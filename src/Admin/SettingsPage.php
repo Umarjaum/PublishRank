@@ -1,0 +1,360 @@
+<?php
+/**
+ * Complete, site-local PublishRank settings surface.
+ *
+ * @package PublishRankSEO
+ */
+namespace PublishRankSEO\Admin;
+
+final class SettingsPage {
+	/** Register admin hooks. */
+	public function register() {
+		add_action( 'admin_menu', array( $this, 'menu' ), 10 );
+		add_action( 'admin_init', array( $this, 'settings' ) );
+	}
+
+	/** Register the settings page. */
+	public function menu() {
+		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'PublishRank Settings', 'publishrank' ), __( 'Settings', 'publishrank' ), 'manage_options', 'publishrank', array( $this, 'page' ) );
+	}
+
+	/** Register and sanitize every setting used by this site. */
+		public function settings() {
+			register_setting( 'publishrank_seo', 'publishrank_image_optimizer_enabled', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) );
+			register_setting( 'publishrank_seo', 'publishrank_image_max_width', array( 'type' => 'integer', 'sanitize_callback' => array( $this, 'sanitize_image_width' ), 'default' => 2000 ) );
+			register_setting( 'publishrank_seo', 'publishrank_image_quality', array( 'type' => 'integer', 'sanitize_callback' => array( $this, 'sanitize_image_quality' ), 'default' => 82 ) );
+			register_setting( 'publishrank_seo', 'publishrank_image_format', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_image_format' ), 'default' => 'webp' ) );
+			register_setting( 'publishrank_seo', 'publishrank_sitemap_endpoint', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_sitemap_endpoint' ), 'default' => 'publishrank-sitemap' ) );
+			register_setting( 'publishrank_seo', 'publishrank_sitemap_aliases', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_sitemap_aliases' ), 'default' => '' ) );
+		register_setting( 'publishrank_seo', 'publishrank_sitemap_stylesheet', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) );
+			register_setting( 'publishrank_seo', 'publishrank_seo_twitter_site', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_handle' ), 'default' => '' ) );
+			register_setting( 'publishrank_seo', 'publishrank_twitter_card', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_twitter_card' ), 'default' => 'summary_large_image' ) );
+			register_setting( 'publishrank_seo', 'publishrank_facebook_app_id', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_verification' ), 'default' => '' ) );
+		register_setting( 'publishrank_seo', 'publishrank_seo_news_enabled', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) );
+			register_setting( 'publishrank_seo', 'publishrank_seo_news_window', array( 'type' => 'integer', 'sanitize_callback' => array( $this, 'sanitize_window' ), 'default' => 48 ) );
+				register_setting( 'publishrank_seo', 'publishrank_seo_publisher_type', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_publisher_type' ), 'default' => 'NewsMediaOrganization' ) );
+				register_setting( 'publishrank_seo', 'publishrank_seo_title_separator', array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '|' ) );
+				foreach ( array( 'publishrank_meta_enabled', 'publishrank_schema_enabled' ) as $field ) { register_setting( 'publishrank_seo', $field, array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) ); }
+				register_setting( 'publishrank_seo', 'publishrank_custom_schema_enabled', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => false ) );
+				register_setting( 'publishrank_seo', 'publishrank_custom_schema_jsonld', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_custom_schema' ), 'default' => '' ) );
+				register_setting( 'publishrank_seo', 'publishrank_schema_founding_date', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_schema_date' ), 'default' => '' ) );
+				register_setting( 'publishrank_seo', 'publishrank_seo_default_robots', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_robots' ), 'default' => 'index,follow' ) );
+				foreach ( array( 'publishrank_noindex_author_archives', 'publishrank_noindex_date_archives' ) as $field ) { register_setting( 'publishrank_seo', $field, array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => false ) ); }
+				foreach ( array( 'publishrank_home_title', 'publishrank_home_description' ) as $field ) { register_setting( 'publishrank_seo', $field, array( 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field', 'default' => '' ) ); }
+			foreach ( array( 'home' => '%%sitename%% %%page%%', 'post' => '%%title%% %%sep%% %%sitename%% %%page%%', 'page' => '%%title%% %%sep%% %%sitename%%', 'archive' => '%%title%% %%sep%% %%sitename%%' ) as $context => $default ) {
+				register_setting( 'publishrank_seo', 'publishrank_seo_title_template_' . $context, array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_template' ), 'default' => $default ) );
+			}
+			register_setting( 'publishrank_seo', 'publishrank_seo_news_max_urls', array( 'type' => 'integer', 'sanitize_callback' => array( $this, 'sanitize_max_urls' ), 'default' => 1000 ) );
+			register_setting( 'publishrank_seo', 'publishrank_seo_news_keywords', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) );
+			register_setting( 'publishrank_seo', 'publishrank_editorial_genre', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_editorial_genre' ), 'default' => '' ) );
+			register_setting( 'publishrank_seo', 'publishrank_sitemap_post_types', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_post_types' ), 'default' => 'post' ) );
+			foreach ( array( 'publishrank_sitemap_pages_enabled', 'publishrank_sitemap_cpt_enabled', 'publishrank_sitemap_taxonomies_enabled', 'publishrank_sitemap_authors_enabled', 'publishrank_sitemap_attachments_enabled' ) as $field ) { register_setting( 'publishrank_seo', $field, array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) ); }
+			register_setting( 'publishrank_seo', 'publishrank_breadcrumbs_enabled', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) );
+			register_setting( 'publishrank_seo', 'publishrank_breadcrumbs_separator', array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '→' ) );
+			register_setting( 'publishrank_seo', 'publishrank_breadcrumb_error_mode', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_breadcrumb_error_mode' ), 'default' => 'skip' ) );
+			register_setting( 'publishrank_seo', 'publishrank_breadcrumb_error_key', array( 'type' => 'string', 'sanitize_callback' => 'sanitize_key', 'default' => 'breadcrumb_error' ) );
+			register_setting( 'publishrank_seo', 'publishrank_breadcrumb_fallback_label', array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => 'Home' ) );
+			register_setting( 'publishrank_seo', 'publishrank_breadcrumb_fallback_url', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_public_url' ), 'default' => home_url( '/' ) ) );
+			register_setting( 'publishrank_seo', 'publishrank_breadcrumb_log_errors', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => false ) );
+			register_setting( 'publishrank_seo', 'publishrank_indexnow_enabled', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => false ) );
+			register_setting( 'publishrank_seo', 'publishrank_indexnow_key', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_indexnow_key' ), 'default' => '' ) );
+		register_setting( 'publishrank_seo', 'publishrank_source_attribution', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => false ) );
+		register_setting( 'publishrank_seo', 'publishrank_public_attribution', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => false ) );
+		register_setting( 'publishrank_seo', 'publishrank_public_attribution_text', array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => 'Powered by PublishRank' ) );
+		register_setting( 'publishrank_seo', 'publishrank_public_attribution_url', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_public_url' ), 'default' => 'https://publishrank.netlify.app/' ) );
+		register_setting( 'publishrank_seo', 'publishrank_identity_type', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_identity_type' ), 'default' => 'organization' ) );
+		foreach ( array( 'publishrank_identity_name', 'publishrank_identity_legal_name', 'publishrank_identity_alternate_name', 'publishrank_identity_description', 'publishrank_identity_founding_date', 'publishrank_identity_contact_email', 'publishrank_identity_contact_phone', 'publishrank_identity_street', 'publishrank_identity_locality', 'publishrank_identity_region', 'publishrank_identity_postal_code', 'publishrank_identity_country', 'publishrank_identity_person_name', 'publishrank_identity_person_alternate_name', 'publishrank_identity_person_description', 'publishrank_identity_person_job_title', 'publishrank_identity_person_email' ) as $field ) {
+			register_setting( 'publishrank_seo', $field, array( 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field', 'default' => '' ) );
+		}
+		foreach ( array( 'publishrank_identity_logo', 'publishrank_identity_owner_url', 'publishrank_identity_owner_logo', 'publishrank_identity_person_image', 'publishrank_identity_person_url' ) as $field ) {
+			register_setting( 'publishrank_seo', $field, array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_public_url' ), 'default' => '' ) );
+		}
+		foreach ( array_keys( \PublishRankSEO\Core\PublicationProfile::social_networks() ) as $network ) {
+			register_setting( 'publishrank_seo', 'publishrank_social_' . $network, array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_social_profile' ), 'default' => '' ) );
+		}
+		register_setting( 'publishrank_seo', 'publishrank_social_custom', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_social_custom' ), 'default' => '' ) );
+		register_setting( 'publishrank_seo', 'publishrank_seo_multilingual_enabled', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) );
+		register_setting( 'publishrank_seo', 'publishrank_cdn_enabled', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => false ) );
+				foreach ( array( 'publishrank_seo_publication_name', 'publishrank_indexnow_key', 'publishrank_indexnow_post_types', 'publishrank_seo_hreflang_map', 'publishrank_seo_news_post_types', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_exclude_categories', 'publishrank_seo_news_genre', 'publishrank_editorial_genre', 'publishrank_seo_publisher_name', 'publishrank_publication_short_name', 'publishrank_default_language', 'publishrank_default_locale', 'publishrank_timezone', 'publishrank_country', 'publishrank_copyright', 'publishrank_contact', 'publishrank_social_profiles', 'publishrank_author_mode', 'publishrank_schema_org_description', 'publishrank_schema_legal_name', 'publishrank_schema_founder', 'publishrank_schema_phone', 'publishrank_schema_street_address', 'publishrank_schema_address_locality', 'publishrank_schema_address_region', 'publishrank_schema_postal_code', 'publishrank_schema_knows_about', 'publishrank_schema_parent_organization', 'publishrank_schema_founding_location' ) as $field ) {
+			register_setting( 'publishrank_seo', $field, array( 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field', 'default' => '' ) );
+		}
+			foreach ( array( 'publishrank_seo_x_default_url', 'publishrank_indexnow_key_location', 'publishrank_primary_url', 'publishrank_media_host', 'publishrank_cdn_host', 'publishrank_video_host', 'publishrank_api_host', 'publishrank_seo_publisher_logo', 'publishrank_seo_default_social_image' ) as $field ) {
+				register_setting( 'publishrank_seo', $field, array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_public_url' ), 'default' => '' ) );
+		}
+			foreach ( array( 'publishrank_seo_image_sitemap', 'publishrank_seo_video_sitemap', 'publishrank_seo_404_monitor' ) as $field ) {
+				register_setting( 'publishrank_seo', $field, array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) );
+			}
+				register_setting( 'publishrank_seo', 'publishrank_image_license_url', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_public_url' ), 'default' => '' ) );
+				foreach ( array( 'google', 'bing', 'yandex', 'baidu', 'pinterest' ) as $engine ) { register_setting( 'publishrank_seo', 'publishrank_verification_' . $engine, array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_verification' ), 'default' => '' ) ); }
+	}
+
+
+	/** @param mixed $value @return string */
+	public function sanitize_breadcrumb_error_mode( $value ) {
+		$value = sanitize_key( $value );
+		$allowed = array( 'skip', 'fallback', 'text', 'disable' );
+		return in_array( $value, $allowed, true ) ? $value : 'skip';
+	}
+
+	/** @param mixed $value @return string */
+	public function sanitize_editorial_genre( $value ) {
+		$allowed = array(
+			'', 'News', 'Breaking News', 'Live Updates', 'Developing Story', 'Local News', 'National News', 'International News', 'Regional News', 'World News',
+			'Report', 'Investigative', 'In-Depth', 'Exclusive', 'Special Report', 'Field Report', 'Eyewitness Report', 'Data Journalism', 'Fact Check', 'Verification', 'News Analysis', 'Analysis', 'Explainer', 'Background', 'Context', 'Briefing', 'News Brief', 'Roundup', 'Timeline',
+			'Opinion', 'Editorial', 'Column', 'Commentary', 'Op-Ed', 'Letter to the Editor', 'Guest Essay', 'Perspective',
+			'Interview', 'Profile', 'Q&A', 'Portrait', 'Biography', 'Obituary', 'Tribute',
+			'Live Blog', 'Event Coverage', 'Election Coverage', 'Breaking Coverage', 'Conference Coverage', 'Sports Coverage',
+			'Review', 'Criticism', 'Preview', 'Guide', 'How-To', 'FAQ', 'Consumer Advice', 'Service Journalism',
+			'Travel', 'Food', 'Technology', 'Science', 'Health', 'Business', 'Finance', 'Politics', 'Sports', 'Entertainment', 'Culture',
+			'Press Release', 'Statement', 'Transcript', 'Speech', 'Announcement', 'Official Statement', 'Court Filing', 'Document', 'Public Records', 'Research', 'Study', 'Survey',
+			'Feature', 'Longform', 'Magazine', 'Essay', 'Human Interest', 'Special Feature', 'Photo Essay', 'Multimedia', 'Documentary',
+			'Satire', 'User Generated', 'Blog', 'Archive', 'Correction', 'Update', 'Retraction', 'Clarification', 'Fact Correction'
+		);
+		$value = sanitize_text_field( (string) $value );
+		return in_array( $value, $allowed, true ) ? $value : '';
+	}
+
+	/** @param mixed $value @return string X/Twitter handle without the @ sign. */
+			public function sanitize_custom_schema( $value ) {
+			$value = trim( (string) $value );
+			if ( '' === $value ) { return ''; }
+			$data = json_decode( $value, true );
+			return ( JSON_ERROR_NONE === json_last_error() && is_array( $data ) ) ? wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) : '';
+		}
+
+		public function sanitize_handle( $value ) {
+				return substr( preg_replace( '/[^A-Za-z0-9_]/', '', ltrim( trim( (string) $value ), '@' ) ), 0, 15 );
+			}
+
+			public function sanitize_twitter_card( $value ) { return in_array( (string) $value, array( 'summary', 'summary_large_image' ), true ) ? (string) $value : 'summary_large_image'; }
+
+		/** @param mixed $value @return string */
+		public function sanitize_indexnow_key( $value ) {
+			$key = preg_replace( '/[^A-Za-z0-9\-_]/', '', trim( (string) $value ) );
+			return substr( (string) $key, 0, 128 );
+		}
+
+	/** @param mixed $value @return string */
+		public function sanitize_publisher_type( $value ) {
+			$value = sanitize_text_field( (string) $value );
+			return in_array( $value, array( 'NewsMediaOrganization', 'Organization' ), true ) ? $value : 'NewsMediaOrganization';
+		}
+
+		/** @param mixed $value @return string */
+			public function sanitize_robots( $value ) {
+				$value = sanitize_text_field( (string) $value );
+				return ( new \PublishRankSEO\Meta\MetaGenerator() )->normalize_robots( $value );
+			}
+
+		/** @param mixed $value @return string ISO year, month, or date. */
+		public function sanitize_schema_date( $value ) {
+			$value = sanitize_text_field( (string) $value );
+			return preg_match( '/^\d{4}(?:-\d{2}(?:-\d{2})?)?$/', $value ) ? $value : '';
+		}
+
+		/** @param mixed $value @return string */
+		public function sanitize_template( $value ) {
+			$value = sanitize_text_field( (string) $value );
+			return preg_replace( '/[^\p{L}\p{N}\s%_\-–—|.,:()]+/u', '', $value );
+		}
+
+		/** @param mixed $value @return int */
+	public function sanitize_max_urls( $value ) {
+		return min( 1000, max( 1, absint( $value ) ) );
+	}
+
+	/** @param mixed $value @return int */
+		public function sanitize_window( $value ) {
+			$value = absint( $value );
+			return min( 168, max( 1, $value ) );
+		}
+		public function sanitize_image_width( $value ) { return min( 4000, max( 640, absint( $value ) ) ); }
+		public function sanitize_image_quality( $value ) { return min( 95, max( 50, absint( $value ) ) ); }
+		public function sanitize_image_format( $value ) { return in_array( sanitize_key( $value ), array( 'webp', 'jpeg', 'preserve' ), true ) ? sanitize_key( $value ) : 'webp'; }
+
+		/** @param mixed $value @return string */
+		public function sanitize_public_url( $value ) {
+			$url = \PublishRankSEO\Core\PublicationProfile::normalize_url( $value );
+			return $url ? $url : '';
+		}
+
+	/** @param mixed $value @return string */
+	public function sanitize_identity_type( $value ) {
+		$value = sanitize_key( $value );
+		return in_array( $value, array( 'organization', 'person' ), true ) ? $value : 'organization';
+	}
+
+	/** Accept a social handle or a full public URL. @param mixed $value @return string */
+	public function sanitize_social_profile( $value ) {
+		$value = trim( (string) $value );
+		if ( '' === $value ) { return ''; }
+		if ( preg_match( '#^https?://#i', $value ) ) {
+			$url = \PublishRankSEO\Core\PublicationProfile::normalize_url( $value );
+			return $url ? $url : '';
+		}
+		return substr( preg_replace( '/[^\p{L}\p{N}._\-\/]/u', '', ltrim( $value, '@' ) ), 0, 100 );
+	}
+
+	/** Custom profiles: one URL per line, deduped. @param mixed $value @return string */
+	public function sanitize_social_custom( $value ) {
+		$lines = array();
+		foreach ( preg_split( '/\r\n|\r|\n/', (string) $value ) as $line ) {
+			$url = \PublishRankSEO\Core\PublicationProfile::normalize_url( trim( $line ) );
+			if ( $url ) { $lines[] = $url; }
+		}
+		return implode( "\n", array_values( array_unique( $lines ) ) );
+	}
+
+		/** @param mixed $value @return string */
+			public function sanitize_post_types( $value ) {
+			$valid = array();
+			foreach ( preg_split( '/[\s,]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY ) as $type ) { $type = sanitize_key( $type ); $object = get_post_type_object( $type ); if ( $object && $object->public && $object->publicly_queryable && 'attachment' !== $type ) { $valid[] = $type; } }
+				return implode( ',', array_values( array_unique( $valid ? $valid : array( 'post' ) ) ) );
+			}
+			public function sanitize_verification( $value ) { return substr( preg_replace( '/[^A-Za-z0-9._\-]/', '', trim( (string) $value ) ), 0, 256 ); }
+			public function sanitize_sitemap_endpoint( $value ) { $value = preg_replace( '/[^a-z0-9\-]/', '', strtolower( (string) $value ) ); return $value ?: 'publishrank-sitemap'; }
+		public function sanitize_sitemap_aliases( $value ) { $out = array(); foreach ( preg_split( '/[\s,]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY ) as $alias ) { $alias = preg_replace( '/[^a-z0-9\-]/', '', strtolower( $alias ) ); if ( $alias && 'publishrank-sitemap' !== $alias ) { $out[] = $alias; } } return implode( ',', array_values( array_unique( $out ) ) ); }
+
+		/** Render the settings form. */
+			public function page() {
+				if ( ! current_user_can( 'manage_options' ) ) {
+					return;
+				}
+		$val = static function ( $key, $default = '' ) { return get_option( $key, $default ); };
+		?>
+		<div class="wrap">
+			<?php \PublishRankSEO\Admin\AdminAssets::header( __( 'Settings', 'publishrank' ), __( 'Publication identity, News SEO, sitemaps and integrations.', 'publishrank' ) ); settings_errors(); ?>
+			<p><?php esc_html_e( 'Configure PublishRank for this WordPress site. Every site in a multisite network keeps its own publication identity and infrastructure settings.', 'publishrank' ); ?></p>
+			<form method="post" action="options.php">
+				<?php settings_fields( 'publishrank_seo' ); ?>
+			<h2><?php esc_html_e( 'Publication profile', 'publishrank' ); ?></h2>
+			<table class="form-table" role="presentation"><tbody>
+				<tr><th scope="row"><label for="publishrank_source_attribution"><?php esc_html_e( 'HTML source attribution', 'publishrank' ); ?></label></th><td><input type="hidden" name="publishrank_source_attribution" value="0" /><label><input id="publishrank_source_attribution" name="publishrank_source_attribution" type="checkbox" value="1" <?php checked( $val( 'publishrank_source_attribution', false ), true ); ?> /> <?php esc_html_e( 'Add PublishRank identification comments and metadata to public page source.', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Optional and disabled by default. Enable only if you want to display PublishRank attribution in your public HTML source.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="publishrank_public_attribution">PublishRank footer attribution</label></th><td><input type="hidden" name="publishrank_public_attribution" value="0" /><label><input id="publishrank_public_attribution" name="publishrank_public_attribution" type="checkbox" value="1" <?php checked( $val( 'publishrank_public_attribution', false ), true ); ?> /> <?php esc_html_e( 'Show an optional “Powered by PublishRank” credit in the site footer.', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Disabled by default. The source attribution control above is separate.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="publishrank_public_attribution_text">Powered by text</label></th><td><input id="publishrank_public_attribution_text" name="publishrank_public_attribution_text" type="text" value="<?php echo esc_attr( $val( 'publishrank_public_attribution_text', 'Powered by PublishRank' ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_public_attribution_url">Attribution URL</label></th><td><input id="publishrank_public_attribution_url" name="publishrank_public_attribution_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_public_attribution_url', 'https://publishrank.netlify.app/' ) ); ?>" class="large-text" /></td></tr>
+			</tbody></table>
+			<table class="form-table" role="presentation"><tbody>
+				<tr><th scope="row"><label for="publishrank_seo_publication_name"><?php esc_html_e( 'Publication name', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_publication_name" name="publishrank_seo_publication_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_seo_publication_name', get_bloginfo( 'name' ) ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_publication_short_name"><?php esc_html_e( 'Short name', 'publishrank' ); ?></label></th><td><input id="publishrank_publication_short_name" name="publishrank_publication_short_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_publication_short_name' ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_primary_url"><?php esc_html_e( 'Primary website URL', 'publishrank' ); ?></label></th><td><input id="publishrank_primary_url" name="publishrank_primary_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_primary_url', home_url( '/' ) ) ); ?>" class="large-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_seo_publisher_name"><?php esc_html_e( 'Publisher name', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_publisher_name" name="publishrank_seo_publisher_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_seo_publisher_name', get_bloginfo( 'name' ) ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_seo_publisher_logo"><?php esc_html_e( 'Publisher logo URL', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_publisher_logo" name="publishrank_seo_publisher_logo" type="url" value="<?php echo esc_attr( $val( 'publishrank_seo_publisher_logo' ) ); ?>" class="large-text" /> <button type="button" class="button rhs-media-button" data-target="publishrank_seo_publisher_logo"><?php esc_html_e( 'Choose image', 'publishrank' ); ?></button></td></tr>
+				<tr><th scope="row"><label for="publishrank_seo_default_social_image"><?php esc_html_e( 'Default social image', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_default_social_image" name="publishrank_seo_default_social_image" type="url" value="<?php echo esc_attr( $val( 'publishrank_seo_default_social_image' ) ); ?>" class="large-text" /> <button type="button" class="button rhs-media-button" data-target="publishrank_seo_default_social_image"><?php esc_html_e( 'Choose image', 'publishrank' ); ?></button><p class="description"><?php esc_html_e( 'Used for Open Graph and X/Twitter when an article has no social or featured image. Recommended 1200x630.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><label for="publishrank_seo_twitter_site"><?php esc_html_e( 'X/Twitter handle', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_twitter_site" name="publishrank_seo_twitter_site" type="text" value="<?php echo esc_attr( $val( 'publishrank_seo_twitter_site' ) ); ?>" class="regular-text" placeholder="yourpublication" /></td></tr>
+					<tr><th scope="row"><label for="publishrank_twitter_card"><?php esc_html_e( 'Default X/Twitter card', 'publishrank' ); ?></label></th><td><select id="publishrank_twitter_card" name="publishrank_twitter_card"><option value="summary_large_image" <?php selected( $val( 'publishrank_twitter_card', 'summary_large_image' ), 'summary_large_image' ); ?>><?php esc_html_e( 'Summary with large image', 'publishrank' ); ?></option><option value="summary" <?php selected( $val( 'publishrank_twitter_card', 'summary_large_image' ), 'summary' ); ?>><?php esc_html_e( 'Summary', 'publishrank' ); ?></option></select> <input id="publishrank_facebook_app_id" name="publishrank_facebook_app_id" type="text" value="<?php echo esc_attr( $val( 'publishrank_facebook_app_id' ) ); ?>" class="regular-text" placeholder="Facebook App ID" /></td></tr>
+					<tr><th scope="row"><label for="publishrank_seo_publisher_type"><?php esc_html_e( 'Publisher type', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_publisher_type" name="publishrank_seo_publisher_type"><option value="NewsMediaOrganization" <?php selected( $val( 'publishrank_seo_publisher_type', 'NewsMediaOrganization' ), 'NewsMediaOrganization' ); ?>><?php esc_html_e( 'News media organization', 'publishrank' ); ?></option><option value="Organization" <?php selected( $val( 'publishrank_seo_publisher_type', 'NewsMediaOrganization' ), 'Organization' ); ?>><?php esc_html_e( 'Organization', 'publishrank' ); ?></option></select></td></tr>
+					<tr><th scope="row"><?php esc_html_e( 'Output controls', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_meta_enabled" value="0" /><label><input name="publishrank_meta_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_meta_enabled', true ) ); ?> /> <?php esc_html_e( 'Output PublishRank title, canonical, robots, Open Graph and X/Twitter metadata', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_schema_enabled" value="0" /><label><input name="publishrank_schema_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_schema_enabled', true ) ); ?> /> <?php esc_html_e( 'Output the connected JSON-LD schema graph', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Leave both enabled for the complete technical SEO layer. Disable only if another SEO plugin owns these outputs.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><label for="publishrank_default_language"><?php esc_html_e( 'Language / locale', 'publishrank' ); ?></label></th><td><input id="publishrank_default_language" name="publishrank_default_language" type="text" value="<?php echo esc_attr( $val( 'publishrank_default_language', substr( (string) get_locale(), 0, 2 ) ) ); ?>" class="small-text" placeholder="en" /> <input id="publishrank_default_locale" name="publishrank_default_locale" type="text" value="<?php echo esc_attr( $val( 'publishrank_default_locale', get_locale() ) ); ?>" class="small-text" placeholder="en_US" /></td></tr>
+					<tr><th scope="row"><?php esc_html_e( 'Homepage metadata', 'publishrank' ); ?></th><td><input id="publishrank_home_title" name="publishrank_home_title" type="text" value="<?php echo esc_attr( $val( 'publishrank_home_title' ) ); ?>" class="large-text" placeholder="Optional homepage title override" /><textarea id="publishrank_home_description" name="publishrank_home_description" rows="2" class="large-text" placeholder="Optional homepage meta description"><?php echo esc_textarea( $val( 'publishrank_home_description' ) ); ?></textarea><p class="description"><?php esc_html_e( 'Leave empty to use the site name and WordPress tagline.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><?php esc_html_e( 'Archive indexing', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_noindex_author_archives" value="0" /><label><input name="publishrank_noindex_author_archives" type="checkbox" value="1" <?php checked( $val( 'publishrank_noindex_author_archives', false ) ); ?> /> <?php esc_html_e( 'Noindex author archives', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_noindex_date_archives" value="0" /><label><input name="publishrank_noindex_date_archives" type="checkbox" value="1" <?php checked( $val( 'publishrank_noindex_date_archives', false ) ); ?> /> <?php esc_html_e( 'Noindex date archives', 'publishrank' ); ?></label></td></tr>
+					<tr><th scope="row"><label for="publishrank_seo_default_robots"><?php esc_html_e( 'Default robots directives', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_default_robots" name="publishrank_seo_default_robots" type="text" class="large-text" value="<?php echo esc_attr( $val( 'publishrank_seo_default_robots', 'index,follow' ) ); ?>" placeholder="index,follow,max-image-preview:large" /><p class="description"><?php esc_html_e( 'Comma-separated defaults for pages without a specific override. Supported directives include index, noindex, follow, nofollow, noarchive, nosnippet, noimageindex, notranslate, max-snippet, max-image-preview and max-video-preview. A post-level robots setting takes precedence. Be careful: setting noindex globally can remove your public pages from search results.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="publishrank_timezone"><?php esc_html_e( 'Timezone / country', 'publishrank' ); ?></label></th><td><input id="publishrank_timezone" name="publishrank_timezone" type="text" value="<?php echo esc_attr( $val( 'publishrank_timezone', wp_timezone_string() ) ); ?>" class="regular-text" placeholder="UTC" /> <input id="publishrank_country" name="publishrank_country" type="text" value="<?php echo esc_attr( $val( 'publishrank_country' ) ); ?>" class="small-text" placeholder="US" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_copyright"><?php esc_html_e( 'Copyright / contact', 'publishrank' ); ?></label></th><td><textarea id="publishrank_copyright" name="publishrank_copyright" rows="2" class="large-text"><?php echo esc_textarea( $val( 'publishrank_copyright' ) ); ?></textarea><textarea id="publishrank_contact" name="publishrank_contact" rows="2" class="large-text" placeholder="contact@example.com"><?php echo esc_textarea( $val( 'publishrank_contact' ) ); ?></textarea></td></tr>
+					<tr><th scope="row"><label for="publishrank_social_profiles"><?php esc_html_e( 'Social profiles', 'publishrank' ); ?></label></th><td><textarea id="publishrank_social_profiles" name="publishrank_social_profiles" rows="4" class="large-text" placeholder="One profile URL per line"><?php echo esc_textarea( $val( 'publishrank_social_profiles' ) ); ?></textarea></td></tr>
+					<tr><th scope="row"><label for="publishrank_schema_org_description"><?php esc_html_e( 'Organization description', 'publishrank' ); ?></label></th><td><textarea id="publishrank_schema_org_description" name="publishrank_schema_org_description" rows="3" class="large-text" placeholder="A concise description of the organization"><?php echo esc_textarea( $val( 'publishrank_schema_org_description' ) ); ?></textarea><p class="description"><?php esc_html_e( 'Used only in the Organization JSON-LD node.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><label for="publishrank_schema_legal_name"><?php esc_html_e( 'Legal name / founder', 'publishrank' ); ?></label></th><td><input id="publishrank_schema_legal_name" name="publishrank_schema_legal_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_legal_name' ) ); ?>" class="regular-text" /><input id="publishrank_schema_founder" name="publishrank_schema_founder" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_founder' ) ); ?>" class="regular-text" placeholder="Founder name" /><p class="description"><?php esc_html_e( 'Optional structured-data identity fields.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><label for="publishrank_schema_founding_date"><?php esc_html_e( 'Founding date / phone', 'publishrank' ); ?></label></th><td><input id="publishrank_schema_founding_date" name="publishrank_schema_founding_date" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_founding_date' ) ); ?>" class="small-text" placeholder="2020-01-31" /><input id="publishrank_schema_phone" name="publishrank_schema_phone" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_phone' ) ); ?>" class="regular-text" placeholder="+1 555 0100" /></td></tr>
+					<tr><th scope="row"><label for="publishrank_schema_street_address"><?php esc_html_e( 'Organization address', 'publishrank' ); ?></label></th><td><input id="publishrank_schema_street_address" name="publishrank_schema_street_address" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_street_address' ) ); ?>" class="large-text" placeholder="Street address" /><div class="rhs-field-row"><input id="publishrank_schema_address_locality" name="publishrank_schema_address_locality" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_address_locality' ) ); ?>" placeholder="City" /><input id="publishrank_schema_address_region" name="publishrank_schema_address_region" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_address_region' ) ); ?>" placeholder="Region" /><input id="publishrank_schema_postal_code" name="publishrank_schema_postal_code" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_postal_code' ) ); ?>" placeholder="Postal code" /></div><p class="description"><?php esc_html_e( 'Country is taken from the Country field above and emitted as area served and address country.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><label for="publishrank_schema_knows_about"><?php esc_html_e( 'Organization expertise', 'publishrank' ); ?></label></th><td><textarea id="publishrank_schema_knows_about" name="publishrank_schema_knows_about" rows="2" class="large-text" placeholder="Investigative journalism, climate reporting, public policy"><?php echo esc_textarea( $val( 'publishrank_schema_knows_about' ) ); ?></textarea><input id="publishrank_schema_parent_organization" name="publishrank_schema_parent_organization" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_parent_organization' ) ); ?>" class="regular-text" placeholder="Parent organization" /><input id="publishrank_schema_founding_location" name="publishrank_schema_founding_location" type="text" value="<?php echo esc_attr( $val( 'publishrank_schema_founding_location' ) ); ?>" class="regular-text" placeholder="Founding location" /></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Multilingual and international SEO', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_multilingual_enabled" value="0" /><label><input name="publishrank_seo_multilingual_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_multilingual_enabled', true ) ); ?> /> <?php esc_html_e( 'Enable hreflang and regional metadata', 'publishrank' ); ?></label></td></tr>
+				<tr><th scope="row"><label for="publishrank_seo_hreflang_map"><?php esc_html_e( 'Language / regional URL map', 'publishrank' ); ?></label></th><td><textarea id="publishrank_seo_hreflang_map" name="publishrank_seo_hreflang_map" rows="5" class="large-text code" placeholder="en-US=https://example.com/
+fr-FR=https://fr.example.com/
+ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_hreflang_map' ) ); ?></textarea><p class="description"><?php esc_html_e( 'One locale=URL per line. Supports language and regional codes such as en, en-US, fr-FR, ar-SA, and de-DE. WPML and Polylang URLs are detected automatically.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="publishrank_seo_x_default_url"><?php esc_html_e( 'x-default URL', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_x_default_url" name="publishrank_seo_x_default_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_seo_x_default_url' ) ); ?>" class="large-text" /><p class="description"><?php esc_html_e( 'Optional fallback URL for visitors whose language or region is not mapped.', 'publishrank' ); ?></p></td></tr>
+					</tbody></table>
+
+			<h2><?php esc_html_e( 'Publication Identity', 'publishrank' ); ?></h2>
+			<p><?php esc_html_e( 'Choose whether this site is published by an Organization or a Person. The selected identity becomes the top-level entity in the JSON-LD graph and is referenced by the WebSite, WebPage and Article nodes. Social profiles below are merged into the schema sameAs list.', 'publishrank' ); ?></p>
+			<table class="form-table" role="presentation"><tbody>
+				<tr><th scope="row"><?php esc_html_e( 'Identity type', 'publishrank' ); ?></th><td><label><input name="publishrank_identity_type" type="radio" value="organization" <?php checked( $val( 'publishrank_identity_type', 'organization' ), 'organization' ); ?> /> <?php esc_html_e( 'Organization', 'publishrank' ); ?></label><br /><label><input name="publishrank_identity_type" type="radio" value="person" <?php checked( $val( 'publishrank_identity_type', 'organization' ), 'person' ); ?> /> <?php esc_html_e( 'Person', 'publishrank' ); ?></label></td></tr>
+			</tbody></table>
+
+			<h3><?php esc_html_e( 'Organization', 'publishrank' ); ?></h3>
+			<table class="form-table" role="presentation"><tbody>
+				<tr><th scope="row"><label for="publishrank_identity_name"><?php esc_html_e( 'Name', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_name" name="publishrank_identity_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_name', $val( 'publishrank_seo_publisher_name', get_bloginfo( 'name' ) ) ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_legal_name"><?php esc_html_e( 'Legal name', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_legal_name" name="publishrank_identity_legal_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_legal_name', $val( 'publishrank_schema_legal_name' ) ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_alternate_name"><?php esc_html_e( 'Alternate name', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_alternate_name" name="publishrank_identity_alternate_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_alternate_name', $val( 'publishrank_publication_short_name' ) ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_description"><?php esc_html_e( 'Description', 'publishrank' ); ?></label></th><td><textarea id="publishrank_identity_description" name="publishrank_identity_description" rows="3" class="large-text"><?php echo esc_textarea( $val( 'publishrank_identity_description', $val( 'publishrank_schema_org_description' ) ) ); ?></textarea></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_logo"><?php esc_html_e( 'Logo', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_logo" name="publishrank_identity_logo" type="url" value="<?php echo esc_attr( $val( 'publishrank_identity_logo', $val( 'publishrank_seo_publisher_logo' ) ) ); ?>" class="large-text" /> <button type="button" class="button rhs-media-button" data-target="publishrank_identity_logo"><?php esc_html_e( 'Choose image', 'publishrank' ); ?></button></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_founding_date"><?php esc_html_e( 'Founding date', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_founding_date" name="publishrank_identity_founding_date" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_founding_date', $val( 'publishrank_schema_founding_date' ) ) ); ?>" class="small-text" placeholder="2015 or 2015-03 or 2015-03-14" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_contact_email"><?php esc_html_e( 'Contact', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_contact_email" name="publishrank_identity_contact_email" type="email" value="<?php echo esc_attr( $val( 'publishrank_identity_contact_email', $val( 'publishrank_contact' ) ) ); ?>" class="regular-text" placeholder="contact@example.com" /> <input id="publishrank_identity_contact_phone" name="publishrank_identity_contact_phone" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_contact_phone', $val( 'publishrank_schema_phone' ) ) ); ?>" class="regular-text" placeholder="+1 555 0100" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_street"><?php esc_html_e( 'Address', 'publishrank' ); ?></label></th><td><input id="publishrank_street_tmp" type="hidden" /><input id="publishrank_identity_street" name="publishrank_identity_street" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_street', $val( 'publishrank_schema_street_address' ) ) ); ?>" class="large-text" placeholder="Street address" /><div class="rhs-field-row"><input id="publishrank_identity_locality" name="publishrank_identity_locality" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_locality', $val( 'publishrank_schema_address_locality' ) ) ); ?>" placeholder="City" /><input id="publishrank_identity_region" name="publishrank_identity_region" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_region', $val( 'publishrank_schema_address_region' ) ) ); ?>" placeholder="Region" /><input id="publishrank_identity_postal_code" name="publishrank_identity_postal_code" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_postal_code', $val( 'publishrank_schema_postal_code' ) ) ); ?>" placeholder="Postal code" /></div><input id="publishrank_identity_country" name="publishrank_identity_country" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_country', $val( 'publishrank_country' ) ) ); ?>" class="small-text" placeholder="US" /></td></tr>
+			</tbody></table>
+
+				<tr><th scope="row"><label for="publishrank_identity_parent_organization"><?php esc_html_e( 'Parent / owner organization', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_parent_organization" name="publishrank_identity_parent_organization" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_parent_organization' ) ); ?>" class="large-text" placeholder="Parent media group or owning organization" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_owner_name"><?php esc_html_e( 'Owner / rights holder', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_owner_name" name="publishrank_identity_owner_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_owner_name' ) ); ?>" class="regular-text" /> <input id="publishrank_identity_owner_url" name="publishrank_identity_owner_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_identity_owner_url' ) ); ?>" class="regular-text" placeholder="Owner URL" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_owner_logo"><?php esc_html_e( 'Owner logo', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_owner_logo" name="publishrank_identity_owner_logo" type="url" value="<?php echo esc_attr( $val( 'publishrank_identity_owner_logo' ) ); ?>" class="large-text" /> <button type="button" class="button rhs-media-button" data-target="publishrank_identity_owner_logo"><?php esc_html_e( 'Choose image', 'publishrank' ); ?></button></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_copyright_holder"><?php esc_html_e( 'Copyright holder', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_copyright_holder" name="publishrank_identity_copyright_holder" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_copyright_holder' ) ); ?>" class="regular-text" /></td></tr>
+			<h3><?php esc_html_e( 'Person', 'publishrank' ); ?></h3>
+			<table class="form-table" role="presentation"><tbody>
+				<tr><th scope="row"><label for="publishrank_identity_person_name"><?php esc_html_e( 'Name', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_person_name" name="publishrank_identity_person_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_person_name' ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_person_alternate_name"><?php esc_html_e( 'Alternate name', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_person_alternate_name" name="publishrank_identity_person_alternate_name" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_person_alternate_name' ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_person_description"><?php esc_html_e( 'Description', 'publishrank' ); ?></label></th><td><textarea id="publishrank_identity_person_description" name="publishrank_identity_person_description" rows="3" class="large-text"><?php echo esc_textarea( $val( 'publishrank_identity_person_description' ) ); ?></textarea></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_person_image"><?php esc_html_e( 'Photo', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_person_image" name="publishrank_identity_person_image" type="url" value="<?php echo esc_attr( $val( 'publishrank_identity_person_image' ) ); ?>" class="large-text" /> <button type="button" class="button rhs-media-button" data-target="publishrank_identity_person_image"><?php esc_html_e( 'Choose image', 'publishrank' ); ?></button></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_person_job_title"><?php esc_html_e( 'Job title', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_person_job_title" name="publishrank_identity_person_job_title" type="text" value="<?php echo esc_attr( $val( 'publishrank_identity_person_job_title' ) ); ?>" class="regular-text" placeholder="Editor-in-Chief" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_person_email"><?php esc_html_e( 'Email', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_person_email" name="publishrank_identity_person_email" type="email" value="<?php echo esc_attr( $val( 'publishrank_identity_person_email' ) ); ?>" class="regular-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_identity_person_url"><?php esc_html_e( 'Profile URL', 'publishrank' ); ?></label></th><td><input id="publishrank_identity_person_url" name="publishrank_identity_person_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_identity_person_url' ) ); ?>" class="large-text" placeholder="<?php echo esc_attr( home_url( '/' ) ); ?>" /></td></tr>
+			</tbody></table>
+
+			<h3><?php esc_html_e( 'Social Profiles', 'publishrank' ); ?></h3>
+			<p class="description"><?php esc_html_e( 'Enter a handle (e.g. yourpublication) or a full profile URL for each network. Everything listed here is emitted as the identity entity sameAs property.', 'publishrank' ); ?></p>
+			<table class="form-table" role="presentation"><tbody>
+				<?php foreach ( \PublishRankSEO\Core\PublicationProfile::social_networks() as $network_key => $network ) : ?>
+				<tr><th scope="row"><label for="publishrank_social_<?php echo esc_attr( $network_key ); ?>"><?php echo esc_html( $network['label'] ); ?></label></th><td><input id="publishrank_social_<?php echo esc_attr( $network_key ); ?>" name="publishrank_social_<?php echo esc_attr( $network_key ); ?>" type="text" value="<?php echo esc_attr( $val( 'publishrank_social_' . $network_key ) ); ?>" class="regular-text" placeholder="handle or full URL" /></td></tr>
+				<?php endforeach; ?>
+				<tr><th scope="row"><label for="publishrank_social_custom"><?php esc_html_e( 'Add custom profile', 'publishrank' ); ?></label></th><td><textarea id="publishrank_social_custom" name="publishrank_social_custom" rows="3" class="large-text code" placeholder="https://mastodon.social/@yourpublication"><?php echo esc_textarea( $val( 'publishrank_social_custom' ) ); ?></textarea><p class="description"><?php esc_html_e( 'One profile URL per line. Custom profiles are merged with the networks above and the legacy social list.', 'publishrank' ); ?></p></td></tr>
+			</tbody></table>
+					<h2><?php esc_html_e( 'Site Connections', 'publishrank' ); ?></h2>
+					<p><?php esc_html_e( 'Enter the verification token supplied by each search engine. PublishRank outputs the matching meta tag on the frontend.', 'publishrank' ); ?></p>
+					<table class="form-table" role="presentation"><tbody>
+					<?php foreach ( array( 'google' => 'Google', 'bing' => 'Bing / Microsoft', 'yandex' => 'Yandex', 'baidu' => 'Baidu', 'pinterest' => 'Pinterest' ) as $engine => $label ) : ?>
+					<tr><th scope="row"><label for="publishrank_verification_<?php echo esc_attr( $engine ); ?>"><?php echo esc_html( $label ); ?></label></th><td><input id="publishrank_verification_<?php echo esc_attr( $engine ); ?>" name="publishrank_verification_<?php echo esc_attr( $engine ); ?>" type="text" value="<?php echo esc_attr( $val( 'publishrank_verification_' . $engine ) ); ?>" class="large-text code" autocomplete="off" /></td></tr>
+					<?php endforeach; ?>
+					</tbody></table>
+					<h2><?php esc_html_e( 'Advanced Schema Insertion', 'publishrank' ); ?></h2>
+				<p><?php esc_html_e( 'Add one validated JSON-LD object for legitimate publisher-specific Schema.org entities that are not covered by the standard graph.', 'publishrank' ); ?></p>
+				<table class="form-table" role="presentation"><tbody><tr><th scope="row"><?php esc_html_e( 'Custom JSON-LD', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_custom_schema_enabled" value="0" /><label><input name="publishrank_custom_schema_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_custom_schema_enabled', false ) ); ?> /> <?php esc_html_e( 'Enable custom schema insertion', 'publishrank' ); ?></label><textarea name="publishrank_custom_schema_jsonld" rows="14" class="large-text code" placeholder='{"@context":"https://schema.org","@type":"Dataset","name":"..."}'><?php echo esc_textarea( $val( 'publishrank_custom_schema_jsonld' ) ); ?></textarea><p class="description"><?php esc_html_e( 'JSON only. Invalid JSON is rejected. Do not paste JavaScript or unsupported claims.', 'publishrank' ); ?></p></td></tr></tbody></table>
+				<h2><?php esc_html_e( 'Breadcrumbs', 'publishrank' ); ?></h2>
+				<table class="form-table" role="presentation"><tbody>
+					<tr><th scope="row"><?php esc_html_e( 'Frontend breadcrumbs', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_breadcrumbs_enabled" value="0" /><label><input name="publishrank_breadcrumbs_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_breadcrumbs_enabled', true ) ); ?> /> <?php esc_html_e( 'Output breadcrumbs on singular content', 'publishrank' ); ?></label><br /><label for="publishrank_breadcrumbs_separator"><?php esc_html_e( 'Separator', 'publishrank' ); ?></label> <input id="publishrank_breadcrumbs_separator" name="publishrank_breadcrumbs_separator" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumbs_separator', '→' ) ); ?>" class="small-text" /></td></tr>
+<tr><th scope="row"><?php esc_html_e( 'Breadcrumb error handling', 'publishrank' ); ?></th><td><label for="publishrank_breadcrumb_error_mode"><?php esc_html_e( 'Invalid item behavior', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_error_mode" name="publishrank_breadcrumb_error_mode"><option value="skip" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'skip' ); ?>><?php esc_html_e( 'Skip invalid item', 'publishrank' ); ?></option><option value="fallback" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'fallback' ); ?>><?php esc_html_e( 'Use fallback item', 'publishrank' ); ?></option><option value="text" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'text' ); ?>><?php esc_html_e( 'Keep text without link', 'publishrank' ); ?></option><option value="disable" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'disable' ); ?>><?php esc_html_e( 'Disable breadcrumbs on error', 'publishrank' ); ?></option></select><br /><label for="publishrank_breadcrumb_error_key"><?php esc_html_e( 'Error key', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_error_key" name="publishrank_breadcrumb_error_key" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_error_key', 'breadcrumb_error' ) ); ?>" class="regular-text code" /><br /><label for="publishrank_breadcrumb_fallback_label"><?php esc_html_e( 'Fallback label', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_fallback_label" name="publishrank_breadcrumb_fallback_label" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_fallback_label', 'Home' ) ); ?>" class="regular-text" /><br /><label for="publishrank_breadcrumb_fallback_url"><?php esc_html_e( 'Fallback URL', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_fallback_url" name="publishrank_breadcrumb_fallback_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_fallback_url', home_url( '/' ) ) ); ?>" class="large-text" /><br /><input type="hidden" name="publishrank_breadcrumb_log_errors" value="0" /><label><input name="publishrank_breadcrumb_log_errors" type="checkbox" value="1" <?php checked( $val( 'publishrank_breadcrumb_log_errors', false ) ); ?> /> <?php esc_html_e( 'Record breadcrumb errors for administrators', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Use these controls when a taxonomy, archive, permalink, or canonical URL cannot be resolved. Error logs stay local to this site.', 'publishrank' ); ?></p></td></tr>
+				</tbody></table>
+				<h2><?php esc_html_e( 'Infrastructure domains', 'publishrank' ); ?></h2>
+			<table class="form-table" role="presentation"><tbody>
+				<tr><th scope="row"><label for="publishrank_media_host"><?php esc_html_e( 'Media host', 'publishrank' ); ?></label></th><td><input id="publishrank_media_host" name="publishrank_media_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_media_host' ) ); ?>" class="large-text" placeholder="https://images.example.com" /><p class="description"><?php esc_html_e( 'Optional. Leave empty to keep normal WordPress uploads URLs.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="publishrank_cdn_host"><?php esc_html_e( 'CDN host', 'publishrank' ); ?></label></th><td><input id="publishrank_cdn_host" name="publishrank_cdn_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_cdn_host' ) ); ?>" class="large-text" /><input type="hidden" name="publishrank_cdn_enabled" value="0" /><label><input id="publishrank_cdn_enabled" name="publishrank_cdn_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_cdn_enabled', false ) ); ?> /> <?php esc_html_e( 'Enable CDN URL generation', 'publishrank' ); ?></label></td></tr>
+				<tr><th scope="row"><label for="publishrank_video_host"><?php esc_html_e( 'Video host', 'publishrank' ); ?></label></th><td><input id="publishrank_video_host" name="publishrank_video_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_video_host' ) ); ?>" class="large-text" /></td></tr>
+				<tr><th scope="row"><label for="publishrank_api_host"><?php esc_html_e( 'API host', 'publishrank' ); ?></label></th><td><input id="publishrank_api_host" name="publishrank_api_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_api_host' ) ); ?>" class="large-text" /></td></tr>
+			</tbody></table>
+			<h2><?php esc_html_e( 'News SEO and sitemaps', 'publishrank' ); ?></h2>
+<table class="form-table" role="presentation"><tbody>
+<tr><th scope="row"><?php esc_html_e( 'News sitemap', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_enabled" value="0" /><label><input name="publishrank_seo_news_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_enabled', true ) ); ?> /> <?php esc_html_e( 'Enable the News sitemap', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Only recently published, indexable content is included.', 'publishrank' ); ?></p></td></tr>
+<tr><th scope="row"><label for="publishrank_seo_news_post_types"><?php esc_html_e( 'News post types', 'publishrank' ); ?></label></th><td><textarea id="publishrank_seo_news_post_types" name="publishrank_seo_news_post_types" rows="2" class="large-text" placeholder="post
+news"><?php echo esc_textarea( $val( 'publishrank_seo_news_post_types', 'post' ) ); ?></textarea><p class="description"><?php esc_html_e( 'One public post type per line or comma-separated. Invalid or non-public types are ignored.', 'publishrank' ); ?></p></td></tr>
+<tr><th scope="row"><label for="publishrank_seo_news_window"><?php esc_html_e( 'News freshness window (hours)', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_window" name="publishrank_seo_news_window" type="number" min="1" max="168" value="<?php echo esc_attr( $val( 'publishrank_seo_news_window', 48 ) ); ?>" class="small-text" /><p class="description"><?php esc_html_e( 'Google News accepts fresh articles; PublishRank caps this at 168 hours.', 'publishrank' ); ?></p></td></tr>
+<tr><th scope="row"><label for="publishrank_seo_news_max_urls"><?php esc_html_e( 'Maximum News URLs', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_max_urls" name="publishrank_seo_news_max_urls" type="number" min="1" max="1000" value="<?php echo esc_attr( $val( 'publishrank_seo_news_max_urls', 1000 ) ); ?>" class="small-text" /></td></tr>
+<tr><th scope="row"><label for="publishrank_seo_news_exclude_ids"><?php esc_html_e( 'Exclude post IDs', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_exclude_ids" name="publishrank_seo_news_exclude_ids" type="text" value="<?php echo esc_attr( $val( 'publishrank_seo_news_exclude_ids' ) ); ?>" class="large-text" placeholder="12, 45, 89" /></td></tr>
+<tr><th scope="row"><label for="publishrank_seo_news_exclude_categories"><?php esc_html_e( 'Exclude category IDs', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_exclude_categories" name="publishrank_seo_news_exclude_categories" type="text" value="<?php echo esc_attr( $val( 'publishrank_seo_news_exclude_categories' ) ); ?>" class="large-text" placeholder="3, 7" /></td></tr>
+<tr><th scope="row"><label for="publishrank_seo_news_genre"><?php esc_html_e( 'News genre', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_news_genre" name="publishrank_seo_news_genre"><option value="" <?php selected( $val( 'publishrank_seo_news_genre' ), '' ); ?>><?php esc_html_e( 'Not specified', 'publishrank' ); ?></option><?php foreach ( array( 'Opinion', 'PressRelease', 'Satire', 'UserGenerated', 'Report', 'Review', 'Interview', 'Background', 'Transcript', 'Obituary', 'Profile' ) as $genre ) : ?><option value="<?php echo esc_attr( $genre ); ?>" <?php selected( $val( 'publishrank_seo_news_genre' ), $genre ); ?>><?php echo esc_html( $genre ); ?></option><?php endforeach; ?></select></td></tr>
+<tr><th scope="row"><label for="publishrank_editorial_genre"><?php esc_html_e( 'Publisher editorial genre', 'publishrank' ); ?></label></th><td><select id="publishrank_editorial_genre" name="publishrank_editorial_genre"><option value="" <?php selected( $val( 'publishrank_editorial_genre' ), '' ); ?>><?php esc_html_e( 'Not specified', 'publishrank' ); ?></option><?php foreach ( array( 'News', 'Breaking News', 'Live Updates', 'Developing Story', 'Local News', 'National News', 'International News', 'Regional News', 'World News', 'Report', 'Investigative', 'In-Depth', 'Exclusive', 'Special Report', 'Field Report', 'Eyewitness Report', 'Data Journalism', 'Fact Check', 'Verification', 'News Analysis', 'Analysis', 'Explainer', 'Background', 'Context', 'Briefing', 'News Brief', 'Roundup', 'Timeline', 'Opinion', 'Editorial', 'Column', 'Commentary', 'Op-Ed', 'Letter to the Editor', 'Guest Essay', 'Perspective', 'Interview', 'Profile', 'Q&A', 'Portrait', 'Biography', 'Obituary', 'Tribute', 'Live Blog', 'Event Coverage', 'Election Coverage', 'Breaking Coverage', 'Conference Coverage', 'Sports Coverage', 'Review', 'Criticism', 'Preview', 'Guide', 'How-To', 'FAQ', 'Consumer Advice', 'Service Journalism', 'Travel', 'Food', 'Technology', 'Science', 'Health', 'Business', 'Finance', 'Politics', 'Sports', 'Entertainment', 'Culture', 'Press Release', 'Statement', 'Transcript', 'Speech', 'Announcement', 'Official Statement', 'Court Filing', 'Document', 'Public Records', 'Research', 'Study', 'Survey', 'Feature', 'Longform', 'Magazine', 'Essay', 'Human Interest', 'Special Feature', 'Photo Essay', 'Multimedia', 'Documentary', 'Satire', 'User Generated', 'Blog', 'Archive', 'Correction', 'Update', 'Retraction', 'Clarification', 'Fact Correction' ) as $genre ) : ?><option value="<?php echo esc_attr( $genre ); ?>" <?php selected( $val( 'publishrank_editorial_genre' ), $genre ); ?>><?php echo esc_html( $genre ); ?></option><?php endforeach; ?></select><p class="description"><?php esc_html_e( 'Editorial classification for newsroom workflows and publisher taxonomy. This is separate from the Google News genre field above and is not written to the News Sitemap as a Google genre value.', 'publishrank' ); ?></p></td></tr>
+	<tr><th scope="row"><?php esc_html_e( 'News keywords', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_keywords" value="0" /><label><input name="publishrank_seo_news_keywords" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_keywords', true ) ); ?> /> <?php esc_html_e( 'Include tags, categories, and focus keyphrase as news keywords', 'publishrank' ); ?></label></td></tr>
+	<tr><th scope="row"><label for="publishrank_sitemap_post_types"><?php esc_html_e( 'Standard sitemap post types', 'publishrank' ); ?></label></th><td><input id="publishrank_sitemap_post_types" name="publishrank_sitemap_post_types" type="text" value="<?php echo esc_attr( $val( 'publishrank_sitemap_post_types', 'post' ) ); ?>" class="large-text" /><p class="description"><?php esc_html_e( 'Public, queryable types included in the standard post sitemap.', 'publishrank' ); ?></p></td></tr>
+	<tr><th scope="row"><?php esc_html_e( 'Additional sitemap providers', 'publishrank' ); ?></th><td><?php foreach ( array( 'Pages' => 'publishrank_sitemap_pages_enabled', 'Custom post types' => 'publishrank_sitemap_cpt_enabled', 'Taxonomies' => 'publishrank_sitemap_taxonomies_enabled', 'Authors' => 'publishrank_sitemap_authors_enabled', 'Attachments' => 'publishrank_sitemap_attachments_enabled' ) as $label => $field ) : ?><input type="hidden" name="<?php echo esc_attr( $field ); ?>" value="0" /><label><input name="<?php echo esc_attr( $field ); ?>" type="checkbox" value="1" <?php checked( $val( $field, 'Attachments' !== $label ) ); ?> /> <?php echo esc_html( $label ); ?></label><br /><?php endforeach; ?></td></tr>
+	<tr><th scope="row"><?php esc_html_e( 'Sitemap appearance', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_sitemap_stylesheet" value="0" /><label><input name="publishrank_sitemap_stylesheet" type="checkbox" value="1" <?php checked( $val( 'publishrank_sitemap_stylesheet', true ) ); ?> /> <?php esc_html_e( 'Show sitemaps as a readable page in browsers (search engines still read the plain XML)', 'publishrank' ); ?></label></td></tr>
+	<tr><th scope="row"><label for="publishrank_sitemap_endpoint"><?php esc_html_e( 'Canonical sitemap endpoint', 'publishrank' ); ?></label></th><td><input id="publishrank_sitemap_endpoint" name="publishrank_sitemap_endpoint" type="text" value="<?php echo esc_attr( $val( 'publishrank_sitemap_endpoint', 'publishrank-sitemap' ) ); ?>" class="regular-text code" /><p class="description"><?php esc_html_e( 'Slug for the canonical sitemap index URL, for example publishrank-sitemap.', 'publishrank' ); ?></p></td></tr>
+	<tr><th scope="row"><label for="publishrank_sitemap_aliases"><?php esc_html_e( 'Sitemap endpoint aliases', 'publishrank' ); ?></label></th><td><input id="publishrank_sitemap_aliases" name="publishrank_sitemap_aliases" type="text" value="<?php echo esc_attr( $val( 'publishrank_sitemap_aliases' ) ); ?>" class="large-text code" placeholder="sitemap, sitemap-index" /><p class="description"><?php esc_html_e( 'Optional comma- or space-separated legacy aliases. The canonical endpoint remains the one submitted to search engines.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Media sitemaps', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_image_sitemap" value="0" /><label><input name="publishrank_seo_image_sitemap" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_image_sitemap', true ) ); ?> /> <?php esc_html_e( 'Image sitemap', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_seo_video_sitemap" value="0" /><label><input name="publishrank_seo_video_sitemap" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_video_sitemap', true ) ); ?> /> <?php esc_html_e( 'Video sitemap', 'publishrank' ); ?></label><br /><label for="publishrank_image_license_url"><?php esc_html_e( 'Image license URL', 'publishrank' ); ?></label><br /><input id="publishrank_image_license_url" name="publishrank_image_license_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_image_license_url' ) ); ?>" class="large-text" /></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Image optimization policy', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_image_optimizer_enabled" value="0" /><label><input name="publishrank_image_optimizer_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_image_optimizer_enabled', true ) ); ?> /> <?php esc_html_e( 'Enable image quality recommendations', 'publishrank' ); ?></label><br /><label><?php esc_html_e( 'Maximum width', 'publishrank' ); ?> <input name="publishrank_image_max_width" type="number" min="640" max="4000" value="<?php echo esc_attr( $val( 'publishrank_image_max_width', 2000 ) ); ?>" class="small-text" /></label> <label><?php esc_html_e( 'Quality', 'publishrank' ); ?> <input name="publishrank_image_quality" type="number" min="50" max="95" value="<?php echo esc_attr( $val( 'publishrank_image_quality', 82 ) ); ?>" class="small-text" /></label> <label><?php esc_html_e( 'Format', 'publishrank' ); ?> <select name="publishrank_image_format"><option value="webp" <?php selected( $val( 'publishrank_image_format', 'webp' ), 'webp' ); ?>>WebP</option><option value="jpeg" <?php selected( $val( 'publishrank_image_format', 'webp' ), 'jpeg' ); ?>>JPEG</option><option value="preserve" <?php selected( $val( 'publishrank_image_format', 'webp' ), 'preserve' ); ?>><?php esc_html_e( 'Preserve', 'publishrank' ); ?></option></select></label> <a class="button" href="<?php echo esc_url( Branding::page_url( 'publishrank-image-optimizer' ) ); ?>"><?php esc_html_e( 'Review media', 'publishrank' ); ?></a></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Monitoring', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_404_monitor" value="0" /><label><input name="publishrank_seo_404_monitor" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_404_monitor', false ) ); ?> /> <?php esc_html_e( 'Record a capped rolling 404 log', 'publishrank' ); ?></label></td></tr>
+			</tbody></table>
+			<?php submit_button(); ?>
+		</form>
+		<hr />
+		<h2><?php esc_html_e( 'Settings portability', 'publishrank' ); ?></h2>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="publishrank_seo_export" /><?php wp_nonce_field( 'publishrank_seo_export' ); ?><?php submit_button( __( 'Export settings', 'publishrank' ), 'secondary', 'submit', false ); ?></form>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="publishrank_seo_import" /><?php wp_nonce_field( 'publishrank_seo_import' ); ?><label for="publishrank_seo_json"><span class="screen-reader-text"><?php esc_html_e( 'PublishRank JSON settings', 'publishrank' ); ?></span></label><textarea id="publishrank_seo_json" name="publishrank_seo_json" rows="8" class="large-text code" required></textarea><?php submit_button( __( 'Import settings', 'publishrank' ), 'secondary' ); ?></form>
+		</div>
+		<?php
+	}
+}

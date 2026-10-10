@@ -1,0 +1,64 @@
+2.9.15
+- Added Publisher Link Intelligence with keyset-batched internal link audits, redirect-aware findings, redirect chain checks, and optional external HTTP link checks in small queued batches.
+- Connected the module to PublishRank administration and retained existing internal-link, orphan-page, redirect, and 404 modules.
+
+2.9.14
+- Added optional Local SEO settings and connected LocalBusiness JSON-LD output.
+- Added validation for business type, coordinates, opening hours, and profile URLs.
+
+PublishRank SEO — Release history
+
+2.9.13
+- Added PublishRank-native Publisher Toolkit inspired by common publisher SEO workflows: bulk metadata management, role-aware access, and missing image alt assistance.
+- Bulk editing supports SEO title, meta description, and robots directives, with explicit clear controls and per-post permission checks.
+- Added optional frontend alt fallback using attachment titles only when stored alt text is missing.
+- Added a bounded operation to fill missing media alt values from attachment titles while preserving existing values.
+- No Rank Math source code, assets, namespaces, or proprietary implementation was copied.
+
+= 2.9.12 =
+* Expanded automatic IndexNow lifecycle handling for publish, update, unpublish, and permalink changes.
+* Standardized submissions on https://api.indexnow.org/indexnow/.
+* Added queue status, pending URL count, next-run information, and clearable submission history.
+* Improved queue concurrency handling to preserve entries updated while a batch is being sent.
+* Defaulted new installations to include public posts and pages in automatic submissions.
+
+PublishRank SEO — Release history
+
+2.9.11
+- Verified and retained the integrated 404 monitor, clear-log and redirect workflows.
+- Verified per-article author schema overrides and selectable article schema types.
+- Verified global/per-content robots directives and robots.txt customization.
+- Kept the existing PublishRank llms.txt and optional llms-full.txt implementation; the supplied alternative was not substituted because it relies on Rank Math-specific hooks, namespaces and dependencies.
+- Added a regression test for feature wiring and privacy-conscious 404 logging.
+
+2.9.7
+- Aligned plugin display name, plugin URI, version metadata, and readme.
+- Made source attribution optional and disabled by default to comply with WordPress.org guideline 10.
+- Removed hosted-Pro policy UI and the extra terms document from the directory build.
+- Shortened readme.txt and moved historical release notes to this file.
+
+2.9.6
+- Added llms.txt and optional llms-full.txt discovery links and PublishRank-specific metadata tags.
+- Added source attribution comment (now opt-in and disabled by default).
+- Improved one-time rewrite-rule setup for llms.txt resources.
+
+2.9.5
+- Improved connected JSON-LD graph metadata, webpage descriptions, article image fallbacks, copyright signals and FAQ node linking.
+- Fixed per-post SEO descriptions being overwritten by generated excerpts.
+- Expanded supported robots directives and added a schema graph extension filter.
+
+2.9.4
+- Removed recursive source-tree scanning from the autoloader; class resolution checks the expected path.
+- Kept general admin assets scoped to relevant dashboard/editor screens.
+
+2.9.3
+- Added batched IndexNow submissions, bounded queue size, duplicate debounce, locks and retry backoff.
+
+2.9.2
+- Added automatic IndexNow key generation, post-list submission actions, path exclusions, CSV export and submission history.
+
+2.9.1
+- Added IndexNow management, key-file verification, manual submissions, retry controls and response history.
+
+Earlier releases
+- Added news and general XML sitemaps, sitemap sharding/auditing, redirects, 404 monitoring, robots controls, schema, metadata, social tags, hreflang, breadcrumbs, editorial SEO analysis, internal-link recommendations, image optimization, onboarding and WP-CLI tools.

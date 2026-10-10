@@ -1,0 +1,256 @@
+# PublishRank advanced publisher guide
+
+PublishRank is a technical SEO and news-publishing infrastructure plugin for WordPress. It is designed for editorial websites that need consistent metadata, NewsArticle structured data, Google News discovery, XML sitemaps, redirects, diagnostics, and operational controls without modifying theme templates.
+
+> PublishRank provides SEO infrastructure. It does not guarantee rankings, indexing, Google News inclusion, Discover visibility, traffic, revenue, or eligibility for any third-party platform.
+
+## 1. Requirements and recommended deployment
+
+- WordPress 6.3 or newer.
+- PHP 7.4 or newer; PHP 8.1+ is recommended for new production sites.
+- Pretty permalinks enabled.
+- HTTPS enabled for the public site, media, and canonical URLs.
+- A current WordPress, theme, and plugin backup.
+- One primary SEO output owner. Do not run multiple plugins that emit competing title, canonical, robots, Open Graph, or JSON-LD tags.
+
+Install on staging first. Test with the active theme, caching layer, CDN, multilingual plugin, editorial workflow, and any existing SEO plugin before production activation.
+
+## 2. Installation and first launch
+
+1. Upload `publishrank` to `wp-content/plugins/`, or install the ZIP from **Plugins → Add New → Upload Plugin**.
+2. Activate **PublishRank**.
+3. Go to **PublishRank → Settings**.
+4. Configure the publication profile before submitting sitemaps to search engines.
+5. Save settings once, then open **PublishRank → Diagnostics** and run the frontend scan.
+6. Verify these endpoints in a browser and with a crawler:
+   - `/publishrank-sitemap.xml`
+   - `/publishrank-news-sitemap.xml`
+   - `/publishrank-sitemap.xsl`
+   - `/publishrank-indexnow-key.txt` when IndexNow is enabled.
+7. Submit the sitemap index in Google Search Console and Bing Webmaster Tools.
+
+Activation creates missing defaults without overwriting existing values and flushes rewrite rules once. Deactivation does not delete content. Uninstall removes PublishRank-owned options and transients; export settings before uninstall if a rollback is required.
+
+## 3. Publication profile
+
+Set these values under **Settings → Publication profile**:
+
+| Setting | Recommended value | Why it matters |
+| --- | --- | --- |
+| Publication name | Official newsroom name | Used in organization schema and News sitemap publication name. |
+| Primary website URL | HTTPS canonical site root | Controls organization identity and safe canonical validation. |
+| Publisher name | Legal/editorial publisher name | Used by NewsArticle publisher schema. |
+| Publisher logo | Stable HTTPS logo URL | Used in publisher and article structured data. |
+| Default social image | 1200×630 image | Fallback Open Graph and X/Twitter image. |
+| Publisher type | `NewsMediaOrganization` for newsrooms | Matches the structured-data organization type. |
+| Language / locale | Site language and locale | Used in schema, Open Graph, and News sitemap output. |
+| Country / contact | Accurate publication details | Adds organization context; do not enter sensitive personal data. |
+| Social profiles | One public profile URL per line | Adds `sameAs` organization signals. |
+
+Use a stable, crawlable logo. Do not use a CDN or media host as the primary site URL. CDN/media hosts are for assets, not article canonicals.
+
+## 4. Titles, descriptions, canonicals, and robots
+
+PublishRank owns one technical output slot per document and emits:
+
+- Document title.
+- Meta description.
+- Canonical URL.
+- Robots directives.
+- Open Graph and X/Twitter tags.
+- Article publication and modification metadata.
+
+Available title variables include `%%title%%`, `%%sitename%%`, `%%category%%`, `%%author%%`, `%%date%%`, `%%excerpt%%`, `%%sep%%`, and `%%page%%`. Keep templates readable and avoid repeating the site name multiple times.
+
+Recommended defaults:
+
+- Article: `%%title%% %%sep%% %%sitename%% %%page%%`
+- Page: `%%title%% %%sep%% %%sitename%%`
+- Archive: `%%title%% %%sep%% %%sitename%%`
+- Home: `%%sitename%% %%page%%`
+
+Search, 404, and feed views are automatically treated as `noindex,follow`. `max-image-preview:large` is added to indexable documents to support image previews.
+
+Per-post controls are available in the **PublishRank** editor box:
+
+- SEO title and meta description.
+- Canonical URL, restricted to the configured primary host.
+- Robots directive.
+- Social title, description, and image.
+- Focus keyphrase and keyword-density guidance.
+- Primary category and cornerstone flag.
+- Schema type: `NewsArticle`, `Article`, or `BlogPosting`.
+- Video thumbnail and ISO 8601 duration.
+- News sitemap eligibility.
+
+Do not use `noindex` as a substitute for removing private data. Use WordPress permissions and access controls for confidential content.
+
+## 5. News SEO and Google News sitemap
+
+The News sitemap is available at `/publishrank-news-sitemap.xml`. It includes recently published, public, indexable content within the configured freshness window.
+
+Recommended newsroom settings:
+
+- Enable the News sitemap.
+- Use a 24–48 hour freshness window for normal publishing.
+- Use only public post types that contain original news content.
+- Keep the maximum URL count within the configured limit.
+- Exclude press-release, archive, or non-news categories when appropriate.
+- Use the News genre only when it accurately describes the content.
+- Enable keywords only when tags/categories are editorially meaningful.
+
+Google News eligibility is determined by Google, not by a sitemap alone. Keep article pages crawlable, clearly authored, timestamped, accessible, and compliant with the publication's policies.
+
+## 5A. Editorial SEO audit
+
+The post editor includes a local editorial audit that checks headline length, meta-description length, article depth, subheadings, featured image, byline, publication/modification dates, and relevant links. It also reports word count and a lightweight reading-ease signal. These are editorial prompts, not ranking rules; journalists should review accuracy, originality, sourcing, legal risk, and reader value before publishing.
+
+## 6. Structured data
+
+PublishRank emits one connected JSON-LD graph containing organization, website, webpage, and—on posts—an article entity. Depending on the page, it can include:
+
+- `NewsMediaOrganization` or `Organization` publisher.
+- Author person, author URL, job title, and image.
+- `NewsArticle`, `Article`, or `BlogPosting`.
+- Headline, description, dates, section, language, word count, keywords, image, and video.
+- BreadcrumbList.
+- ItemList for collection pages.
+- FAQ entities when supported by the configured automation.
+
+Validate representative homepage, article, category, author, and paginated archive URLs with Google's Rich Results Test and Schema Markup Validator. Resolve warnings that reflect missing publisher logo, author, image, date, or canonical data.
+
+## 7. XML sitemap architecture
+
+The sitemap index is provider-based and can include:
+
+- Posts.
+- Pages.
+- Public custom post types.
+- Taxonomies.
+- Authors.
+- Attachments, disabled by default.
+- News.
+- Images.
+- Videos.
+
+Sitemaps are sharded, cached, and invalidated after relevant content or setting changes. Use **PublishRank → Diagnostics** to inspect provider status and cache state. For large sites, regenerate through WP-CLI instead of repeatedly loading URLs in a browser.
+
+```bash
+wp publishrank sitemap status
+wp publishrank sitemap regenerate
+wp publishrank sitemap regenerate --type=news
+wp publishrank sitemap clear-cache
+wp publishrank sitemap validate
+wp publishrank sitemap audit --format=json
+```
+
+Use **PublishRank → Sitemap Health** for a generated-XML audit, provider/shard/URL counts, lastmod coverage, and a clickable URL preview. The audit renders actual sitemap XML rather than only inspecting configuration. Under **Settings → News SEO and sitemaps**, configure a canonical sitemap index slug and optional legacy aliases. Submit only the canonical endpoint to search engines; aliases are for migration compatibility.
+
+## 8. Redirects and 404 monitoring
+
+Use **Redirects** for deliberate URL migrations. Supported response types are 301, 302, 303, 307, 308, and 410. Redirect destinations are validated to prevent open redirects; regex rules are opt-in and should be tested on staging.
+
+Use **404 Monitor** to identify recurring broken paths and create redirects after confirming the correct destination. Keep the log bounded and review retention against the site's privacy policy. Do not redirect every 404 to the homepage; map old content to the closest relevant replacement or return 410 when it is permanently gone.
+
+## 9. Robots.txt and crawler controls
+
+The virtual robots.txt manager can add sitemap discovery lines, validated custom rules, and optional AI-training crawler blocks. Use **Robots.txt** to preview the effective output.
+
+Best practices:
+
+- Never disallow CSS, JavaScript, or image assets needed to render pages.
+- Do not use robots.txt to hide confidential information.
+- Confirm that a physical `robots.txt` file is not overriding the virtual output.
+- Review AI crawler rules with legal, editorial, and licensing stakeholders.
+- Check the final file from the public site after cache/CDN changes.
+
+## 10. IndexNow
+
+IndexNow is an optional notification protocol for participating search engines. It does not replace XML sitemaps or Google Search Console, does not guarantee crawling/indexing, and is not supported by Google. Notifications sent to the shared endpoint can be shared among participating engines.
+
+Open **PublishRank → IndexNow** to:
+
+1. Enable or disable automatic notifications and select public post types.
+2. View the generated key and public verification URL (`/publishrank-indexnow-key.txt`).
+3. Test whether the public key URL returns the expected key.
+4. Submit up to 100 same-host URLs in one bulk request.
+5. Review the latest 50 URL attempts, HTTP status and response summary, and retry failed URLs.
+
+When enabled, PublishRank queues eligible published content after saves and sends deletion notifications for eligible public posts. Password-protected, non-public and detected noindex content is excluded from automatic publication submissions. Temporary network, rate-limit and server failures receive bounded retries. Hosting must allow WordPress cron and outbound HTTPS requests to `https://api.indexnow.org/indexnow/`.
+
+The key is excluded from settings exports. Do not paste it into public issue trackers or support messages. IndexNow sends the site's host, key, key-location URL, and submitted public URL(s); it does not send visitor data or article content. Review the [IndexNow terms](https://www.indexnow.org/en_gb/terms) and [Microsoft privacy statement](https://privacy.microsoft.com/en-us/privacystatement). Disable IndexNow in **PublishRank → IndexNow** if the publisher does not want these outbound requests.
+
+## 11. Multilingual and international SEO
+
+Enable multilingual output only when the site has real language or regional alternates. Provide one `locale=URL` entry per line and an optional `x-default` URL. Validate reciprocal hreflang links and ensure each alternate page has a self-referencing canonical appropriate to the language version.
+
+WPML and Polylang integrations are feature-detected. Always verify generated alternate URLs on representative pages.
+
+## 12. Conflict prevention and diagnostics
+
+PublishRank detects common SEO plugins including Yoast SEO, Rank Math, All in One SEO, SEOPress, and The SEO Framework. A warning means you must choose one technical output owner or disable overlapping modules.
+
+The frontend scanner requests the site's own homepage and latest article, then counts titles, canonicals, descriptions, robots, Open Graph, JSON-LD, and PublishRank markers. Run it after:
+
+- Theme changes.
+- SEO plugin changes.
+- CDN/cache changes.
+- Multilingual configuration changes.
+- Major permalink migrations.
+
+Expected output is one canonical, one description, one title, one robots directive, and one primary JSON-LD graph unless another active integration intentionally owns a slot.
+
+## 13. Provenance and official branding
+
+Optional frontend source attribution (disabled by default) can add local-only PublishRank provenance markers when explicitly enabled in Settings:
+
+- `publishrank-brand` meta tag.
+- `publishrank-version` meta tag.
+- HTML provenance comment with release fingerprint.
+
+These markers do not track visitors or make network requests. They help publishers and support teams identify the active official SEO layer. The administrator dashboard includes the supplied PublishRank banner.
+
+Because the plugin is GPLv2-or-later WordPress software, source copying cannot be technically prevented by PHP. For controlled commercial releases, publish checksums, sign release archives in CI, protect the private source repository, and maintain trademark/copyright notices. See `docs/SECURITY-AND-PROVENANCE.md`.
+
+## 14. Import, export, and rollback
+
+Export settings before major changes. Imports accept PublishRank-prefixed, schema-validated JSON and intentionally exclude the IndexNow secret key. Review imported URLs, redirects, robots rules, and multilingual mappings before saving.
+
+Recommended rollback procedure:
+
+1. Export current settings.
+2. Disable cache/CDN page caching for the test window.
+3. Restore the previous plugin package.
+4. Clear sitemap cache with WP-CLI or diagnostics.
+5. Flush permalinks once under **Settings → Permalinks**.
+6. Run the frontend scan and validate sitemap endpoints.
+
+## 15. Production launch checklist
+
+- [ ] HTTPS and pretty permalinks are enabled.
+- [ ] Publication identity, logo, language, and social profiles are correct.
+- [ ] One SEO plugin owns titles, canonicals, robots, social tags, and JSON-LD.
+- [ ] Homepage, article, archive, author, search, 404, and feed outputs were reviewed.
+- [ ] News sitemap contains only fresh, public, indexable articles.
+- [ ] Sitemap index and robots.txt are reachable without authentication.
+- [ ] Representative JSON-LD was validated.
+- [ ] Redirects and 404 handling were tested.
+- [ ] CDN and cache purge rules include SEO head and sitemap responses.
+- [ ] IndexNow was tested only if intentionally enabled.
+- [ ] Import/export backup exists.
+- [ ] Staging scan passes before production activation.
+- [ ] Google Search Console and Bing Webmaster Tools have the sitemap index.
+- [ ] If source attribution is enabled, provenance markers are visible in view-source.
+
+## 16. Support boundaries
+
+PublishRank does not modify theme files, guarantee search results, or replace WordPress security, backups, editorial review, legal review, or platform-specific webmaster tools. Test all production changes on staging and keep a rollback path.
+
+Public HTML source attribution is optional and disabled by default. Enable it only when you want PublishRank source markers to appear in page HTML.
+
+
+### Publisher editorial genre
+
+PublishRank includes a broad **Publisher editorial genre** taxonomy for newsroom classification, covering breaking news, investigations, exclusives, explainers, opinion, interviews, profiles, live coverage, reviews, service journalism, specialist desks, press releases, transcripts, longform, multimedia, corrections and other publisher workflows.
+
+This editorial taxonomy is intentionally separate from the **Google News genre** field. The Google News field remains available for Google-compatible content-property labeling; the broader publisher taxonomy is stored as a newsroom classification and is not emitted as an arbitrary `news:genres` value.
