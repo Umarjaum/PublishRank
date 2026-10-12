@@ -10,6 +10,8 @@ use PublishRankSEO\Redirect\RedirectStore;
 use PublishRankSEO\SEO\EditorialAudit;
 use PublishRankSEO\SEO\ArticleIntelligence;
 
+defined( 'ABSPATH' ) || exit;
+
 final class InsightsPage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 11 );

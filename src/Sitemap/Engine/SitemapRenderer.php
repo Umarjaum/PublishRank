@@ -1,6 +1,8 @@
 <?php
 namespace PublishRankSEO\Sitemap\Engine;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SitemapRenderer {
 	public static function urlset( $entries, $namespaces = array() ) {
 		$attributes = 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"';

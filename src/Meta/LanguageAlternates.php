@@ -2,6 +2,8 @@
 /** Emits safe international language and regional alternates. */
 namespace PublishRankSEO\Meta;
 
+defined( 'ABSPATH' ) || exit;
+
 final class LanguageAlternates {
 	public function register() {
 		add_action( 'wp_head', array( $this, 'render' ), 2 );

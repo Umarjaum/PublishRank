@@ -4,6 +4,8 @@ namespace PublishRankSEO\Admin;
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\SEO\ArticleIntelligence;
 
+defined( 'ABSPATH' ) || exit;
+
 final class EditorScoreCard {
 	public function register() { add_action( 'admin_footer', array( $this, 'render' ) ); add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) ); }
 	public function enqueue( $hook ) { if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) { return; } wp_enqueue_style( 'publishrank-editor-score-card', Branding::asset_url( 'css/editor-score-card.css' ), array(), Branding::version() ); wp_enqueue_script( 'publishrank-editor-score-card', Branding::asset_url( 'js/editor-score-card.js' ), array( 'jquery' ), Branding::version(), true ); }

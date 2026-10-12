@@ -4,6 +4,8 @@ namespace PublishRankSEO\CLI;
 use PublishRankSEO\Sitemap\SitemapController;
 use PublishRankSEO\Sitemap\Engine\SitemapAudit;
 
+defined( 'ABSPATH' ) || exit;
+
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	class PublishRankCommand {
 		private function engine() { return ( new SitemapController() )->engine(); }

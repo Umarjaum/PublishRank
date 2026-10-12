@@ -2,6 +2,8 @@
 /** Storage and validation for redirect rules. */
 namespace PublishRankSEO\Redirect;
 
+defined( 'ABSPATH' ) || exit;
+
 final class RedirectStore {
 	const OPTION    = 'publishrank_seo_redirects';
 	const MAX_RULES = 2000;

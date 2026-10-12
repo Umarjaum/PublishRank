@@ -11,6 +11,8 @@ namespace PublishRankSEO\SEO;
 
 use PublishRankSEO\Meta\PostMeta;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ArticleIntelligence {
 	const SCORE_META   = '_publishrank_seo_intel_score';
 	const SUMMARY_META = '_publishrank_seo_intel_summary';

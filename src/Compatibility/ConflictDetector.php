@@ -2,6 +2,8 @@
 /** Detect other SEO plugins that would duplicate PublishRank output. */
 namespace PublishRankSEO\Compatibility;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ConflictDetector {
 	/** @return string[] Names of active SEO plugins. */
 	public function active() {

@@ -4,6 +4,8 @@ namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Meta\PostMeta;
 
+defined( 'ABSPATH' ) || exit;
+
 final class PostListColumns {
 	public function register() {
 		add_filter( 'manage_post_posts_columns', array( $this, 'columns' ) );

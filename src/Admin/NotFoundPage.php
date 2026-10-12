@@ -5,6 +5,8 @@ namespace PublishRankSEO\Admin;
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Redirect\RedirectStore;
 
+defined( 'ABSPATH' ) || exit;
+
 final class NotFoundPage {
 	const SLUG     = 'publishrank-seo-404';
 	const OPTION   = 'publishrank_seo_404_log';

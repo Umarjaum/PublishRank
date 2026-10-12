@@ -2,6 +2,8 @@
 /** Fetches the site's own pages and counts SEO tags, to expose duplicate output from themes or other plugins. */
 namespace PublishRankSEO\Admin;
 
+defined( 'ABSPATH' ) || exit;
+
 final class FrontendScanner {
 	/**
 	 * Count SEO tags in an HTML document. Pure string analysis.
@@ -48,7 +50,7 @@ final class FrontendScanner {
 				array(
 					'timeout'     => 10,
 					'redirection' => 3,
-					'sslverify'   => (bool) apply_filters( 'https_local_ssl_verify', false ),
+					'sslverify'   => (bool) apply_filters( 'https_local_ssl_verify', true ),
 					'headers'     => array( 'Cache-Control' => 'no-cache' ),
 				)
 			);

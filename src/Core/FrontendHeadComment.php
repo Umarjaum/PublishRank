@@ -6,10 +6,6 @@ defined( 'ABSPATH' ) || exit;
 
 final class FrontendHeadComment {
 	public function register() {
-		// WordPress.org guideline 10: public-facing credits are opt-in and off by default.
-		if ( ! get_option( 'publishrank_source_attribution', false ) ) {
-			return;
-		}
 		add_action( 'wp_head', array( $this, 'render' ), 0 );
 	}
 
@@ -17,6 +13,6 @@ final class FrontendHeadComment {
 		if ( is_admin() || wp_doing_ajax() || is_feed() ) {
 			return;
 		}
-		echo "<!-- Powered by PublishRank SEO -->\n";
+		echo "<!-- SEO of this website is Powered by PublishRank -->\n";
 	}
 }

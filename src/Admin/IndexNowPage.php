@@ -5,6 +5,8 @@ namespace PublishRankSEO\Admin;
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Indexing\IndexNow;
 
+defined( 'ABSPATH' ) || exit;
+
 final class IndexNowPage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 16 );

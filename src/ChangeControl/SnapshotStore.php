@@ -2,6 +2,8 @@
 /** Secure, bounded SEO configuration snapshots. */
 namespace PublishRankSEO\ChangeControl;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SnapshotStore {
 	const OPTION = 'publishrank_seo_config_snapshots';
 	const MAX = 20;

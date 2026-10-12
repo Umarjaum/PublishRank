@@ -24,7 +24,7 @@ Install on staging first. Test with the active theme, caching layer, CDN, multil
 5. Save settings once, then open **PublishRank → Diagnostics** and run the frontend scan.
 6. Verify these endpoints in a browser and with a crawler:
    - `/publishrank-sitemap.xml`
-   - `/publishrank-news-sitemap.xml`
+	   - the configured News Sitemap endpoint shown in PublishRank Sitemap Health
    - `/publishrank-sitemap.xsl`
    - `/publishrank-indexnow-key.txt` when IndexNow is enabled.
 7. Submit the sitemap index in Google Search Console and Bing Webmaster Tools.
@@ -85,9 +85,13 @@ Per-post controls are available in the **PublishRank** editor box:
 
 Do not use `noindex` as a substitute for removing private data. Use WordPress permissions and access controls for confidential content.
 
+## Sitemap types and automatic splitting
+
+The sitemap index separates posts, pages, public custom post types, taxonomies, author archives, attachments, news, images, and videos into their respective provider URLs. Standard providers split at a maximum of 50,000 URL entries per child sitemap. The News Sitemap is intentionally capped at 1,000 news articles per shard. In **Settings → News SEO and sitemaps → Media sitemaps**, choose `all` to scan every public, queryable content type or provide a comma-separated list such as `post,page,news`. Image and video sitemaps include only content URLs with corresponding image or valid video data; they do not merely repeat every post URL.
+
 ## 5. News SEO and Google News sitemap
 
-The News sitemap is available at `/publishrank-news-sitemap.xml`. It includes recently published, public, indexable content within the configured freshness window.
+The News Sitemap endpoint is configurable and is displayed by PublishRank Sitemap Health and the dashboard. It includes explicitly configured, recently published, public, indexable news content within the two-day eligibility window.
 
 Recommended newsroom settings:
 

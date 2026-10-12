@@ -6,6 +6,8 @@
  */
 namespace PublishRankSEO\Core;
 
+defined( 'ABSPATH' ) || exit;
+
 final class PublicationProfile {
 	/** @return string */
 	public static function publication_name() {
@@ -32,9 +34,39 @@ final class PublicationProfile {
 		$parts = $url ? wp_parse_url( $url ) : array();
 		if ( empty( $parts['host'] ) || empty( $parts['scheme'] ) || ! in_array( strtolower( $parts['scheme'] ), array( 'http', 'https' ), true ) ) { return ''; }
 		$host = strtolower( (string) $parts['host'] );
-		if ( in_array( $host, array( 'localhost', '127.0.0.1', '::1' ), true ) || false !== strpos( $host, '.local' ) || false !== strpos( (string) ( $parts['path'] ?? '' ), '/wp-admin' ) ) { return ''; }
+		if ( self::is_local_host( $host ) && ! self::local_hosts_allowed() ) { return ''; }
+		if ( false !== strpos( (string) ( $parts['path'] ?? '' ), '/wp-admin' ) ) { return ''; }
 		$path = $base_only ? '/' : ( isset( $parts['path'] ) ? '/' . ltrim( $parts['path'], '/' ) : '/' );
-		return set_url_scheme( $parts['scheme'] . '://' . $host . $path );
+		$port = ! empty( $parts['port'] ) ? ':' . (int) $parts['port'] : '';
+		$query = $base_only ? '' : self::identifying_query( isset( $parts['query'] ) ? (string) $parts['query'] : '' );
+		return set_url_scheme( $parts['scheme'] . '://' . $host . $port . $path . $query );
+	}
+
+	/**
+	 * Keep only query arguments that identify content (plain permalinks use ?p=123, ?page_id=4, ?cat=2, ...);
+	 * tracking and session parameters are dropped. Without this every post canonicalises to the home page
+	 * on sites that use WordPress's default "Plain" permalink structure.
+	 */
+	private static function identifying_query( $query ) {
+		if ( '' === $query ) { return ''; }
+		parse_str( $query, $args );
+		$allowed = array( 'p', 'page_id', 'attachment_id', 'cat', 'tag', 'author', 'm', 'post_type', 'taxonomy', 'term', 'paged', 'page' );
+		if ( function_exists( 'apply_filters' ) ) { $allowed = (array) apply_filters( 'publishrank_seo_canonical_query_args', $allowed ); }
+		$keep = array_intersect_key( (array) $args, array_flip( $allowed ) );
+		ksort( $keep );
+		return $keep ? '?' . http_build_query( $keep, '', '&' ) : '';
+	}
+
+	/** @param string $host Lower-case host name. */
+	private static function is_local_host( $host ) {
+		return in_array( $host, array( 'localhost', '127.0.0.1', '::1', '[::1]' ), true ) || false !== strpos( $host, '.local' );
+	}
+
+	/** Local hosts are valid on local/development/staging sites; they are refused on production. */
+	private static function local_hosts_allowed() {
+		$type = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
+		$allowed = in_array( $type, array( 'local', 'development', 'staging' ), true );
+		return (bool) ( function_exists( 'apply_filters' ) ? apply_filters( 'publishrank_seo_allow_local_hosts', $allowed ) : $allowed );
 	}
 
 	/** @return array<string, string> */

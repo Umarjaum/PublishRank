@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /** Static regression checks for schema graph and metadata precedence. */
 $root = dirname( __DIR__ );
 $meta = file_get_contents( $root . '/src/Meta/MetaGenerator.php' );

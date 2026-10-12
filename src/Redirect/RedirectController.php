@@ -2,6 +2,8 @@
 /** Validated, loop-safe redirects without touching rewrite files. */
 namespace PublishRankSEO\Redirect;
 
+defined( 'ABSPATH' ) || exit;
+
 final class RedirectController {
 	public function register() { add_action( 'template_redirect', array( $this, 'handle' ), 0 ); }
 

@@ -24,8 +24,8 @@ final class TraceIntegrity {
 			return;
 		}
 		$version = defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : 'unknown';
-		echo '<!-- PublishRank provenance: brand=PublishRank SEO; version=' . esc_attr( $version ) . '; fingerprint=' . esc_attr( self::fingerprint() ) . " -->\n";
-		echo '<meta name="publishrank-brand" content="PublishRank SEO" />' . "\n";
+		echo '<!-- PublishRank provenance: brand=PublishRank; version=' . esc_attr( $version ) . '; fingerprint=' . esc_attr( self::fingerprint() ) . " -->\n";
+		echo '<meta name="publishrank-brand" content="PublishRank" />' . "\n";
 		echo '<meta name="publishrank-version" content="' . esc_attr( $version ) . '" />' . "\n";
 	}
 }

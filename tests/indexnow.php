@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /** Source-level regression checks for the IndexNow module. */
 $root = dirname( __DIR__ );
 $module = file_get_contents( $root . '/src/Indexing/IndexNow.php' );

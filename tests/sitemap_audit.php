@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 function __( $text, $domain = '' ) { return $text; }
 function absint( $value ) { return abs( (int) $value ); }
 function wp_strip_all_tags( $value ) { return strip_tags( (string) $value ); }

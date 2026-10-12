@@ -6,6 +6,8 @@
  */
 namespace PublishRankSEO\Admin;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ImportExport {
 	/** @var string[] */
 		private $allowed = array(
@@ -143,7 +145,7 @@ final class ImportExport {
 				return max( 1, min( 1000, absint( $value ) ) );
 			}
 			if ( 'publishrank_seo_news_window' === $key ) {
-			return max( 1, min( 168, absint( $value ) ) );
+				return max( 1, min( 168, absint( $value ) ) );
 		}
 		if ( in_array( $key, array( 'publishrank_seo_404_monitor', 'publishrank_sitemap_stylesheet', 'publishrank_robots_enabled', 'publishrank_robots_sitemaps', 'publishrank_robots_block_ai' ), true ) ) {
 			return (bool) $value;

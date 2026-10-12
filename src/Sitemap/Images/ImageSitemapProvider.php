@@ -4,8 +4,12 @@ namespace PublishRankSEO\Sitemap\Images;
 use PublishRankSEO\Sitemap\Providers\AbstractPostProvider;
 use PublishRankSEO\Sitemap\Engine\SitemapRenderer;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ImageSitemapProvider extends AbstractPostProvider {
-	protected $slug = 'image'; protected $name = 'Images'; protected $post_types = array( 'post' );
+	protected $slug = 'image'; protected $name = 'Images'; protected $post_types = array( 'post', 'page' );
+	public function __construct() { $this->post_types = $this->media_post_types(); }
+	protected function requires_extra() { return true; }
 	public function is_enabled() { return (bool) get_option( 'publishrank_seo_image_sitemap', true ); }
 	protected function extra( $post_id ) {
 		$ids = array(); $featured = get_post_thumbnail_id( $post_id ); if ( $featured ) { $ids[] = $featured; }

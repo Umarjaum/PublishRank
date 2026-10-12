@@ -2,6 +2,8 @@
 /** Watches important SEO settings and creates bounded configuration history. */
 namespace PublishRankSEO\ChangeControl;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ConfigHistory {
 	public function register() {
 		add_action( 'init', array( $this, 'ensure' ), 100 );

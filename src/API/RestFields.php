@@ -4,7 +4,10 @@ namespace PublishRankSEO\API;
 
 use PublishRankSEO\Links\LinkManager;
 use PublishRankSEO\Meta\PostMeta;
+use PublishRankSEO\Meta\SeoData;
 use PublishRankSEO\SEO\ReadingExperience;
+
+defined( 'ABSPATH' ) || exit;
 
 final class RestFields {
 	public function register() {
@@ -12,7 +15,7 @@ final class RestFields {
 	}
 
 	public function fields() {
-		foreach ( apply_filters( 'publishrank_rest_post_types', array( 'post', 'page' ) ) as $post_type ) {
+		foreach ( apply_filters( 'publishrank_rest_post_types', array_values( get_post_types( array( 'public' => true, 'show_in_rest' => true ), 'names' ) ) ) as $post_type ) {
 			if ( ! post_type_exists( $post_type ) ) { continue; }
 			register_rest_field(
 				$post_type,
@@ -29,17 +32,26 @@ final class RestFields {
 	public function get( $object ) {
 		$post_id = (int) ( $object['id'] ?? 0 );
 		if ( ! $post_id ) { return array(); }
-		$title = PostMeta::get( $post_id, PostMeta::TITLE, '' );
-		$description = PostMeta::get( $post_id, PostMeta::DESCRIPTION, '' );
-		$canonical = PostMeta::get( $post_id, PostMeta::CANONICAL, '' );
-		$og_image = PostMeta::get( $post_id, PostMeta::OG_IMAGE, '' );
-		if ( '' === $og_image && has_post_thumbnail( $post_id ) ) { $og_image = (string) get_the_post_thumbnail_url( $post_id, 'full' ); }
+		$status = get_post_status( $post_id );
+		if ( 'publish' !== $status && ! current_user_can( 'read_post', $post_id ) ) { return array(); }
+		$seo   = SeoData::for_post( $post_id );
+		$image = isset( $seo['image'] ) && is_array( $seo['image'] ) ? $seo['image'] : array();
 		return array(
-			'title'            => '' !== $title ? $title : get_the_title( $post_id ),
-			'description'      => '' !== $description ? $description : wp_trim_words( wp_strip_all_tags( (string) get_post_field( 'post_content', $post_id ) ), 30, '' ),
-			'canonical'        => '' !== $canonical ? $canonical : get_permalink( $post_id ),
-			'robots'           => PostMeta::get( $post_id, PostMeta::ROBOTS, (string) get_option( 'publishrank_seo_default_robots', 'index,follow' ) ),
-			'og_image'         => $og_image,
+			'title'            => isset( $seo['title'] ) ? $seo['title'] : '',
+			'description'      => isset( $seo['description'] ) ? $seo['description'] : '',
+			'canonical'        => isset( $seo['canonical'] ) ? $seo['canonical'] : '',
+			'robots'           => isset( $seo['robots'] ) ? $seo['robots'] : '',
+			'og_title'         => isset( $seo['og_title'] ) ? $seo['og_title'] : '',
+			'og_description'   => isset( $seo['og_description'] ) ? $seo['og_description'] : '',
+			'og_image'         => isset( $image['url'] ) ? $image['url'] : '',
+			'image'            => array(
+				'url'    => isset( $image['url'] ) ? $image['url'] : '',
+				'alt'    => isset( $image['alt'] ) ? $image['alt'] : '',
+				'width'  => isset( $image['width'] ) ? (int) $image['width'] : 0,
+				'height' => isset( $image['height'] ) ? (int) $image['height'] : 0,
+				'type'   => isset( $image['type'] ) ? $image['type'] : '',
+			),
+			'sources'          => isset( $seo['sources'] ) ? $seo['sources'] : array(),
 			'focus_keyword'    => PostMeta::get( $post_id, PostMeta::FOCUS_KEYWORD, '' ),
 			'primary_keyphrase' => PostMeta::get( $post_id, PostMeta::PRIMARY_KEYPHRASE, '' ),
 			'secondary_keyphrases' => PostMeta::get_list( $post_id, PostMeta::SECONDARY_KEYPHRASES ),

@@ -1,6 +1,8 @@
 <?php
 namespace PublishRankSEO\Sitemap\Engine;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Persistent keyset checkpoints for large sitemap providers.
  *
@@ -124,8 +126,8 @@ final class SitemapCursorStore {
 		add_action( 'pre_user_query', $where, 10, 1 ); $args['number'] = $size; $args['orderby'] = 'ID'; $args['order'] = 'ASC';
 		$rows = get_users( $args ); remove_action( 'pre_user_query', $where, 10 ); return (array) $rows;
 	}
-	private static function query_terms( $args, $size, $after ) {
-		$where = static function ( $clauses ) use ( $after ) { global $wpdb; $clauses['where'] .= $wpdb->prepare( " AND {$wpdb->terms}.term_id > %d", $after ); return $clauses; };
+		private static function query_terms( $args, $size, $after ) {
+			$where = static function ( $clauses ) use ( $after ) { global $wpdb; $clauses['where'] .= $wpdb->prepare( ' AND t.term_id > %d', $after ); return $clauses; };
 		add_filter( 'terms_clauses', $where, 10, 3 ); $args['number'] = $size; $args['orderby'] = 'term_id'; $args['order'] = 'ASC';
 		$rows = get_terms( $args ); remove_filter( 'terms_clauses', $where, 10 ); return is_wp_error( $rows ) ? array() : (array) $rows;
 	}

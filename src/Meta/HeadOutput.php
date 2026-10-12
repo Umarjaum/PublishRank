@@ -5,13 +5,15 @@ namespace PublishRankSEO\Meta;
 use PublishRankSEO\Core\OutputRegistry;
 use PublishRankSEO\Core\PublicationProfile;
 
+defined( 'ABSPATH' ) || exit;
+
 final class HeadOutput {
 	/** @var OutputRegistry */
 	private $registry;
 	/** @var MetaGenerator */
 	private $meta;
 
-	public function __construct( OutputRegistry $registry, MetaGenerator $meta = null ) {
+	public function __construct( OutputRegistry $registry, ?MetaGenerator $meta = null ) {
 		$this->registry = $registry;
 		$this->meta     = $meta ? $meta : new MetaGenerator();
 	}
@@ -20,11 +22,19 @@ final class HeadOutput {
 		if ( ! get_option( 'publishrank_meta_enabled', true ) ) {
 			return;
 		}
+		add_action( 'after_setup_theme', array( $this, 'ensure_title_support' ), 1 );
 		add_filter( 'pre_get_document_title', array( $this, 'title' ), 99 );
 		add_action( 'wp_head', array( $this, 'render' ), 1 );
 		// PublishRank prints the canonical and robots tags itself; remove core's copies to avoid duplicates.
 		remove_action( 'wp_head', 'rel_canonical' );
 		remove_action( 'wp_head', 'wp_robots', 1 );
+	}
+
+	/** Add core title-tag support only when the active theme has not declared it. */
+	public function ensure_title_support() {
+		if ( function_exists( 'current_theme_supports' ) && ! current_theme_supports( 'title-tag' ) ) {
+			add_theme_support( 'title-tag' );
+		}
 	}
 
 	public function title( $title ) {
@@ -48,7 +58,7 @@ final class HeadOutput {
 		echo "<!-- SEO metadata output begin -->\n";
 		if ( $source_attribution ) {
 			echo '<!-- PublishRank: begin; version=' . esc_html( PUBLISHRANK_SEO_VERSION ) . '; output=technical,social,news -->' . "\n";
-			echo '<meta name="generator" content="PublishRank SEO ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
+			echo '<meta name="generator" content="PublishRank ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
 			echo '<meta name="publishrank" content="active" />' . "\n";
 		}
 		echo "<!-- Technical metadata begin -->\n";
@@ -63,15 +73,17 @@ final class HeadOutput {
 				echo '<meta name="robots" content="' . esc_attr( $this->robots_value() ) . '" />' . "\n";
 			}
 			echo "<!-- Technical metadata end -->\n";
-			if ( is_singular( 'post' ) && $this->registry->claim( 'news-meta' ) ) {
+			if ( $this->is_editorial_article() && $this->registry->claim( 'news-meta' ) ) {
 				echo "<!-- News SEO metadata begin; type=NewsArticle -->\n";
 			$post_id = get_queried_object_id();
 			echo '<meta property="article:published_time" content="' . esc_attr( get_post_time( DATE_W3C, true, $post_id ) ) . '" />' . "\n";
 			echo '<meta property="article:modified_time" content="' . esc_attr( get_post_modified_time( DATE_W3C, true, $post_id ) ) . '" />' . "\n";
 			echo '<meta property="article:section" content="' . esc_attr( $this->meta->section() ) . '" />' . "\n";
-				foreach ( $this->meta->keywords() as $keyword ) {
-					echo '<meta property="article:tag" content="' . esc_attr( $keyword ) . '" />' . "\n";
-				}
+					foreach ( $this->meta->keywords() as $keyword ) {
+						echo '<meta property="article:tag" content="' . esc_attr( $keyword ) . '" />' . "\n";
+					}
+					$news_keywords = implode( ', ', $this->meta->keywords() );
+					if ( $news_keywords ) { echo '<meta name="news_keywords" content="' . esc_attr( $news_keywords ) . '" />' . "\n"; }
 				echo "<!-- News SEO metadata end -->\n";
 			}
 				$image = $this->image();
@@ -82,8 +94,8 @@ final class HeadOutput {
 			echo '<meta property="og:site_name" content="' . esc_attr( PublicationProfile::publication_name() ) . '" />' . "\n";
 			echo '<meta property="og:description" content="' . esc_attr( $this->social( PostMeta::OG_DESCRIPTION, $description ) ) . '" />' . "\n";
 					echo '<meta property="og:url" content="' . esc_url( $this->meta->canonical() ) . '" />' . "\n";
-					echo '<meta property="og:type" content="' . esc_attr( is_singular( 'post' ) ? 'article' : 'website' ) . '" />' . "\n";
-					if ( is_singular( 'post' ) ) { echo '<meta property="og:updated_time" content="' . esc_attr( get_post_modified_time( DATE_W3C, true, get_queried_object_id() ) ) . '" />' . "\n"; }
+					echo '<meta property="og:type" content="' . esc_attr( $this->is_editorial_article() ? 'article' : 'website' ) . '" />' . "\n";
+					if ( $this->is_editorial_article() ) { echo '<meta property="og:updated_time" content="' . esc_attr( get_post_modified_time( DATE_W3C, true, get_queried_object_id() ) ) . '" />' . "\n"; }
 				$locale = str_replace( '-', '_', sanitize_text_field( (string) get_option( 'publishrank_default_locale', get_locale() ) ) );
 				echo '<meta property="og:locale" content="' . esc_attr( $locale ) . '" />' . "\n";
 				foreach ( LanguageAlternates::alternates() as $alternate_locale => $alternate_url ) {
@@ -99,9 +111,9 @@ final class HeadOutput {
 						if ( 0 < $image_details['width'] ) { echo '<meta property="og:image:width" content="' . esc_attr( $image_details['width'] ) . '" />' . "\n"; }
 						if ( 0 < $image_details['height'] ) { echo '<meta property="og:image:height" content="' . esc_attr( $image_details['height'] ) . '" />' . "\n"; }
 						if ( $image_details['type'] ) { echo '<meta property="og:image:type" content="' . esc_attr( $image_details['type'] ) . '" />' . "\n"; }
-						if ( 0 === strpos( strtolower( $image ), 'https://' ) ) { echo '<meta property="og:image:secure_url" content="' . esc_url( $image ) . '" />' . "\n"; }
-					}
-					if ( is_singular( 'post' ) ) {
+							if ( 0 === strpos( strtolower( $image ), 'https://' ) ) { echo '<meta property="og:image:secure_url" content="' . esc_url( $image ) . '" />' . "\n"; }
+						}
+						if ( $this->is_editorial_article() ) {
 						$publisher = $this->publisher_profile();
 						if ( $publisher ) { echo '<meta property="article:publisher" content="' . esc_url( $publisher ) . '" />' . "\n"; }
 						$author_url = get_author_posts_url( (int) get_post_field( 'post_author', get_queried_object_id() ) );
@@ -124,13 +136,11 @@ final class HeadOutput {
 			if ( $creator ) { echo '<meta name="twitter:creator" content="@' . esc_attr( ltrim( $creator, '@' ) ) . '" />' . "\n"; }
 			echo '<meta name="twitter:title" content="' . esc_attr( $this->social( PostMeta::OG_TITLE, $this->meta->title() ) ) . '" />' . "\n";
 			echo '<meta name="twitter:description" content="' . esc_attr( $this->social( PostMeta::OG_DESCRIPTION, $description ) ) . '" />' . "\n";
-					if ( $image ) {
-						echo '<meta name="twitter:image" content="' . esc_url( $image ) . '" />' . "\n";
-						$image_alt = $this->image_alt( $image );
-						if ( $image_alt ) { echo '<meta name="twitter:image:alt" content="' . esc_attr( $image_alt ) . '" />' . "\n"; }
-						$image_alt = $this->image_alt( $image );
-						if ( $image_alt ) { echo '<meta name="twitter:image:alt" content="' . esc_attr( $image_alt ) . '" />' . "\n"; }
-					}
+						if ( $image ) {
+							echo '<meta name="twitter:image" content="' . esc_url( $image ) . '" />' . "\n";
+							$image_alt = $this->image_alt( $image );
+							if ( $image_alt ) { echo '<meta name="twitter:image:alt" content="' . esc_attr( $image_alt ) . '" />' . "\n"; }
+						}
 				echo "<!-- X/Twitter metadata end -->\n";
 			}
 			echo "<!-- SEO metadata output end -->\n";
@@ -159,53 +169,60 @@ final class HeadOutput {
 		return (string) apply_filters( 'publishrank_seo_robots', $robots );
 	}
 
-	/** @return string Social image: per-post override, featured image, then the site default. */
-		private function image() {
+	/** @var array<string,mixed> Details of the social image chosen for this request. */
+	private $image_info = array();
+
+	/** @return string Social image: per-post override, featured image (any post type), first content image, then the site default. */
+	private function image() {
+		$this->image_info = array();
 		if ( is_singular() ) {
-			$post_id  = get_queried_object_id();
-			$override = PostMeta::get( $post_id, PostMeta::OG_IMAGE, '' );
-			if ( '' !== (string) $override ) {
-				$url = PublicationProfile::normalize_url( (string) $override );
+			$found = SeoData::image_for_post( get_queried_object_id() );
+			if ( $found && ! empty( $found['url'] ) ) {
+				$url = 'override' === ( $found['source'] ?? '' ) ? PublicationProfile::normalize_url( (string) $found['url'] ) : (string) $found['url'];
 				if ( $url ) {
-					return PublicationProfile::asset_url( $url );
-				}
-			}
-			if ( is_singular( 'post' ) ) {
-				$image = get_the_post_thumbnail_url( $post_id, 'full' );
-				if ( $image ) {
-					return PublicationProfile::asset_url( (string) $image );
+					$url = PublicationProfile::asset_url( $url );
+					$this->image_info = array_merge( $found, array( 'url' => $url ) );
+					return $url;
 				}
 			}
 		}
 		$default = (string) get_option( 'publishrank_seo_default_social_image', '' );
-			return $default ? PublicationProfile::asset_url( $default ) : '';
-		}
+		return $default ? PublicationProfile::asset_url( $default ) : '';
+	}
 
-		/** @param string $url @return string */
-		private function image_alt( $url ) {
-			if ( is_singular() ) {
-				$alt = PostMeta::get( get_queried_object_id(), PostMeta::OG_IMAGE_ALT, '' );
-				if ( $alt ) { return wp_strip_all_tags( (string) $alt ); }
-			}
-			$attachment_id = function_exists( 'attachment_url_to_postid' ) ? absint( attachment_url_to_postid( $url ) ) : 0;
-			return $attachment_id ? sanitize_text_field( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ) : '';
+	/** @param string $url @return string Override, then attachment alt text, caption or post title. */
+	private function image_alt( $url ) {
+		if ( ! empty( $this->image_info['url'] ) && $this->image_info['url'] === $url && ! empty( $this->image_info['alt'] ) ) {
+			return wp_strip_all_tags( (string) $this->image_info['alt'] );
 		}
+		$attachment_id = function_exists( 'attachment_url_to_postid' ) && $url ? absint( attachment_url_to_postid( $url ) ) : 0;
+		return $attachment_id ? sanitize_text_field( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ) : '';
+	}
 
-		/** @param string $url @return array<string, mixed> */
-		private function image_details( $url ) {
-			$details = array( 'width' => 0, 'height' => 0, 'type' => '' );
-			if ( ! $url || ! function_exists( 'attachment_url_to_postid' ) ) { return $details; }
-			$attachment_id = absint( attachment_url_to_postid( $url ) );
-			if ( ! $attachment_id ) { return $details; }
-			$metadata = wp_get_attachment_metadata( $attachment_id );
-			if ( is_array( $metadata ) ) {
-				$details['width'] = isset( $metadata['width'] ) ? absint( $metadata['width'] ) : 0;
-				$details['height'] = isset( $metadata['height'] ) ? absint( $metadata['height'] ) : 0;
-			}
-			$mime = get_post_mime_type( $attachment_id );
-			$details['type'] = $mime ? sanitize_text_field( $mime ) : '';
-			return $details;
+	/** @param string $url @return array<string, mixed> */
+	private function image_details( $url ) {
+		$details = array( 'width' => 0, 'height' => 0, 'type' => '' );
+		if ( ! $url ) { return $details; }
+		if ( ! empty( $this->image_info['url'] ) && $this->image_info['url'] === $url && ( ! empty( $this->image_info['width'] ) || ! empty( $this->image_info['type'] ) ) ) {
+			return array(
+				'width'  => absint( $this->image_info['width'] ?? 0 ),
+				'height' => absint( $this->image_info['height'] ?? 0 ),
+				'type'   => sanitize_text_field( (string) ( $this->image_info['type'] ?? '' ) ),
+			);
 		}
+		if ( ! function_exists( 'attachment_url_to_postid' ) ) { return $details; }
+		$attachment_id = absint( attachment_url_to_postid( $url ) );
+		if ( ! $attachment_id ) { return $details; }
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		if ( is_array( $metadata ) ) {
+			$details['width']  = isset( $metadata['width'] ) ? absint( $metadata['width'] ) : 0;
+			$details['height'] = isset( $metadata['height'] ) ? absint( $metadata['height'] ) : 0;
+		}
+		$mime     = get_post_mime_type( $attachment_id );
+		$filetype = wp_check_filetype( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+		$details['type'] = ! empty( $filetype['type'] ) ? sanitize_text_field( $filetype['type'] ) : ( $mime ? sanitize_text_field( $mime ) : '' );
+		return $details;
+	}
 
 		/** @return string */
 		private function publisher_profile() {
@@ -214,6 +231,11 @@ final class HeadOutput {
 				if ( false !== strpos( strtolower( $profile ), 'facebook.com' ) ) { return $profile; }
 			}
 			return ! empty( $profiles ) ? (string) reset( $profiles ) : '';
+		}
+		private function is_editorial_article() {
+			$post = get_queried_object();
+			$type = $post instanceof \WP_Post ? get_post_type_object( $post->post_type ) : false;
+			return is_singular() && $type && $type->public && $type->publicly_queryable && ! in_array( $post->post_type, array( 'page', 'attachment' ), true );
 		}
 	}
 

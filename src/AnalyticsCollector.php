@@ -2,6 +2,8 @@
 /** Collects lightweight, local SEO snapshots for PublishRank analytics. */
 namespace PublishRankSEO;
 
+defined( 'ABSPATH' ) || exit;
+
 final class AnalyticsCollector {
 	const OPTION = 'publishrank_analytics_snapshots';
 	const HOOK = 'publishrank_daily_analytics_snapshot';

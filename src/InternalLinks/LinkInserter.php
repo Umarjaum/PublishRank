@@ -2,6 +2,8 @@
 /** Explicit, editor-approved insertion helpers. Never called automatically. */
 namespace PublishRankSEO\InternalLinks;
 
+defined( 'ABSPATH' ) || exit;
+
 final class LinkInserter {
 	public static function content_links_to_post( $content, $target_post_id ) {
 		if ( ! preg_match_all( '/\bhref\s*=\s*(["\'])(.*?)\1/is', (string) $content, $matches ) ) {

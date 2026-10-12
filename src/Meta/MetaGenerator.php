@@ -8,6 +8,8 @@ namespace PublishRankSEO\Meta;
 
 use PublishRankSEO\Core\PublicationProfile;
 
+defined( 'ABSPATH' ) || exit;
+
 final class MetaGenerator {
 	/** @return string */
 	public function title() {
@@ -22,25 +24,40 @@ final class MetaGenerator {
 				return wp_strip_all_tags( (string) $override );
 			}
 		}
-		$context = is_front_page() || is_home() ? 'home' : ( is_singular( 'post' ) ? 'post' : ( is_singular() ? 'page' : 'archive' ) );
+		$context = is_front_page() || is_home() ? 'home' : ( $this->is_editorial_article() ? 'post' : ( is_singular() ? 'page' : 'archive' ) );
+		return $this->render_title( $context, $post_id );
+	}
+
+	/** Title for a specific post, independent of the main query (REST, editor, CLI). Override wins. */
+	public function title_for_post( $post_id ) {
+		$post_id  = (int) $post_id;
+		$override = PostMeta::get( $post_id, PostMeta::TITLE, '' );
+		if ( '' !== (string) $override ) { return wp_strip_all_tags( (string) $override ); }
+		$type    = get_post_type_object( (string) get_post_type( $post_id ) );
+		$context = $type && $type->public && $type->publicly_queryable && ! in_array( $type->name, array( 'page', 'attachment' ), true ) ? 'post' : 'page';
+		return $this->render_title( $context, $post_id );
+	}
+
+	/** @param string $context home|post|page|archive @param int $post_id Post ID or 0. */
+	private function render_title( $context, $post_id ) {
 		$template = (string) get_option( 'publishrank_seo_title_template_' . $context, '' );
 		if ( '' === $template ) {
 			$template = 'home' === $context ? '%%sitename%% %%page%%' : '%%title%% %%sep%% %%sitename%% %%page%%';
 		}
 		$values = array(
-				// This method feeds pre_get_document_title; calling wp_get_document_title()
-				// here would recurse on archives and search results.
-				'%%title%%' => $post_id ? get_the_title( $post_id ) : $this->context_title( $context ),
+			// This method feeds pre_get_document_title; calling wp_get_document_title()
+			// here would recurse on archives and search results.
+			'%%title%%'    => $post_id ? get_the_title( $post_id ) : $this->context_title( $context ),
 			'%%sitename%%' => get_bloginfo( 'name' ),
 			'%%category%%' => $post_id ? $this->category( $post_id ) : '',
-			'%%author%%' => $post_id ? get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) : '',
-			'%%date%%' => $post_id ? get_the_date( '', $post_id ) : '',
-			'%%excerpt%%' => $post_id ? ( has_excerpt( $post_id ) ? get_the_excerpt( $post_id ) : '' ) : get_bloginfo( 'description' ),
-			'%%page%%' => $this->page_suffix(),
-			'%%sep%%' => (string) get_option( 'publishrank_seo_title_separator', '|' ),
+			'%%author%%'   => $post_id ? get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) : '',
+			'%%date%%'     => $post_id ? get_the_date( '', $post_id ) : '',
+			'%%excerpt%%'  => $post_id ? ( has_excerpt( $post_id ) && ! post_password_required( $post_id ) ? SeoData::clean( get_post_field( 'post_excerpt', $post_id ) ) : '' ) : get_bloginfo( 'description' ),
+			'%%page%%'     => $this->page_suffix(),
+			'%%sep%%'      => (string) get_option( 'publishrank_seo_title_separator', '|' ),
 		);
-		$title = strtr( (string) $template, $values );
-		$title = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $title ) ), " \t\n\r\0\x0B|–—-" );
+		$title = strtr( $template, $values );
+		$title = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( html_entity_decode( $title, ENT_QUOTES, 'UTF-8' ) ) ), " \t\n\r\0\x0B|–—-" );
 		return function_exists( 'mb_substr' ) ? mb_substr( $title, 0, 180 ) : substr( $title, 0, 180 );
 	}
 
@@ -52,21 +69,31 @@ final class MetaGenerator {
 			if ( $home_description ) { return function_exists( 'mb_substr' ) ? mb_substr( $home_description, 0, 160 ) : substr( $home_description, 0, 160 ); }
 		}
 		$override = $post_id ? PostMeta::get( $post_id, PostMeta::DESCRIPTION, '' ) : '';
-		// A manually written SEO description must win over the generated excerpt.
-		// The previous ordering overwrote a valid per-post override on every request.
+		// A manually written SEO description always wins over anything fetched automatically. A manually written SEO description must win over the generated excerpt.
 		if ( '' !== (string) $override ) {
-			$text = $override;
-		} else {
-			$text = get_bloginfo( 'description' );
-			if ( $post_id ) {
-				$post = get_post( $post_id );
-				if ( $post instanceof \WP_Post ) {
-					$text = has_excerpt( $post ) ? get_the_excerpt( $post ) : wp_trim_words( $post->post_content, 30, '' );
-				}
-			}
+			return SeoData::truncate( SeoData::clean( (string) $override ), 160 );
 		}
-		$text = trim( (string) preg_replace( '/\s+/', ' ', wp_strip_all_tags( (string) $text ) ) );
-		return function_exists( 'mb_substr' ) ? mb_substr( $text, 0, 160 ) : substr( $text, 0, 160 );
+		if ( $post_id ) {
+			$auto = SeoData::auto_description( $post_id );
+			if ( '' !== $auto ) { return $auto; }
+		}
+		$text = $this->archive_description();
+		if ( '' === $text ) { $text = SeoData::clean( get_bloginfo( 'description' ) ); }
+		return SeoData::truncate( $text, 160 );
+	}
+
+	/** Description for term, author and post-type archives, fetched from WordPress. */
+	private function archive_description() {
+		$text = '';
+		if ( is_category() || is_tag() || is_tax() ) {
+			$text = (string) term_description();
+		} elseif ( is_author() ) {
+			$text = (string) get_the_author_meta( 'description', (int) get_queried_object_id() );
+		} elseif ( is_post_type_archive() ) {
+			$type = get_queried_object();
+			$text = $type instanceof \WP_Post_Type ? (string) $type->description : '';
+		}
+		return SeoData::clean( $text );
 	}
 
 	/** @return string */
@@ -74,15 +101,7 @@ final class MetaGenerator {
 		$primary = PublicationProfile::primary_url();
 		$primary_host = strtolower( (string) wp_parse_url( $primary, PHP_URL_HOST ) );
 		if ( is_singular() ) {
-			$override = PostMeta::get( get_queried_object_id(), PostMeta::CANONICAL, '' );
-			$candidate = $override ? PublicationProfile::normalize_url( $override ) : '';
-			$candidate_host = strtolower( (string) wp_parse_url( $candidate, PHP_URL_HOST ) );
-			if ( $candidate && $primary_host && $candidate_host === $primary_host && ! $this->is_media_host( $candidate_host ) ) {
-				return $candidate;
-			}
-			$permalink = PublicationProfile::normalize_url( (string) get_permalink() );
-			$permalink_host = strtolower( (string) wp_parse_url( $permalink, PHP_URL_HOST ) );
-			return $permalink && ( ! $primary_host || $permalink_host === $primary_host ) ? $permalink : $primary;
+			return $this->canonical_for_post( get_queried_object_id() );
 		}
 		if ( is_home() || is_front_page() ) { return $primary; }
 		if ( function_exists( 'get_pagenum_link' ) ) {
@@ -95,18 +114,38 @@ final class MetaGenerator {
 		return PublicationProfile::normalize_url( home_url( '/' . ltrim( (string) $request, '/' ) ) ) ?: $primary;
 	}
 
+	/** Canonical URL for a post: a valid same-site override, else its permalink. */
+	public function canonical_for_post( $post_id ) {
+		$primary      = PublicationProfile::primary_url();
+		$primary_host = strtolower( (string) wp_parse_url( $primary, PHP_URL_HOST ) );
+		$override     = PostMeta::get( $post_id, PostMeta::CANONICAL, '' );
+		$candidate    = $override ? PublicationProfile::normalize_url( $override ) : '';
+		$candidate_host = strtolower( (string) wp_parse_url( $candidate, PHP_URL_HOST ) );
+		if ( $candidate && $primary_host && $candidate_host === $primary_host && ! $this->is_media_host( $candidate_host ) ) {
+			return $candidate;
+		}
+		$permalink      = PublicationProfile::normalize_url( (string) get_permalink( $post_id ) );
+		$permalink_host = strtolower( (string) wp_parse_url( $permalink, PHP_URL_HOST ) );
+		return $permalink && ( ! $primary_host || $permalink_host === $primary_host ) ? $permalink : $primary;
+	}
+
 	/** @return string */
 	public function section() {
-		if ( ! is_singular( 'post' ) ) { return ''; }
+		if ( ! $this->is_editorial_article() ) { return ''; }
 		$categories = get_the_category( get_queried_object_id() );
 		return ! empty( $categories ) ? wp_strip_all_tags( (string) $categories[0]->name ) : __( 'News', 'publishrank' );
 	}
 
 	/** @return array<int, string> */
 	public function keywords() {
-		if ( ! is_singular( 'post' ) ) { return array(); }
-		$tags = get_the_tags( get_queried_object_id() );
-		return ! empty( $tags ) && is_array( $tags ) ? array_map( 'wp_strip_all_tags', wp_list_pluck( $tags, 'name' ) ) : array();
+		if ( ! $this->is_editorial_article() ) { return array(); }
+		$post_id = get_queried_object_id(); $keywords = array();
+		$tags = get_the_tags( $post_id );
+		if ( ! empty( $tags ) && is_array( $tags ) ) { $keywords = array_map( 'wp_strip_all_tags', wp_list_pluck( $tags, 'name' ) ); }
+		$focus = PostMeta::get( $post_id, PostMeta::FOCUS_KEYWORD, '' ); if ( $focus ) { $keywords[] = $focus; }
+		$primary = PostMeta::get( $post_id, PostMeta::PRIMARY_KEYPHRASE, '' ); if ( $primary ) { $keywords[] = $primary; }
+		$keywords = array_merge( $keywords, PostMeta::get_list( $post_id, PostMeta::SECONDARY_KEYPHRASES ), PostMeta::get_list( $post_id, PostMeta::RELATED_TERMS ) );
+		return array_values( array_unique( array_filter( array_map( 'wp_strip_all_tags', $keywords ) ) ) );
 	}
 
 	/** @return string */
@@ -165,5 +204,11 @@ final class MetaGenerator {
 			if ( $configured_host && $configured_host === strtolower( (string) $host ) ) { return true; }
 		}
 		return false;
+	}
+
+	private function is_editorial_article() {
+		$post = get_queried_object();
+		$type = $post instanceof \WP_Post ? get_post_type_object( $post->post_type ) : false;
+		return is_singular() && $type && $type->public && $type->publicly_queryable && ! in_array( $post->post_type, array( 'page', 'attachment' ), true );
 	}
 }

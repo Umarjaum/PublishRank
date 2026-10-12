@@ -12,6 +12,8 @@ use PublishRankSEO\Sitemap\News\NewsSitemapProvider;
 use PublishRankSEO\Sitemap\Images\ImageSitemapProvider;
 use PublishRankSEO\Sitemap\Video\VideoSitemapProvider;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SitemapEngine {
 	private $cache;
 	private $lock;
@@ -30,17 +32,20 @@ final class SitemapEngine {
 		$provider = $this->provider( $slug );
 		if ( ! $provider || ! $provider->is_enabled() || absint( $shard ) < 1 || absint( $shard ) > $provider->get_shard_count() ) { return ''; }
 		$shard = absint( $shard );
-		$cached = $this->cache->get( $slug, $shard );
+		// News entries expire on a rolling publication-time window. Never serve
+		// cached or stale XML for this provider, otherwise an expired article can
+		// remain discoverable after its timestamp has left the configured window.
+		$cached = 'news' === $slug ? false : $this->cache->get( $slug, $shard );
 		if ( false !== $cached && '' !== $cached ) { return $cached; }
 		if ( method_exists( $provider, 'prepare_cursor' ) && ! SitemapCursorStore::is_ready( $slug, $shard ) ) { SitemapCursorStore::request_preparation(); return null; }
-		if ( ! $this->lock->acquire( $slug, $shard ) ) {
-			$stale = get_transient( $this->stale_key( $slug, $shard ) );
-			return false !== $stale ? $stale : $provider->render_shard( $shard );
+			if ( ! $this->lock->acquire( $slug, $shard ) ) {
+				$stale = get_transient( $this->stale_key( $slug, $shard ) );
+				return 'news' !== $slug && false !== $stale ? $stale : $provider->render_shard( $shard );
 		}
 		try {
 			$xml = $provider->render_shard( $shard );
 			$ready = ! method_exists( $provider, 'prepare_cursor' ) || SitemapCursorStore::is_ready( $slug, $shard );
-			if ( $xml && $ready ) { $this->cache->set( $slug, $shard, $xml ); set_transient( $this->stale_key( $slug, $shard ), $xml, DAY_IN_SECONDS ); }
+				if ( $xml && $ready && 'news' !== $slug ) { $this->cache->set( $slug, $shard, $xml ); set_transient( $this->stale_key( $slug, $shard ), $xml, DAY_IN_SECONDS ); }
 			return $xml;
 		} finally { $this->lock->release( $slug, $shard ); }
 	}

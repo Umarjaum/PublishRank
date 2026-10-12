@@ -5,6 +5,8 @@ namespace PublishRankSEO\InternalLinks;
 use PublishRankSEO\Admin\AdminAssets;
 use PublishRankSEO\Core\Branding;
 
+defined( 'ABSPATH' ) || exit;
+
 final class InternalLinksPage {
 	const SLUG     = 'publishrank-seo-internal-links';
 	const PER_PAGE = 50;

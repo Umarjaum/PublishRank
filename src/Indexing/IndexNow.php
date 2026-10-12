@@ -2,6 +2,8 @@
 /** Publisher-safe IndexNow integration for participating search engines. */
 namespace PublishRankSEO\Indexing;
 
+defined( 'ABSPATH' ) || exit;
+
 final class IndexNow {
 	const LOG_OPTION = 'publishrank_indexnow_log';
 	const MAX_LOGS = 100;
@@ -129,9 +131,12 @@ final class IndexNow {
 			$queue = array_slice( $queue, -5000, null, true );
 		}
 		update_option( 'publishrank_indexnow_queue', $queue, false );
-		if ( ! wp_next_scheduled( 'publishrank_indexnow_flush_queue' ) ) {
-			wp_schedule_single_event( time() + 15, 'publishrank_indexnow_flush_queue' );
-		}
+			if ( ! wp_next_scheduled( 'publishrank_indexnow_flush_queue' ) ) {
+				wp_schedule_single_event( time() + 1, 'publishrank_indexnow_flush_queue' );
+				// Ask WordPress to spawn the cron runner now. The queued request is
+				// still non-blocking; this avoids depending solely on the next visitor.
+				if ( function_exists( 'spawn_cron' ) ) { spawn_cron( time() ); }
+			}
 	}
 
 	/** Process queued URLs in batches to reduce outbound requests on high-volume publishers. */

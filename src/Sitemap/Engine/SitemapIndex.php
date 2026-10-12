@@ -1,5 +1,8 @@
 <?php
 namespace PublishRankSEO\Sitemap\Engine;
+use PublishRankSEO\Sitemap\SitemapUrls;
+
+defined( 'ABSPATH' ) || exit;
 
 final class SitemapIndex {
 	public function render( $providers ) {
@@ -10,7 +13,7 @@ final class SitemapIndex {
 			}
 			$count = $provider->get_shard_count();
 			for ( $shard = 1; $shard <= $count; $shard++ ) {
-				$url = home_url( '/publishrank-' . $provider->get_slug() . '-sitemap-' . $shard . '.xml' );
+				$url = SitemapUrls::shard_url( $provider->get_slug(), $shard );
 				$lastmod = method_exists( $provider, 'get_lastmod' ) ? $provider->get_lastmod() : '';
 				$items[] = '<sitemap><loc>' . esc_xml( esc_url_raw( $url ) ) . '</loc>' . ( $lastmod ? '<lastmod>' . esc_xml( $lastmod ) . '</lastmod>' : '' ) . '</sitemap>';
 			}

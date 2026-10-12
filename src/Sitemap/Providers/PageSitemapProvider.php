@@ -1,6 +1,8 @@
 <?php
 namespace PublishRankSEO\Sitemap\Providers;
 
+defined( 'ABSPATH' ) || exit;
+
 final class PageSitemapProvider extends AbstractPostProvider {
 	protected $slug = 'page';
 	protected $name = 'Pages';

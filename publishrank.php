@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: PublishRank SEO
+ * Plugin Name: PublishRank
  * Plugin URI: https://publishrank.netlify.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.9.15
+ * Version: 2.9.40
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.9.15' );
+define( 'PUBLISHRANK_SEO_VERSION', '2.9.40' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
@@ -70,6 +70,89 @@ register_deactivation_hook(
 			flush_rewrite_rules();
 	}
 );
+
+
+/** Add PublishRank branding and shortcuts to the WordPress toolbar. */
+function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
+	if ( ! current_user_can( 'manage_options' ) || ! is_object( $wp_admin_bar ) ) {
+		return;
+	}
+
+	$icon_url = add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank-toolbar-icon-v2.png', __FILE__ ) );
+	$icon     = '<img class="publishrank-toolbar-icon" src="' . esc_url( $icon_url ) . '" alt="" width="18" height="18" style="display:inline-block;width:18px;height:18px;margin:0 4px 0 0;vertical-align:middle;object-fit:contain;" /><span class="ab-label">' . esc_html__( 'PublishRank', 'publishrank' ) . '</span>';
+	$dashboard = admin_url( 'admin.php?page=publishrank-seo-dashboard' );
+	$settings  = admin_url( 'admin.php?page=publishrank' );
+
+	// Add a branded entry to the top-left WordPress logo dropdown.
+	$wp_admin_bar->add_node(
+		array(
+			'id'     => 'publishrank-wp-logo',
+			'parent' => 'wp-logo',
+			'title'  => esc_html__( 'PublishRank', 'publishrank' ),
+			'href'   => $dashboard,
+			'meta'   => array( 'class' => 'publishrank-wp-logo-item' ),
+		)
+	);
+
+	// Add PublishRank to the horizontal admin toolbar with useful shortcuts.
+	$wp_admin_bar->add_node(
+		array(
+			'id'    => 'publishrank-seo-toolbar',
+			'title' => $icon,
+			'href'  => $dashboard,
+			'meta'  => array( 'class' => 'publishrank-toolbar-root', 'title' => esc_attr__( 'PublishRank shortcuts', 'publishrank' ) ),
+		)
+	);
+	$items = array(
+		'dashboard'  => array( __( 'Dashboard', 'publishrank' ), $dashboard ),
+		'settings'   => array( __( 'Settings', 'publishrank' ), $settings ),
+		'setup'      => array( __( 'Setup Wizard', 'publishrank' ), admin_url( 'admin.php?page=publishrank-onboarding' ) ),
+		'sitemaps'   => array( __( 'Sitemap Health', 'publishrank' ), admin_url( 'admin.php?page=publishrank-sitemap-health' ) ),
+		'diagnostics'=> array( __( 'Diagnostics', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-diagnostics' ) ),
+	);
+	$items = apply_filters( 'publishrank_seo_admin_toolbar_items', $items );
+	foreach ( (array) $items as $key => $item ) {
+		if ( ! is_array( $item ) || ! isset( $item[0], $item[1] ) || ! is_scalar( $item[0] ) || ! is_string( $item[1] ) ) {
+			continue;
+		}
+		$wp_admin_bar->add_node(
+			array(
+				'id'     => 'publishrank-toolbar-' . $key,
+				'parent' => 'publishrank-seo-toolbar',
+				'title'  => esc_html( $item[0] ),
+				'href'   => esc_url( $item[1] ),
+			)
+		);
+	}
+}
+add_action( 'admin_bar_menu', 'publishrank_seo_admin_toolbar', 100 );
+
+/** Style the toolbar icon and the shortcut in the WordPress logo dropdown. */
+function publishrank_seo_admin_toolbar_styles() {
+	if ( ! is_admin_bar_showing() || ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$icon_url = esc_url( add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank-toolbar-icon-v2.png', __FILE__ ) ) );
+	echo '<style id="publishrank-admin-toolbar-styles">';
+	echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item .publishrank-toolbar-icon{display:inline-block!important;width:18px!important;height:18px!important;margin:0 4px 0 0!important;vertical-align:middle!important;object-fit:cover!important;}';
+	echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item{display:flex;align-items:center;}';
+	echo '#wpadminbar #wp-admin-bar-publishrank-wp-logo > .ab-item{padding-left:28px;background-image:url("' . $icon_url . '");background-position:7px center;background-repeat:no-repeat;background-size:16px 16px;}';
+	echo '</style>';
+}
+add_action( 'admin_head', 'publishrank_seo_admin_toolbar_styles', 99 );
+add_action( 'wp_head', 'publishrank_seo_admin_toolbar_styles', 99 );
+
+/** Add useful shortcuts to the Installed Plugins screen (including Multisite). */
+function publishrank_seo_plugin_action_links( $links ) {
+	$settings = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank' ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '</a>';
+	$wizard = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-onboarding' ) ) . '">' . esc_html__( 'Setup Wizard', 'publishrank' ) . '</a>';
+	$sitemap = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-sitemap-health' ) ) . '">' . esc_html__( 'Sitemap Health', 'publishrank' ) . '</a>';
+	$diagnostics = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-seo-diagnostics' ) ) . '">' . esc_html__( 'Diagnostics', 'publishrank' ) . '</a>';
+	$support = '<a href="https://publishrank.netlify.app/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Support', 'publishrank' ) . '</a>';
+	return array_merge( array( $settings, $wizard, $sitemap, $diagnostics, $support ), $links );
+}
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'publishrank_seo_plugin_action_links' );
+add_filter( 'network_admin_plugin_action_links_' . plugin_basename( __FILE__ ), 'publishrank_seo_plugin_action_links' );
 
 add_action(
 	'plugins_loaded',

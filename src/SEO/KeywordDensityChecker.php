@@ -1,6 +1,8 @@
 <?php
 namespace PublishRankSEO\SEO;
 
+defined( 'ABSPATH' ) || exit;
+
 final class KeywordDensityChecker {
 	/** @return array<string, mixed> */
 	public function analyze( $post ) {

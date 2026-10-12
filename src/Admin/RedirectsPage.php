@@ -4,6 +4,8 @@ namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Redirect\RedirectStore;
 
+defined( 'ABSPATH' ) || exit;
+
 final class RedirectsPage {
 	const SLUG     = 'publishrank-seo-redirects';
 	const PER_PAGE = 50;

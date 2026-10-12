@@ -2,6 +2,8 @@
 /** Relevant internal-link recommendation scoring and anchor selection. */
 namespace PublishRankSEO\InternalLinks;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Recommender {
 	public static function for_target( $target_node, $max = 5 ) {
 		$target_post = get_post( (int) $target_node->object_id );

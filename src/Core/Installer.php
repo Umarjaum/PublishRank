@@ -2,6 +2,8 @@
 /** Activation defaults and version upgrades. */
 namespace PublishRankSEO\Core;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Installer {
 	const VERSION_OPTION = 'publishrank_seo_version';
 
@@ -47,6 +49,7 @@ final class Installer {
 			'publishrank_seo_image_sitemap'          => 1,
 			'publishrank_image_license_url'          => '',
 			'publishrank_seo_video_sitemap'          => 1,
+			'publishrank_seo_media_post_types'       => 'all',
 			'publishrank_source_attribution'         => 0,
 			'publishrank_public_attribution'         => 0,
 			'publishrank_sitemap_post_types'         => 'post',
@@ -157,6 +160,11 @@ final class Installer {
 		}
 		self::install_defaults();
 		\PublishRankSEO\InternalLinks\Store::install();
+		( new \PublishRankSEO\Indexing\IndexNow() )->rewrite();
+		// Shard boundaries changed in 2.9.20; bump versions so old cursor checkpoints and cached XML cannot be reused.
+		if ( version_compare( (string) get_option( self::VERSION_OPTION, '0' ), '2.9.20', '<' ) ) {
+			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::bump_many( array( 'post', 'page', 'cpt', 'taxonomy', 'author', 'attachment', 'news', 'image', 'video' ) );
+		}
 		update_option( 'publishrank_seo_cache_epoch', time(), false );
 		update_option( self::VERSION_OPTION, PUBLISHRANK_SEO_VERSION, true );
 		flush_rewrite_rules( false );

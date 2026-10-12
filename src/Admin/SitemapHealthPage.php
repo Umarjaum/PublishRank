@@ -5,6 +5,8 @@ use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Sitemap\Engine\SitemapAudit;
 use PublishRankSEO\Sitemap\SitemapUrls;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SitemapHealthPage {
 	const SLUG = 'publishrank-sitemap-health';
 	public function register() { add_action( 'admin_menu', array( $this, 'menu' ), 13 ); }

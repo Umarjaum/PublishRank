@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /**
  * Static regression checks for 404 monitoring, schema author controls and robots directives.
  * Run with: php tests/404_schema_robots.php

@@ -6,6 +6,8 @@
  */
 namespace PublishRankSEO\Core;
 
+defined( 'ABSPATH' ) || exit;
+
 final class OutputRegistry {
 	/** @var array<string, string> */
 	private $claimed = array();

@@ -2,6 +2,8 @@
 /** Emits preconnect/dns-prefetch hints for configured infrastructure hosts. */
 namespace PublishRankSEO\Performance;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ResourceHints {
 	public function register() {
 		add_filter( 'wp_resource_hints', array( $this, 'hints' ), 10, 2 );

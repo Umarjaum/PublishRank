@@ -4,9 +4,24 @@ namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Core\Branding;
 
+defined( 'ABSPATH' ) || exit;
+
 final class AdminAssets {
 	public function register() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+		add_action( 'admin_head', array( $this, 'menu_alignment_css' ) );
+		add_action( 'admin_bar_menu', array( $this, 'welcome_admin_bar' ), 90 );
+	}
+
+	/** Add a compact, branded welcome link to the admin toolbar. */
+	public function welcome_admin_bar( $wp_admin_bar ) {
+		if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) { return; }
+		$wp_admin_bar->add_node( array( 'id' => 'publishrank-welcome', 'parent' => 'top-secondary', 'title' => '<span class="ab-icon dashicons dashicons-chart-line"></span><span class="ab-label">' . esc_html__( 'Welcome to PublishRank', 'publishrank' ) . '</span>', 'href' => esc_url( Branding::page_url( Branding::MENU_SLUG ) ), 'meta' => array( 'title' => __( 'Welcome to PublishRank', 'publishrank' ) ) ) );
+	}
+
+	/** Keep the custom top-level icon centered on every wp-admin screen. */
+	public function menu_alignment_css() {
+		echo '<style id="publishrank-menu-alignment">.rhs-header__icon,.rhs-header__logo{width:40px!important;height:40px!important}.rhs-header__icon{flex:0 0 40px!important}.rhs-header__icon .dashicons{width:40px!important;height:40px!important;font-size:40px!important;line-height:40px!important}.rhs-header__logo{object-fit:contain!important}#adminmenu #toplevel_page_publishrank-seo-dashboard > a{display:flex;align-items:center;min-height:34px}#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image{width:32px!important;height:34px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center}#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img{width:32px!important;height:32px!important;padding:0!important;margin:0!important;object-fit:contain}#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name{line-height:34px;padding-left:0!important;margin-left:0!important}.publishrank-settings-actions{clear:both;padding:12px 0}.publishrank-settings-actions--top{border-bottom:1px solid #dcdcde;margin:0 0 18px}.publishrank-settings-actions--bottom{border-top:1px solid #dcdcde;margin-top:18px}.publishrank-settings-actions .button-primary{min-width:220px}.ab-top-menu #wp-admin-bar-publishrank-welcome .ab-icon{font-family:dashicons;vertical-align:middle;margin-right:4px}</style>';
 	}
 
 	public function enqueue() {
@@ -53,12 +68,13 @@ final class AdminAssets {
 		}
 		echo '<div class="rhs-header">';
 		echo '<div class="rhs-header__icon" aria-hidden="true"><span class="dashicons ' . esc_attr( $icon ) . '"></span></div>';
-		echo '<img class="rhs-header__logo" src="' . esc_url( Branding::image( 'icon-128x128.png' ) ) . '" width="56" height="56" alt="" />';
+		echo '<img class="rhs-header__logo" src="' . esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ) . '" width="40" height="40" alt="" />';
 		echo '<div class="rhs-header__text"><h1 class="rhs-header__title">' . esc_html( $title ) . '</h1>';
 		if ( '' !== (string) $subtitle ) {
 			echo '<p class="rhs-header__sub">' . esc_html( $subtitle ) . '</p>';
 		}
 		echo '</div><span class="rhs-header__badge">v' . esc_html( Branding::version() ) . '</span></div><hr class="wp-header-end" />';
+		do_action( 'publishrank_seo_after_admin_header', $page, $title );
 	}
 
 	/** Store a one-time notice for the current user. */

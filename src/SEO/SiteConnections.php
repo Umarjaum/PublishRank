@@ -1,6 +1,8 @@
 <?php
 namespace PublishRankSEO\SEO;
 
+defined( 'ABSPATH' ) || exit;
+
 /** Search-engine ownership verification output. */
 final class SiteConnections {
 	public function register() { add_action( 'wp_head', array( $this, 'meta' ), 2 ); }

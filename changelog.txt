@@ -1,3 +1,105 @@
+= 2.9.40 =
+* Fixed activation and frontend schema fatal handling, including the custom schema path.
+* Added the public GitHub source repository and documented reviewable asset sources.
+* Replaced the schema editor inline script with a locally enqueued, reviewable JavaScript asset.
+* Deferred admin translations and menu registration to avoid WordPress 6.7 debug notices during activation.
+* Corrected sitemap stylesheet output and refreshed WordPress.org metadata.
+
+= 2.9.38 =
+* Security: JSON-LD output now escapes <, >, &, quotes (JSON_HEX_*) so stored strings cannot terminate the script tag.
+* Performance: 404 monitor is rate-limited (60 writes/minute) and evicts least-recently-seen entries only when over 500.
+* Hardening: added direct-access guards to all class files; loopback scanner verifies TLS by default (filterable).
+* Tests: added behavior test for JSON-LD escaping and a phpunit.xml.dist.
+* Automatic SEO data: meta description (excerpt or content, shortcodes/blocks stripped, word-boundary trim), canonical, title, social image (featured image for every post type, then first content image), image alt text (attachment alt, caption, post title), term/author/post-type archive descriptions. Per-post values always override; blank = automatic.
+* Fix: auto-generated title/description were copied into post meta on first save (stale, looked like overrides, could leak protected content). They are now computed live; a batched cleanup removes old copies and keeps real overrides.
+* Fix: canonical collapsed to the home page on sites using plain permalinks (?p=ID); localhost/.local/.test hosts are accepted on local, development and staging environments.
+* Fix: blank robots field no longer saves an explicit index,follow that overrode the site default.
+* Fix: schema image ignored the social-image override when a featured image existed; now consistent with meta tags.
+* Editor: PublishRank meta box now available for pages and all public post types, shows what will be published and its source, and uses placeholders; editorial audit no longer repeated per field.
+* Block editor/REST: overrides registered with register_post_meta (sanitized, capability-checked); REST output returns resolved values, image and alt text, and sources for all public REST post types.
+* Compatibility: PHP 8.4 implicit-nullable fix. Added integration test running on real WordPress (tests/integration).
+
+= 2.9.37 =
+* Added a large responsive landscape Welcome to PublishRank panel to the dashboard with branded imagery, newsroom SEO messaging, and a setup-review action.
+* Synchronized the current release version across plugin metadata, readme, project README, audit documentation, and branding fallbacks.
+
+= 2.9.36 =
+* IndexNow queue events now request an immediate non-blocking WP-Cron spawn instead of waiting for a future visitor.
+* Plugin upgrades now register and flush the public IndexNow key rewrite endpoint.
+
+= 2.9.35 =
+* News Sitemap responses now bypass cached and stale XML and enforce rolling publication-time expiry immediately on every request.
+* Reduced the WordPress sidebar icon to 32×32 while retaining the 40×40 header icon and tight label spacing.
+
+= 2.9.34 =
+* Restored visible Save PublishRank settings buttons at the top and bottom of the settings form.
+* Added a Welcome to PublishRank item to the WordPress admin top bar.
+* Standardized the PublishRank header and admin-menu icons to 40×40 and removed extra label spacing.
+* Added a strict publication-timestamp check so News Sitemap entries are excluded only when their publication timestamp is outside the configured window, future-dated, invalid, or explicitly opted out.
+
+= 2.9.33 =
+* Fixed newly saved articles being written as News Sitemap-ineligible when the editor control was not present.
+* Added an explicit Google News Sitemap eligibility control and 72-hour freshness choice (with up to 168 hours available in advanced settings).
+* Added WebP-aware `encodingFormat` and URL-derived MIME output to schema and Open Graph image metadata.
+* Added the requested public HTML branding comment: `SEO of this website is Powered by PublishRank`.
+* Centered the PublishRank WordPress sidebar icon and label on all admin screens.
+
+= 2.9.32 =
+* Corrected the public plugin branding to PublishRank while preserving internal option keys and namespaces for upgrade compatibility.
+* Restricted the News Sitemap to explicitly configured public news post types instead of silently including every public custom post type.
+* Enforced the Google News two-day eligibility window across the provider, onboarding, settings, and import validation paths.
+* Made the dashboard News Sitemap link use the configured sitemap endpoint.
+* Registered the editorial SEO panel for configured public news post types and kept it off unrelated pages and attachments.
+
+= 2.9.31 =
+* Fixed article metadata and NewsArticle JSON-LD for public editorial custom post types.
+* Fixed featured-image, author, publisher, Open Graph, news-keyword and article-section fallbacks for custom editorial content.
+* Fixed configured sitemap endpoints so sitemap index child URLs and rewrite rules use the same endpoint prefix.
+* Added compatibility regression coverage for these mismatches.
+
+= 2.9.30 =
+* Made sitemap discovery automatic for public posts, pages, editorial custom post types, taxonomies, authors, images, videos and Google News entries.
+* Fixed custom post types being discovered before their registration hook ran.
+* Fixed robots.txt to advertise the configured sitemap index instead of a hard-coded endpoint.
+* Preserved automatic sharding, last-modified values, cache invalidation, stale fallback and XML validation.
+
+= 2.9.29 =
+* Added automatic newsroom classification for article, breaking news, live coverage, analysis, opinion, feature and review content.
+* Added automatic NewsArticle/LiveBlogPosting genre, article body, dateline, location, coverage start and news-keyword signals.
+* Added LiveBlogPosting to the optional schema allow-list while retaining automatic defaults.
+
+= 2.9.28 =
+* Added automatic article SEO generation on save: missing SEO title, meta description, Open Graph fallbacks and schema type are filled from the article itself.
+* Kept all editor SEO fields as optional overrides; editors only need to write the article normally.
+
+= 2.9.27 =
+* Fixed frontend SEO recovery when caching, compression, or security plugins already have an output buffer open.
+* Added nested-buffer recovery so metadata and JSON-LD can still be inserted when a news theme omits wp_head().
+* Added a safe document-title fallback during recovery and automatic title-tag support for themes that do not declare it.
+
+= 2.9.24 =
+* Updated sidebar and toolbar branding icon; made toolbar icon rendering more reliable.
+
+PublishRank 2.9.20
+- Fixed image and video sitemap filtering and expanded scanning to configurable public post types.
+- Added a media sitemap content-type setting (default: all public queryable types).
+- Set standard sitemap shard capacity to 50,000 URL entries; News sitemap retains its 1,000-article limit.
+- Invalidate media sitemap cursor/cache data after content changes and relevant settings updates.
+
+PublishRank 2.9.19
+- Expanded setup wizard: publisher identity, extra organization schema details, and optional LocalBusiness profile in the same guided flow.
+- Completed setup now shows saved configuration with Edit and Restore recommended defaults actions.
+- Preserved edit-mode navigation and added nonce/capability-guarded defaults restoration.
+
+PublishRank 2.9.17
+- Removed the Google Search Console OAuth connection/admin screen, including site-specific OAuth credential entry.
+- Added an in-dashboard Feature Documentation page and contextual information icons beside supported admin labels and headings.
+- Added guidance for SEO metadata, sitemaps, schema, indexing, redirects, IndexNow, diagnostics and privacy boundaries.
+
+PublishRank 2.9.16
+- Added Installed Plugins shortcuts for Settings, Setup Wizard, Sitemap Health, Diagnostics, and Support, including Multisite network plugin rows.
+- Preserved existing sitemap, metadata, schema, and onboarding modules.
+
 2.9.15
 - Added Publisher Link Intelligence with keyset-batched internal link audits, redirect-aware findings, redirect chain checks, and optional external HTTP link checks in small queued batches.
 - Connected the module to PublishRank administration and retained existing internal-link, orphan-page, redirect, and 404 modules.
@@ -6,7 +108,7 @@
 - Added optional Local SEO settings and connected LocalBusiness JSON-LD output.
 - Added validation for business type, coordinates, opening hours, and profile URLs.
 
-PublishRank SEO — Release history
+PublishRank — Release history
 
 2.9.13
 - Added PublishRank-native Publisher Toolkit inspired by common publisher SEO workflows: bulk metadata management, role-aware access, and missing image alt assistance.
@@ -22,7 +124,7 @@ PublishRank SEO — Release history
 * Improved queue concurrency handling to preserve entries updated while a batch is being sent.
 * Defaulted new installations to include public posts and pages in automatic submissions.
 
-PublishRank SEO — Release history
+PublishRank — Release history
 
 2.9.11
 - Verified and retained the integrated 404 monitor, clear-log and redirect workflows.

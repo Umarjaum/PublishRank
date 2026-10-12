@@ -4,6 +4,8 @@ namespace PublishRankSEO\Monitor;
 
 use PublishRankSEO\Sitemap\Engine\SitemapAudit;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ScheduledAudit {
 	const CRON   = 'publishrank_weekly_audit';
 	const OPTION = 'publishrank_seo_audit_report';

@@ -2,6 +2,8 @@
 /** Optional public attribution for publishers who choose to credit PublishRank. */
 namespace PublishRankSEO\Core;
 
+defined( 'ABSPATH' ) || exit;
+
 final class FrontendBranding {
 	const ENABLED_OPTION = 'publishrank_public_attribution';
 	const TEXT_OPTION    = 'publishrank_public_attribution_text';
@@ -21,10 +23,10 @@ final class FrontendBranding {
 		if ( is_admin() || wp_doing_ajax() || ! self::enabled() ) {
 			return;
 		}
-		$path = dirname( dirname( __DIR__ ) ) . '/assets/css/branding.css';
-		if ( file_exists( $path ) ) {
-			wp_enqueue_style( 'publishrank-branding', plugins_url( 'assets/css/branding.css', dirname( dirname( __DIR__ ) ) . '/publishrank.php' ), array(), defined( 'PUBLISHRANK_VERSION' ) ? PUBLISHRANK_VERSION : null );
-		}
+			$path = dirname( dirname( __DIR__ ) ) . '/assets/css/branding.css';
+			if ( file_exists( $path ) ) {
+				wp_enqueue_style( 'publishrank-branding', plugins_url( 'assets/css/branding.css', dirname( dirname( __DIR__ ) ) . '/publishrank.php' ), array(), defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : null );
+			}
 	}
 
 	public static function enabled() {

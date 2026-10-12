@@ -15,10 +15,12 @@ final class OnboardingPage {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 		add_action( 'admin_post_publishrank_onboarding_save', array( $this, 'save' ) );
 		add_action( 'admin_post_publishrank_onboarding_exit', array( $this, 'exit_wizard' ) );
+		add_action( 'admin_post_publishrank_onboarding_defaults', array( $this, 'restore_defaults' ) );
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'PublishRank Setup', 'publishrank' ), __( 'Setup Wizard', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'page' ) );
+		$label = $this->is_setup_complete() ? __( 'Setup Wizard', 'publishrank' ) : __( 'Complete Setup →', 'publishrank' );
+		add_submenu_page( Branding::MENU_SLUG, __( 'PublishRank Setup', 'publishrank' ), $label, 'manage_options', self::SLUG, array( $this, 'page' ) );
 	}
 
 	/** Yoast-style: after activation, send the admin straight into the wizard. */
@@ -33,29 +35,36 @@ final class OnboardingPage {
 		if ( isset( $_GET['activate-multi'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return; // Bulk activation: stay on the plugins screen.
 		}
-		if ( get_option( 'publishrank_onboarding_complete' ) ) {
-			return; // Upgrades never re-trigger the wizard.
+		if ( $this->is_setup_complete() ) {
+			return; // A completed setup is not re-triggered on upgrades.
 		}
 		wp_safe_redirect( Branding::page_url( self::SLUG ) );
 		exit;
 	}
 
-	/** Yoast-style "First-time SEO configuration" reminder. */
+	/** A persistent, Yoast-style first-run card; it remains until setup is truly completed. */
 	public function setup_reminder_notice() {
-		if ( get_option( 'publishrank_onboarding_complete' ) || get_option( 'publishrank_onboarding_dismissed' ) || ! current_user_can( 'manage_options' ) ) {
+		if ( $this->is_setup_complete() || ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 		$is_wizard = $screen && false !== strpos( (string) $screen->id, self::SLUG );
-		$is_relevant = $screen && ( 'dashboard' === $screen->id || false !== strpos( (string) $screen->id, 'publishrank' ) );
-		if ( $is_wizard || ! $is_relevant ) {
+		if ( $is_wizard ) {
 			return;
 		}
-		$url = wp_nonce_url( admin_url( 'admin-post.php?action=publishrank_onboarding_exit' ), 'publishrank_onboarding_exit' );
-		echo '<div class="notice notice-info prw-setup-notice"><p><strong>' . esc_html__( 'Welcome to PublishRank!', 'publishrank' ) . '</strong> '
-			. esc_html__( 'Configure your publisher SEO foundation with the guided setup wizard — identity, search appearance, News SEO and sitemap infrastructure.', 'publishrank' )
-			. ' <a href="' . esc_url( Branding::page_url( self::SLUG ) ) . '" class="button button-primary prw-notice-button">' . esc_html__( 'Start configuration', 'publishrank' ) . '</a>'
-			. ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Dismiss — I know what I\'m doing', 'publishrank' ) . '</a></p></div>';
+		$icon = add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank-header-icon-v2.png' ) );
+		$wizard_url = Branding::page_url( self::SLUG );
+		echo '<div class="notice notice-info prw-setup-notice" style="border-left-color:#3858c8;padding:14px 16px;max-width:1000px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
+		echo '<img src="' . esc_url( $icon ) . '" alt="" width="48" height="48" style="width:48px;height:48px;object-fit:contain;flex:0 0 48px" />';
+		echo '<div style="flex:1;min-width:220px"><strong style="font-size:14px;color:#202938">' . esc_html__( 'First-time SEO configuration', 'publishrank' ) . '</strong><p style="margin:5px 0 0">' . esc_html__( 'Set up your publisher identity, search appearance, schema, News SEO and sitemap infrastructure in one guided flow. This reminder stays here until setup is completed.', 'publishrank' ) . '</p></div>';
+		echo '<a href="' . esc_url( $wizard_url ) . '" class="button button-primary prw-notice-button">' . esc_html__( 'Start onboarding', 'publishrank' ) . '</a>';
+		echo '</div></div>';
+	}
+
+	/** Require the completion marker introduced with the verified setup flow. */
+	private function is_setup_complete() {
+		return (bool) get_option( 'publishrank_onboarding_complete', false )
+			&& (string) get_option( 'publishrank_onboarding_completed_at', '' ) !== '';
 	}
 
 	public function enqueue() {
@@ -70,7 +79,7 @@ final class OnboardingPage {
 	/** Leave the wizard without completing it (Yoast's close option). */
 	public function exit_wizard() {
 		AdminAssets::guard( 'publishrank_onboarding_exit' );
-		update_option( 'publishrank_onboarding_dismissed', 1, false );
+		// Leaving the wizard does not mark onboarding as complete. The reminder remains until setup is saved.
 		wp_safe_redirect( Branding::page_url( Branding::MENU_SLUG ) );
 		exit;
 	}
@@ -97,6 +106,56 @@ final class OnboardingPage {
 		);
 	}
 
+	/** Restore conservative recommended defaults without deleting unrelated SEO data. */
+	public function restore_defaults() {
+		AdminAssets::guard( 'publishrank_onboarding_defaults' );
+		$defaults = array(
+			'publishrank_identity_type' => 'organization',
+			'publishrank_identity_name' => get_bloginfo( 'name' ),
+			'publishrank_identity_description' => get_bloginfo( 'description' ),
+			'publishrank_seo_publisher_name' => get_bloginfo( 'name' ),
+			'publishrank_seo_publisher_logo' => '',
+			'publishrank_identity_alternate_name' => '',
+			'publishrank_identity_legal_name' => '',
+			'publishrank_identity_contact_email' => '',
+			'publishrank_identity_contact_phone' => '',
+			'publishrank_identity_founding_date' => '',
+			'publishrank_identity_street' => '',
+			'publishrank_identity_locality' => '',
+			'publishrank_identity_region' => '',
+			'publishrank_identity_postal_code' => '',
+			'publishrank_identity_country' => '',
+			'publishrank_schema_founder' => '',
+			'publishrank_schema_knows_about' => '',
+			'publishrank_schema_parent_organization' => '',
+			'publishrank_schema_founding_location' => '',
+			'publishrank_home_title' => '',
+			'publishrank_home_description' => get_bloginfo( 'description' ),
+			'publishrank_seo_default_robots' => 'index,follow',
+			'publishrank_seo_title_template_home' => '%%sitename%% %%page%%',
+			'publishrank_seo_news_enabled' => 1,
+			'publishrank_seo_news_window' => 48,
+			'publishrank_seo_news_keywords' => 1,
+			'publishrank_sitemap_stylesheet' => 1,
+			'publishrank_sitemap_pages_enabled' => 1,
+			'publishrank_sitemap_taxonomies_enabled' => 1,
+			'publishrank_breadcrumbs_enabled' => 1,
+			'publishrank_meta_enabled' => 1,
+			'publishrank_schema_enabled' => 1,
+			'publishrank_image_optimizer_enabled' => 0,
+			'publishrank_image_max_width' => 2000,
+			'publishrank_image_quality' => 82,
+			'publishrank_image_format' => 'webp',
+			'publishrank_local_seo_profile' => array( 'enabled' => 0, 'name' => '', 'type' => 'LocalBusiness', 'description' => '', 'url' => '', 'phone' => '', 'email' => '', 'logo' => '', 'street' => '', 'city' => '', 'region' => '', 'postal_code' => '', 'country' => '', 'latitude' => '', 'longitude' => '', 'price_range' => '', 'has_map' => '', 'service_area' => '', 'opening_hours' => array(), 'same_as' => array() ),
+		);
+		foreach ( $defaults as $key => $value ) { update_option( $key, $value, false ); }
+		// Defaults update configuration but do not count as a completed guided onboarding.
+		delete_option( 'publishrank_onboarding_complete' );
+		delete_option( 'publishrank_onboarding_completed_at' );
+		wp_safe_redirect( Branding::page_url( self::SLUG ) . '&step=1&restored=1' );
+		exit;
+	}
+
 	public function save() {
 		if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'You do not have permission to do this.', 'publishrank' ) ); }
 		check_admin_referer( 'publishrank_onboarding_save' );
@@ -109,7 +168,28 @@ final class OnboardingPage {
 			$set( 'publishrank_identity_name', sanitize_text_field( wp_unslash( $_POST['identity_name'] ?? '' ) ) );
 			$set( 'publishrank_identity_description', sanitize_textarea_field( wp_unslash( $_POST['identity_description'] ?? '' ) ) );
 			$set( 'publishrank_seo_publisher_name', sanitize_text_field( wp_unslash( $_POST['identity_name'] ?? get_bloginfo( 'name' ) ) ) );
-			$set( 'publishrank_seo_publisher_logo', esc_url_raw( wp_unslash( $_POST['identity_logo'] ?? '' ) ) );
+			$publisher_logo = esc_url_raw( wp_unslash( $_POST['identity_logo'] ?? '' ) );
+			$set( 'publishrank_seo_publisher_logo', $publisher_logo );
+			$set( 'publishrank_identity_logo', $publisher_logo );
+			if ( isset( $_POST['identity_type'] ) && 'person' === $_POST['identity_type'] ) {
+				$set( 'publishrank_identity_person_name', sanitize_text_field( wp_unslash( $_POST['identity_name'] ?? '' ) ) );
+				$set( 'publishrank_identity_person_description', sanitize_textarea_field( wp_unslash( $_POST['identity_description'] ?? '' ) ) );
+				$set( 'publishrank_identity_person_image', $publisher_logo );
+				$set( 'publishrank_identity_person_url', esc_url_raw( home_url( '/' ) ) );
+				$set( 'publishrank_identity_person_email', sanitize_email( wp_unslash( $_POST['contact_email'] ?? '' ) ) );
+			}
+			$identity_fields = array( 'alternate_name' => 'publishrank_identity_alternate_name', 'legal_name' => 'publishrank_identity_legal_name', 'contact_email' => 'publishrank_identity_contact_email', 'contact_phone' => 'publishrank_identity_contact_phone', 'founding_date' => 'publishrank_identity_founding_date', 'street' => 'publishrank_identity_street', 'locality' => 'publishrank_identity_locality', 'region' => 'publishrank_identity_region', 'postal_code' => 'publishrank_identity_postal_code', 'country' => 'publishrank_identity_country' );
+			foreach ( $identity_fields as $field => $option ) {
+				$value = isset( $_POST[ $field ] ) ? wp_unslash( $_POST[ $field ] ) : '';
+				$clean = 'contact_email' === $field ? sanitize_email( $value ) : ( 'founding_date' === $field ? sanitize_text_field( $value ) : sanitize_text_field( $value ) );
+				$set( $option, $clean );
+			}
+			$set( 'publishrank_schema_founder', sanitize_text_field( wp_unslash( $_POST['schema_founder'] ?? '' ) ) );
+			$set( 'publishrank_schema_knows_about', sanitize_textarea_field( wp_unslash( $_POST['schema_knows_about'] ?? '' ) ) );
+			$set( 'publishrank_schema_parent_organization', sanitize_text_field( wp_unslash( $_POST['schema_parent_organization'] ?? '' ) ) );
+			$set( 'publishrank_schema_founding_location', sanitize_text_field( wp_unslash( $_POST['schema_founding_location'] ?? '' ) ) );
+			$local_input = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? wp_unslash( $_POST['local_seo'] ) : array();
+			$set( 'publishrank_local_seo_profile', \PublishRankSEO\SEO\LocalSEO::sanitize_profile( $local_input ) );
 		} elseif ( 3 === $step ) {
 			$set( 'publishrank_home_title', sanitize_text_field( wp_unslash( $_POST['home_title'] ?? '' ) ) );
 			$set( 'publishrank_home_description', sanitize_textarea_field( wp_unslash( $_POST['home_description'] ?? '' ) ) );
@@ -134,9 +214,11 @@ final class OnboardingPage {
 		} elseif ( 6 === $step ) {
 			$set( 'publishrank_onboarding_complete', 1 );
 			$set( 'publishrank_onboarding_version', Branding::version() );
+			$set( 'publishrank_onboarding_completed_at', gmdate( 'c' ) );
 		}
 		$next = min( self::TOTAL_STEPS, $step + 1 );
-		wp_safe_redirect( Branding::page_url( self::SLUG ) . '&step=' . $next . '&saved=1' );
+		$edit_suffix = ! empty( $_POST['edit_mode'] ) ? '&edit=1' : '';
+		wp_safe_redirect( Branding::page_url( self::SLUG ) . '&step=' . $next . '&saved=1' . $edit_suffix );
 		exit;
 	}
 
@@ -157,8 +239,21 @@ final class OnboardingPage {
 		$description = get_option( 'publishrank_home_description', get_bloginfo( 'description' ) );
 		$news = (bool) get_option( 'publishrank_seo_news_enabled', true );
 		$news_window = (int) get_option( 'publishrank_seo_news_window', 48 );
-		$complete = (bool) get_option( 'publishrank_onboarding_complete', false );
+		$complete = $this->is_setup_complete();
 		$exit_url = wp_nonce_url( admin_url( 'admin-post.php?action=publishrank_onboarding_exit' ), 'publishrank_onboarding_exit' );
+		if ( $complete && empty( $_GET['edit'] ) ) {
+			$local_profile = get_option( 'publishrank_local_seo_profile', array() );
+			$local_profile = is_array( $local_profile ) ? $local_profile : array();
+			echo '<div class="wrap rhs-onboarding-wrap">';
+			AdminAssets::header( __( 'PublishRank Configuration', 'publishrank' ), __( 'Your setup is complete. Review the current configuration here, or edit it when your publication changes.', 'publishrank' ) );
+			echo '<div class="rhs-onboarding-card"><div class="rhs-setup-complete"><div class="rhs-setup-complete__icon" aria-hidden="true">✓</div><div class="rhs-setup-complete__copy"><span class="rhs-eyebrow">' . esc_html__( 'Setup complete', 'publishrank' ) . '</span><h2>' . esc_html__( 'Your PublishRank configuration', 'publishrank' ) . '</h2><small>' . esc_html__( 'The wizard will not keep prompting you. Your settings remain saved until you edit them.', 'publishrank' ) . '</small></div></div>';
+			echo '<div class="prw-recap"><div class="prw-recap__item"><strong>' . esc_html( $name ?: get_bloginfo( 'name' ) ) . '</strong><span>' . esc_html__( 'Publisher / site identity', 'publishrank' ) . '</span></div><div class="prw-recap__item"><strong>' . esc_html( $title ?: get_bloginfo( 'name' ) ) . '</strong><span>' . esc_html__( 'Homepage SEO title', 'publishrank' ) . '</span></div><div class="prw-recap__item"><strong>' . ( get_option( 'publishrank_schema_enabled', true ) ? esc_html__( 'Schema graph enabled', 'publishrank' ) : esc_html__( 'Schema graph disabled', 'publishrank' ) ) . '</strong><span>' . esc_html__( 'Organization, website, webpage and article schema where applicable', 'publishrank' ) . '</span></div><div class="prw-recap__item"><strong>' . ( ! empty( $local_profile['enabled'] ) ? esc_html( $local_profile['name'] ?? __( 'Local business profile enabled', 'publishrank' ) ) : esc_html__( 'Local SEO schema disabled', 'publishrank' ) ) . '</strong><span>' . esc_html__( 'Local business information', 'publishrank' ) . '</span></div><div class="prw-recap__item"><strong>' . ( $news ? esc_html__( 'News sitemap enabled', 'publishrank' ) : esc_html__( 'News sitemap disabled', 'publishrank' ) ) . '</strong><span>' . esc_html( sprintf( __( 'Freshness window: %d hours', 'publishrank' ), $news_window ) ) . '</span></div></div>';
+			echo '<div class="rhs-onboarding-actions"><a class="button button-primary" href="' . esc_url( Branding::page_url( self::SLUG ) . '&edit=1&step=1' ) . '">' . esc_html__( 'Edit configuration', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( Branding::MENU_SLUG ) ) . '">' . esc_html__( 'Go to dashboard', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( 'publishrank-seo-settings' ) ) . '">' . esc_html__( 'Advanced settings', 'publishrank' ) . '</a><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" onsubmit="return confirm(&quot;Restore recommended setup defaults? Your current wizard-managed values will be replaced.&quot;);"><input type="hidden" name="action" value="publishrank_onboarding_defaults" />';
+			wp_nonce_field( 'publishrank_onboarding_defaults' );
+			echo '<button class="button" type="submit">' . esc_html__( 'Restore recommended defaults', 'publishrank' ) . '</button></form></div></div></div>';
+			if ( isset( $_GET['restored'] ) ) { echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Recommended defaults restored.', 'publishrank' ) . '</p></div>'; }
+			return;
+		}
 		?>
 		<div class="wrap rhs-onboarding-wrap">
 			<?php AdminAssets::header( __( 'PublishRank Setup', 'publishrank' ), __( 'Your first-time SEO configuration — guided, publisher-grade, done in minutes.', 'publishrank' ) ); ?>
@@ -167,7 +262,7 @@ final class OnboardingPage {
 				<div>
 					<span class="rhs-eyebrow"><?php esc_html_e( 'First-time SEO configuration', 'publishrank' ); ?></span>
 					<h1><?php esc_html_e( 'Set up PublishRank the right way, from day one.', 'publishrank' ); ?></h1>
-					<p><?php esc_html_e( 'Six guided steps: environment readiness, publication identity, search appearance, Google News, and the technical foundation your newsroom deserves.', 'publishrank' ); ?></p>
+					<p><?php esc_html_e( 'Six guided steps for environment readiness, site identity, local business details, search appearance, News SEO, schema and technical infrastructure.', 'publishrank' ); ?></p>
 				</div>
 				<div class="rhs-onboarding-orbit" aria-hidden="true"><span>PR</span><i></i></div>
 			</div>
@@ -189,6 +284,7 @@ final class OnboardingPage {
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="rhs-onboarding-card">
 				<input type="hidden" name="action" value="publishrank_onboarding_save" />
 				<input type="hidden" name="step" value="<?php echo esc_attr( $step ); ?>" />
+				<?php if ( ! empty( $_GET['edit'] ) ) : ?><input type="hidden" name="edit_mode" value="1" /><?php endif; ?>
 				<?php wp_nonce_field( 'publishrank_onboarding_save' ); ?>
 
 				<?php if ( 1 === $step ) : ?>
@@ -222,6 +318,44 @@ final class OnboardingPage {
 							</span>
 							<small><?php esc_html_e( 'Used in schema markup and search knowledge surfaces.', 'publishrank' ); ?></small>
 						</label>
+						<label><b><?php esc_html_e( 'Alternate / short name', 'publishrank' ); ?></b><input type="text" name="alternate_name" value="<?php echo esc_attr( get_option( 'publishrank_identity_alternate_name', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Legal organization name', 'publishrank' ); ?></b><input type="text" name="legal_name" value="<?php echo esc_attr( get_option( 'publishrank_identity_legal_name', get_option( 'publishrank_schema_legal_name', '' ) ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Public contact email', 'publishrank' ); ?></b><input type="email" name="contact_email" value="<?php echo esc_attr( get_option( 'publishrank_identity_contact_email', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Public contact phone', 'publishrank' ); ?></b><input type="text" name="contact_phone" value="<?php echo esc_attr( get_option( 'publishrank_identity_contact_phone', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Founding date', 'publishrank' ); ?></b><input type="text" name="founding_date" placeholder="2015 or 2015-03-14" value="<?php echo esc_attr( get_option( 'publishrank_identity_founding_date', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Street address (optional)', 'publishrank' ); ?></b><input type="text" name="street" value="<?php echo esc_attr( get_option( 'publishrank_identity_street', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'City / locality', 'publishrank' ); ?></b><input type="text" name="locality" value="<?php echo esc_attr( get_option( 'publishrank_identity_locality', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'State / region', 'publishrank' ); ?></b><input type="text" name="region" value="<?php echo esc_attr( get_option( 'publishrank_identity_region', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Postal code', 'publishrank' ); ?></b><input type="text" name="postal_code" value="<?php echo esc_attr( get_option( 'publishrank_identity_postal_code', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Country', 'publishrank' ); ?></b><input type="text" name="country" placeholder="PK or Pakistan" value="<?php echo esc_attr( get_option( 'publishrank_identity_country', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Founder (optional)', 'publishrank' ); ?></b><input type="text" name="schema_founder" value="<?php echo esc_attr( get_option( 'publishrank_schema_founder', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Parent organization', 'publishrank' ); ?></b><input type="text" name="schema_parent_organization" value="<?php echo esc_attr( get_option( 'publishrank_schema_parent_organization', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Founding location', 'publishrank' ); ?></b><input type="text" name="schema_founding_location" value="<?php echo esc_attr( get_option( 'publishrank_schema_founding_location', '' ) ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Topics / expertise (comma separated)', 'publishrank' ); ?></b><textarea name="schema_knows_about" rows="2"><?php echo esc_textarea( get_option( 'publishrank_schema_knows_about', '' ) ); ?></textarea></label>
+					</div>
+					<h3><?php esc_html_e( 'Local SEO (optional)', 'publishrank' ); ?></h3>
+					<p class="rhs-lead"><?php esc_html_e( 'Only enable this if the publication or company has a real, public-facing business location. News publishers without a customer-facing location should leave it off.', 'publishrank' ); ?></p>
+					<?php $local = get_option( 'publishrank_local_seo_profile', array() ); $local = wp_parse_args( is_array( $local ) ? $local : array(), array( 'enabled' => 0, 'name' => '', 'type' => 'LocalBusiness', 'description' => '', 'url' => home_url( '/' ), 'phone' => '', 'email' => '', 'logo' => '', 'street' => '', 'city' => '', 'region' => '', 'postal_code' => '', 'country' => '', 'latitude' => '', 'longitude' => '', 'price_range' => '', 'has_map' => '', 'service_area' => '', 'opening_hours' => array(), 'same_as' => array() ) ); ?>
+					<div class="rhs-onboarding-fields">
+						<label class="rhs-toggle"><input type="checkbox" name="local_seo[enabled]" value="1" <?php checked( ! empty( $local['enabled'] ) ); ?> /><span><b><?php esc_html_e( 'Enable LocalBusiness schema', 'publishrank' ); ?></b><small><?php esc_html_e( 'Leave off for a purely digital publication without a real public business location.', 'publishrank' ); ?></small></span></label>
+						<label><b><?php esc_html_e( 'Business / location name', 'publishrank' ); ?></b><input type="text" name="local_seo[name]" value="<?php echo esc_attr( $local['name'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Business type', 'publishrank' ); ?></b><select name="local_seo[type]"><?php foreach ( \PublishRankSEO\SEO\LocalSEO::types() as $type => $label ) : ?><option value="<?php echo esc_attr( $type ); ?>" <?php selected( $local['type'], $type ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
+						<label><b><?php esc_html_e( 'Business URL', 'publishrank' ); ?></b><input type="url" name="local_seo[url]" value="<?php echo esc_attr( $local['url'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Business phone', 'publishrank' ); ?></b><input type="text" name="local_seo[phone]" value="<?php echo esc_attr( $local['phone'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Business email', 'publishrank' ); ?></b><input type="email" name="local_seo[email]" value="<?php echo esc_attr( $local['email'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Business logo / image URL', 'publishrank' ); ?></b><input type="url" name="local_seo[logo]" value="<?php echo esc_attr( $local['logo'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Street address', 'publishrank' ); ?></b><input type="text" name="local_seo[street]" value="<?php echo esc_attr( $local['street'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'City / locality', 'publishrank' ); ?></b><input type="text" name="local_seo[city]" value="<?php echo esc_attr( $local['city'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Region', 'publishrank' ); ?></b><input type="text" name="local_seo[region]" value="<?php echo esc_attr( $local['region'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Postal code', 'publishrank' ); ?></b><input type="text" name="local_seo[postal_code]" value="<?php echo esc_attr( $local['postal_code'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Country', 'publishrank' ); ?></b><input type="text" name="local_seo[country]" value="<?php echo esc_attr( $local['country'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Latitude', 'publishrank' ); ?></b><input type="number" step="any" name="local_seo[latitude]" value="<?php echo esc_attr( $local['latitude'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Longitude', 'publishrank' ); ?></b><input type="number" step="any" name="local_seo[longitude]" value="<?php echo esc_attr( $local['longitude'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Service area', 'publishrank' ); ?></b><input type="text" name="local_seo[service_area]" value="<?php echo esc_attr( $local['service_area'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Map URL', 'publishrank' ); ?></b><input type="url" name="local_seo[has_map]" value="<?php echo esc_attr( $local['has_map'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Price range (if applicable)', 'publishrank' ); ?></b><input type="text" name="local_seo[price_range]" value="<?php echo esc_attr( $local['price_range'] ); ?>" /></label>
+						<label><b><?php esc_html_e( 'Opening hours', 'publishrank' ); ?></b><textarea name="local_seo[opening_hours]" rows="2"><?php echo esc_textarea( is_array( $local['opening_hours'] ) ? implode( "\n", $local['opening_hours'] ) : '' ); ?></textarea><small><?php esc_html_e( 'Example: Mo-Fr 09:00-17:00', 'publishrank' ); ?></small></label>
+						<label><b><?php esc_html_e( 'Official profile URLs (one per line)', 'publishrank' ); ?></b><textarea name="local_seo[same_as]" rows="2"><?php echo esc_textarea( is_array( $local['same_as'] ) ? implode( "\n", $local['same_as'] ) : '' ); ?></textarea></label>
 					</div>
 
 				<?php elseif ( 3 === $step ) : ?>
@@ -250,7 +384,7 @@ final class OnboardingPage {
 				<?php elseif ( 5 === $step ) : ?>
 					<span class="rhs-eyebrow"><?php esc_html_e( 'Step 5 · Infrastructure', 'publishrank' ); ?></span>
 					<h2><?php esc_html_e( 'Turn on the technical foundation.', 'publishrank' ); ?></h2>
-					<p class="rhs-lead"><?php esc_html_e( 'These defaults are designed for a publisher site. Existing advanced settings remain available after setup.', 'publishrank' ); ?></p>
+					<p class="rhs-lead"><?php esc_html_e( 'Configure the connected schema graph and technical SEO foundation here. Your site identity and optional LocalBusiness profile were configured in the previous step.', 'publishrank' ); ?></p>
 					<div class="rhs-settings-grid"><?php $toggles = array( 'meta_enabled' => array( 'publishrank_meta_enabled', __( 'SEO metadata', 'publishrank' ), __( 'Title, canonical, robots and social metadata.', 'publishrank' ) ), 'schema_enabled' => array( 'publishrank_schema_enabled', __( 'Connected schema graph', 'publishrank' ), __( 'Organization, WebSite, WebPage and article structured data.', 'publishrank' ) ), 'sitemap_stylesheet' => array( 'publishrank_sitemap_stylesheet', __( 'Sitemap presentation', 'publishrank' ), __( 'Human-readable sitemap stylesheet and publisher-friendly output.', 'publishrank' ) ), 'sitemap_pages' => array( 'publishrank_sitemap_pages_enabled', __( 'Pages in sitemap', 'publishrank' ), __( 'Include public pages in the sitemap infrastructure.', 'publishrank' ) ), 'sitemap_taxonomies' => array( 'publishrank_sitemap_taxonomies_enabled', __( 'Taxonomies in sitemap', 'publishrank' ), __( 'Include eligible public taxonomy archives.', 'publishrank' ) ), 'breadcrumbs' => array( 'publishrank_breadcrumbs_enabled', __( 'Breadcrumbs', 'publishrank' ), __( 'Connect breadcrumb navigation with structured data.', 'publishrank' ) ), 'image_optimizer_enabled' => array( 'publishrank_image_optimizer_enabled', __( 'Image optimizer', 'publishrank' ), __( 'Resize oversized images and create WebP/JPEG derivatives for faster Discover and News pages.', 'publishrank' ) ) ); foreach ( $toggles as $field => $item ) : ?><label class="rhs-setting-card"><input type="checkbox" name="<?php echo esc_attr( $field ); ?>" value="1" <?php checked( get_option( $item[0], true ) ); ?> /><span><b><?php echo esc_html( $item[1] ); ?></b><small><?php echo esc_html( $item[2] ); ?></small></span></label><?php endforeach; ?></div>
 					<div class="rhs-onboarding-fields">
 						<label><b><?php esc_html_e( 'Maximum image width', 'publishrank' ); ?></b><input type="number" name="image_max_width" min="640" max="4000" value="<?php echo esc_attr( get_option( 'publishrank_image_max_width', 2000 ) ); ?>" /></label>
@@ -289,9 +423,9 @@ final class OnboardingPage {
 					<?php if ( ! $complete ) : ?>
 						<a class="prw-exit" href="<?php echo esc_url( $exit_url ); ?>"><?php esc_html_e( 'Exit wizard', 'publishrank' ); ?></a>
 						<span></span>
-						<?php if ( $step > 1 ) : ?><a class="button" href="<?php echo esc_url( Branding::page_url( self::SLUG ) . '&step=' . ( $step - 1 ) ); ?>"><?php esc_html_e( 'Back', 'publishrank' ); ?></a><?php endif; ?>
+						<?php if ( $step > 1 ) : ?><a class="button" href="<?php echo esc_url( Branding::page_url( self::SLUG ) . '&step=' . ( $step - 1 ) . ( ! empty( $_GET['edit'] ) ? '&edit=1' : '' ) ); ?>"><?php esc_html_e( 'Back', 'publishrank' ); ?></a><?php endif; ?>
 						<?php if ( 1 === $step ) : ?>
-							<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( self::SLUG ) . '&step=2' ); ?>"><?php esc_html_e( 'Start configuration', 'publishrank' ); ?> <span>→</span></a>
+							<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( self::SLUG ) . '&step=2' . ( ! empty( $_GET['edit'] ) ? '&edit=1' : '' ) ); ?>"><?php esc_html_e( 'Start configuration', 'publishrank' ); ?> <span>→</span></a>
 						<?php else : ?>
 							<button class="button button-primary rhs-onboarding-next" type="submit"><?php echo esc_html( 6 === $step ? __( 'Finish setup', 'publishrank' ) : __( 'Save & continue', 'publishrank' ) ); ?> <span>→</span></button>
 						<?php endif; ?>

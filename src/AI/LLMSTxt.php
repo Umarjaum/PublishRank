@@ -2,6 +2,8 @@
 /** Serve the site's configurable llms.txt and optional llms-full.txt resources. */
 namespace PublishRankSEO\AI;
 
+defined( 'ABSPATH' ) || exit;
+
 final class LLMSTxt {
 	const OPTION_ENABLED       = 'publishrank_llms_txt_enabled';
 	const OPTION_TITLE         = 'publishrank_llms_txt_title';

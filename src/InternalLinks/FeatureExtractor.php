@@ -2,6 +2,8 @@
 /** Topic, keyword, taxonomy and content-similarity features. */
 namespace PublishRankSEO\InternalLinks;
 
+defined( 'ABSPATH' ) || exit;
+
 final class FeatureExtractor {
 	const STOP_WORDS = array( 'the', 'and', 'for', 'with', 'that', 'this', 'from', 'your', 'you', 'are', 'was', 'were', 'has', 'have', 'had', 'will', 'would', 'can', 'could', 'should', 'about', 'after', 'before', 'into', 'over', 'under', 'than', 'then', 'when', 'where', 'which', 'while', 'their', 'there', 'them', 'they', 'our', 'out', 'but', 'not', 'all', 'any', 'its', 'his', 'her', 'she', 'him', 'who', 'what', 'why', 'how', 'new', 'news', 'said', 'say', 'says' );
 

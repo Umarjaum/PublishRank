@@ -4,6 +4,8 @@ namespace PublishRankSEO\Sitemap;
 
 use PublishRankSEO\Core\Branding;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SitemapStylesheet {
 	public function register() {
 		add_action( 'init', array( $this, 'rewrite' ) );
@@ -28,7 +30,9 @@ final class SitemapStylesheet {
 		header( 'Content-Type: application/xml; charset=UTF-8' );
 		header( 'X-Robots-Tag: noindex' );
 		header( 'Cache-Control: public, max-age=3600' );
-		echo str_replace( array( '%%LOGO%%', '%%CSS%%' ), array( esc_url( Branding::image( 'icon-128x128.png' ) ), esc_url( Branding::asset_url( 'css/sitemap.css' ) ) ), self::xsl() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$css_file = PUBLISHRANK_SEO_PATH . 'assets/css/sitemap.css';
+		$css = is_readable( $css_file ) ? file_get_contents( $css_file ) : '';
+		echo str_replace( array( '%%LOGO%%', '%%CSS%%' ), array( esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ), esc_html( (string) $css ) ), self::xsl() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		exit;
 	}
 
@@ -50,7 +54,7 @@ final class SitemapStylesheet {
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="noindex"/>
 <title>XML Sitemap - PublishRank</title>
-	<link rel="stylesheet" type="text/css" href="%%CSS%%" />
+	<style type="text/css">%%CSS%%</style>
 </head>
 <body>
 <header>

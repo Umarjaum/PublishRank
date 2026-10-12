@@ -6,6 +6,8 @@
  */
 namespace PublishRankSEO\Compatibility;
 
+defined( 'ABSPATH' ) || exit;
+
 final class JNewsAdapter {
 	/**
 	 * Whether a verified JNews integration is available.

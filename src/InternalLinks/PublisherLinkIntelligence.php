@@ -6,6 +6,8 @@ use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Admin\AdminAssets;
 use PublishRankSEO\Redirect\RedirectStore;
 
+defined( 'ABSPATH' ) || exit;
+
 final class PublisherLinkIntelligence {
 	const SLUG = 'publishrank-link-intelligence';
 	const RESULTS_OPTION = 'publishrank_link_intelligence_results';

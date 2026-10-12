@@ -5,6 +5,8 @@ use PublishRankSEO\Meta\HeadOutput;
 use PublishRankSEO\Meta\FrontendOutputRecovery;
 use PublishRankSEO\Meta\LanguageAlternates;
 use PublishRankSEO\Schema\GraphOutput;
+use PublishRankSEO\Schema\SchemaSuite;
+use PublishRankSEO\Admin\SchemaPage;
 use PublishRankSEO\Sitemap\SitemapController;
 use PublishRankSEO\Sitemap\Engine\SitemapCursorStore;
 use PublishRankSEO\Redirect\RedirectController;
@@ -16,6 +18,7 @@ use PublishRankSEO\Admin\DashboardPage;
 use PublishRankSEO\Compatibility\JNewsAdapter;
 use PublishRankSEO\Monitor\NotFoundMonitor;
 use PublishRankSEO\SEO\AdvancedFeatures;
+use PublishRankSEO\SEO\AutomaticArticleSEO;
 use PublishRankSEO\SEO\YoastParityFeatures;
 use PublishRankSEO\SEO\SiteConnections;
 use PublishRankSEO\SEO\LocalSEO;
@@ -48,8 +51,11 @@ use PublishRankSEO\Admin\LLMSTxtPage;
 use PublishRankSEO\Admin\ImageOptimizerPage;
 use PublishRankSEO\Admin\EditorScoreCard;
 use PublishRankSEO\Admin\IndexNowPage;
-use PublishRankSEO\Admin\AnalyticsPage;
+use PublishRankSEO\Admin\PublisherToolkitPage;
+use PublishRankSEO\Admin\HelpDocumentationPage;
 use PublishRankSEO\AnalyticsCollector;
+
+defined( 'ABSPATH' ) || exit;
 
 final class Plugin {
 	private $registry;
@@ -72,6 +78,7 @@ final class Plugin {
 		$this->loader->register( FrontendOutputRecovery::class, true, array( $this->registry ) );
 		$this->loader->register( LanguageAlternates::class, false );
 		$this->loader->register( GraphOutput::class, true, array( $this->registry ) );
+		$this->loader->register( SchemaSuite::class, false );
 		$this->loader->register( SitemapController::class, true );
 		$this->loader->register( SitemapStylesheet::class, false );
 			$this->loader->register( RobotsTxt::class, false );
@@ -82,7 +89,8 @@ final class Plugin {
 		$this->loader->register( AnalyticsCollector::class, false );
 		$this->loader->register( RedirectController::class, false );
 		$this->loader->register( NotFoundMonitor::class, false );
-		$this->loader->register( AdvancedFeatures::class, false );
+			$this->loader->register( AdvancedFeatures::class, false );
+			$this->loader->register( AutomaticArticleSEO::class, false );
 		$this->loader->register( YoastParityFeatures::class, false );
 		$this->loader->register( InternalLinksModule::class, false );
 		$this->loader->register( PublisherLinkIntelligence::class, false );
@@ -116,8 +124,9 @@ final class Plugin {
 				$this->loader->register( ImageOptimizerPage::class, false );
 				$this->loader->register( EditorScoreCard::class, false );
 			$this->loader->register( IndexNowPage::class, false );
-			$this->loader->register( AnalyticsPage::class, false );
 			$this->loader->register( PublisherToolkitPage::class, false );
+			$this->loader->register( HelpDocumentationPage::class, false );
+			$this->loader->register( SchemaPage::class, false );
 		}
 
 		do_action( 'publishrank_seo_loaded', $this );
@@ -131,7 +140,7 @@ $invalidate = static function () { SitemapCursorStore::bump_many( array( 'post',
 			$invalidate_video = static function () { SitemapCursorStore::bump( 'video' ); };
 $invalidate_post = static function ( $post_id = 0 ) {
 $type = $post_id ? get_post_type( $post_id ) : '';
-$providers = array( 'author', 'news' );
+$providers = array( 'author', 'news', 'image', 'video' );
 if ( 'attachment' === $type ) { $providers[] = 'attachment'; } elseif ( 'page' === $type ) { $providers[] = 'page'; } elseif ( $type && 'post' !== $type ) { $providers[] = 'cpt'; } else { $providers[] = 'post'; }
 SitemapCursorStore::bump_many( $providers );
 };
@@ -154,6 +163,7 @@ add_action( 'set_object_terms', $invalidate_term, 20 );
 		add_action( 'update_option_publishrank_sitemap_aliases', $refresh_sitemap_routes, 20 );
 		foreach ( array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_window', 'publishrank_seo_news_post_types', 'publishrank_seo_news_max_urls', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_exclude_categories', 'publishrank_seo_news_keywords', 'publishrank_seo_news_genre' ) as $setting ) { add_action( 'update_option_' . $setting, $invalidate_news, 20 ); }
 			add_action( 'update_option_publishrank_seo_image_sitemap', $invalidate_image, 20 );
+			add_action( 'update_option_publishrank_seo_media_post_types', $invalidate, 20 );
 			add_action( 'update_option_publishrank_image_license_url', $invalidate_image, 20 );
 		add_action( 'update_option_publishrank_seo_video_sitemap', $invalidate_video, 20 );
 		add_action( 'update_option_publishrank_seo_publisher_name', $invalidate, 20 );

@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /** Static regression checks for the bounded sitemap architecture. */
 $root = dirname( __DIR__ );
 $read = static function ( $file ) use ( $root ) { return file_get_contents( $root . '/' . ltrim( $file, '/' ) ); };
@@ -20,7 +21,7 @@ foreach ( array( 1, 2, 10, 100, 1000, 45000, 45001 ) as $shard ) { if ( $shard <
 foreach ( array( 'ID > %d', 'posts_per_page', 'checkpoint_key', 'MAX_SYNC_STEPS', 'PREPARE_HOOK', 'CONTINUE_HOOK', 'wp_schedule_single_event', 'queue_continuation', 'acquire_provider', 'is_complete' ) as $needle ) { if ( false === strpos( $cursor, $needle ) ) { exit( 4 ); } }
 if ( false === strpos( $engine, 'SitemapCursorStore::version' ) || false === strpos( $engine, 'stale_key' ) ) { exit( 5 ); }
 if ( false === strpos( $engine, 'return null' ) || false === strpos( $controller_source, 'Retry-After: 60' ) ) { exit( 8 ); }
-if ( false === strpos( $controller, 'publishrank-([a-z-]+)-sitemap-([0-9]+)' ) ) { exit( 6 ); }
+if ( false === strpos( $controller, 'SitemapUrls::shard_prefix' ) || false === strpos( $controller, '([a-z-]+)-sitemap-([0-9]+)' ) ) { exit( 6 ); }
 foreach ( array( 'publishrank_schema_enabled', 'publishrank_schema_org_description', 'publishrank_schema_legal_name', 'publishrank_schema_founding_date' ) as $needle ) { if ( false === strpos( $settings, $needle ) ) { exit( 9 ); } }
 foreach ( array( 'foundingDate', 'PostalAddress', 'legalName', 'publishrank_schema_enabled' ) as $needle ) { if ( false === strpos( $graph, $needle ) ) { exit( 10 ); } }
 foreach ( array( 'publishrank_meta_enabled', 'og:image:width', 'og:image:height', 'og:image:type', 'article:publisher', 'image_details', 'publisher_profile' ) as $needle ) { if ( false === strpos( $head, $needle ) ) { exit( 11 ); } }

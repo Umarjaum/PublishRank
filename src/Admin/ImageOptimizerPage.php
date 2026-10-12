@@ -3,6 +3,8 @@ namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Core\Branding;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ImageOptimizerPage {
 	const SLUG = 'publishrank-image-optimizer';
 	public function register() { add_action( 'admin_menu', array( $this, 'menu' ), 14 ); add_action( 'admin_post_publishrank_optimize_image', array( $this, 'optimize' ) ); }

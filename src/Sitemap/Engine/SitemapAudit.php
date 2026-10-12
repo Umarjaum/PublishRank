@@ -1,6 +1,8 @@
 <?php
 namespace PublishRankSEO\Sitemap\Engine;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SitemapAudit {
 	/** @return array<string,mixed> */
 	public static function run( $engine, $preview_limit = 10 ) {

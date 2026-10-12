@@ -2,6 +2,8 @@
 /** External link policy enforcement and per-post link accounting. */
 namespace PublishRankSEO\Links;
 
+defined( 'ABSPATH' ) || exit;
+
 final class LinkManager {
 	const COUNTS_META = '_publishrank_link_counts';
 

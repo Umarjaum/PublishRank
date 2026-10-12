@@ -4,8 +4,10 @@ namespace PublishRankSEO\Sitemap\Providers;
 use PublishRankSEO\Sitemap\Engine\SitemapRenderer;
 use PublishRankSEO\Sitemap\Engine\SitemapCursorStore;
 
+defined( 'ABSPATH' ) || exit;
+
 final class AuthorSitemapProvider implements SitemapProviderInterface {
-	const SHARD_SIZE = 45000;
+	const SHARD_SIZE = 50000;
 	public function get_name() { return 'Authors'; }
 	public function get_slug() { return 'author'; }
 	public function is_enabled() { return (bool) get_option( 'publishrank_sitemap_authors_enabled', true ); }
@@ -25,5 +27,5 @@ final class AuthorSitemapProvider implements SitemapProviderInterface {
 		}
 		return SitemapRenderer::urlset( $entries );
 	}
-	private function query_args() { return array( 'who' => 'authors', 'fields' => array( 'ID', 'user_nicename' ) ); }
+		private function query_args() { return array( 'has_published_posts' => true, 'fields' => array( 'ID', 'user_nicename' ) ); }
 }

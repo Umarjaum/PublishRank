@@ -3,6 +3,8 @@ namespace PublishRankSEO\Sitemap;
 
 use PublishRankSEO\Sitemap\Engine\SitemapEngine;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SitemapController {
 	private $engine;
 	public function __construct() { $this->engine = new SitemapEngine(); }
@@ -15,8 +17,9 @@ final class SitemapController {
 		add_rewrite_tag( '%publishrank_sitemap%', '([^&]+)' );
 		$endpoints = array_merge( array( SitemapUrls::base() ), SitemapUrls::aliases() );
 		foreach ( $endpoints as $endpoint ) { add_rewrite_rule( '^' . preg_quote( $endpoint, '/' ) . '\.xml$', 'index.php?publishrank_sitemap=index', 'top' ); }
-		add_rewrite_rule( '^publishrank-([a-z-]+)-sitemap-([0-9]+)\.xml$', 'index.php?publishrank_sitemap=$matches[1]&publishrank_sitemap_shard=$matches[2]', 'top' );
-		add_rewrite_rule( '^publishrank-([a-z-]+)-sitemap\.xml$', 'index.php?publishrank_sitemap=$matches[1]&publishrank_sitemap_shard=1', 'top' );
+		$prefix = preg_quote( SitemapUrls::shard_prefix(), '/' );
+		add_rewrite_rule( '^' . $prefix . '-([a-z-]+)-sitemap-([0-9]+)\.xml$', 'index.php?publishrank_sitemap=$matches[1]&publishrank_sitemap_shard=$matches[2]', 'top' );
+		add_rewrite_rule( '^' . $prefix . '-([a-z-]+)-sitemap\.xml$', 'index.php?publishrank_sitemap=$matches[1]&publishrank_sitemap_shard=1', 'top' );
 		add_rewrite_tag( '%publishrank_sitemap_shard%', '([0-9]+)' );
 	}
 	public function render() {

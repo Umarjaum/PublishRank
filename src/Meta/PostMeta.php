@@ -2,6 +2,8 @@
 /** Post-level SEO fields and sanitization. */
 namespace PublishRankSEO\Meta;
 
+defined( 'ABSPATH' ) || exit;
+
 final class PostMeta {
 	const TITLE = '_publishrank_seo_title';
 	const DESCRIPTION = '_publishrank_seo_description';
@@ -23,6 +25,13 @@ final class PostMeta {
 	const VIDEO_THUMBNAIL = '_publishrank_seo_video_thumbnail';
 	const VIDEO_DURATION = '_publishrank_seo_video_duration';
 	const SCHEMA_TYPE = '_publishrank_seo_schema_type';
+	const FAQ_ITEMS = '_publishrank_seo_faq_items';
+	const VIDEO_URL = '_publishrank_seo_video_url';
+	const VIDEO_EMBED_URL = '_publishrank_seo_video_embed_url';
+	const AUDIO_URL = '_publishrank_seo_audio_url';
+	const AUDIO_DURATION = '_publishrank_seo_audio_duration';
+	const EVENT_START = '_publishrank_seo_event_start';
+	const EVENT_LOCATION = '_publishrank_seo_event_location';
 	const NEWS_ELIGIBLE = '_publishrank_seo_news_eligible';
 	const AUTHOR_NAME = '_publishrank_seo_author_name';
 	const AUTHOR_JOB_TITLE = '_publishrank_seo_author_job_title';
@@ -30,6 +39,49 @@ final class PostMeta {
 	const ACCESSIBLE_FOR_FREE = '_publishrank_seo_accessible_for_free';
 	const CONTENT_TIER = '_publishrank_seo_content_tier';
 	const CITATIONS = '_publishrank_seo_citations';
+
+	/** Meta keys that editors may override and that are exposed to the block editor and REST API. */
+	public static function overridable() {
+		return array(
+			self::TITLE => 'text', self::DESCRIPTION => 'text', self::CANONICAL => 'url', self::OG_TITLE => 'text',
+			self::OG_DESCRIPTION => 'text', self::OG_IMAGE => 'url', self::OG_IMAGE_ALT => 'text', self::ROBOTS => 'robots',
+			self::FOCUS_KEYWORD => 'text',
+		);
+	}
+
+	/** Public post types that support SEO overrides. */
+	public static function post_types() {
+		$types = array_values( get_post_types( array( 'public' => true ), 'names' ) );
+		$types = array_diff( $types, array( 'attachment' ) );
+		return array_values( array_unique( array_filter( (array) apply_filters( 'publishrank_seo_meta_box_post_types', $types ) ) ) );
+	}
+
+	/** Register overrides as post meta so the block editor, REST API and WP-CLI can read and write them. */
+	public static function register_meta() {
+		foreach ( self::post_types() as $post_type ) {
+			foreach ( self::overridable() as $key => $kind ) {
+				register_post_meta(
+					$post_type,
+					$key,
+					array(
+						'type'              => 'string',
+						'single'            => true,
+						'default'           => '',
+						'show_in_rest'      => true,
+						'sanitize_callback' => static function ( $value ) use ( $kind ) {
+							$value = is_scalar( $value ) ? (string) $value : '';
+							if ( 'url' === $kind ) { return PostMeta::sanitize_url( addslashes( $value ) ); }
+							if ( 'robots' === $kind ) { $value = sanitize_text_field( $value ); return '' === trim( $value ) ? '' : ( new MetaGenerator() )->normalize_robots( $value ); }
+							return PostMeta::sanitize_text( addslashes( $value ), 320 );
+						},
+						'auth_callback'     => static function ( $allowed, $meta_key, $post_id ) {
+							return current_user_can( 'edit_post', (int) $post_id );
+						},
+					)
+				);
+			}
+		}
+	}
 
 	public static function get( $post_id, $key, $default = '' ) {
 		$value = get_post_meta( $post_id, $key, true );
@@ -87,22 +139,41 @@ final class PostMeta {
 		if ( isset( $_POST[ self::ROBOTS ] ) ) {
 			$robots = sanitize_text_field( wp_unslash( $_POST[ self::ROBOTS ] ) );
 			// Use the same allow-list as frontend output so editors can safely combine supported directives.
-			update_post_meta( $post_id, self::ROBOTS, ( new MetaGenerator() )->normalize_robots( $robots ) );
+			update_post_meta( $post_id, self::ROBOTS, '' === trim( $robots ) ? '' : ( new MetaGenerator() )->normalize_robots( $robots ) ); // Blank = follow the site default.
 		}
 		if ( isset( $_POST[ self::TWITTER_CARD ] ) ) {
 			$card = sanitize_text_field( wp_unslash( $_POST[ self::TWITTER_CARD ] ) );
 			update_post_meta( $post_id, self::TWITTER_CARD, in_array( $card, array( 'summary', 'summary_large_image' ), true ) ? $card : 'summary_large_image' );
 		}
 		if ( isset( $_POST[ self::SCHEMA_TYPE ] ) ) {
-			$type = sanitize_key( wp_unslash( $_POST[ self::SCHEMA_TYPE ] ) );
-			update_post_meta( $post_id, self::SCHEMA_TYPE, in_array( $type, array( 'NewsArticle', 'Article', 'BlogPosting' ), true ) ? $type : 'NewsArticle' );
+			$type = sanitize_text_field( wp_unslash( $_POST[ self::SCHEMA_TYPE ] ) );
+			update_post_meta( $post_id, self::SCHEMA_TYPE, ( '' === $type || SchemaTypes::resolve( $type ) ) ? $type : '' );
 		}
-		update_post_meta( $post_id, self::ACCESSIBLE_FOR_FREE, isset( $_POST[ self::ACCESSIBLE_FOR_FREE ] ) ? '1' : '0' );
-		update_post_meta( $post_id, self::NEWS_ELIGIBLE, isset( $_POST[ self::NEWS_ELIGIBLE ] ) ? '1' : '0' );
+		foreach ( array( self::VIDEO_URL, self::VIDEO_EMBED_URL, self::AUDIO_URL, self::VIDEO_THUMBNAIL ) as $key ) {
+			if ( isset( $_POST[ $key ] ) ) { update_post_meta( $post_id, $key, self::sanitize_url( $_POST[ $key ] ) ); }
+		}
+		foreach ( array( self::AUDIO_DURATION => 32, self::EVENT_START => 40, self::EVENT_LOCATION => 200 ) as $key => $length ) {
+			if ( isset( $_POST[ $key ] ) ) { update_post_meta( $post_id, $key, self::sanitize_text( $_POST[ $key ], $length ) ); }
+		}
+		if ( isset( $_POST['publishrank_faq_items'] ) && is_array( $_POST['publishrank_faq_items'] ) ) {
+			$faq = array();
+			foreach ( array_slice( $_POST['publishrank_faq_items'], 0, 20 ) as $item ) {
+				if ( ! is_array( $item ) ) { continue; }
+				$q = isset( $item['q'] ) ? self::sanitize_text( $item['q'], 300 ) : '';
+				$a = isset( $item['a'] ) ? sanitize_textarea_field( wp_unslash( $item['a'] ) ) : '';
+				if ( '' !== $q && '' !== $a ) { $faq[] = array( 'q' => $q, 'a' => wp_trim_words( $a, 200, '' ) ); }
+			}
+			update_post_meta( $post_id, self::FAQ_ITEMS, $faq );
+		}
+		if ( ! empty( $_POST['publishrank_seo_article_fields'] ) ) { update_post_meta( $post_id, self::ACCESSIBLE_FOR_FREE, isset( $_POST[ self::ACCESSIBLE_FOR_FREE ] ) ? '1' : '0' ); }
+		if ( isset( $_POST[ self::NEWS_ELIGIBLE ] ) ) {
+			update_post_meta( $post_id, self::NEWS_ELIGIBLE, '1' === (string) wp_unslash( $_POST[ self::NEWS_ELIGIBLE ] ) ? '1' : '-1' );
+		}
 		update_post_meta( $post_id, self::CORNERSTONE, isset( $_POST[ self::CORNERSTONE ] ) ? '1' : '0' );
 		if ( isset( $_POST[ self::PRIMARY_CATEGORY ] ) ) {
 			$category_id = absint( wp_unslash( $_POST[ self::PRIMARY_CATEGORY ] ) );
 			update_post_meta( $post_id, self::PRIMARY_CATEGORY, term_exists( $category_id, 'category' ) ? (string) $category_id : '' );
 		}
+		SeoData::flush( (int) $post_id );
 	}
 }

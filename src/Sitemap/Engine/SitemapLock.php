@@ -1,6 +1,8 @@
 <?php
 namespace PublishRankSEO\Sitemap\Engine;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SitemapLock {
 	const TTL = 30;
 	const PREPARATION_TTL = 60;

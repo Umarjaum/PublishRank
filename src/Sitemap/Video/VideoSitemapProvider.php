@@ -4,8 +4,12 @@ namespace PublishRankSEO\Sitemap\Video;
 use PublishRankSEO\Sitemap\Providers\AbstractPostProvider;
 use PublishRankSEO\Meta\PostMeta;
 
+defined( 'ABSPATH' ) || exit;
+
 final class VideoSitemapProvider extends AbstractPostProvider {
-	protected $slug = 'video'; protected $name = 'Videos'; protected $post_types = array( 'post' );
+	protected $slug = 'video'; protected $name = 'Videos'; protected $post_types = array( 'post', 'page' );
+	public function __construct() { $this->post_types = $this->media_post_types(); }
+	protected function requires_extra() { return true; }
 	public function is_enabled() { return (bool) get_option( 'publishrank_seo_video_sitemap', true ); }
 	protected function extra( $post_id ) {
 		$content = (string) get_post_field( 'post_content', $post_id ); $items = array();

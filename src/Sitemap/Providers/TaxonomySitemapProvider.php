@@ -4,8 +4,10 @@ namespace PublishRankSEO\Sitemap\Providers;
 use PublishRankSEO\Sitemap\Engine\SitemapRenderer;
 use PublishRankSEO\Sitemap\Engine\SitemapCursorStore;
 
+defined( 'ABSPATH' ) || exit;
+
 final class TaxonomySitemapProvider implements SitemapProviderInterface {
-	const SHARD_SIZE = 45000;
+	const SHARD_SIZE = 50000;
 	public function get_name() { return 'Taxonomies'; }
 	public function get_slug() { return 'taxonomy'; }
 	public function is_enabled() { return (bool) get_option( 'publishrank_sitemap_taxonomies_enabled', true ); }

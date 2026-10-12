@@ -4,6 +4,8 @@ namespace PublishRankSEO\SEO;
 
 use PublishRankSEO\Meta\PostMeta;
 
+defined( 'ABSPATH' ) || exit;
+
 final class EditorialAudit {
 	/** @param \WP_Post $post @return array<string,mixed> */
 	public function analyze( $post ) {

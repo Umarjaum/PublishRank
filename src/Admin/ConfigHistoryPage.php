@@ -3,12 +3,17 @@
 namespace PublishRankSEO\Admin;
 use PublishRankSEO\ChangeControl\SnapshotStore;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ConfigHistoryPage {
 	const SLUG = 'publishrank-seo-config-history';
 	public function register() {
-		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'SEO Configuration History', 'publishrank' ), __( 'Configuration History', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_action( 'admin_menu', array( $this, 'menu' ), 30 );
 		add_action( 'admin_post_publishrank_snapshot_create', array( $this, 'create' ) );
 		add_action( 'admin_post_publishrank_snapshot_restore', array( $this, 'restore' ) );
+	}
+	public function menu() {
+		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'SEO Configuration History', 'publishrank' ), __( 'Configuration History', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
 	}
 	public function create() { AdminAssets::guard( 'publishrank_snapshot_create' ); SnapshotStore::snapshot( __( 'Manual SEO configuration snapshot', 'publishrank' ) ); AdminAssets::done( self::SLUG, 'success', __( 'Snapshot created.', 'publishrank' ) ); }
 	public function restore() { AdminAssets::guard( 'publishrank_snapshot_restore' ); $id = isset( $_POST['snapshot_id'] ) ? sanitize_text_field( wp_unslash( $_POST['snapshot_id'] ) ) : ''; $r = SnapshotStore::restore( $id ); if ( is_wp_error( $r ) ) { AdminAssets::done( self::SLUG, 'error', $r->get_error_message() ); } AdminAssets::done( self::SLUG, 'success', __( 'Configuration restored. A safety snapshot was created first.', 'publishrank' ) ); }

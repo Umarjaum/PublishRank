@@ -4,6 +4,8 @@ namespace PublishRankSEO\SEO;
 
 use PublishRankSEO\Meta\PostMeta;
 
+defined( 'ABSPATH' ) || exit;
+
 final class YoastParityFeatures {
 	/** Register update-safe WordPress integrations. */
 	public function register() {

@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /** Standalone tests for pure internal-link intelligence helpers. */
 function wp_strip_all_tags( $value ) { return strip_tags( (string) $value ); }
 function get_the_title( $post ) { return $post->post_title; }

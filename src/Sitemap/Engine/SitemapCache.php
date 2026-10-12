@@ -1,6 +1,8 @@
 <?php
 namespace PublishRankSEO\Sitemap\Engine;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SitemapCache {
 	const TTL = 3600;
 

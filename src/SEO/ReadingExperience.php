@@ -2,6 +2,8 @@
 /** Reading-time and table-of-contents shortcodes plus heading anchors. */
 namespace PublishRankSEO\SEO;
 
+defined( 'ABSPATH' ) || exit;
+
 final class ReadingExperience {
 	public function register() {
 		add_shortcode( 'publishrank_reading_time', array( $this, 'reading_time_shortcode' ) );

@@ -1,11 +1,15 @@
 <?php
 /** Emits one connected JSON-LD graph for the current document. */
+// Article schema allow-list: 'NewsArticle', 'Article', 'BlogPosting', 'LiveBlogPosting'.
 namespace PublishRankSEO\Schema;
 
 use PublishRankSEO\Core\OutputRegistry;
 use PublishRankSEO\Core\PublicationProfile;
 use PublishRankSEO\Meta\PostMeta;
 use PublishRankSEO\SEO\BreadcrumbEngine;
+use PublishRankSEO\SEO\NewsroomSignals;
+
+defined( 'ABSPATH' ) || exit;
 
 final class GraphOutput {
 	/** @var OutputRegistry */
@@ -20,7 +24,7 @@ final class GraphOutput {
 		$identity = $this->identity_entity();
 		$graph = array( $identity, $this->website(), $this->webpage() );
 		$list = null;
-		if ( is_singular( 'post' ) ) {
+		if ( $this->is_editorial_article() ) {
 			$graph[] = $this->article();
 			$graph[] = $this->article_author();
 		}
@@ -31,6 +35,7 @@ final class GraphOutput {
 				$graph[2]['mainEntity'] = array( '@id' => trailingslashit( ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical() ) . '#itemlist' );
 			}
 		}
+		if ( get_option( 'publishrank_schema_faq_auto', true ) ) {
 		$automated = ( new SchemaAutomation() )->for_current_document();
 		if ( is_array( $automated ) && ! empty( $automated['faq'] ) ) {
 			$faq = $automated['faq'];
@@ -38,20 +43,40 @@ final class GraphOutput {
 			$faq['mainEntityOfPage'] = array( '@id' => trailingslashit( ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical() ) . '#webpage' );
 			$graph[] = $faq;
 		}
+		}
 		$graph = apply_filters( 'publishrank_schema_graph', $graph, $this );
 		if ( ! is_array( $graph ) ) { $graph = array(); }
 		$graph = array_values( array_filter( $graph, 'is_array' ) );
 		if ( is_singular() && false === function_exists( 'yoast_breadcrumb' ) ) { $graph[] = ( new BreadcrumbEngine() )->schema(); }
 		$entities = PublicationProfile::identity_is_person() ? 'person,website,webpage' : 'organization,website,webpage';
-		if ( is_singular( 'post' ) ) { $entities .= ',article'; }
+		if ( $this->is_editorial_article() ) { $entities .= ',article'; }
 		if ( $list ) { $entities .= ',itemlist'; }
 		echo '<!-- Structured data graph begin; entities=' . esc_attr( $entities ) . " -->\n";
 		$custom = $this->custom_schema(); if ( $custom ) { $graph[] = $custom; }
-		echo '<script type="application/ld+json">' . wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
-		echo "<!-- Structured data graph end -->\n";
-	}
+		foreach ( ( new SchemaBuilder() )->extra_nodes() as $node ) { $graph[] = $node; }
+			echo '<script type="application/ld+json">' . wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . '</script>' . "\n";
+			echo "<!-- Structured data graph end -->\n";
+		}
 
-	/** @return string Stable @id anchor for the site identity entity. */
+		/** @return array<string, mixed>|null */
+		private function custom_schema() {
+			if ( ! get_option( 'publishrank_custom_schema_enabled', false ) ) {
+				return null;
+			}
+			$raw = trim( (string) get_option( 'publishrank_custom_schema_jsonld', '' ) );
+			if ( '' === $raw ) {
+				return null;
+			}
+			$data = json_decode( $raw, true );
+			if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $data ) || empty( $data ) ) {
+				return null;
+			}
+			// The outer graph owns @context; avoid nesting a second graph.
+			unset( $data['@context'], $data['@graph'] );
+			return empty( $data ) ? null : $data;
+		}
+
+		/** @return string Stable @id anchor for the site identity entity. */
 	private function identity_id() {
 		return trailingslashit( PublicationProfile::primary_url() ) . ( PublicationProfile::identity_is_person() ? '#person' : '#organization' );
 	}
@@ -156,7 +181,7 @@ final class GraphOutput {
 		$canonical = ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical();
 		$url = trailingslashit( $canonical );
 		$page = array(
-			'@type' => is_singular() ? 'WebPage' : 'CollectionPage',
+			'@type' => is_singular() ? ( new SchemaBuilder() )->current_webpage_type() : 'CollectionPage',
 			'@id' => $url . '#webpage',
 			'url' => $canonical,
 			'name' => wp_get_document_title(),
@@ -170,9 +195,9 @@ final class GraphOutput {
 			$page['datePublished'] = get_post_time( DATE_W3C, true, $post );
 			$page['dateModified'] = get_post_modified_time( DATE_W3C, true, $post );
 			$page['breadcrumb'] = array( '@id' => $url . '#breadcrumb' );
-			if ( is_singular( 'post' ) ) { $page['mainEntity'] = array( '@id' => $url . '#article' ); }
-			$image = $post instanceof \WP_Post ? get_the_post_thumbnail_url( $post, 'full' ) : '';
-			if ( ! $image && $post instanceof \WP_Post ) { $image = (string) PostMeta::get( $post->ID, PostMeta::OG_IMAGE, get_option( 'publishrank_seo_default_social_image', '' ) ); }
+			if ( $this->is_editorial_article() ) { $page['mainEntity'] = array( '@id' => $url . '#article' ); }
+			$found = $post instanceof \WP_Post ? \PublishRankSEO\Meta\SeoData::image_for_post( $post ) : null;
+			$image = $found ? (string) $found['url'] : (string) get_option( 'publishrank_seo_default_social_image', '' );
 			if ( $image ) {
 				$image_id = function_exists( 'attachment_url_to_postid' ) ? absint( attachment_url_to_postid( $image ) ) : 0;
 				$image_meta = $image_id ? wp_get_attachment_metadata( $image_id ) : array();
@@ -189,8 +214,9 @@ final class GraphOutput {
 		$site_url = trailingslashit( PublicationProfile::primary_url() );
 		$author = $post instanceof \WP_Post ? get_userdata( $post->post_author ) : false;
 		$author_url = $author ? (string) get_author_posts_url( $post->post_author ) : $site_url;
-		$schema_type = (string) PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, 'NewsArticle' );
-		$schema_type = in_array( $schema_type, array( 'NewsArticle', 'Article', 'BlogPosting' ), true ) ? $schema_type : 'NewsArticle';
+			$format = NewsroomSignals::format( $post );
+			$schema_type = (string) PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, 'NewsArticle' );
+			$schema_type = 'live' === $format ? 'LiveBlogPosting' : ( array_key_exists( $schema_type, SchemaTypes::article_types() ) ? $schema_type : 'NewsArticle' );
 		$description = (string) PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' );
 		$description = $description ? wp_strip_all_tags( $description ) : wp_strip_all_tags( get_the_excerpt( $post ) );
 		$author_node_id = trailingslashit( $author_url ) . '#author';
@@ -210,14 +236,16 @@ final class GraphOutput {
 			'author' => array( '@id' => $author_node_id ),
 			'publisher' => array( '@id' => $this->identity_id(), 'name' => $identity['name'] ),
 			'mainEntityOfPage' => array( '@id' => trailingslashit( $permalink ) . '#webpage' ),
-			'articleSection' => $this->article_section( $post ),
-			'wordCount' => str_word_count( wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) ) ),
+				'articleSection' => $this->article_section( $post ),
+				'genre' => NewsroomSignals::genre( $post ),
+				'articleBody' => wp_trim_words( wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) ), 500, '' ),
+				'wordCount' => str_word_count( wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) ) ),
 			'copyrightYear' => (int) get_post_time( 'Y', true, $post ),
 			'copyrightHolder' => array( '@id' => $this->identity_id() ),
 		);
 		if ( isset( $identity['logo'] ) ) { $article['publisher']['logo'] = $identity['logo']; }
-		$image = get_the_post_thumbnail_url( $post, 'full' );
-		if ( ! $image ) { $image = (string) PostMeta::get( $post->ID, PostMeta::OG_IMAGE, get_option( 'publishrank_seo_default_social_image', '' ) ); }
+		$found = \PublishRankSEO\Meta\SeoData::image_for_post( $post );
+		$image = $found ? (string) $found['url'] : (string) get_option( 'publishrank_seo_default_social_image', '' );
 		if ( $image ) {
 			$image_id = function_exists( 'attachment_url_to_postid' ) ? absint( attachment_url_to_postid( $image ) ) : 0;
 			$image_meta = $image_id ? wp_get_attachment_metadata( $image_id ) : array();
@@ -233,8 +261,13 @@ final class GraphOutput {
 			$citations = array_filter( array_map( 'esc_url_raw', preg_split( '/\r\n|\r|\n|,/', (string) PostMeta::get( $post->ID, PostMeta::CITATIONS, '' ) ) ) );
 			if ( $citations ) { $article['citation'] = array_values( $citations ); }
 		$video = $this->video_object( $post, $image );
-		if ( $video ) { $article['video'] = $video; }
-		return $article;
+			if ( $video ) { $article['video'] = $video; }
+			$dateline = sanitize_text_field( (string) get_post_meta( $post->ID, '_publishrank_seo_dateline', true ) );
+			if ( $dateline ) { $article['dateline'] = $dateline; }
+			$location = sanitize_text_field( (string) get_post_meta( $post->ID, '_publishrank_seo_location_created', true ) );
+			if ( $location ) { $article['locationCreated'] = array( '@type' => 'Place', 'name' => $location ); }
+			if ( 'live' === $format ) { $article['coverageStartTime'] = get_post_time( DATE_W3C, true, $post ); }
+			return $article;
 	}
 
 	/** @return array<string, mixed> A stable author node connected to the article by @id. */
@@ -265,6 +298,10 @@ final class GraphOutput {
 		$image = array( '@type' => 'ImageObject', '@id' => $id, 'url' => PublicationProfile::asset_url( $clean ), 'contentUrl' => PublicationProfile::asset_url( $clean ) );
 		if ( ! empty( $meta['width'] ) ) { $image['width'] = absint( $meta['width'] ); }
 		if ( ! empty( $meta['height'] ) ) { $image['height'] = absint( $meta['height'] ); }
+		$path = (string) wp_parse_url( $clean, PHP_URL_PATH );
+		$filetype = wp_check_filetype( $path );
+		$mime = ! empty( $filetype['type'] ) ? sanitize_text_field( $filetype['type'] ) : '';
+		if ( $mime ) { $image['encodingFormat'] = $mime; }
 		return $image;
 	}
 
@@ -295,7 +332,7 @@ final class GraphOutput {
 			'@type' => 'VideoObject',
 			'@id' => trailingslashit( (string) get_permalink( $post ) ) . '#video',
 			'name' => wp_strip_all_tags( (string) get_the_title( $post ) ),
-			'description' => wp_strip_all_tags( get_the_excerpt( $post ) ),
+			'description' => ( function ( $seo ) { return isset( $seo['description'] ) ? (string) $seo['description'] : ''; } )( \PublishRankSEO\Meta\SeoData::for_post( $post ) ),
 			'thumbnailUrl' => PublicationProfile::asset_url( $thumbnail ? $thumbnail : $fallback_image ),
 			'uploadDate' => get_post_time( DATE_W3C, true, $post ),
 			'contentUrl' => $content_url,
@@ -308,6 +345,12 @@ final class GraphOutput {
 	private function article_section( $post ) {
 		$categories = get_the_category( $post->ID );
 		return ! empty( $categories ) ? (string) $categories[0]->name : __( 'News', 'publishrank' );
+	}
+
+	private function is_editorial_article() {
+		$post = get_queried_object();
+		$type = $post instanceof \WP_Post ? get_post_type_object( $post->post_type ) : false;
+		return is_singular() && $type && $type->public && $type->publicly_queryable && ! in_array( $post->post_type, array( 'page', 'attachment' ), true );
 	}
 
 	/** @return array<string, mixed>|null */

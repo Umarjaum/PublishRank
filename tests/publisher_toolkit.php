@@ -1,11 +1,12 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /** Source-level regression checks for PublishRank-native publisher toolkit workflows. */
 $root = dirname( __DIR__ );
 $page = file_get_contents( $root . '/src/Admin/PublisherToolkitPage.php' );
 $plugin = file_get_contents( $root . '/src/Core/Plugin.php' );
 $changelog = file_get_contents( $root . '/changelog.txt' );
 $checks = array(
-    'toolkit module wired into plugin loader' => false !== strpos( $plugin, 'PublisherToolkitPage::class' ),
+    'toolkit module wired into plugin loader with correct namespace import' => false !== strpos( $plugin, 'use PublishRankSEO\\Admin\\PublisherToolkitPage;' ) && false !== strpos( $plugin, 'PublisherToolkitPage::class' ),
     'bulk SEO update handler registered' => false !== strpos( $page, 'publishrank_bulk_seo_update' ),
     'per-post edit permission enforced' => false !== strpos( $page, "current_user_can( 'edit_post', " . '$id' . " )" ),
     'bulk update bounded to 100 records' => false !== strpos( $page, 'array_slice( $ids, 0, 100 )' ),

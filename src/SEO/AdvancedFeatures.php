@@ -3,19 +3,60 @@
 namespace PublishRankSEO\SEO;
 
 use PublishRankSEO\Meta\PostMeta;
+use PublishRankSEO\Meta\SeoData;
+
+defined( 'ABSPATH' ) || exit;
 
 final class AdvancedFeatures {
 	/** Register supported frontend and editor hooks. */
 	public function register() {
-		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
+		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ), 10, 2 );
+		add_action( 'init', array( PostMeta::class, 'register_meta' ), 20 );
 		add_action( 'save_post', array( PostMeta::class, 'save' ), 10 );
 		add_action( 'wp_head', array( $this, 'render_pagination_links' ), 2 );
 		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_noindex_posts' ), 10, 2 );
 	}
 
 	/** Add editorial controls to posts without changing theme presentation. */
-	public function add_meta_box() {
-		add_meta_box( 'publishrank-seo-meta', __( 'PublishRank', 'publishrank' ), array( $this, 'render_meta_box' ), 'post', 'normal', 'high' );
+	public function add_meta_box( $post_type = '', $post = null ) {
+		if ( $post_type && in_array( $post_type, PostMeta::post_types(), true ) ) {
+			add_meta_box( 'publishrank-seo-meta', __( 'PublishRank', 'publishrank' ), array( $this, 'render_meta_box' ), $post_type, 'normal', 'high' );
+		}
+	}
+
+	/** Article/news-only controls apply to editorial post types, not pages. */
+	private function is_article_type( $post_type ) {
+		$types = array();
+		foreach ( preg_split( '/[\s,]+/', (string) get_option( 'publishrank_seo_news_post_types', 'post' ), -1, PREG_SPLIT_NO_EMPTY ) as $type ) { $types[] = sanitize_key( $type ); }
+		$object = get_post_type_object( (string) $post_type );
+		return $object && $object->public && $object->publicly_queryable && ! in_array( $post_type, array( 'page', 'attachment' ), true ) && in_array( $post_type, $types, true );
+	}
+
+	/** Read-only summary of what visitors and search engines will get, and where each value came from. */
+	private function render_resolved_summary( $post ) {
+		$seo = SeoData::for_post( $post );
+		if ( empty( $seo ) ) { return; }
+		$labels = array(
+			'title' => __( 'Title', 'publishrank' ), 'description' => __( 'Description', 'publishrank' ), 'canonical' => __( 'Canonical URL', 'publishrank' ),
+			'robots' => __( 'Robots', 'publishrank' ), 'image' => __( 'Social image', 'publishrank' ), 'image_alt' => __( 'Image alt text', 'publishrank' ),
+		);
+		$image = isset( $seo['image'] ) && is_array( $seo['image'] ) ? $seo['image'] : array();
+		$values = array(
+			'title' => $seo['title'], 'description' => $seo['description'], 'canonical' => $seo['canonical'], 'robots' => $seo['robots'],
+			'image' => isset( $image['url'] ) ? $image['url'] : '', 'image_alt' => isset( $image['alt'] ) ? $image['alt'] : '',
+		);
+		$names = array( 'override' => __( 'Your override', 'publishrank' ), 'auto' => __( 'Automatic', 'publishrank' ), 'featured' => __( 'Featured image', 'publishrank' ), 'content' => __( 'First image in content', 'publishrank' ), 'attachment' => __( 'Attachment', 'publishrank' ), 'none' => __( 'Not available', 'publishrank' ) );
+		echo '<div class="notice notice-info inline"><p><strong>' . esc_html__( 'What will be published', 'publishrank' ) . '</strong> — ' . esc_html__( 'fetched automatically from this post. Fill in a field below only to override it; leave it empty to stay automatic.', 'publishrank' ) . '</p>';
+		echo '<table class="widefat striped" style="margin-bottom:10px"><tbody>';
+		foreach ( $labels as $key => $label ) {
+			$source = isset( $seo['sources'][ $key ] ) ? $seo['sources'][ $key ] : 'auto';
+			echo '<tr><th style="width:140px">' . esc_html( $label ) . '</th><td>' . ( '' !== (string) $values[ $key ] ? esc_html( (string) $values[ $key ] ) : '<em>' . esc_html__( 'empty', 'publishrank' ) . '</em>' ) . '</td><td style="width:170px"><span class="description">' . esc_html( isset( $names[ $source ] ) ? $names[ $source ] : $source ) . '</span></td></tr>';
+		}
+		echo '</tbody></table>';
+		if ( isset( $image['alt_source'] ) && 'none' === $image['alt_source'] && ! empty( $image['url'] ) ) {
+			echo '<p class="description">' . esc_html__( 'This image has no alt text. Add it in the Media Library or in the social image alt override below.', 'publishrank' ) . '</p>';
+		}
+		echo '</div>';
 	}
 
 	/** @param \WP_Post $post Render fields. */
@@ -42,7 +83,18 @@ final class AdvancedFeatures {
 				PostMeta::CITATIONS => __( 'Article citations', 'publishrank' ),
 		);
 		$primary_category = absint( PostMeta::get( $post->ID, PostMeta::PRIMARY_CATEGORY, 0 ) );
-		echo '<p>' . esc_html__( 'These fields control technical search output only; the JNews theme remains responsible for presentation.', 'publishrank' ) . '</p>';
+		$seo         = SeoData::for_post( $post );
+		$seo_image   = isset( $seo['image'] ) && is_array( $seo['image'] ) ? $seo['image'] : array();
+		$placeholders = array(
+			PostMeta::TITLE => isset( $seo['title'] ) ? $seo['title'] : '', PostMeta::DESCRIPTION => isset( $seo['description'] ) ? $seo['description'] : '',
+			PostMeta::CANONICAL => isset( $seo['canonical'] ) ? $seo['canonical'] : '', PostMeta::OG_TITLE => isset( $seo['title'] ) ? $seo['title'] : '',
+			PostMeta::OG_DESCRIPTION => isset( $seo['description'] ) ? $seo['description'] : '', PostMeta::OG_IMAGE => isset( $seo_image['url'] ) ? $seo_image['url'] : '',
+			PostMeta::OG_IMAGE_ALT => isset( $seo_image['alt'] ) ? $seo_image['alt'] : '',
+		);
+		$is_article = $this->is_article_type( $post->post_type );
+		$this->render_resolved_summary( $post );
+			echo '<div class="notice notice-success inline"><p><strong>' . esc_html__( 'Automatic SEO is active.', 'publishrank' ) . '</strong> ' . esc_html__( 'Write the article title and content normally. PublishRank automatically generates the SEO title, meta description, social metadata, NewsArticle schema, author, dates, canonical URL and image fallbacks. The fields below are optional overrides.', 'publishrank' ) . '</p></div>';
+			echo '<p>' . esc_html__( 'These optional fields control technical search output only; the JNews theme remains responsible for presentation.', 'publishrank' ) . '</p>';
 			if ( $analysis['keyword'] ) {
 			echo '<div class="notice notice-info inline"><p><strong>' . esc_html__( 'Keyword density', 'publishrank' ) . '</strong>: ' . esc_html( $analysis['keyword'] ) . ' — ' . esc_html( (string) $analysis['count'] ) . ' occurrence(s), ' . esc_html( (string) $analysis['density'] ) . '%, ' . esc_html( $analysis['status'] ) . '.</p><p class="description">' . esc_html__( 'Healthy guidance is 0.5%–3%; this is an editorial signal, not a ranking guarantee.', 'publishrank' ) . '</p></div>';
 		} else {
@@ -53,17 +105,17 @@ final class AdvancedFeatures {
 			$value = PostMeta::get( $post->ID, $key );
 			echo '<p><label for="' . esc_attr( $key ) . '"><strong>' . esc_html( $label ) . '</strong></label><br />';
 			if ( 'textarea' === $type ) {
-				echo '<textarea class="widefat" rows="3" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '">' . esc_textarea( $value ) . '</textarea>';
+				echo '<textarea class="widefat" rows="3" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" placeholder="' . esc_attr( isset( $placeholders[ $key ] ) ? $placeholders[ $key ] : '' ) . '">' . esc_textarea( $value ) . '</textarea>';
 			} else {
-				echo '<input class="widefat" type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $value ) . '" />';
+				echo '<input class="widefat" type="text" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $value ) . '" placeholder="' . esc_attr( isset( $placeholders[ $key ] ) ? $placeholders[ $key ] : '' ) . '" />';
 			}
-			echo '<div class="notice ' . esc_attr( $audit['score'] >= 75 ? 'notice-success' : ( $audit['score'] >= 50 ? 'notice-warning' : 'notice-error' ) ) . ' inline"><p><strong>' . esc_html__( 'Editorial SEO audit', 'publishrank' ) . '</strong>: ' . esc_html( (string) $audit['score'] ) . '/100 — ' . esc_html( sprintf( /* translators: 1: word count, 2: reading ease. */ __( '%1$d words; reading ease %2$s.', 'publishrank' ), (int) $audit['words'], (string) $audit['reading_ease'] ) ) . '</p>';
-			if ( ! empty( $audit['issues'] ) ) {
-				echo '<ul>'; foreach ( array_slice( $audit['issues'], 0, 5 ) as $issue ) { echo '<li>' . esc_html( $issue ) . '</li>'; } echo '</ul>';
-			} else { echo '<p>' . esc_html__( 'Core editorial checks pass. Review the article as a journalist before publishing.', 'publishrank' ) . '</p>'; }
-			echo '</div>';
 			echo '</p>';
 		}
+		echo '<div class="notice ' . esc_attr( $audit['score'] >= 75 ? 'notice-success' : ( $audit['score'] >= 50 ? 'notice-warning' : 'notice-error' ) ) . ' inline"><p><strong>' . esc_html__( 'Editorial SEO audit', 'publishrank' ) . '</strong>: ' . esc_html( (string) $audit['score'] ) . '/100 — ' . esc_html( sprintf( /* translators: 1: word count, 2: reading ease. */ __( '%1$d words; reading ease %2$s.', 'publishrank' ), (int) $audit['words'], (string) $audit['reading_ease'] ) ) . '</p>';
+		if ( ! empty( $audit['issues'] ) ) {
+			echo '<ul>'; foreach ( array_slice( $audit['issues'], 0, 5 ) as $issue ) { echo '<li>' . esc_html( $issue ) . '</li>'; } echo '</ul>';
+		} else { echo '<p>' . esc_html__( 'Core editorial checks pass. Review the article as a journalist before publishing.', 'publishrank' ) . '</p>'; }
+		echo '</div>';
 		echo '<hr style="margin:14px 0;" /><h3 style="margin:0 0 4px;">' . esc_html__( 'Keyphrase strategy', 'publishrank' ) . '</h3>';
 		echo '<p class="description">' . esc_html__( 'Primary and secondary keyphrases feed density analysis, schema keywords and Google News keywords.', 'publishrank' ) . '</p>';
 		$value = PostMeta::get( $post->ID, PostMeta::PRIMARY_KEYPHRASE );
@@ -82,17 +134,18 @@ final class AdvancedFeatures {
 		echo '</select></p>';
 		echo '<p><label><input type="checkbox" name="' . esc_attr( PostMeta::CORNERSTONE ) . '" value="1" ' . checked( PostMeta::get( $post->ID, PostMeta::CORNERSTONE, '0' ), '1', false ) . ' /> ' . esc_html__( 'Mark as cornerstone content', 'publishrank' ) . '</label></p>';
 		echo '<p><label for="' . esc_attr( PostMeta::ROBOTS ) . '"><strong>' . esc_html__( 'Robots directives', 'publishrank' ) . '</strong></label><br />';
-		echo '<input class="widefat" type="text" id="' . esc_attr( PostMeta::ROBOTS ) . '" name="' . esc_attr( PostMeta::ROBOTS ) . '" value="' . esc_attr( PostMeta::get( $post->ID, PostMeta::ROBOTS, 'index,follow' ) ) . '" placeholder="index,follow,max-image-preview:large" />';
+		echo '<input class="widefat" type="text" id="' . esc_attr( PostMeta::ROBOTS ) . '" name="' . esc_attr( PostMeta::ROBOTS ) . '" value="' . esc_attr( PostMeta::get( $post->ID, PostMeta::ROBOTS, '' ) ) . '" placeholder="' . esc_attr( (string) get_option( 'publishrank_seo_default_robots', 'index,follow' ) ) . '" />';
 		echo '<span class="description">' . esc_html__( 'Use comma-separated supported directives, e.g. noindex,follow. noindex prevents this URL from appearing in search results; it does not block crawling. A robots.txt Disallow rule is different.', 'publishrank' ) . '</span></p>';
-			echo '<p><label for="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '"><strong>' . esc_html__( 'Article schema type', 'publishrank' ) . '</strong></label><br />';
-			echo '<select class="widefat" id="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '" name="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '">';
-			foreach ( array( 'NewsArticle' => __( 'NewsArticle', 'publishrank' ), 'Article' => __( 'Article', 'publishrank' ), 'BlogPosting' => __( 'BlogPosting', 'publishrank' ) ) as $schema_type => $schema_label ) {
-				echo '<option value="' . esc_attr( $schema_type ) . '" ' . selected( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, 'NewsArticle' ), $schema_type, false ) . '>' . esc_html( $schema_label ) . '</option>';
-			}
-			echo '</select><span class="description">' . esc_html__( 'Choose how this article is described in structured data. Search engines decide whether and how to show rich results.', 'publishrank' ) . '</span></p>';
-			echo '<p><label for="' . esc_attr( PostMeta::TWITTER_CARD ) . '"><strong>' . esc_html__( 'X/Twitter card', 'publishrank' ) . '</strong></label><br /><select class="widefat" id="' . esc_attr( PostMeta::TWITTER_CARD ) . '" name="' . esc_attr( PostMeta::TWITTER_CARD ) . '">';
+		if ( $is_article ) {
+				$news_eligible = '-1' !== (string) get_post_meta( $post->ID, PostMeta::NEWS_ELIGIBLE, true );
+				echo '<p><label><input type="checkbox" name="' . esc_attr( PostMeta::NEWS_ELIGIBLE ) . '" value="1" ' . checked( $news_eligible, true, false ) . ' /> ' . esc_html__( 'Include this article in the Google News Sitemap', 'publishrank' ) . '</label><br /><span class="description">' . esc_html__( 'New articles are included automatically when public, indexable, and within the selected freshness window.', 'publishrank' ) . '</span></p>';
+		}
+				echo '<p><label for="' . esc_attr( PostMeta::TWITTER_CARD ) . '"><strong>' . esc_html__( 'X/Twitter card', 'publishrank' ) . '</strong></label><br /><select class="widefat" id="' . esc_attr( PostMeta::TWITTER_CARD ) . '" name="' . esc_attr( PostMeta::TWITTER_CARD ) . '">';
 		foreach ( array( 'summary_large_image' => __( 'Summary with large image', 'publishrank' ), 'summary' => __( 'Summary', 'publishrank' ) ) as $card => $label ) { echo '<option value="' . esc_attr( $card ) . '" ' . selected( PostMeta::get( $post->ID, PostMeta::TWITTER_CARD, 'summary_large_image' ), $card, false ) . '>' . esc_html( $label ) . '</option>'; }
-		echo '</select></p><p><label><input type="checkbox" name="' . esc_attr( PostMeta::ACCESSIBLE_FOR_FREE ) . '" value="1" ' . checked( PostMeta::get( $post->ID, PostMeta::ACCESSIBLE_FOR_FREE, '1' ), '1', false ) . ' /> ' . esc_html__( 'Article is accessible for free', 'publishrank' ) . '</label></p>';
+		echo '</select></p>';
+		if ( $is_article ) {
+			echo '<input type="hidden" name="publishrank_seo_article_fields" value="1" /><p><label><input type="checkbox" name="' . esc_attr( PostMeta::ACCESSIBLE_FOR_FREE ) . '" value="1" ' . checked( PostMeta::get( $post->ID, PostMeta::ACCESSIBLE_FOR_FREE, '1' ), '1', false ) . ' /> ' . esc_html__( 'Article is accessible for free', 'publishrank' ) . '</label></p>';
+		}
 	}
 
 	private function render_repeater( $post_id, $key, $label, $description, $max ) {

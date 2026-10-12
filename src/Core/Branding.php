@@ -2,6 +2,8 @@
 /** Brand assets and shared admin URLs. */
 namespace PublishRankSEO\Core;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Branding {
 	const MENU_SLUG = 'publishrank-seo-dashboard';
 	const WEBSITE_URL = 'https://publishrank.netlify.app';
@@ -19,7 +21,7 @@ final class Branding {
 	}
 
 	public static function version() {
-		return defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '2.9.7';
+		return defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '2.9.40';
 	}
 
 	/** @param string $page Admin page slug. */

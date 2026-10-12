@@ -37,7 +37,7 @@ final class DashboardPage {
 			'manage_options',
 			Branding::MENU_SLUG,
 			array( $this, 'render' ),
-			Branding::image( 'menu-icon-20x20.png' ),
+			add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank-menu-icon-v2.png' ) ),
 			58
 		);
 		add_submenu_page( Branding::MENU_SLUG, __( 'Dashboard', 'publishrank' ), __( 'Dashboard', 'publishrank' ), 'manage_options', Branding::MENU_SLUG, array( $this, 'render' ) );
@@ -61,14 +61,22 @@ final class DashboardPage {
 			$indexnow  = get_option( 'publishrank_indexnow_enabled', false ) ? __( 'On', 'publishrank' ) : __( 'Off', 'publishrank' );
 			$urls      = array( SitemapUrls::index_url() => __( 'Sitemap index', 'publishrank' ) );
 		if ( get_option( 'publishrank_seo_news_enabled', true ) ) {
-			$urls[ home_url( '/publishrank-news-sitemap.xml' ) ] = __( 'Google News sitemap', 'publishrank' );
+				$urls[ SitemapUrls::shard_url( 'news', 1 ) ] = __( 'Google News sitemap', 'publishrank' );
 		}
 
 			echo '<div class="wrap">';
 			AdminAssets::header( __( 'PublishRank', 'publishrank' ), __( 'Advanced Sitemap & SEO Plugin — built for news sites.', 'publishrank' ) );
 			AdminAssets::render_flash();
 			?>
-			<div class="rhs-banner"><img src="<?php echo esc_url( Branding::image( 'publishrank-banner-publisher.png' ) ); ?>" alt="<?php esc_attr_e( 'PublishRank — Enterprise SEO Infrastructure for WordPress Publishers', 'publishrank' ); ?>" loading="lazy" /></div>
+				<div class="rhs-welcome-banner">
+					<div class="rhs-welcome-banner__copy">
+						<p class="rhs-welcome-banner__eyebrow"><?php esc_html_e( 'Welcome to PublishRank', 'publishrank' ); ?></p>
+						<h2><?php esc_html_e( 'Your newsroom SEO is ready to grow.', 'publishrank' ); ?></h2>
+						<p><?php esc_html_e( 'PublishRank automatically connects article metadata, NewsArticle schema, News Sitemaps, IndexNow notifications, and technical SEO health in one workspace.', 'publishrank' ); ?></p>
+						<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( 'publishrank-onboarding' ) ); ?>"><?php esc_html_e( 'Review your setup', 'publishrank' ); ?></a>
+					</div>
+					<div class="rhs-welcome-banner__image"><img src="<?php echo esc_url( Branding::image( 'publishrank-banner-publisher.png' ) ); ?>" alt="<?php esc_attr_e( 'PublishRank — Enterprise SEO Infrastructure for WordPress Publishers', 'publishrank' ); ?>" loading="lazy" /></div>
+				</div>
 			<div class="rhs-grid">
 			<div class="rhs-card rhs-score">
 				<p class="rhs-label"><?php esc_html_e( 'SEO health', 'publishrank' ); ?></p>
@@ -111,6 +119,7 @@ final class DashboardPage {
 					<a class="button" href="<?php echo esc_url( Branding::page_url( RobotsPage::SLUG ) ); ?>"><?php esc_html_e( 'Robots.txt', 'publishrank' ); ?></a>
 					<a class="button" href="<?php echo esc_url( Branding::page_url( 'publishrank-seo-diagnostics' ) ); ?>"><?php esc_html_e( 'Diagnostics & scan', 'publishrank' ); ?></a>
 				</p>
+				<?php do_action( 'publishrank_seo_dashboard_actions' ); ?>
 			</div>
 		</div>
 		<h2><?php esc_html_e( 'Technical health', 'publishrank' ); ?></h2>

@@ -2,6 +2,10 @@
 /** Virtual robots.txt additions: sitemap discovery, optional AI-crawler blocking, custom rules. */
 namespace PublishRankSEO\Robots;
 
+use PublishRankSEO\Sitemap\SitemapUrls;
+
+defined( 'ABSPATH' ) || exit;
+
 final class RobotsTxt {
 	public function register() {
 		add_filter( 'robots_txt', array( $this, 'filter' ), 20, 2 );
@@ -32,10 +36,7 @@ final class RobotsTxt {
 			$lines[] = '';
 		}
 		if ( get_option( 'publishrank_robots_sitemaps', 1 ) ) {
-			$urls = array( home_url( '/publishrank-sitemap.xml' ) );
-			if ( get_option( 'publishrank_seo_news_enabled', 1 ) ) {
-				$urls[] = home_url( '/publishrank-news-sitemap.xml' );
-			}
+				$urls = array( SitemapUrls::index_url() );
 			foreach ( $urls as $url ) {
 				if ( false === stripos( $output . $custom, $url ) ) {
 					$lines[] = 'Sitemap: ' . esc_url_raw( $url );

@@ -1,20 +1,21 @@
-# PublishRank SEO
+# PublishRank
 
 **Free, open-source WordPress SEO plugin for publishers, blogs, and content-heavy websites.**  
 *Enterprise SEO Infrastructure for WordPress Publishers*
 
-PublishRank SEO brings technical SEO tools for WordPress into a publisher-focused plugin. It is built for news websites, newspapers, magazines, digital publishers, editorial teams, blogs, and general WordPress sites. If you are researching a **free WordPress SEO plugin**, a **Yoast SEO alternative**, a **Rank Math alternative**, or a plugin with **News SEO and XML news sitemaps**, review PublishRank's feature set below.
+PublishRank brings technical SEO tools for WordPress into a publisher-focused plugin. It is built for news websites, newspapers, magazines, digital publishers, editorial teams, blogs, and general WordPress sites. If you are researching a **free WordPress SEO plugin**, a **Yoast SEO alternative**, a **Rank Math alternative**, or a plugin with **News SEO and XML news sitemaps**, review PublishRank's feature set below.
 
 > PublishRank is an independent project. It is not affiliated with, endorsed by, or a clone of Yoast or Rank Math. Features and workflows differ, so evaluate compatibility before switching from another SEO plugin.
 
 ## Current version
 
-- **Version:** 2.9.15
+- **Version:** 2.9.40
 - **License:** GPL-2.0-or-later
 - **WordPress:** Requires 6.3 or later
 - **PHP:** Requires 7.4 or later
 - **Official website and documentation:** https://publishrank.netlify.app/
 - **Developer website:** https://umarjaum.netlify.app/
+- **Source repository:** https://github.com/Umarjaum/PublishRank
 
 ## Features
 
@@ -36,12 +37,12 @@ PublishRank SEO brings technical SEO tools for WordPress into a publisher-focuse
 
 1. Download the ZIP from the project's Releases page (when a release is published) or obtain the plugin ZIP from the project maintainer.
 2. In WordPress, open **Plugins → Add New Plugin → Upload Plugin**.
-3. Upload the ZIP, install it, and activate **PublishRank SEO**.
+3. Upload the ZIP, install it, and activate **PublishRank**.
 4. Open **PublishRank** in the dashboard and complete onboarding.
 5. Review metadata, schema, sitemap, and robots settings before using it on a production site.
 6. If replacing another SEO plugin, plan the migration and ensure only one plugin controls each metadata/schema output to avoid duplicates.
 
-For source-code development, clone or download this repository and place the `publishrank` plugin directory in `wp-content/plugins/`. The main plugin file is `publishrank.php`.
+For source-code development, clone or download the [PublishRank source repository](https://github.com/Umarjaum/PublishRank) and place the `publishrank` plugin directory in `wp-content/plugins/`. The main plugin file is `publishrank.php`.
 
 ## Is PublishRank a Yoast SEO or Rank Math alternative?
 
@@ -77,7 +78,7 @@ These lightweight scripts are not a substitute for testing in a real WordPress i
 
 ## License
 
-PublishRank SEO is distributed under the GNU General Public License, version 2 or later. See [`LICENSE.txt`](LICENSE.txt).
+PublishRank is distributed under the GNU General Public License, version 2 or later. See [`LICENSE.txt`](LICENSE.txt).
 
 ## Search terms
 

@@ -13,6 +13,8 @@ use PublishRankSEO\Core\OutputRegistry;
 use PublishRankSEO\Sitemap\SitemapController;
 use PublishRankSEO\Sitemap\Engine\SitemapAudit;
 
+defined( 'ABSPATH' ) || exit;
+
 final class DiagnosticsPage {
 	/** @var OutputRegistry */
 	private $registry;

@@ -2,6 +2,8 @@
 /** Minimal safe security headers plus feed noindex via X-Robots-Tag. */
 namespace PublishRankSEO\Security;
 
+defined( 'ABSPATH' ) || exit;
+
 final class SecurityHeaders {
 	public function register() {
 		add_action( 'send_headers', array( $this, 'send' ) );

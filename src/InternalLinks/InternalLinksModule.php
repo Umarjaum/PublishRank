@@ -2,6 +2,8 @@
 /** Module bootstrap for the content graph and internal-link intelligence. */
 namespace PublishRankSEO\InternalLinks;
 
+defined( 'ABSPATH' ) || exit;
+
 final class InternalLinksModule {
 	public function register() {
 		if ( ! Store::enabled() ) {

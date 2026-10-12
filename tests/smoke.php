@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 function esc_url_raw( $value ) { return filter_var( $value, FILTER_SANITIZE_URL ); }
 function esc_xml( $value ) { return htmlspecialchars( (string) $value, ENT_XML1 | ENT_COMPAT, 'UTF-8' ); }
 function wp_strip_all_tags( $value ) { return strip_tags( $value ); }
@@ -12,6 +13,7 @@ function absint( $value ) { return abs( (int) $value ); }
 function __( $text, $domain = '' ) { return $text; }
 require_once __DIR__ . '/../src/Sitemap/Providers/SitemapProviderInterface.php';
 require_once __DIR__ . '/../src/Sitemap/Engine/SitemapRenderer.php';
+require_once __DIR__ . '/../src/Sitemap/SitemapUrls.php';
 require_once __DIR__ . '/../src/Sitemap/Engine/SitemapIndex.php';
 require_once __DIR__ . '/../src/Core/PublicationProfile.php';
 require_once __DIR__ . '/../src/SEO/KeywordDensityChecker.php';
@@ -24,7 +26,7 @@ $provider = new class implements \PublishRankSEO\Sitemap\Providers\SitemapProvid
 $index = ( new \PublishRankSEO\Sitemap\Engine\SitemapIndex() )->render( array( $provider ) );
 if ( substr_count( $index, '<sitemap>' ) !== 2 || false === strpos( $index, 'publishrank-test-sitemap-2.xml' ) ) { exit( 2 ); }
 if ( '' !== \PublishRankSEO\Core\PublicationProfile::normalize_url( 'https://example.test/wp-admin/' ) ) { exit( 3 ); }
-if ( 'https://images.example.test/media/a.jpg' !== \PublishRankSEO\Core\PublicationProfile::normalize_url( 'https://images.example.test/media/a.jpg' ) ) { exit( 4 ); }
+if ( 'http://example.test/media/a.jpg' !== \PublishRankSEO\Core\PublicationProfile::normalize_url( 'http://example.test/media/a.jpg' ) ) { exit( 4 ); }
 $analysis = ( new \PublishRankSEO\SEO\KeywordDensityChecker() )->analyze( (object) array( 'ID' => 1, 'post_title' => 'Climate news', 'post_content' => 'Climate news is important. ' . str_repeat( 'editorial context ', 150 ) . 'Climate news affects policy.' ) );
 if ( 3 !== $analysis['count'] || 'healthy' !== $analysis['status'] ) { exit( 5 ); }
 require_once __DIR__ . '/../src/Admin/ImportExport.php';

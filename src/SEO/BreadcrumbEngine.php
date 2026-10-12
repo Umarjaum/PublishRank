@@ -4,6 +4,8 @@ namespace PublishRankSEO\SEO;
 use PublishRankSEO\Core\PublicationProfile;
 use PublishRankSEO\Meta\MetaGenerator;
 
+defined( 'ABSPATH' ) || exit;
+
 final class BreadcrumbEngine {
 	const ERROR_TRANSIENT = 'publishrank_breadcrumb_errors';
 

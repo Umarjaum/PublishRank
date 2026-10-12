@@ -5,6 +5,8 @@ namespace PublishRankSEO\Admin;
 use PublishRankSEO\AI\LLMSTxt;
 use PublishRankSEO\Core\Branding;
 
+defined( 'ABSPATH' ) || exit;
+
 final class LLMSTxtPage {
 	const SLUG = 'publishrank-llms-txt';
 

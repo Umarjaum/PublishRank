@@ -19,6 +19,11 @@ final class NotFoundMonitor {
 				? ( ! empty( $referrer_parts['scheme'] ) ? $referrer_parts['scheme'] . '://' : 'https://' ) . $referrer_parts['host'] . ( isset( $referrer_parts['port'] ) ? ':' . absint( $referrer_parts['port'] ) : '' ) . ( isset( $referrer_parts['path'] ) ? $referrer_parts['path'] : '/' )
 				: '';
 		}
+		// Throttle writes so a scanner or bot flood cannot cause unbounded option rewrites.
+		$bucket = 'publishrank_404_rate_' . gmdate( 'YmdHi' );
+		$hits   = (int) get_transient( $bucket );
+		if ( $hits >= 60 ) { return; }
+		set_transient( $bucket, $hits + 1, 90 );
 		$agent = strtolower( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
 		$category = false !== strpos( $agent, 'bot' ) || false !== strpos( $agent, 'spider' ) || false !== strpos( $agent, 'crawler' ) ? 'crawler' : ( false !== strpos( $agent, 'mobile' ) ? 'mobile' : 'browser' );
 		$log = get_option( 'publishrank_seo_404_log', array() ); $log = is_array( $log ) ? $log : array(); $found = false;
@@ -34,7 +39,11 @@ final class NotFoundMonitor {
 		unset( $entry );
 		if ( ! $found ) { $now = current_time( 'mysql', true );
 			$log[] = array( 'path' => $path, 'time' => $now, 'first_seen' => $now, 'last_seen' => $now, 'count' => 1, 'referrer' => $referrer, 'agent_category' => $category, 'resolved' => false ); }
-		usort( $log, static function ( $a, $b ) { return strcmp( (string) ( $b['last_seen'] ?? '' ), (string) ( $a['last_seen'] ?? '' ) ); } );
-		update_option( 'publishrank_seo_404_log', array_slice( $log, 0, 500 ), false );
+		if ( count( $log ) > 500 ) {
+			// Evict the least-recently-seen entries so new junk paths cannot displace frequently hit ones.
+			usort( $log, static function ( $a, $b ) { return strcmp( (string) ( $b['last_seen'] ?? '' ), (string) ( $a['last_seen'] ?? '' ) ); } );
+			$log = array_slice( $log, 0, 500 );
+		}
+		update_option( 'publishrank_seo_404_log', array_values( $log ), false );
 	}
 }

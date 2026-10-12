@@ -2,6 +2,8 @@
 /** Keyset-batched construction of the internal-link content graph. */
 namespace PublishRankSEO\InternalLinks;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Scanner {
 	const STATE_KEY = 'publishrank_internal_links_scan_state';
 
