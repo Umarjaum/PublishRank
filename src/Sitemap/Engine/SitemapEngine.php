@@ -15,6 +15,14 @@ use PublishRankSEO\Sitemap\Video\VideoSitemapProvider;
 defined( 'ABSPATH' ) || exit;
 
 final class SitemapEngine {
+	/** Sitemap protocol: 50 MB uncompressed per file. */
+	const MAX_BYTES = 52428800;
+	const ERROR_OPTION = 'publishrank_seo_sitemap_last_error';
+	/** Store a sanitized failure (no paths, no stack trace) for the admin diagnostics screen. */
+	public static function record_error( $slug, $message ) {
+		$message = trim( preg_replace( '#(?:[A-Za-z]:)?[\\/][^\s:]+#', '[path]', wp_strip_all_tags( (string) $message ) ) );
+		update_option( self::ERROR_OPTION, array( 'provider' => sanitize_key( $slug ), 'message' => substr( $message, 0, 300 ), 'time' => time() ), false );
+	}
 	private $cache;
 	private $lock;
 	private $providers = array();
@@ -37,17 +45,37 @@ final class SitemapEngine {
 		// remain discoverable after its timestamp has left the configured window.
 		$cached = 'news' === $slug ? false : $this->cache->get( $slug, $shard );
 		if ( false !== $cached && '' !== $cached ) { return $cached; }
-		if ( method_exists( $provider, 'prepare_cursor' ) && ! SitemapCursorStore::is_ready( $slug, $shard ) ) { SitemapCursorStore::request_preparation(); return null; }
-			if ( ! $this->lock->acquire( $slug, $shard ) ) {
-				$stale = get_transient( $this->stale_key( $slug, $shard ) );
-				return 'news' !== $slug && false !== $stale ? $stale : $provider->render_shard( $shard );
+		if ( method_exists( $provider, 'prepare_cursor' ) && ! SitemapCursorStore::is_ready( $slug, $shard ) ) {
+			// Do not depend on WP-Cron: advance the cursor a bounded number of steps inline first.
+			$this->prepare_inline( $provider, $slug );
+			if ( ! SitemapCursorStore::is_ready( $slug, $shard ) ) { SitemapCursorStore::request_preparation(); return null; }
+		}
+		// The News provider has no shared state, so it needs no render lock.
+		$locked = 'news' !== $slug;
+		if ( $locked && ! $this->lock->acquire( $slug, $shard ) ) {
+			$stale = get_transient( $this->stale_key( $slug, $shard ) );
+			return false !== $stale ? $stale : $provider->render_shard( $shard );
 		}
 		try {
-			$xml = $provider->render_shard( $shard );
+			try {
+				$xml = $provider->render_shard( $shard );
+			} catch ( \Throwable $e ) {
+				self::record_error( $slug, $e->getMessage() );
+				return false;
+			}
+			if ( is_string( $xml ) && strlen( $xml ) > self::MAX_BYTES ) {
+				self::record_error( $slug, sprintf( 'Shard %d exceeds the 50 MB uncompressed sitemap limit; lower the provider shard size.', $shard ) );
+				return false;
+			}
 			$ready = ! method_exists( $provider, 'prepare_cursor' ) || SitemapCursorStore::is_ready( $slug, $shard );
 				if ( $xml && $ready && 'news' !== $slug ) { $this->cache->set( $slug, $shard, $xml ); set_transient( $this->stale_key( $slug, $shard ), $xml, DAY_IN_SECONDS ); }
 			return $xml;
-		} finally { $this->lock->release( $slug, $shard ); }
+		} finally { if ( $locked ) { $this->lock->release( $slug, $shard ); } }
+	}
+	/** Bounded synchronous cursor progress, so a missing or disabled WP-Cron cannot leave a shard unavailable. */
+	private function prepare_inline( $provider, $slug ) {
+		if ( ! $this->lock->acquire_provider( $slug ) ) { return; }
+		try { $provider->prepare_cursor( SitemapCursorStore::INLINE_STEPS ); } finally { $this->lock->release_provider( $slug ); }
 	}
 	public function clear_cache() { $this->cache->clear(); }
 	private function stale_key( $slug, $shard ) { return 'publishrank_sitemap_stale_' . sanitize_key( $slug ) . '_' . absint( $shard ) . '_' . SitemapCursorStore::version( $slug ); }

@@ -7,6 +7,8 @@ use PublishRankSEO\Meta\PostMeta;
 defined( 'ABSPATH' ) || exit;
 
 final class VideoSitemapProvider extends AbstractPostProvider {
+	/** Media blocks make each URL large; 5,000 URLs per file keeps every file well under the 50 MB limit. */
+	protected function shard_size() { return 5000; }
 	protected $slug = 'video'; protected $name = 'Videos'; protected $post_types = array( 'post', 'page' );
 	public function __construct() { $this->post_types = $this->media_post_types(); }
 	protected function requires_extra() { return true; }

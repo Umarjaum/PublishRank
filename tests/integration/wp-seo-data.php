@@ -1,18 +1,15 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /**
  * Integration test: runs against a real WordPress install (any DB, e.g. SQLite).
  *   WP_LOAD=/path/to/wp-load.php php tests/integration/wp-seo-data.php
  * Verifies automatic SEO data (title, description, canonical, images, alt text) and that per-post overrides win.
  */
-$mode = isset( $argv[1] ) ? $argv[1] : 'runner';
+$mode = isset( $argv[1] ) ? $argv[1] : 'run';
 $self = escapeshellarg( __FILE__ );
 $wp_load = getenv( 'WP_LOAD' ) ?: dirname( __DIR__, 5 ) . '/wp-load.php';
 putenv( 'WP_ENVIRONMENT_TYPE=local' ); // allows localhost URLs in the test site.
-if ( 'runner' === $mode ) { // Boot like a real site: activate in one process, test in another.
-	passthru( PHP_BINARY . " $self activate", $rc1 );
-	passthru( PHP_BINARY . " $self run", $rc2 );
-	exit( $rc1 || $rc2 ? 1 : 0 );
-}
+// Run activation separately when needed: php tests/integration/wp-seo-data.php activate
 $_SERVER['HTTP_HOST']   = 'localhost:8765';
 $_SERVER['REQUEST_URI'] = '/';
 putenv( 'WP_LOAD=' . $wp_load );

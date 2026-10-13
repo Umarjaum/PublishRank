@@ -156,6 +156,9 @@ final class PublicationProfile {
 			'owner_url'     => $get( 'publishrank_identity_owner_url' ),
 			'owner_logo'    => $get( 'publishrank_identity_owner_logo' ),
 			'copyright_holder' => $get( 'publishrank_identity_copyright_holder' ),
+			'founder'        => $get( 'publishrank_schema_founder' ),
+			'founding_location' => $get( 'publishrank_schema_founding_location' ),
+			'knows_about'    => $get( 'publishrank_schema_knows_about' ),
 		);
 	}
 

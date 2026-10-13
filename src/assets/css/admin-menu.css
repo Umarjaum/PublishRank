@@ -1,0 +1,6 @@
+/* Admin menu and toolbar icon alignment for PublishRank (scoped to the plugin's own menu/toolbar nodes). */
+#adminmenu #toplevel_page_publishrank-seo-dashboard > a{display:flex;align-items:center;min-height:34px}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image{width:32px!important;height:34px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img{width:32px!important;height:32px!important;padding:0!important;margin:0!important;object-fit:contain}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name{line-height:34px;padding-left:0!important;margin-left:0!important}
+.ab-top-menu #wp-admin-bar-publishrank-welcome .ab-icon{font-family:dashicons;vertical-align:middle;margin-right:4px}

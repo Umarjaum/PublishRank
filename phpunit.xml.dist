@@ -1,2 +1,0 @@
-<?xml version="1.0"?>
-<phpunit colors="true"><testsuites><testsuite name="publishrank"><directory suffix=".php">tests</directory></testsuite></testsuites></phpunit>

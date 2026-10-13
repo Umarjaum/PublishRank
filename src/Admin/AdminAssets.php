@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 final class AdminAssets {
 	public function register() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
-		add_action( 'admin_head', array( $this, 'menu_alignment_css' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'menu_alignment_css' ) );
 		add_action( 'admin_bar_menu', array( $this, 'welcome_admin_bar' ), 90 );
 	}
 
@@ -19,9 +19,9 @@ final class AdminAssets {
 		$wp_admin_bar->add_node( array( 'id' => 'publishrank-welcome', 'parent' => 'top-secondary', 'title' => '<span class="ab-icon dashicons dashicons-chart-line"></span><span class="ab-label">' . esc_html__( 'Welcome to PublishRank', 'publishrank' ) . '</span>', 'href' => esc_url( Branding::page_url( Branding::MENU_SLUG ) ), 'meta' => array( 'title' => __( 'Welcome to PublishRank', 'publishrank' ) ) ) );
 	}
 
-	/** Keep the custom top-level icon centered on every wp-admin screen. */
+	/** Enqueue the small static stylesheet that keeps the top-level menu icon centered. */
 	public function menu_alignment_css() {
-		echo '<style id="publishrank-menu-alignment">.rhs-header__icon,.rhs-header__logo{width:40px!important;height:40px!important}.rhs-header__icon{flex:0 0 40px!important}.rhs-header__icon .dashicons{width:40px!important;height:40px!important;font-size:40px!important;line-height:40px!important}.rhs-header__logo{object-fit:contain!important}#adminmenu #toplevel_page_publishrank-seo-dashboard > a{display:flex;align-items:center;min-height:34px}#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image{width:32px!important;height:34px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center}#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img{width:32px!important;height:32px!important;padding:0!important;margin:0!important;object-fit:contain}#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name{line-height:34px;padding-left:0!important;margin-left:0!important}.publishrank-settings-actions{clear:both;padding:12px 0}.publishrank-settings-actions--top{border-bottom:1px solid #dcdcde;margin:0 0 18px}.publishrank-settings-actions--bottom{border-top:1px solid #dcdcde;margin-top:18px}.publishrank-settings-actions .button-primary{min-width:220px}.ab-top-menu #wp-admin-bar-publishrank-welcome .ab-icon{font-family:dashicons;vertical-align:middle;margin-right:4px}</style>';
+		wp_enqueue_style( 'publishrank-seo-menu', Branding::asset_url( 'css/admin-menu.css' ), array(), Branding::version() );
 	}
 
 	public function enqueue() {

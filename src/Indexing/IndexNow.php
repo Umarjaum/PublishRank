@@ -54,7 +54,7 @@ final class IndexNow {
 		status_header( 200 );
 		header( 'Content-Type: text/plain; charset=utf-8' );
 		header( 'X-Content-Type-Options: nosniff' );
-		echo $key; // The endpoint intentionally returns only the verification key.
+		echo esc_html( $key ); // The endpoint intentionally returns only the verification key.
 		exit;
 	}
 

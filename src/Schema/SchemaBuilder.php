@@ -174,12 +174,16 @@ final class SchemaBuilder {
 		$items = get_post_meta( $post->ID, PostMeta::FAQ_ITEMS, true );
 		if ( empty( $items ) || ! is_array( $items ) ) { return array(); }
 		$questions = array();
-		foreach ( $items as $item ) {
-			if ( ! is_array( $item ) || empty( $item['q'] ) || empty( $item['a'] ) ) { continue; }
+		$allowed_html = array( 'a' => array( 'href' => true ), 'p' => array(), 'br' => array(), 'ul' => array(), 'ol' => array(), 'li' => array(), 'strong' => array(), 'em' => array(), 'b' => array(), 'i' => array() );
+		foreach ( array_slice( $items, 0, 20 ) as $item ) {
+			if ( ! is_array( $item ) ) { continue; }
+			$q = trim( wp_strip_all_tags( (string) ( $item['q'] ?? '' ) ) );
+			$a = trim( wp_kses( (string) ( $item['a'] ?? '' ), $allowed_html ) );
+			if ( '' === $q || '' === trim( wp_strip_all_tags( $a ) ) ) { continue; }
 			$questions[] = array(
 				'@type' => 'Question',
-				'name'  => wp_strip_all_tags( (string) $item['q'] ),
-				'acceptedAnswer' => array( '@type' => 'Answer', 'text' => wp_strip_all_tags( (string) $item['a'] ) ),
+				'name'  => $q,
+				'acceptedAnswer' => array( '@type' => 'Answer', 'text' => $a ),
 			);
 		}
 		if ( empty( $questions ) ) { return array(); }

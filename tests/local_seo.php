@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /** Focused unit checks for Local SEO profile validation and JSON-LD construction. */
 define( 'ABSPATH', __DIR__ );
 function sanitize_text_field( $v ) { return trim( strip_tags( (string) $v ) ); }

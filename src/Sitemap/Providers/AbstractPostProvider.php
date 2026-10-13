@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
 abstract class AbstractPostProvider implements SitemapProviderInterface {
 	const SHARD_SIZE = 50000;
 	protected $post_types = array();
+	/** URLs per file. Sitemap protocol maximum is 50,000 URLs and 50 MB uncompressed; media providers use smaller files because each URL carries image/video blocks. */
+	protected function shard_size() { return self::SHARD_SIZE; }
 	protected $slug = 'post';
 	protected $name = 'Posts';
 	public function get_name() { return $this->name; }
@@ -16,15 +18,15 @@ abstract class AbstractPostProvider implements SitemapProviderInterface {
 	public function is_enabled() { return true; }
 	public function get_shard_count() {
 		$query = new \WP_Query( array( 'post_type' => $this->post_types, 'post_status' => 'publish', 'posts_per_page' => 1, 'no_found_rows' => false, 'fields' => 'ids', 'meta_query' => $this->robots_query() ) );
-		return max( 1, (int) ceil( (int) $query->found_posts / self::SHARD_SIZE ) );
+		return max( 1, (int) ceil( (int) $query->found_posts / $this->shard_size() ) );
 	}
 	public function get_lastmod() {
 		$query = new \WP_Query( array( 'post_type' => $this->post_types, 'post_status' => 'publish', 'posts_per_page' => 1, 'orderby' => 'modified', 'order' => 'DESC', 'no_found_rows' => true, 'fields' => 'ids' ) );
 		return ! empty( $query->posts ) ? get_post_modified_time( DATE_W3C, true, (int) $query->posts[0] ) : '';
 	}
-	public function prepare_cursor( $steps = 2 ) { SitemapCursorStore::prepare_posts( $this->get_slug(), $this->query_args(), self::SHARD_SIZE, $steps ); }
+	public function prepare_cursor( $steps = 2 ) { SitemapCursorStore::prepare_posts( $this->get_slug(), $this->query_args(), $this->shard_size(), $steps ); }
 	public function render_shard( $shard ) {
-		$post_ids = SitemapCursorStore::post_page( $this->get_slug(), $this->query_args(), $shard, self::SHARD_SIZE );
+		$post_ids = SitemapCursorStore::post_page( $this->get_slug(), $this->query_args(), $shard, $this->shard_size() );
 		$entries = array();
 		if ( null === $post_ids ) { return SitemapRenderer::urlset( $entries, $this->namespaces() ); }
 		foreach ( $post_ids as $post_id ) {

@@ -1,4 +1,45 @@
+= 2.9.43 =
+* Fix (News sitemap): rebuilt the provider as a bounded, UTC-based query. It no longer uses the keyset cursor store or WP-Cron, so a new article appears on the next request instead of after a background job, and no 503 is returned for News.
+* Fix: News publication window now compares `post_date_gmt` against UTC (previously a site-timezone relative date query), and `publication_date` is always the original publish time.
+* Fix: titles are decoded and escaped exactly once (WordPress stores typographic entities such as &#8217;); articles with no title are skipped instead of emitted blank; `<news:language>` is normalised to an ISO 639 code (zh-cn / zh-tw for Chinese) and parenthetical text is removed from the publication name, per Google's specification.
+* Fix: News entries are now excluded for noindex set by PublishRank, Yoast SEO or Rank Math, for password-protected posts, and for URLs that are empty or off-site.
+* Change: `<news:genres>` and `<news:keywords>` are no longer part of Google's News sitemap specification and are emitted only if the `publishrank_news_emit_legacy_tags` filter returns true. Settings are unchanged.
+* Fix: cache invalidation now also runs on status transitions (publish, trash, unpublish, scheduled publish) and when News eligibility, robots, title or canonical meta changes.
+* Fix: cursor-backed sitemaps advance a bounded number of steps inline when a shard is requested, so a disabled or stalled WP-Cron can no longer leave a shard on HTTP 503; incomplete cursors that stop progressing for 24 hours restart automatically; overdue follow-up events are cleared.
+* Fix: HTTP responses. Unknown or out-of-range sitemap URLs return 404, generation failures return 500 and are recorded, XML is always UTF-8, buffered output is discarded before the XML declaration, HEAD requests are supported, and WordPress canonical redirects can no longer rewrite sitemap URLs.
+* Change: image and video sitemaps use 5,000 URLs per file (protocol limit remains 50,000 URLs / 50 MB; News stays at 1,000). Files over 50 MB are refused and reported instead of served.
+* Added: Sitemap Health now shows News diagnostics (enabled, public URL, index membership, window, eligible count, XML validity, last generation, skip reasons, last error) and cursor / WP-Cron health.
+* Added: LiveBlogPosting. Only posts explicitly set to the Live Blog Post schema type (or the live news format) are marked up; titles and categories containing "live" no longer trigger it. New Live coverage panel with coverage start/end and individually timestamped updates, emitted as liveBlogUpdate BlogPosting entries. Coverage times are never derived from the publish date.
+* Fix: manual and auto-detected FAQ blocks no longer produce duplicate FAQPage nodes; FAQ answers are sanitised; the schema graph is de-duplicated (shared @id, identical FAQ sets, one primary article entity per page).
+* Added: optional Speakable markup through the `publishrank_schema_speakable_selectors` filter (no selectors are invented).
+* Attribution: the front-end source comment now names PublishRank SEO and links the official site. It is emitted once, only in front-end HTML (never admin, AJAX, REST, feeds, embeds or sitemaps), and is not stored in content. See docs/ATTRIBUTION.md for the WordPress.org guideline conflict.
+
+= 2.9.42 =
+* Plugin Review fixes: admin menu/toolbar CSS is now a static enqueued stylesheet (no inline style or script tags in admin output); bulk-edit "select all" moved into admin.js.
+* Frontend SEO recovery now uses WordPress's template-enhancement output buffer (WordPress 6.9+) instead of opening its own buffer.
+* All remaining table-name SQL now uses wpdb::prepare() with %i identifiers.
+* Editor score-card JavaScript is shipped readable, not minified. Neutral grey admin theme.
+* Escaped remaining late-output cases, removed a silenced-error call, and documented the optional external link check in the readme External Services section.
+* Fix: admin.js closed its wrapper early, so the insert-link confirmation and scan auto-submit ran without jQuery.
+* Fix: recovered <title> tag was followed by a literal \n instead of a newline.
+
+= 2.9.41 =
+* Setup wizard: one-time settings (publisher identity, Organization/Person details, social profiles, site verification, language/country/timezone, homepage metadata, content scope) now live in an 8-step setup wizard that opens as a modal on activation.
+* Fresh installs are locked to the wizard on PublishRank screens until the required fields (publisher type, name, country) are saved; the rest of wp-admin is never blocked. Sites upgrading from earlier versions keep the non-blocking reminder.
+* Settings page: moved fields replaced by an "Edit in Setup Wizard" shortcut; ongoing controls (output, indexing, News window and limits, sitemaps, breadcrumbs, multilingual, attribution) stay.
+* Fix: saving Settings no longer blanks options that have no field on that form (title separator, title templates, IndexNow options).
+* Fix: Founder, Founding location and Topics/expertise are now emitted in the Organization schema; Parent organization, Owner and Copyright holder are now actually saved.
+* Fix: Settings page fatal error on Branding class reference and invalid table markup in the identity section.
+* Fix: wizard "Advanced settings" link pointed to a non-existent page.
+* Tests: added behavior test for the wizard, lock, validation and option mirroring.
+
 = 2.9.40 =
+* Closed the frontend SEO recovery output buffer at shutdown without intentionally closing pre-existing buffers.
+* Escaped internal-link recommendation action markup through a strict HTML allow-list.
+* Prepared internal-link statistics queries, including table identifiers.
+* Added direct-web-access guards to PHP test scripts.
+* Added a readable editor score-card JavaScript source counterpart and clarified source documentation.
+
 * Fixed activation and frontend schema fatal handling, including the custom schema path.
 * Added the public GitHub source repository and documented reviewable asset sources.
 * Replaced the schema editor inline script with a locally enqueued, reviewable JavaScript asset.

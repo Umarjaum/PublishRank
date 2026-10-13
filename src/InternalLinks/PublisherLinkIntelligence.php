@@ -152,7 +152,11 @@ final class PublisherLinkIntelligence {
 				$pattern = (string) ( $rule['source'] ?? '' );
 				if ( '' !== $pattern ) {
 					if ( 0 !== strpos( $pattern, '~' ) ) { $pattern = '~' . str_replace( '~', '\\~', $pattern ) . '~'; }
-					if ( false !== @preg_match( $pattern, $path ) && preg_match( $pattern, $path ) ) { return $rule; }
+					$pattern_ok = true;
+					set_error_handler( static function () use ( &$pattern_ok ) { $pattern_ok = false; return true; } ); // Invalid admin-supplied patterns must not emit warnings.
+					$matched = preg_match( $pattern, $path );
+					restore_error_handler();
+					if ( $pattern_ok && 1 === $matched ) { return $rule; }
 				}
 			}
 		}

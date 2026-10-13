@@ -105,6 +105,7 @@ final class Plugin {
 		$this->loader->register( ScheduledAudit::class, false );
 		$this->loader->register( ConfigHistory::class, false );
 		$this->loader->register( LLMSTxt::class, false );
+		$this->loader->register( \PublishRankSEO\Schema\LiveBlogSchema::class, false );
 		$this->register_cache_invalidation();
 		if ( is_admin() ) {
 			$this->loader->register( DashboardPage::class, false, array( $this->registry, new JNewsAdapter() ) );
@@ -147,6 +148,13 @@ SitemapCursorStore::bump_many( $providers );
 $invalidate_term = static function () { SitemapCursorStore::bump( 'taxonomy' ); };
 add_action( 'save_post', $invalidate_post, 20, 1 );
 add_action( 'deleted_post', $invalidate_post, 20, 1 );
+// Publish, unpublish, trash, restore and scheduled-publish transitions do not all fire save_post.
+add_action( 'transition_post_status', static function ( $new, $old, $post ) use ( $invalidate_post ) { if ( $new !== $old && $post instanceof \WP_Post ) { $invalidate_post( (int) $post->ID ); } }, 20, 3 );
+// Editor-controlled eligibility/robots/title metadata changes must refresh the News sitemap immediately.
+$news_meta_keys = array( '_publishrank_seo_news_eligible', '_publishrank_seo_robots', '_publishrank_seo_title', '_publishrank_seo_canonical', '_yoast_wpseo_meta-robots-noindex', 'rank_math_robots' );
+foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $meta_hook ) {
+	add_action( $meta_hook, static function ( $meta_id, $object_id, $meta_key ) use ( $news_meta_keys ) { if ( in_array( $meta_key, $news_meta_keys, true ) ) { SitemapCursorStore::bump( 'news' ); } }, 20, 3 );
+}
 add_action( 'clean_post_cache', $invalidate_post, 20, 1 );
 add_action( 'add_attachment', $invalidate_post, 20, 1 );
 add_action( 'edit_attachment', $invalidate_post, 20, 1 );

@@ -35,7 +35,7 @@ final class GraphOutput {
 				$graph[2]['mainEntity'] = array( '@id' => trailingslashit( ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical() ) . '#itemlist' );
 			}
 		}
-		if ( get_option( 'publishrank_schema_faq_auto', true ) ) {
+		if ( get_option( 'publishrank_schema_faq_auto', true ) && ! $this->has_manual_faq() ) {
 		$automated = ( new SchemaAutomation() )->for_current_document();
 		if ( is_array( $automated ) && ! empty( $automated['faq'] ) ) {
 			$faq = $automated['faq'];
@@ -54,6 +54,7 @@ final class GraphOutput {
 		echo '<!-- Structured data graph begin; entities=' . esc_attr( $entities ) . " -->\n";
 		$custom = $this->custom_schema(); if ( $custom ) { $graph[] = $custom; }
 		foreach ( ( new SchemaBuilder() )->extra_nodes() as $node ) { $graph[] = $node; }
+			$graph = self::dedupe_graph( $graph );
 			echo '<script type="application/ld+json">' . wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . '</script>' . "\n";
 			echo "<!-- Structured data graph end -->\n";
 		}
@@ -132,6 +133,12 @@ final class GraphOutput {
 		if ( ! empty( $org['parent_organization'] ) ) { $organization['parentOrganization'] = array( '@type' => 'Organization', 'name' => sanitize_text_field( $org['parent_organization'] ) ); }
 		if ( ! empty( $org['owner_name'] ) ) { $owner = array( '@type' => 'Organization', 'name' => sanitize_text_field( $org['owner_name'] ) ); if ( ! empty( $org['owner_url'] ) ) { $owner['url'] = esc_url_raw( $org['owner_url'] ); } if ( ! empty( $org['owner_logo'] ) ) { $owner['logo'] = $this->image_object( $org['owner_logo'], $url . '#owner-logo' ); } $organization['owner'] = $owner; }
 		if ( ! empty( $org['copyright_holder'] ) ) { $organization['copyrightHolder'] = array( '@type' => 'Organization', 'name' => sanitize_text_field( $org['copyright_holder'] ) ); }
+		if ( ! empty( $org['founder'] ) ) { $organization['founder'] = array( '@type' => 'Person', 'name' => sanitize_text_field( $org['founder'] ) ); }
+		if ( ! empty( $org['founding_location'] ) ) { $organization['foundingLocation'] = array( '@type' => 'Place', 'name' => sanitize_text_field( $org['founding_location'] ) ); }
+		if ( ! empty( $org['knows_about'] ) ) {
+			$topics = array_values( array_filter( array_map( 'sanitize_text_field', preg_split( '/\s*,\s*/', (string) $org['knows_about'] ) ) ) );
+			if ( $topics ) { $organization['knowsAbout'] = $topics; }
+		}
 		$social = PublicationProfile::social_profiles();
 		if ( ! empty( $social ) ) { $organization['sameAs'] = $social; }
 		return $organization;
@@ -216,7 +223,7 @@ final class GraphOutput {
 		$author_url = $author ? (string) get_author_posts_url( $post->post_author ) : $site_url;
 			$format = NewsroomSignals::format( $post );
 			$schema_type = (string) PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, 'NewsArticle' );
-			$schema_type = 'live' === $format ? 'LiveBlogPosting' : ( array_key_exists( $schema_type, SchemaTypes::article_types() ) ? $schema_type : 'NewsArticle' );
+			$schema_type = LiveBlogSchema::is_live_blog( $post ) ? 'LiveBlogPosting' : ( ( array_key_exists( $schema_type, SchemaTypes::article_types() ) && 'LiveBlogPosting' !== $schema_type ) ? $schema_type : 'NewsArticle' );
 		$description = (string) PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' );
 		$description = $description ? wp_strip_all_tags( $description ) : wp_strip_all_tags( get_the_excerpt( $post ) );
 		$author_node_id = trailingslashit( $author_url ) . '#author';
@@ -266,7 +273,10 @@ final class GraphOutput {
 			if ( $dateline ) { $article['dateline'] = $dateline; }
 			$location = sanitize_text_field( (string) get_post_meta( $post->ID, '_publishrank_seo_location_created', true ) );
 			if ( $location ) { $article['locationCreated'] = array( '@type' => 'Place', 'name' => $location ); }
-			if ( 'live' === $format ) { $article['coverageStartTime'] = get_post_time( DATE_W3C, true, $post ); }
+			if ( 'LiveBlogPosting' === $schema_type ) { $article = LiveBlogSchema::decorate( $article, $post ); }
+			// Speakable is opt-in: selectors depend on the theme, so none are invented. Return CSS selectors from this filter to enable it.
+			$speakable = array_values( array_filter( array_map( 'sanitize_text_field', (array) apply_filters( 'publishrank_schema_speakable_selectors', array(), $post ) ) ) );
+			if ( $speakable ) { $article['speakable'] = array( '@type' => 'SpeakableSpecification', 'cssSelector' => $speakable ); }
 			return $article;
 	}
 
@@ -365,6 +375,57 @@ final class GraphOutput {
 			$items[] = array( '@type' => 'ListItem', 'position' => $index + 1, 'url' => esc_url_raw( (string) get_permalink( $post ) ), 'name' => wp_strip_all_tags( (string) get_the_title( $post ) ) );
 		}
 		return empty( $items ) ? null : array( '@type' => 'ItemList', '@id' => $url . '#itemlist', 'numberOfItems' => count( $items ), 'itemListElement' => $items );
+	}
+
+	/** True when the editor entered FAQ items for this post (these take priority over auto-detected <details> blocks). */
+	private function has_manual_faq() {
+		$post = get_queried_object();
+		if ( ! $post instanceof \WP_Post ) { return false; }
+		foreach ( (array) get_post_meta( $post->ID, PostMeta::FAQ_ITEMS, true ) as $item ) {
+			if ( is_array( $item ) && ! empty( $item['q'] ) && ! empty( $item['a'] ) ) { return true; }
+		}
+		return false;
+	}
+
+	/**
+	 * Collapse duplicate nodes before output: nodes sharing an @id are merged (first value wins), identical FAQPage
+	 * question sets are emitted once, and when several article-type nodes describe the same URL only one primary
+	 * entity is kept (LiveBlogPosting is preferred over NewsArticle/Article/BlogPosting).
+	 *
+	 * @param array<int,array<string,mixed>> $graph
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function dedupe_graph( array $graph ) {
+		$article_types = array( 'NewsArticle', 'Article', 'BlogPosting', 'LiveBlogPosting', 'Report', 'TechArticle', 'ScholarlyArticle', 'AdvertiserContentArticle' );
+		$type_of = static function ( $node ) { $t = $node['@type'] ?? ''; return is_array( $t ) ? (string) reset( $t ) : (string) $t; };
+		$by_id = array(); $out = array();
+		foreach ( $graph as $node ) {
+			if ( ! is_array( $node ) ) { continue; }
+			$id = isset( $node['@id'] ) ? (string) $node['@id'] : '';
+			if ( '' !== $id && isset( $by_id[ $id ] ) ) { $out[ $by_id[ $id ] ] += $node; continue; }
+			if ( '' !== $id ) { $by_id[ $id ] = count( $out ); }
+			$out[] = $node;
+		}
+		$faq_seen = array(); $primary_for = array(); $drop = array();
+		foreach ( $out as $i => $node ) {
+			$type = $type_of( $node );
+			if ( 'FAQPage' === $type && ! empty( $node['mainEntity'] ) ) {
+				$fingerprint = md5( wp_json_encode( $node['mainEntity'] ) );
+				if ( isset( $faq_seen[ $fingerprint ] ) ) { $drop[ $i ] = true; continue; }
+				$faq_seen[ $fingerprint ] = true;
+			}
+			if ( in_array( $type, $article_types, true ) ) {
+				$key = (string) ( $node['mainEntityOfPage']['@id'] ?? $node['url'] ?? '' );
+				if ( '' === $key ) { continue; }
+				if ( isset( $primary_for[ $key ] ) ) {
+					$keep = $primary_for[ $key ];
+					if ( 'LiveBlogPosting' === $type && 'LiveBlogPosting' !== $type_of( $out[ $keep ] ) ) { $drop[ $keep ] = true; $primary_for[ $key ] = $i; } else { $drop[ $i ] = true; }
+				} else { $primary_for[ $key ] = $i; }
+			}
+		}
+		$result = array();
+		foreach ( $out as $i => $node ) { if ( empty( $drop[ $i ] ) ) { $result[] = $node; } }
+		return $result;
 	}
 }
 /* EOF */

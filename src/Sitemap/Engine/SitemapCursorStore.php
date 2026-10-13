@@ -15,6 +15,10 @@ final class SitemapCursorStore {
 	const MAX_SYNC_STEPS = 1;
 	const CRON_STEPS = 2;
 	const CONTINUE_DELAY = 30;
+	/** Cursor steps advanced inline when a shard is requested before its checkpoint exists. */
+	const INLINE_STEPS = 3;
+	/** A cursor that has not advanced for this long is discarded and rebuilt. */
+	const STALE_AFTER = DAY_IN_SECONDS;
 
 	public static function register() {
 		add_action( self::PREPARE_HOOK, array( __CLASS__, 'prepare_registered_providers' ) );
@@ -22,6 +26,9 @@ final class SitemapCursorStore {
 		if ( ! wp_next_scheduled( self::PREPARE_HOOK ) ) {
 			wp_schedule_event( time() + 60, 'hourly', self::PREPARE_HOOK );
 		}
+		// A follow-up event left far in the past means WP-Cron is not running: drop it so it can be re-queued.
+		$next = wp_next_scheduled( self::CONTINUE_HOOK );
+		if ( $next && $next < time() - HOUR_IN_SECONDS ) { wp_clear_scheduled_hook( self::CONTINUE_HOOK ); }
 	}
 
 	public static function unregister() {
@@ -57,8 +64,10 @@ final class SitemapCursorStore {
 	public static function prepare_terms( $provider, $args, $size, $steps = self::CRON_STEPS ) { return self::prepare( $provider, $args, $size, 'terms', $steps ); }
 
 	private static function prepare( $provider, $args, $size, $kind, $steps ) {
+		self::expire_if_stale( $provider );
 		$prepared = (int) get_option( self::meta_key( $provider, 'prepared' ), 1 );
 		if ( self::is_complete( $provider ) ) { return $prepared; }
+		update_option( self::meta_key( $provider, 'progress' ), time(), false );
 		self::checkpoint( $provider, 1 );
 		for ( $i = 0; $i < max( 1, (int) $steps ); $i++ ) {
 			$cursor = (int) self::checkpoint( $provider, $prepared );
@@ -71,6 +80,26 @@ final class SitemapCursorStore {
 			update_option( self::meta_key( $provider, 'prepared' ), $prepared, false );
 		}
 		return $prepared;
+	}
+
+	/** Restart an incomplete cursor that has made no progress for STALE_AFTER seconds (interrupted preparation). */
+	private static function expire_if_stale( $provider ) {
+		if ( self::is_complete( $provider ) ) { return; }
+		$progress = (int) get_option( self::meta_key( $provider, 'progress' ), 0 );
+		if ( $progress && $progress < time() - self::STALE_AFTER ) { self::bump( $provider ); }
+	}
+
+	/** Cursor health for diagnostics. @return array<string,mixed> */
+	public static function health( $provider ) {
+		$progress = (int) get_option( self::meta_key( $provider, 'progress' ), 0 );
+		$next = wp_next_scheduled( self::CONTINUE_HOOK );
+		return array(
+			'complete'      => self::is_complete( $provider ),
+			'prepared'      => (int) get_option( self::meta_key( $provider, 'prepared' ), 1 ),
+			'last_progress' => $progress,
+			'stale'         => ! self::is_complete( $provider ) && $progress && $progress < time() - self::STALE_AFTER,
+			'cron_overdue'  => (bool) ( $next && $next < time() - HOUR_IN_SECONDS ),
+		);
 	}
 
 	private static function checkpoint( $provider, $shard ) {

@@ -12,7 +12,7 @@ final class NewsroomSignals {
 		$title = strtolower( wp_strip_all_tags( (string) $post->post_title ) );
 		$slugs = array(); foreach ( (array) get_the_category( $post->ID ) as $category ) { if ( isset( $category->slug ) ) { $slugs[] = sanitize_key( $category->slug ); } }
 		$haystack = $title . ' ' . implode( ' ', $slugs );
-		if ( preg_match( '/\b(live|liveblog|live-blog)\b/', $haystack ) ) { return 'live'; }
+		// 'live' is never inferred from a title or category ("live music" is not a live blog); editors choose it explicitly.
 		if ( preg_match( '/\b(breaking|just-in|urgent|developing)\b/', $haystack ) ) { return 'breaking'; }
 		if ( preg_match( '/\b(opinion|editorial|comment)\b/', $haystack ) ) { return 'opinion'; }
 		if ( preg_match( '/\b(analysis|explainer|background)\b/', $haystack ) ) { return 'analysis'; }

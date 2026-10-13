@@ -43,7 +43,8 @@ final class SchemaSuite {
 		$selected  = PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' );
 		$permalink = get_permalink( $post );
 		echo '<div class="publishrank-schema-suite">';
-		echo '<p><label for="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '"><strong>' . esc_html__( 'Schema type for this ' . ( 'page' === $post->post_type ? 'page' : 'post' ), 'publishrank' ) . '</strong></label><br />';
+		$schema_label = ( 'page' === $post->post_type ) ? esc_html__( 'Schema type for this page', 'publishrank' ) : esc_html__( 'Schema type for this post', 'publishrank' );
+		echo '<p><label for="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '"><strong>' . $schema_label . '</strong></label><br />';
 		echo '<select class="widefat" id="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '" name="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '">';
 		echo '<option value=""' . selected( $selected, '', false ) . '>' . esc_html__( '— Automatic (recommended default) —', 'publishrank' ) . '</option>';
 		foreach ( SchemaTypes::grouped() as $group => $types ) {
@@ -65,6 +66,8 @@ final class SchemaSuite {
 			echo '<textarea class="widefat" rows="2" name="publishrank_faq_items[' . (int) $i . '][a]" placeholder="' . esc_attr__( 'Answer', 'publishrank' ) . '">' . esc_textarea( isset( $item['a'] ) ? $item['a'] : '' ) . '</textarea></p>';
 		}
 		echo '</div>';
+
+		\PublishRankSEO\Schema\LiveBlogSchema::render_panel( $post );
 
 		echo '<div class="pr-schema-panel" data-types="VideoObject" style="display:none"><hr /><h4>' . esc_html__( 'Video details', 'publishrank' ) . '</h4>';
 		foreach ( array( PostMeta::VIDEO_URL => __( 'Video file URL (contentUrl)', 'publishrank' ), PostMeta::VIDEO_EMBED_URL => __( 'Embed URL (embedUrl)', 'publishrank' ), PostMeta::VIDEO_THUMBNAIL => __( 'Thumbnail URL', 'publishrank' ) ) as $key => $label ) {

@@ -1,6 +1,6 @@
 # PublishRank
 
-**Free, open-source WordPress SEO plugin for publishers, blogs, and content-heavy websites.**  
+**Free, open-source WordPress SEO plugin for news publishers, editorial teams, blogs, and content-heavy websites.**  
 *Enterprise SEO Infrastructure for WordPress Publishers*
 
 PublishRank brings technical SEO tools for WordPress into a publisher-focused plugin. It is built for news websites, newspapers, magazines, digital publishers, editorial teams, blogs, and general WordPress sites. If you are researching a **free WordPress SEO plugin**, a **Yoast SEO alternative**, a **Rank Math alternative**, or a plugin with **News SEO and XML news sitemaps**, review PublishRank's feature set below.
@@ -9,10 +9,11 @@ PublishRank brings technical SEO tools for WordPress into a publisher-focused pl
 
 ## Current version
 
-- **Version:** 2.9.40
+- **Version:** 2.9.43
 - **License:** GPL-2.0-or-later
 - **WordPress:** Requires 6.3 or later
 - **PHP:** Requires 7.4 or later
+- **Tested up to:** WordPress 6.7
 - **Official website and documentation:** https://publishrank.netlify.app/
 - **Developer website:** https://umarjaum.netlify.app/
 - **Source repository:** https://github.com/Umarjaum/PublishRank

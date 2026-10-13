@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 6.7
-Stable tag: 2.9.40
+Stable tag: 2.9.43
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -33,7 +33,7 @@ Features include:
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
 
 == Source code ==
-PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained source repository is [github.com/Umarjaum/PublishRank](https://github.com/Umarjaum/PublishRank). Runtime assets are mirrored in `src/assets/js/` and `src/assets/css/`; no build step is required for this release.
+PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained source repository is [github.com/Umarjaum/PublishRank](https://github.com/Umarjaum/PublishRank). All JavaScript and CSS in `assets/` is shipped unminified and human-readable; identical copies are kept in `src/assets/`. There is no build step. The plugin does not download executable assets from third-party CDNs.
 
 == Installation ==
 
@@ -44,6 +44,15 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 5. Submit the sitemap index in your search engine webmaster tools when ready.
 
 == Frequently Asked Questions ==
+
+= Does PublishRank add anything to my page source? =
+Only if explicitly enabled. The optional HTML-source attribution comment and visible footer credit are both disabled by default. They are not added to admin screens, feeds, REST/AJAX responses or sitemaps.
+
+= Which articles appear in the News sitemap? =
+Published, public, indexable articles from the configured post types whose original publish time is inside the publication window (48 hours by default). Drafts, scheduled, private and password-protected posts, noindex posts and posts you excluded are left out. An empty sitemap is valid.
+
+= How do I mark a live blog? =
+Edit the post, open the Schema box, choose "Live Blog Post" as the schema type, and add timestamped updates in the Live coverage panel. Ordinary posts are never marked up as live blogs automatically.
 
 = Is PublishRank free? =
 Yes. PublishRank is released under the GPLv2-or-later license. The plugin does not require a paid AI API key for its core functionality. Optional integrations such as IndexNow require an administrator to enable them.
@@ -77,10 +86,10 @@ The plugin does not send visitor analytics or make remote calls during ordinary 
 
 PublishRank integrates optionally with IndexNow at `https://api.indexnow.org/indexnow/`. It connects when an administrator enables IndexNow and eligible content is published, updated, deleted, manually submitted or retried. It sends the site's host, IndexNow key, public key-location URL and submitted public URL(s). IndexNow's terms are available at https://www.indexnow.org/en_gb/terms and Microsoft's privacy statement is at https://privacy.microsoft.com/en-us/privacystatement. IndexNow does not guarantee crawling or indexing and is not supported by Google.
 
+Optional external link check: when an administrator ticks "check external links" while running the Publisher link audit, PublishRank sends HEAD (and, if needed, GET) requests from the site's server to the external URLs already linked in the site's own content, only to see whether they respond. Nothing else is sent, and no data is sent to PublishRank or any other third party. The check never runs automatically.
+
 == Changelog ==
-= 2.9.40 =
-* Fixed activation and frontend schema fatal handling, including the custom schema path.
-* Added the public GitHub source repository and documented reviewable asset sources.
-* Replaced the schema editor inline script with a locally enqueued, reviewable JavaScript asset.
-* Deferred admin translations and menu registration to avoid WordPress 6.7 debug notices during activation.
-* Corrected sitemap stylesheet output and refreshed WordPress.org metadata.
+= 2.9.43 =
+* Fixed News sitemap freshness, UTC filtering, XML escaping, cache invalidation, HTTP semantics and diagnostics.
+* Added explicit LiveBlogPosting controls, coverage updates, speakable filters and schema graph de-duplication.
+* Made optional source attribution explicitly opt-in and documented privacy and external-service boundaries.

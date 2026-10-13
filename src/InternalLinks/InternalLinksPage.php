@@ -244,7 +244,7 @@ final class InternalLinksPage {
 
 	private function render_recommendations( $recs ) {
 		global $wpdb;
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM " . Store::table( 'recommendations' ) . " WHERE status IN ('pending','approved','inserted')" );
+		$total = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE status IN (%s, %s, %s)', Store::table( 'recommendations' ), 'pending', 'approved', 'inserted' ) );
 		echo '<div class="rhs-card"><h2>' . esc_html__( 'Recommended internal links', 'publishrank' ) . '</h2>';
 		echo '<p>' . esc_html__( 'Approve first, then insert. PublishRank never changes published content automatically.', 'publishrank' ) . '</p>';
 		echo '<table class="widefat striped rhs-ilink-table"><thead><tr><th>' . esc_html__( 'Source article', 'publishrank' ) . '</th><th>' . esc_html__( 'Target article', 'publishrank' ) . '</th><th>' . esc_html__( 'Suggested anchor', 'publishrank' ) . '</th><th>' . esc_html__( 'Score', 'publishrank' ) . '</th><th>' . esc_html__( 'Signals', 'publishrank' ) . '</th><th>' . esc_html__( 'Status', 'publishrank' ) . '</th><th>' . esc_html__( 'Actions', 'publishrank' ) . '</th></tr></thead><tbody>';
@@ -258,7 +258,13 @@ final class InternalLinksPage {
 			echo '<td><strong>' . esc_html( number_format_i18n( (float) $rec->score, 0 ) ) . '</strong>/100</td>';
 			echo '<td>' . esc_html( implode( ', ', $labels ) ) . '</td>';
 			echo '<td><span class="rhs-pill rhs-pill--' . esc_attr( $rec->status ) . '">' . esc_html( ucfirst( $rec->status ) ) . '</span></td>';
-			echo '<td class="rhs-ilink-actions">' . $this->row_actions( $rec ) . '</td>';
+			echo '<td class="rhs-ilink-actions">' . wp_kses( $this->row_actions( $rec ), array(
+				'form' => array( 'method' => true, 'action' => true, 'class' => true, 'data-confirm' => true ),
+				'input' => array( 'type' => true, 'name' => true, 'value' => true, 'id' => true ),
+				'div' => array( 'class' => true ), 'p' => array( 'class' => true ),
+				'button' => array( 'type' => true, 'class' => true, 'name' => true, 'value' => true, 'id' => true ),
+				'span' => array( 'class' => true ),
+			) ) . '</td>';
 			echo '</tr>';
 		}
 		if ( empty( $recs ) ) {

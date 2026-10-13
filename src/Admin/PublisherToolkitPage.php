@@ -140,7 +140,6 @@ final class PublisherToolkitPage {
 			echo '</p>';
 		}
 		wp_reset_postdata();
-		echo '<script>(function(){var a=document.getElementById("publishrank-select-all");if(a){a.addEventListener("change",function(){document.querySelectorAll("input[name=\'post_ids[]\']").forEach(function(c){c.checked=a.checked;});});}})();</script>';
 	}
 
 	public function bulk_update() {

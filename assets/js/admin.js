@@ -51,8 +51,6 @@
 		$(this).closest('.rhs-repeater__row').remove();
 	});
 
-})(jQuery);
-
 	$(document).on('submit', '.rhs-internal-links-confirm', function (event) {
 		var message = $(this).data('confirm') || publishrankSeo.confirmInsert;
 		if (!window.confirm(message)) {
@@ -66,4 +64,8 @@
 			setTimeout(function () { form.submit(); }, 500);
 		});
 	});
-	
+
+	$(document).on('change', '#publishrank-select-all', function () {
+		$('input[name="post_ids[]"]').prop('checked', this.checked);
+	});
+})(jQuery);

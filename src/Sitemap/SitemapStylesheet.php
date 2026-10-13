@@ -36,6 +36,11 @@ final class SitemapStylesheet {
 		exit;
 	}
 
+	/**
+	 * XSLT document served at /publishrank-sitemap.xsl for browsers viewing the XML sitemap.
+	 * It is not an HTML page rendered by WordPress, so wp_enqueue_style() cannot apply;
+	 * the CSS comes from the bundled assets/css/sitemap.css file and is escaped on output.
+	 */
 	private static function xsl() {
 		return <<<'XSL'
 <?xml version="1.0" encoding="UTF-8"?>

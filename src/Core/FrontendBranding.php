@@ -36,7 +36,7 @@ final class FrontendBranding {
 	public function render_admin() {
 		if ( ! is_admin() ) { return; }
 		$url = esc_url( 'https://publishrank.netlify.app/' );
-		echo '<div style="text-align:center;margin:12px 0 18px;font-size:11px;opacity:.72">' . esc_html__( 'PublishRank — Enterprise SEO Infrastructure for WordPress Publishers', 'publishrank' ) . ' · <a href="' . $url . '" target="_blank" rel="noopener noreferrer">publishrank.netlify.app</a></div>';
+		echo '<div style="text-align:center;margin:12px 0 18px;font-size:11px;opacity:.72">' . esc_html__( 'PublishRank — Enterprise SEO Infrastructure for WordPress Publishers', 'publishrank' ) . ' · <a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">publishrank.netlify.app</a></div>';
 	}
 
 	public function render() {
@@ -51,7 +51,7 @@ final class FrontendBranding {
 		$logo = esc_url( plugins_url( 'assets/images/publishrank-mark-transparent.png', dirname( dirname( __DIR__ ) ) . '/publishrank.php' ) );
 		echo '<div class="publishrank-attribution">';
 		echo '<a class="publishrank-attribution__link" href="' . $url . '" rel="nofollow" aria-label="' . esc_attr( $text ) . '">';
-		echo '<img class="publishrank-attribution__mark" src="' . $logo . '" alt="" width="20" height="20" loading="lazy" decoding="async" />';
+		echo '<img class="publishrank-attribution__mark" src="' . esc_url( $logo ) . '" alt="" width="20" height="20" loading="lazy" decoding="async" />';
 		echo '<span>' . esc_html( $text ) . '</span>';
 		echo '</a></div>';
 	}

@@ -144,6 +144,10 @@ final class Installer {
 	public static function activate() {
 		add_option( 'publishrank_article_intel_enabled', 1, '', false );
 		self::install_defaults();
+		// Fresh installs must complete the setup wizard once; sites that already finished it are left alone.
+		if ( ! get_option( 'publishrank_onboarding_completed_at', '' ) ) {
+			update_option( 'publishrank_setup_required', 1, false );
+		}
 		\PublishRankSEO\InternalLinks\Store::install();
 		update_option( 'publishrank_seo_cache_epoch', time(), false );
 		update_option( self::VERSION_OPTION, PUBLISHRANK_SEO_VERSION, true );
@@ -164,6 +168,10 @@ final class Installer {
 		// Shard boundaries changed in 2.9.20; bump versions so old cursor checkpoints and cached XML cannot be reused.
 		if ( version_compare( (string) get_option( self::VERSION_OPTION, '0' ), '2.9.20', '<' ) ) {
 			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::bump_many( array( 'post', 'page', 'cpt', 'taxonomy', 'author', 'attachment', 'news', 'image', 'video' ) );
+		}
+		// 2.9.43: News sitemap no longer uses cursors and media sitemaps use smaller files; discard old checkpoints and cached XML.
+		if ( version_compare( (string) get_option( self::VERSION_OPTION, '0' ), '2.9.43', '<' ) ) {
+			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::bump_many( array( 'news', 'image', 'video' ) );
 		}
 		update_option( 'publishrank_seo_cache_epoch', time(), false );
 		update_option( self::VERSION_OPTION, PUBLISHRANK_SEO_VERSION, true );

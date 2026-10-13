@@ -101,7 +101,7 @@ final class Store {
 		global $wpdb;
 		foreach ( array( 'recommendations', 'terms', 'edges', 'nodes' ) as $table ) {
 			$name = self::table( $table );
-			$wpdb->query( "DROP TABLE IF EXISTS {$name}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 	}
 
@@ -299,7 +299,7 @@ final class Store {
 
 	public static function delete_unlocked_recommendations() {
 		global $wpdb;
-		$wpdb->query( "DELETE FROM " . self::table( 'recommendations' ) . " WHERE status IN ('pending','dismissed')" );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE status IN (%s, %s)', self::table( 'recommendations' ), 'pending', 'dismissed' ) );
 	}
 
 	public static function cleanup_scan( $scan_id ) {
@@ -309,10 +309,10 @@ final class Store {
 		$terms = self::table( 'terms' );
 		$recs  = self::table( 'recommendations' );
 
-		$wpdb->query( $wpdb->prepare( "DELETE e FROM {$edges} e LEFT JOIN {$nodes} n ON n.node_id = e.source_node_id WHERE n.node_id IS NULL OR e.scan_id != %d", $scan_id ) );
-		$wpdb->query( $wpdb->prepare( "DELETE t FROM {$terms} t LEFT JOIN {$nodes} n ON n.node_id = t.node_id WHERE n.node_id IS NULL OR t.scan_id != %d", $scan_id ) );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$nodes} WHERE scan_id != %d", $scan_id ) );
-		$wpdb->query( "DELETE r FROM {$recs} r LEFT JOIN {$nodes} s ON s.node_id = r.source_node_id LEFT JOIN {$nodes} t ON t.node_id = r.target_node_id WHERE s.node_id IS NULL OR t.node_id IS NULL" );
+		$wpdb->query( $wpdb->prepare( 'DELETE e FROM %i e LEFT JOIN %i n ON n.node_id = e.source_node_id WHERE n.node_id IS NULL OR e.scan_id != %d', $edges, $nodes, $scan_id ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE t FROM %i t LEFT JOIN %i n ON n.node_id = t.node_id WHERE n.node_id IS NULL OR t.scan_id != %d', $terms, $nodes, $scan_id ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE scan_id != %d', $nodes, $scan_id ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE r FROM %i r LEFT JOIN %i s ON s.node_id = r.source_node_id LEFT JOIN %i t ON t.node_id = r.target_node_id WHERE s.node_id IS NULL OR t.node_id IS NULL', $recs, $nodes, $nodes ) );
 	}
 
 	public static function total_posts() {
@@ -344,11 +344,11 @@ final class Store {
 		global $wpdb;
 		$settings = self::settings();
 		return array(
-			'nodes'    => (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::table( 'nodes' ) ),
-			'edges'    => (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::table( 'edges' ) ),
-			'orphans'  => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table( 'nodes' ) . ' WHERE inbound_count <= %d', $settings['threshold'] ) ),
-			'pending'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM " . self::table( 'recommendations' ) . " WHERE status = 'pending'" ),
-			'approved' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM " . self::table( 'recommendations' ) . " WHERE status IN ('approved','inserted')" ),
+			'nodes'    => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', self::table( 'nodes' ) ) ),
+			'edges'    => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', self::table( 'edges' ) ) ),
+			'orphans'  => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE inbound_count <= %d', self::table( 'nodes' ), $settings['threshold'] ) ),
+			'pending'  => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE status = %s', self::table( 'recommendations' ), 'pending' ) ),
+			'approved' => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE status IN (%s, %s)', self::table( 'recommendations' ), 'approved', 'inserted' ) ),
 		);
 	}
 

@@ -15,7 +15,7 @@ $checks = array(
     'llms.txt has PublishRank metadata tag' => strpos( $llms, 'name="publishrank:llms-txt"' ) !== false,
     'optional full file discovery is conditional' => strpos( $llms, 'OPTION_FULL_ENABLED' ) !== false && strpos( $llms, 'publishrank:llms-full-txt' ) !== false,
     'rewrite rules flush only once after registration' => strpos( $llms, 'maybe_flush_rewrite_rules' ) !== false && strpos( $llms, "publishrank_llms_rewrite_ready" ) !== false,
-    'powered-by HTML comment exists' => strpos( $comment, '<!-- SEO of this website is Powered by PublishRank -->' ) !== false,
+    'powered-by HTML comment exists as an opt-in feature' => strpos( $comment, 'Powered by PublishRank SEO - https://publishrank.netlify.app' ) !== false && strpos( $comment, "get_option( 'publishrank_source_attribution', false )" ) !== false,
     'head comment module is registered' => strpos( $plugin, 'FrontendHeadComment::class' ) !== false,
     'source attribution controls remain available for optional metadata' => strpos( $trace, "get_option( 'publishrank_source_attribution', false )" ) !== false,
     'source attribution setting is user-controllable' => strpos( $settings, "'publishrank_source_attribution'" ) !== false && strpos( $settings, 'HTML source attribution' ) !== false,
