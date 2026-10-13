@@ -1,77 +1,152 @@
 # PublishRank
 
-**Free, open-source WordPress SEO plugin for news publishers, editorial teams, blogs, and content-heavy websites.**  
-*Enterprise SEO Infrastructure for WordPress Publishers*
+[![Latest release](https://img.shields.io/github/v/release/Umarjaum/PublishRank?display_name=tag&sort=semver)](https://github.com/Umarjaum/PublishRank/releases)
+[![License: GPL-2.0-or-later](https://img.shields.io/badge/license-GPL--2.0--or--later-blue.svg)](LICENSE.txt)
+[![WordPress plugin](https://img.shields.io/badge/WordPress-plugin-21759B?logo=wordpress&logoColor=white)](https://github.com/Umarjaum/PublishRank)
 
-PublishRank brings technical SEO tools for WordPress into a publisher-focused plugin. It is built for news websites, newspapers, magazines, digital publishers, editorial teams, blogs, and general WordPress sites. If you are researching a **free WordPress SEO plugin**, a **Yoast SEO alternative**, a **Rank Math alternative**, or a plugin with **News SEO and XML news sitemaps**, review PublishRank's feature set below.
+**Free, open-source WordPress SEO infrastructure for news publishers, editorial teams, blogs, and content-heavy websites.**
 
-> PublishRank is an independent project. It is not affiliated with, endorsed by, or a clone of Yoast or Rank Math. Features and workflows differ, so evaluate compatibility before switching from another SEO plugin.
+PublishRank brings technical SEO, News SEO, XML sitemaps, structured data, redirects, robots controls, internal-link intelligence, and editorial workflows into one publisher-focused WordPress plugin. It is designed for newspapers, magazines, digital publishers, independent newsrooms, agencies, and site owners who need a clear and maintainable SEO foundation.
 
-## Current version
+> PublishRank is an independent project. It is not affiliated with, endorsed by, or a clone of Yoast or Rank Math. Features and workflows differ, so evaluate compatibility before switching.
+
+## Current release
 
 - **Version:** 2.9.43
+- **Latest release:** [v2.9.43](https://github.com/Umarjaum/PublishRank/releases/tag/v2.9.43)
 - **License:** GPL-2.0-or-later
 - **WordPress:** Requires 6.3 or later
 - **PHP:** Requires 7.4 or later
 - **Tested up to:** WordPress 6.7
 - **Official website and documentation:** https://publishrank.netlify.app/
-- **Developer website:** https://umarjaum.netlify.app/
 - **Source repository:** https://github.com/Umarjaum/PublishRank
 
-## Features
+## Why publishers use PublishRank
 
-- **Technical SEO metadata:** SEO titles and descriptions, canonical URLs, robots directives, Open Graph, and X/Twitter metadata.
-- **Structured data:** Connected JSON-LD for organizations, people, webpages, articles, breadcrumbs, and supported media/content types.
-- **XML sitemaps:** Sitemaps for posts, pages, taxonomies, authors, images, and videos, plus a Google News sitemap.
-- **Redirects and 404 monitoring:** Manage redirects and review locally recorded 404 paths and referrer information.
-- **Publisher and article SEO:** Article schema options and per-article author metadata overrides.
-- **Robots and crawling controls:** Global and per-content index/follow directives, robots.txt controls, hreflang support, and breadcrumbs.
-- **IndexNow:** Optional notifications to the IndexNow service for eligible public URLs. IndexNow does **not** guarantee indexing and is **not supported by Google**.
-- **Internal-link tools:** Internal-link recommendations, orphan-page insights, and Publisher Link Intelligence for broken or redirected links, with optional queued external URL checks.
-- **Publisher Toolkit:** Permission-aware bulk SEO editing and optional assistance for missing image alt text.
-- **Local SEO:** Optional local business profile and LocalBusiness structured data.
-- **LLMs discovery files:** Configurable `llms.txt` and optional `llms-full.txt`.
-- **Diagnostics and WP-CLI:** Sitemap diagnostics and supported command-line workflows.
-- **No external AI API required** for the core plugin features described here.
+Publishers need more than a title field. They need dependable publication signals, clean crawl paths, structured editorial data, fast sitemap updates, and workflows that can be understood by editors and administrators.
+
+PublishRank is built around these principles:
+
+- **Publisher-first defaults:** News, article, author, organization, and editorial signals are treated as first-class SEO data.
+- **Explicit ownership:** The plugin detects overlapping SEO output and documents how to avoid duplicate titles, canonicals, robots directives, or schema.
+- **Human-readable source:** PHP, JavaScript, and CSS sources are included and documented in the repository.
+- **Local-first core:** Core metadata, schema, sitemaps, redirects, and diagnostics run on the WordPress site without a required AI API or PublishRank account.
+- **Permission-aware controls:** Administrative actions use WordPress capabilities, nonces, sanitization, and scoped admin assets.
+- **Transparent integrations:** Optional external services are documented and only contacted when an administrator enables the related feature.
+
+## Feature architecture
+
+### Technical SEO and metadata
+
+- SEO titles and descriptions with automatic fallbacks and per-content overrides.
+- Canonical URLs, robots directives, Open Graph, and X/Twitter metadata.
+- Language alternates, breadcrumbs, title templates, and site-identity controls.
+- Automatic image and alt-text fallbacks that preserve explicit editorial values.
+
+### News SEO and publisher signals
+
+- Google News sitemap with configurable publication windows and post-type coverage.
+- UTC-based publication filtering and cache invalidation on status and eligibility changes.
+- News Sitemap Health diagnostics, shard visibility, XML validation, and error reporting.
+- NewsArticle, Article, BlogPosting, and explicitly selected LiveBlogPosting schema.
+- Live coverage updates with real timestamps and bounded output.
+- Publisher, author, organization, article section, genre, and newsroom signals.
+
+### Structured data
+
+- Connected JSON-LD graphs for organizations, people, websites, webpages, articles, breadcrumbs, media, and local businesses.
+- Schema graph de-duplication using stable identifiers.
+- FAQ handling that avoids duplicate FAQPage nodes.
+- Optional Speakable markup through documented filters; no selectors are invented automatically.
+- Custom schema JSON with validation and capability checks.
+
+### Sitemaps and crawl controls
+
+- Sitemap index plus post, page, custom-post-type, taxonomy, author, image, video, and News Sitemap providers.
+- Bounded generation, shard limits, UTF-8 XML, correct HTTP status codes, and safe output buffering.
+- Robots.txt controls, sitemap discovery, AI crawler directives, and hreflang support.
+- IndexNow notifications are optional and do not guarantee indexing or Google inclusion.
+
+### Editorial and operational tools
+
+- Redirect management and locally recorded 404 monitoring.
+- Internal-link recommendations, orphan-page insights, and Publisher Link Intelligence.
+- Permission-aware bulk SEO editing and optional missing-alt-text assistance.
+- Setup wizard, configuration history, import/export, diagnostics, WP-CLI support, and feature documentation.
+- Optional LocalBusiness schema and configurable `llms.txt` / `llms-full.txt` discovery files.
 
 ## Install in WordPress
 
-1. Download the ZIP from the project's Releases page (when a release is published) or obtain the plugin ZIP from the project maintainer.
+1. Download the ZIP from the [Releases page](https://github.com/Umarjaum/PublishRank/releases).
 2. In WordPress, open **Plugins → Add New Plugin → Upload Plugin**.
-3. Upload the ZIP, install it, and activate **PublishRank**.
+3. Upload the ZIP and activate **PublishRank**.
 4. Open **PublishRank** in the dashboard and complete onboarding.
-5. Review metadata, schema, sitemap, and robots settings before using it on a production site.
-6. If replacing another SEO plugin, plan the migration and ensure only one plugin controls each metadata/schema output to avoid duplicates.
+5. Review metadata ownership, schema, sitemap, robots, and integration settings before production use.
+6. If replacing another SEO plugin, plan the migration and ensure only one plugin owns each output type.
 
-For source-code development, clone or download the [PublishRank source repository](https://github.com/Umarjaum/PublishRank) and place the `publishrank` plugin directory in `wp-content/plugins/`. The main plugin file is `publishrank.php`.
+## Development setup
 
-## Is PublishRank a Yoast SEO or Rank Math alternative?
-
-PublishRank is an independent **free WordPress SEO plugin** option focused on technical SEO and publisher-oriented workflows, including News SEO, news sitemaps, redirects, robots controls, schema, and internal-link auditing. It may suit publishers who want these tools in a focused plugin, but it is not a feature-for-feature replacement for Yoast SEO or Rank Math. Check the exact features you rely on and test on staging before switching.
-
-## Compatibility and limitations
-
-- Do not run multiple plugins that output the same title, canonical, robots, or schema data without configuring ownership; duplicate output can occur.
-- Search Console reporting, where configured, requires the site administrator's own Google Cloud OAuth credentials and API setup.
-- External URL checks may be affected by server restrictions, rate limits, redirects, or remote sites blocking automated requests; review findings before acting on them.
-- PublishRank does not guarantee rankings, crawling, indexing, traffic, or Google News inclusion.
-- IndexNow is not a Google indexing API.
-
-## Privacy
-
-Ordinary front-end rendering does not send visitor analytics to a PublishRank-owned service. Optional integrations may make external requests when enabled. For example, IndexNow submits eligible public URLs and the required site/key information to the IndexNow service. Review the plugin's `readme.txt` and documentation before enabling integrations.
-
-## Development and tests
-
-The repository includes PHP test scripts in `tests/`. Run them in an environment with PHP CLI:
+Clone the repository and place the plugin directory in `wp-content/plugins/`:
 
 ```bash
+git clone https://github.com/Umarjaum/PublishRank.git
+cd PublishRank
+# The repository root is the plugin directory.
+```
+
+The main plugin file is `publishrank.php`. The distributed WordPress ZIP keeps the plugin in a `publishrank/` directory so it can be uploaded directly through the WordPress admin.
+
+## Testing and quality checks
+
+Run the lightweight static and behavior tests with PHP CLI:
+
+```bash
+# Syntax check every PHP file.
+find . -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+# Run the complete regression suite.
 for test in tests/*.php; do php "$test" || exit 1; done
 ```
 
-These lightweight scripts are not a substitute for testing in a real WordPress installation. Test plugin activation, settings, redirects, sitemaps, integrations, and theme/plugin compatibility on a staging site before production deployment.
+The XML sitemap test uses PHP SimpleXML. On Ubuntu/Debian, install it with:
 
-## Documentation and support
+```bash
+sudo apt install php-xml
+```
+
+Before production deployment, also test activation and frontend output in a clean WordPress installation with `WP_DEBUG` enabled. The lightweight scripts are not a substitute for testing with the active theme, caching layer, security plugins, and editorial post types used by a real publication.
+
+## Source disclosure and build policy
+
+The repository contains the reviewable PHP, JavaScript, and CSS source. Runtime assets are shipped locally and are mirrored in `src/assets/` for review. This release does not require a build step or a third-party JavaScript/CSS CDN. See [`src/assets/README.md`](src/assets/README.md) for the asset-source mapping.
+
+## Privacy and external services
+
+Ordinary frontend rendering does not send visitor analytics to a PublishRank-owned service. Optional integrations are disabled until an administrator enables them:
+
+- **IndexNow:** sends the publisher host, IndexNow key, key-location URL, and eligible public URL when enabled.
+- **External link checks:** send requests only to external URLs already present in the site’s own content when an administrator manually starts that audit.
+- **Source attribution:** HTML-source attribution and visible footer credit are both disabled by default and require explicit administrator opt-in.
+
+See [`readme.txt`](readme.txt) for the complete External Services disclosure and privacy details.
+
+## Compatibility and limitations
+
+- Do not run multiple plugins that output the same title, canonical, robots, or schema data without configuring ownership.
+- Search Console reporting, where configured, requires the site administrator’s own Google Cloud OAuth credentials and API setup.
+- External URL checks can be affected by rate limits, redirects, server restrictions, or remote sites blocking automated requests.
+- PublishRank does not guarantee rankings, crawling, indexing, traffic, or Google News inclusion.
+- IndexNow is not a Google indexing API.
+
+## Contributing and pull requests
+
+Pull requests are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening one. Use the repository’s pull-request template, describe the user-visible impact, include focused tests, and document any WordPress compatibility or migration considerations.
+
+Suggested contribution areas include News SEO edge cases, sitemap correctness, schema interoperability, editor usability, accessibility, performance, documentation, and compatibility with publisher themes.
+
+[Open a pull request](https://github.com/Umarjaum/PublishRank/compare) · [Report a bug](https://github.com/Umarjaum/PublishRank/issues/new/choose) · [Read the documentation](https://publishrank.netlify.app/)
+
+## Support
 
 - Project website and documentation: https://publishrank.netlify.app/
 - Developer website: https://umarjaum.netlify.app/
@@ -80,7 +155,3 @@ These lightweight scripts are not a substitute for testing in a real WordPress i
 ## License
 
 PublishRank is distributed under the GNU General Public License, version 2 or later. See [`LICENSE.txt`](LICENSE.txt).
-
-## Search terms
-
-WordPress SEO plugin · free WordPress SEO plugin · SEO plugin for WordPress · Yoast SEO alternative · Rank Math alternative · WordPress technical SEO · News SEO · Google News sitemap · XML sitemap plugin · schema markup · structured data · redirect manager · 404 monitor · internal link audit · orphan pages · IndexNow · robots.txt · llms.txt · SEO plugin for news websites.
