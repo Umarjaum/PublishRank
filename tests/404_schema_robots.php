@@ -40,7 +40,7 @@ $assert( strpos( $not_found, 'publishrank_seo_404_dismiss' ) !== false && strpos
 $assert( strpos( $post_meta, 'AUTHOR_NAME' ) !== false && strpos( $post_meta, 'AUTHOR_JOB_TITLE' ) !== false && strpos( $post_meta, 'AUTHOR_IMAGE' ) !== false, 'per-article author schema fields exist' );
 $assert( strpos( $post_meta, 'normalize_robots' ) !== false && strpos( $post_meta, 'self::ROBOTS' ) !== false, 'per-article robots directives are sanitized before saving' );
 $assert( strpos( $graph, 'PostMeta::AUTHOR_NAME' ) !== false && strpos( $graph, 'PostMeta::AUTHOR_JOB_TITLE' ) !== false && strpos( $graph, 'PostMeta::AUTHOR_IMAGE' ) !== false, 'custom author metadata is used in JSON-LD author schema' );
-$assert( strpos( $graph, 'PostMeta::SCHEMA_TYPE' ) !== false && strpos( $graph, "'NewsArticle', 'Article', 'BlogPosting'" ) !== false, 'article schema type can be selected from an allow-list' );
+$assert( strpos( $graph, 'PostMeta::SCHEMA_TYPE' ) !== false && strpos( $graph, 'SchemaTypes::article_types' ) !== false, 'article schema type can be selected from an allow-list' );
 $assert( strpos( $meta_generator, "'noindex'" ) !== false && strpos( $meta_generator, "'index'" ) !== false && strpos( $meta_generator, 'normalize_robots' ) !== false, 'index/noindex and follow/nofollow directives are normalized safely' );
 $assert( strpos( $settings, 'publishrank_seo_default_robots' ) !== false && strpos( $settings, 'publishrank_noindex_author_archives' ) !== false, 'global default robots and archive noindex settings are available' );
 $assert( strpos( $robots_page, 'publishrank_robots_custom' ) !== false && strpos( $robots_txt, 'clean_rules' ) !== false, 'robots.txt supports sanitized custom rules' );

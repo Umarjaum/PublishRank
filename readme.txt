@@ -3,17 +3,21 @@ Contributors: umarjaum
 Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
-Tested up to: 6.7
-Stable tag: 2.9.43
+Tested up to: 7.1
+Stable tag: 2.9.46
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
 
 Free SEO plugin for news publishers with News SEO, XML sitemaps, schema, metadata, redirects and technical SEO tools.
 
+Compatibility target: WordPress 7.1. This package includes a compatibility test plan in docs/WORDPRESS-7.1.3-COMPATIBILITY.md. The plugin remains installable on PHP 7.4+ and passed syntax checks on PHP 8.3.6; PHP 8.5 is the forward compatibility target. Complete staging checks before production use.
+
 == Description ==
 
 PublishRank is a free, open-source WordPress SEO plugin for site owners, bloggers, news publishers, newspapers, magazines and editorial teams. It brings core technical SEO workflows into one publisher-focused plugin and can be evaluated as an alternative to Yoast SEO, Rank Math and other WordPress SEO plugins. Compare the feature set with your current setup before switching; features and workflows are not identical across plugins.
+
+Copyright and project rights: Muhammad Umar Jabbar.
 
 Features include:
 
@@ -89,6 +93,14 @@ PublishRank integrates optionally with IndexNow at `https://api.indexnow.org/ind
 Optional external link check: when an administrator ticks "check external links" while running the Publisher link audit, PublishRank sends HEAD (and, if needed, GET) requests from the site's server to the external URLs already linked in the site's own content, only to see whether they respond. Nothing else is sent, and no data is sent to PublishRank or any other third party. The check never runs automatically.
 
 == Changelog ==
+= 2.9.46 =
+* Fixed the blank white XML sitemap page: the sitemap stylesheet request ended in a PHP fatal error ("Cannot use output buffering in output buffering display handlers"), so the browser had nothing to render. The head-recovery fallback no longer opens an output buffer inside a buffer callback; it renders at shutdown instead.
+* Fixed the same fatal error blanking every front-end page whenever PublishRank's head output was off or missing, which also removed all JSON-LD from those pages.
+* The sitemap stylesheet now has the same stale-rewrite-rule safety net as the sitemap XML, discards stray output before the XML declaration and is served as text/xsl.
+* Every front-end document now gets a WebPage-family schema node: author archives output ProfilePage, search results SearchResultsPage, 404 pages WebPage, and the "Homepage webpage type" setting is honored on blog-style home pages (previously always CollectionPage).
+* Fixed "Run graph scan": the follow-up auto-continue script threw "form.submit is not a function" (WordPress names the button "submit"), leaving the scan stuck at 0% until "Continue graph scan" was clicked by hand.
+* Fixed the Graph settings form, which printed settings_fields() and so posted action=update instead of its own admin-post action.
+* The content graph and image/video sitemaps now include pages (pages are public but not publicly_queryable, so they were silently excluded).
 = 2.9.43 =
 * Fixed News sitemap freshness, UTC filtering, XML escaping, cache invalidation, HTTP semantics and diagnostics.
 * Added explicit LiveBlogPosting controls, coverage updates, speakable filters and schema graph de-duplication.

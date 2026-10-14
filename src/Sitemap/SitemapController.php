@@ -12,6 +12,44 @@ final class SitemapController {
 		add_action( 'init', array( $this, 'rewrite' ) );
 		add_action( 'template_redirect', array( $this, 'render' ), 0 );
 		add_filter( 'wp_sitemaps_enabled', '__return_false', 20 );
+		// Sitemap URLs must keep working even when the stored rewrite rules are missing or stale
+		// (plugin files replaced without re-activation, permalinks reset, rules flushed by another plugin).
+		add_action( 'parse_request', array( $this, 'match_request' ), 0 );
+		add_action( 'wp_loaded', array( $this, 'heal_rewrite_rules' ), 20 );
+	}
+	/** Resolve a sitemap request straight from the URL when no stored rewrite rule matched it. */
+	public function match_request( $wp ) {
+		if ( ! is_object( $wp ) || ! empty( $wp->query_vars['publishrank_sitemap'] ) || empty( $_SERVER['REQUEST_URI'] ) ) { return; }
+		$path = (string) wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH );
+		$home = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+		if ( '' !== $home && '/' !== $home && 0 === strpos( $path, $home ) ) { $path = '/' . substr( $path, strlen( $home ) ); }
+		$path = ltrim( rawurldecode( $path ), '/' );
+		if ( '.xml' !== substr( $path, -4 ) ) { return; }
+		$name = substr( $path, 0, -4 );
+		if ( in_array( $name, array_merge( array( SitemapUrls::base() ), SitemapUrls::aliases() ), true ) ) {
+			$wp->query_vars['publishrank_sitemap'] = 'index';
+			return;
+		}
+		$prefix = preg_quote( SitemapUrls::shard_prefix(), '#' );
+		if ( preg_match( '#^' . $prefix . '-([a-z-]+)-sitemap-([0-9]+)$#', $name, $m ) ) {
+			$wp->query_vars['publishrank_sitemap'] = $m[1];
+			$wp->query_vars['publishrank_sitemap_shard'] = $m[2];
+		} elseif ( preg_match( '#^' . $prefix . '-([a-z-]+)-sitemap$#', $name, $m ) ) {
+			$wp->query_vars['publishrank_sitemap'] = $m[1];
+			$wp->query_vars['publishrank_sitemap_shard'] = 1;
+		}
+	}
+	/** Flush rewrite rules once when the sitemap rule is absent from the stored rules. */
+	public function heal_rewrite_rules() {
+		if ( ! get_option( 'permalink_structure' ) ) { return; }
+		$signature = md5( 'xsl|' . SitemapUrls::base() . '|' . implode( ',', SitemapUrls::aliases() ) . '|' . SitemapUrls::shard_prefix() );
+		$rules = get_option( 'rewrite_rules' );
+		$key = '^' . preg_quote( SitemapUrls::base(), '/' ) . '\.xml$';
+		// The sitemap stylesheet rule is checked too: without it the styled sitemap view renders as a blank page.
+		if ( is_array( $rules ) && isset( $rules[ $key ] ) && isset( $rules['^publishrank-sitemap\.xsl$'] ) ) { return; }
+		if ( get_option( 'publishrank_sitemap_rules_healed' ) === $signature ) { return; }
+		update_option( 'publishrank_sitemap_rules_healed', $signature, false );
+		flush_rewrite_rules( false );
 	}
 	public function rewrite() {
 		add_rewrite_tag( '%publishrank_sitemap%', '([^&]+)' );

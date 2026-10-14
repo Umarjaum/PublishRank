@@ -1,6 +1,9 @@
-/* Admin menu and toolbar icon alignment for PublishRank (scoped to the plugin's own menu/toolbar nodes). */
-#adminmenu #toplevel_page_publishrank-seo-dashboard > a{display:flex;align-items:center;min-height:34px}
-#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image{width:32px!important;height:34px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center}
-#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img{width:32px!important;height:32px!important;padding:0!important;margin:0!important;object-fit:contain}
-#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name{line-height:34px;padding-left:0!important;margin-left:0!important}
-.ab-top-menu #wp-admin-bar-publishrank-welcome .ab-icon{font-family:dashicons;vertical-align:middle;margin-right:4px}
+/* PublishRank admin menu and toolbar alignment. */
+#adminmenu #toplevel_page_publishrank-seo-dashboard>a{display:flex;align-items:center;min-height:34px}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image{width:26px!important;height:26px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center;flex:0 0 26px}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img{width:26px!important;height:26px!important;padding:0!important;margin:0!important;object-fit:contain;display:block}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name{line-height:34px;padding:0 0 0 4px!important;margin:0!important;white-space:nowrap}
+#wpadminbar #wp-admin-bar-publishrank-seo-toolbar>.ab-item{display:inline-flex!important;align-items:center!important;gap:4px;white-space:nowrap;line-height:32px}
+#wpadminbar #wp-admin-bar-publishrank-seo-toolbar>.ab-item .publishrank-toolbar-icon{display:block!important;width:18px!important;height:18px!important;margin:0!important;vertical-align:middle!important;object-fit:contain!important;flex:0 0 18px}
+#wpadminbar #wp-admin-bar-publishrank-seo-toolbar>.ab-item .ab-label{display:inline-block!important;line-height:inherit!important;margin:0!important;padding:0!important}
+#wpadminbar #wp-admin-bar-publishrank-wp-logo>.ab-item{padding-left:28px;background-position:7px center;background-repeat:no-repeat;background-size:16px 16px}

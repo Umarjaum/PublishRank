@@ -57,6 +57,7 @@ final class ImportExport {
 			'publishrank_breadcrumb_log_errors',
 			'publishrank_seo_multilingual_enabled',
 			'publishrank_seo_hreflang_map',
+			'publishrank_seo_hreflang_mirror',
 			'publishrank_seo_x_default_url',
 			'publishrank_seo_news_enabled',
 			'publishrank_seo_news_window',

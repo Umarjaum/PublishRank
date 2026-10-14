@@ -10,6 +10,18 @@ final class SitemapStylesheet {
 	public function register() {
 		add_action( 'init', array( $this, 'rewrite' ) );
 		add_action( 'template_redirect', array( $this, 'render' ), 1 );
+		// Serve the stylesheet even when the stored rewrite rules are stale or missing (same safety net as the sitemap XML itself).
+		// A 404 here makes the browser render the styled XML sitemap as a blank white page.
+		add_action( 'parse_request', array( $this, 'match_request' ), 0 );
+	}
+
+	/** Resolve /publishrank-sitemap.xsl straight from the URL when no stored rewrite rule matched it. */
+	public function match_request( $wp ) {
+		if ( ! is_object( $wp ) || ! empty( $wp->query_vars['publishrank_xsl'] ) || empty( $_SERVER['REQUEST_URI'] ) ) { return; }
+		$path = (string) wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH );
+		$home = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+		if ( '' !== $home && '/' !== $home && 0 === strpos( $path, $home ) ) { $path = '/' . substr( $path, strlen( $home ) ); }
+		if ( 'publishrank-sitemap.xsl' === ltrim( rawurldecode( $path ), '/' ) ) { $wp->query_vars['publishrank_xsl'] = '1'; }
 	}
 
 	public function rewrite() {
@@ -26,8 +38,11 @@ final class SitemapStylesheet {
 		if ( '1' !== (string) get_query_var( 'publishrank_xsl' ) ) {
 			return;
 		}
+		// WordPress' canonical redirect must never rewrite the stylesheet URL, and no theme/plugin output may precede the XML declaration.
+		remove_action( 'template_redirect', 'redirect_canonical' );
+		while ( ob_get_level() > 0 ) { @ob_end_clean(); }
 		status_header( 200 );
-		header( 'Content-Type: application/xml; charset=UTF-8' );
+		header( 'Content-Type: text/xsl; charset=UTF-8' );
 		header( 'X-Robots-Tag: noindex' );
 		header( 'Cache-Control: public, max-age=3600' );
 		$css_file = PUBLISHRANK_SEO_PATH . 'assets/css/sitemap.css';

@@ -96,7 +96,7 @@ final class HeadOutput {
 					echo '<meta property="og:url" content="' . esc_url( $this->meta->canonical() ) . '" />' . "\n";
 					echo '<meta property="og:type" content="' . esc_attr( $this->is_editorial_article() ? 'article' : 'website' ) . '" />' . "\n";
 					if ( $this->is_editorial_article() ) { echo '<meta property="og:updated_time" content="' . esc_attr( get_post_modified_time( DATE_W3C, true, get_queried_object_id() ) ) . '" />' . "\n"; }
-				$locale = str_replace( '-', '_', sanitize_text_field( (string) get_option( 'publishrank_default_locale', get_locale() ) ) );
+				$locale = str_replace( '-', '_', LanguageAlternates::current_locale() ?: sanitize_text_field( (string) get_option( 'publishrank_default_locale', get_locale() ) ) );
 				echo '<meta property="og:locale" content="' . esc_attr( $locale ) . '" />' . "\n";
 				foreach ( LanguageAlternates::alternates() as $alternate_locale => $alternate_url ) {
 					$alternate_locale = str_replace( '-', '_', $alternate_locale );

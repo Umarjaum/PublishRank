@@ -20,46 +20,61 @@ final class SchemaBuilder {
 			return $nodes;
 		}
 		if ( ! is_singular() ) { return $nodes; }
-		foreach ( array_merge( $this->media_nodes(), array_filter( array( $this->manual_faq() ) ) ) as $node ) {
+		foreach ( $this->media_nodes() as $node ) {
 			if ( is_array( $node ) && ! empty( $node ) ) { $nodes[] = $node; }
 		}
 		return $nodes;
 	}
 
-	/** The @type for GraphOutput's WebPage node, honoring overrides + global maps. */
+	/**
+	 * The @type for GraphOutput's WebPage node, honoring per-document overrides and the global defaults.
+	 * Every front-end document gets exactly one WebPage-family node: singular documents follow the editor choice /
+	 * page map / "Default schema for pages", the front page follows "Homepage webpage type", and archives, author,
+	 * search and 404 documents get their natural type instead of silently losing the default WebPage.
+	 */
 	public function current_webpage_type() {
 		if ( is_front_page() ) {
 			$home = sanitize_text_field( (string) get_option( 'publishrank_schema_home_type', 'WebPage' ) );
-			return SchemaTypes::resolve( $home ) ? SchemaTypes::resolve( $home ) : 'WebPage';
+			$home = SchemaTypes::resolve( $home );
+			if ( is_singular() ) {
+				// A static front page may still carry an explicit editor override below.
+				$override = $this->singular_override_type();
+				if ( $override ) { return $override; }
+			}
+			return $home ? $home : 'WebPage';
 		}
-		if ( is_author() )  { return 'ProfilePage'; }
+		if ( is_author() )  { return get_option( 'publishrank_schema_author_enabled', true ) ? 'ProfilePage' : 'CollectionPage'; }
 		if ( is_search() )  { return 'SearchResultsPage'; }
+		if ( is_404() )     { return 'WebPage'; }
 		if ( is_singular() ) {
 			$post = get_queried_object();
 			if ( $post instanceof \WP_Post ) {
-				$resolved = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' ) );
-				if ( $resolved && in_array( $resolved, array_merge( array( 'WebPage' ), array_keys( SchemaTypes::page_types() ) ), true ) ) {
-					return $resolved;
-				}
-				$mapped = $this->page_map_type( $post->ID );
-				if ( $mapped ) { return $mapped; }
+				$override = $this->singular_override_type();
+				if ( $override ) { return $override; }
 				if ( 'page' === $post->post_type ) {
-					$default = sanitize_text_field( (string) get_option( 'publishrank_schema_default_page_type', 'WebPage' ) );
-					return SchemaTypes::resolve( $default ) ? SchemaTypes::resolve( $default ) : 'WebPage';
+					$default = SchemaTypes::resolve( sanitize_text_field( (string) get_option( 'publishrank_schema_default_page_type', 'WebPage' ) ) );
+					return $default ? $default : 'WebPage';
 				}
 			}
+			return 'WebPage';
 		}
+		if ( is_home() || is_archive() || is_post_type_archive() ) { return 'CollectionPage'; }
 		return 'WebPage';
+	}
+
+	/** Editor override or global About/Contact assignment for the current singular document ('' = none). */
+	private function singular_override_type() {
+		$post = get_queried_object();
+		if ( ! $post instanceof \WP_Post ) { return ''; }
+		$resolved = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' ) );
+		if ( $resolved && in_array( $resolved, array_merge( array( 'WebPage' ), array_keys( SchemaTypes::page_types() ) ), true ) ) {
+			return $resolved;
+		}
+		return $this->page_map_type( $post->ID );
 	}
 
 	/** Global About/Contact/Privacy/Terms page assignment → WebPage subtype. */
 	private function page_map_type( $post_id ) {
-		$map = (array) get_option( 'publishrank_schema_page_map', array() );
-		$map = array_map( 'absint', $map );
-		if ( ! empty( $map['about'] ) && $map['about'] === (int) $post_id )    { return 'AboutPage'; }
-		if ( ! empty( $map['contact'] ) && $map['contact'] === (int) $post_id ) { return 'ContactPage'; }
-		if ( ! empty( $map['privacy'] ) && $map['privacy'] === (int) $post_id ) { return 'WebPage'; }
-		if ( ! empty( $map['terms'] ) && $map['terms'] === (int) $post_id )     { return 'WebPage'; }
 		return '';
 	}
 
@@ -102,98 +117,52 @@ final class SchemaBuilder {
 		return array_values( array_unique( array_slice( $urls, 0, 20 ) ) );
 	}
 
-	/** VideoObject / AudioObject / Event / ImageObject nodes from post meta. */
+	/** VideoObject and ImageGallery nodes selected for the current editorial document. */
 	private function media_nodes() {
-		$post = get_queried_object();
-		if ( ! $post instanceof \WP_Post ) { return array(); }
-		$type       = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' ) );
-		$permalink  = trailingslashit( esc_url_raw( get_permalink( $post ) ) );
-		$title      = wp_strip_all_tags( (string) get_the_title( $post ) );
-		$nodes      = array();
-
-		if ( 'VideoObject' === $type ) {
-			$content = PostMeta::get( $post->ID, PostMeta::VIDEO_URL, '' );
-			$embed   = PostMeta::get( $post->ID, PostMeta::VIDEO_EMBED_URL, '' );
-			if ( $content || $embed ) {
-				$video = array(
-					'@type' => 'VideoObject', '@id' => $permalink . '#video',
-					'name' => $title, 'url' => $permalink,
-					'description' => wp_strip_all_tags( get_the_excerpt( $post ) ),
-					'uploadDate' => get_post_time( DATE_W3C, true, $post ),
-					'thumbnailUrl' => PostMeta::get( $post->ID, PostMeta::VIDEO_THUMBNAIL, '' ) ?: \PublishRankSEO\Meta\SeoData::image_for_post( $post )['url'] ?? '',
-					'mainEntityOfPage' => array( '@id' => $permalink . '#webpage' ),
-				);
-				if ( $content ) { $video['contentUrl'] = esc_url_raw( $content ); }
-				if ( $embed )   { $video['embedUrl']   = esc_url_raw( $embed ); }
-				$duration = PostMeta::get( $post->ID, PostMeta::VIDEO_DURATION, '' );
-				if ( $duration && preg_match( '/^[A-Z0-9:]+$/i', $duration ) ) { $video['duration'] = $duration; }
-				$nodes[] = array_filter( $video );
+$post = get_queried_object();
+if ( ! $post instanceof \WP_Post ) { return array(); }
+$type = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' ) );
+$permalink = trailingslashit( esc_url_raw( get_permalink( $post ) ) );
+$title = wp_strip_all_tags( (string) get_the_title( $post ) );
+if ( 'VideoObject' === $type ) {
+$content = PostMeta::get( $post->ID, PostMeta::VIDEO_URL, '' );
+$embed = PostMeta::get( $post->ID, PostMeta::VIDEO_EMBED_URL, '' );
+if ( $content || $embed ) {
+$video = array( '@type' => 'VideoObject', '@id' => $permalink . '#video', 'name' => $title, 'url' => $permalink, 'description' => wp_strip_all_tags( get_the_excerpt( $post ) ), 'uploadDate' => get_post_time( DATE_W3C, true, $post ), 'thumbnailUrl' => PostMeta::get( $post->ID, PostMeta::VIDEO_THUMBNAIL, '' ), 'mainEntityOfPage' => array( '@id' => $permalink . '#webpage' ) );
+if ( $content ) { $video['contentUrl'] = esc_url_raw( $content ); }
+if ( $embed ) { $video['embedUrl'] = esc_url_raw( $embed ); }
+$duration = PostMeta::get( $post->ID, PostMeta::VIDEO_DURATION, '' );
+if ( $duration && preg_match( '/^[A-Z0-9:]+$/i', $duration ) ) { $video['duration'] = $duration; }
+return array( array_filter( $video ) );
+}
+}
+if ( 'ImageGallery' === $type ) {
+$images = $this->content_image_urls( $post );
+if ( count( $images ) > 1 ) {
+$gallery = array( '@type' => 'ImageGallery', '@id' => $permalink . '#gallery', 'name' => $title, 'url' => $permalink, 'image' => array(), 'mainEntityOfPage' => array( '@id' => $permalink . '#webpage' ) );
+foreach ( array_slice( $images, 0, 20 ) as $index => $image ) { $gallery['image'][] = array( '@type' => 'ImageObject', '@id' => $permalink . '#gallery-image-' . ( $index + 1 ), 'url' => $image['url'], 'width' => (int) ( $image['width'] ?? 0 ), 'height' => (int) ( $image['height'] ?? 0 ) ); }
+return array( $gallery );
+}
+}
+return array();
+}
+/** Extract clean http(s) URLs from raw multiline text. */
+private function content_image_urls( $post ) {
+			$images = array();
+			$content = (string) $post->post_content;
+			if ( preg_match_all( '/<img\b[^>]*\bsrc=["\']([^"\']+)["\'][^>]*>/i', $content, $matches ) ) {
+				foreach ( array_slice( $matches[1], 0, 20 ) as $url ) {
+					$url = esc_url_raw( $url );
+					$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+					if ( $url && in_array( strtolower( (string) $scheme ), array( 'http', 'https' ), true ) ) { $images[] = array( 'url' => $url ); }
+				}
 			}
-		} elseif ( 'AudioObject' === $type ) {
-			$content = PostMeta::get( $post->ID, PostMeta::AUDIO_URL, '' );
-			if ( $content ) {
-				$audio = array(
-					'@type' => 'AudioObject', '@id' => $permalink . '#audio',
-					'name' => $title, 'url' => esc_url_raw( $content ),
-					'uploadDate' => get_post_time( DATE_W3C, true, $post ),
-				);
-				$duration = PostMeta::get( $post->ID, PostMeta::AUDIO_DURATION, '' );
-				if ( $duration && preg_match( '/^[A-Z0-9:]+$/i', $duration ) ) { $audio['duration'] = $duration; }
-				$nodes[] = array_filter( $audio );
+			if ( empty( $images ) && function_exists( 'get_the_post_thumbnail_url' ) ) {
+				$url = esc_url_raw( (string) get_the_post_thumbnail_url( $post, 'full' ) );
+				if ( $url ) { $images[] = array( 'url' => $url ); }
 			}
-		} elseif ( 'Event' === $type ) {
-			$start = PostMeta::get( $post->ID, PostMeta::EVENT_START, '' );
-			if ( $start && strtotime( $start ) ) {
-				$event = array(
-					'@type' => 'Event', '@id' => $permalink . '#event', 'name' => $title,
-					'startDate' => gmdate( DATE_W3C, strtotime( $start ) ),
-					'url' => $permalink,
-					'organizer' => array( '@id' => trailingslashit( PublicationProfile::primary_url() ) . '#organization' ),
-				);
-				$location = PostMeta::get( $post->ID, PostMeta::EVENT_LOCATION, '' );
-				if ( $location ) { $event['location'] = array( '@type' => 'Place', 'name' => $location ); }
-				$nodes[] = array_filter( $event );
-			}
-		} elseif ( 'ImageObject' === $type && 'attachment' === $post->post_type && wp_attachment_is_image( $post ) ) {
-			$src = wp_get_attachment_image_src( $post->ID, 'full' );
-			if ( $src ) {
-				$nodes[] = array(
-					'@type' => 'ImageObject', '@id' => $permalink . '#image',
-					'url' => esc_url_raw( $src[0] ), 'width' => (int) $src[1], 'height' => (int) $src[2],
-					'name' => $title,
-				);
-			}
+			return $images;
 		}
-		return $nodes;
-	}
-
-	/** Manual FAQ items entered in the schema meta box (takes priority over auto-detect). */
-	private function manual_faq() {
-		$post = get_queried_object();
-		if ( ! $post instanceof \WP_Post ) { return array(); }
-		$items = get_post_meta( $post->ID, PostMeta::FAQ_ITEMS, true );
-		if ( empty( $items ) || ! is_array( $items ) ) { return array(); }
-		$questions = array();
-		$allowed_html = array( 'a' => array( 'href' => true ), 'p' => array(), 'br' => array(), 'ul' => array(), 'ol' => array(), 'li' => array(), 'strong' => array(), 'em' => array(), 'b' => array(), 'i' => array() );
-		foreach ( array_slice( $items, 0, 20 ) as $item ) {
-			if ( ! is_array( $item ) ) { continue; }
-			$q = trim( wp_strip_all_tags( (string) ( $item['q'] ?? '' ) ) );
-			$a = trim( wp_kses( (string) ( $item['a'] ?? '' ), $allowed_html ) );
-			if ( '' === $q || '' === trim( wp_strip_all_tags( $a ) ) ) { continue; }
-			$questions[] = array(
-				'@type' => 'Question',
-				'name'  => $q,
-				'acceptedAnswer' => array( '@type' => 'Answer', 'text' => $a ),
-			);
-		}
-		if ( empty( $questions ) ) { return array(); }
-		$permalink = trailingslashit( esc_url_raw( get_permalink( $post ) ) );
-		return array(
-			'@type' => 'FAQPage', '@id' => $permalink . '#faq',
-			'mainEntityOfPage' => array( '@id' => $permalink . '#webpage' ),
-			'mainEntity' => $questions,
-		);
-	}
 	/** Extract clean http(s) URLs from raw multiline text. */
 	public static function author_social_urls_from_text( $text ) {
 		$urls = array();

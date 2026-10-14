@@ -4,8 +4,11 @@ namespace PublishRankSEO\Sitemap;
 defined( 'ABSPATH' ) || exit;
 
 final class SitemapUrls {
-	public static function base() { $value = preg_replace( '/[^a-z0-9\-]/', '', strtolower( (string) get_option( 'publishrank_sitemap_endpoint', 'publishrank-sitemap' ) ) ); return $value ?: 'publishrank-sitemap'; }
-	public static function aliases() { $raw = (string) get_option( 'publishrank_sitemap_aliases', '' ); $out = array(); foreach ( preg_split( '/[\s,]+/', $raw, -1, PREG_SPLIT_NO_EMPTY ) as $alias ) { $alias = preg_replace( '/[^a-z0-9\-]/', '', strtolower( $alias ) ); if ( $alias && $alias !== self::base() ) { $out[] = $alias; } } return array_values( array_unique( $out ) ); }
+	/** Fixed on purpose: a publisher-editable endpoint could collide with WordPress' built-in wp-sitemap.xml or another plugin's sitemap. */
+	const ENDPOINT = 'publishrank-sitemap';
+	public static function base() { return self::ENDPOINT; }
+	/** Aliases are retired together with the editable endpoint; the canonical URL is the only sitemap index URL. */
+	public static function aliases() { return array(); }
 	public static function index_url() { return home_url( '/' . self::base() . '.xml' ); }
 	public static function shard_prefix() {
 		$base = self::base();

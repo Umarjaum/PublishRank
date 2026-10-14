@@ -1,6 +1,6 @@
 <?php
 /** Emits one connected JSON-LD graph for the current document. */
-// Article schema allow-list: 'NewsArticle', 'Article', 'BlogPosting', 'LiveBlogPosting'.
+// News-publisher article schema allow-list: NewsArticle, Article, LiveBlogPosting.
 namespace PublishRankSEO\Schema;
 
 use PublishRankSEO\Core\OutputRegistry;
@@ -28,21 +28,15 @@ final class GraphOutput {
 			$graph[] = $this->article();
 			$graph[] = $this->article_author();
 		}
-		if ( ! is_singular() ) {
+		if ( ! is_singular() && ! is_404() ) {
 			$list = $this->collection_list();
 			if ( $list ) {
 				$graph[] = $list;
-				$graph[2]['mainEntity'] = array( '@id' => trailingslashit( ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical() ) . '#itemlist' );
+				// An author's ProfilePage is about the Person; every other listing is about its item list.
+				if ( ! is_author() || 'ProfilePage' !== ( $graph[2]['@type'] ?? '' ) ) {
+					$graph[2]['mainEntity'] = array( '@id' => trailingslashit( ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical() ) . '#itemlist' );
+				}
 			}
-		}
-		if ( get_option( 'publishrank_schema_faq_auto', true ) && ! $this->has_manual_faq() ) {
-		$automated = ( new SchemaAutomation() )->for_current_document();
-		if ( is_array( $automated ) && ! empty( $automated['faq'] ) ) {
-			$faq = $automated['faq'];
-			$faq['@id'] = trailingslashit( ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical() ) . '#faq';
-			$faq['mainEntityOfPage'] = array( '@id' => trailingslashit( ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical() ) . '#webpage' );
-			$graph[] = $faq;
-		}
 		}
 		$graph = apply_filters( 'publishrank_schema_graph', $graph, $this );
 		if ( ! is_array( $graph ) ) { $graph = array(); }
@@ -52,36 +46,13 @@ final class GraphOutput {
 		if ( $this->is_editorial_article() ) { $entities .= ',article'; }
 		if ( $list ) { $entities .= ',itemlist'; }
 		echo '<!-- Structured data graph begin; entities=' . esc_attr( $entities ) . " -->\n";
-		$custom = $this->custom_schema(); if ( $custom ) { $graph[] = $custom; }
 		foreach ( ( new SchemaBuilder() )->extra_nodes() as $node ) { $graph[] = $node; }
 			$graph = self::dedupe_graph( $graph );
 			echo '<script type="application/ld+json">' . wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . '</script>' . "\n";
 			echo "<!-- Structured data graph end -->\n";
 		}
 
-		/** @return array<string, mixed>|null */
-		private function custom_schema() {
-			if ( ! get_option( 'publishrank_custom_schema_enabled', false ) ) {
-				return null;
-			}
-			$raw = trim( (string) get_option( 'publishrank_custom_schema_jsonld', '' ) );
-			if ( '' === $raw ) {
-				return null;
-			}
-			$data = json_decode( $raw, true );
-			if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $data ) || empty( $data ) ) {
-				return null;
-			}
-			// The outer graph owns @context; avoid nesting a second graph.
-			unset( $data['@context'], $data['@graph'] );
-			return empty( $data ) ? null : $data;
-		}
-
-		/** @return string Stable @id anchor for the site identity entity. */
-	private function identity_id() {
-		return trailingslashit( PublicationProfile::primary_url() ) . ( PublicationProfile::identity_is_person() ? '#person' : '#organization' );
-	}
-
+		
 	/** @return array<string, mixed> */
 	private function identity_entity() {
 		return PublicationProfile::identity_is_person() ? $this->person() : $this->organization();
@@ -144,6 +115,9 @@ final class GraphOutput {
 		return $organization;
 	}
 
+	/** Stable @id for the configured publisher identity. */
+	private function identity_id() { return trailingslashit( PublicationProfile::primary_url() ) . ( PublicationProfile::identity_is_person() ? '#person' : '#organization' ); }
+
 	/** @return array<string, mixed> */
 	private function person() {
 		$url    = trailingslashit( PublicationProfile::primary_url() );
@@ -188,7 +162,7 @@ final class GraphOutput {
 		$canonical = ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical();
 		$url = trailingslashit( $canonical );
 		$page = array(
-			'@type' => is_singular() ? ( new SchemaBuilder() )->current_webpage_type() : 'CollectionPage',
+			'@type' => ( new SchemaBuilder() )->current_webpage_type(),
 			'@id' => $url . '#webpage',
 			'url' => $canonical,
 			'name' => wp_get_document_title(),
@@ -197,6 +171,9 @@ final class GraphOutput {
 			'isPartOf' => array( '@id' => trailingslashit( PublicationProfile::primary_url() ) . '#website' ),
 			'about' => array( '@id' => $this->identity_id() ),
 		);
+		if ( is_author() && 'ProfilePage' === $page['@type'] ) {
+			$page['mainEntity'] = array( '@id' => trailingslashit( get_author_posts_url( (int) get_queried_object_id() ) ) . '#author' );
+		}
 		if ( is_singular() ) {
 			$post = get_queried_object();
 			$page['datePublished'] = get_post_time( DATE_W3C, true, $post );
@@ -222,8 +199,10 @@ final class GraphOutput {
 		$author = $post instanceof \WP_Post ? get_userdata( $post->post_author ) : false;
 		$author_url = $author ? (string) get_author_posts_url( $post->post_author ) : $site_url;
 			$format = NewsroomSignals::format( $post );
-			$schema_type = (string) PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, 'NewsArticle' );
-			$schema_type = LiveBlogSchema::is_live_blog( $post ) ? 'LiveBlogPosting' : ( ( array_key_exists( $schema_type, SchemaTypes::article_types() ) && 'LiveBlogPosting' !== $schema_type ) ? $schema_type : 'NewsArticle' );
+			$default_type = (string) get_option( 'publishrank_schema_default_post_type', 'NewsArticle' );
+			$default_type = ( array_key_exists( $default_type, SchemaTypes::article_types() ) ? $default_type : 'NewsArticle' );
+			$schema_type = (string) PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, $default_type );
+			$schema_type = LiveBlogSchema::is_live_blog( $post ) ? 'LiveBlogPosting' : ( ( array_key_exists( $schema_type, SchemaTypes::article_types() ) && 'LiveBlogPosting' !== $schema_type ) ? $schema_type : $default_type );
 		$description = (string) PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' );
 		$description = $description ? wp_strip_all_tags( $description ) : wp_strip_all_tags( get_the_excerpt( $post ) );
 		$author_node_id = trailingslashit( $author_url ) . '#author';
@@ -360,7 +339,14 @@ final class GraphOutput {
 	private function is_editorial_article() {
 		$post = get_queried_object();
 		$type = $post instanceof \WP_Post ? get_post_type_object( $post->post_type ) : false;
-		return is_singular() && $type && $type->public && $type->publicly_queryable && ! in_array( $post->post_type, array( 'page', 'attachment' ), true );
+		if ( ! is_singular() || ! $post instanceof \WP_Post || ! $type || ! $type->public ) { return false; }
+		if ( 'attachment' === $post->post_type ) { return false; }
+		if ( 'page' === $post->post_type ) {
+			// Pages are WebPage nodes unless the editor explicitly chose an article schema type for this page.
+			$chosen = (string) PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' );
+			return '' !== $chosen && array_key_exists( $chosen, SchemaTypes::article_types() );
+		}
+		return (bool) $type->publicly_queryable;
 	}
 
 	/** @return array<string, mixed>|null */
@@ -377,26 +363,15 @@ final class GraphOutput {
 		return empty( $items ) ? null : array( '@type' => 'ItemList', '@id' => $url . '#itemlist', 'numberOfItems' => count( $items ), 'itemListElement' => $items );
 	}
 
-	/** True when the editor entered FAQ items for this post (these take priority over auto-detected <details> blocks). */
-	private function has_manual_faq() {
-		$post = get_queried_object();
-		if ( ! $post instanceof \WP_Post ) { return false; }
-		foreach ( (array) get_post_meta( $post->ID, PostMeta::FAQ_ITEMS, true ) as $item ) {
-			if ( is_array( $item ) && ! empty( $item['q'] ) && ! empty( $item['a'] ) ) { return true; }
-		}
-		return false;
-	}
-
 	/**
-	 * Collapse duplicate nodes before output: nodes sharing an @id are merged (first value wins), identical FAQPage
-	 * question sets are emitted once, and when several article-type nodes describe the same URL only one primary
-	 * entity is kept (LiveBlogPosting is preferred over NewsArticle/Article/BlogPosting).
+	 * Collapse duplicate nodes before output: nodes sharing an @id are merged (first value wins), when several supported article-type nodes describe the same URL only one primary
+	 * entity is kept (LiveBlogPosting is preferred over NewsArticle/Article).
 	 *
 	 * @param array<int,array<string,mixed>> $graph
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function dedupe_graph( array $graph ) {
-		$article_types = array( 'NewsArticle', 'Article', 'BlogPosting', 'LiveBlogPosting', 'Report', 'TechArticle', 'ScholarlyArticle', 'AdvertiserContentArticle' );
+		$article_types = array( 'NewsArticle', 'Article', 'LiveBlogPosting' );
 		$type_of = static function ( $node ) { $t = $node['@type'] ?? ''; return is_array( $t ) ? (string) reset( $t ) : (string) $t; };
 		$by_id = array(); $out = array();
 		foreach ( $graph as $node ) {
@@ -406,14 +381,9 @@ final class GraphOutput {
 			if ( '' !== $id ) { $by_id[ $id ] = count( $out ); }
 			$out[] = $node;
 		}
-		$faq_seen = array(); $primary_for = array(); $drop = array();
+		$primary_for = array(); $drop = array();
 		foreach ( $out as $i => $node ) {
 			$type = $type_of( $node );
-			if ( 'FAQPage' === $type && ! empty( $node['mainEntity'] ) ) {
-				$fingerprint = md5( wp_json_encode( $node['mainEntity'] ) );
-				if ( isset( $faq_seen[ $fingerprint ] ) ) { $drop[ $i ] = true; continue; }
-				$faq_seen[ $fingerprint ] = true;
-			}
 			if ( in_array( $type, $article_types, true ) ) {
 				$key = (string) ( $node['mainEntityOfPage']['@id'] ?? $node['url'] ?? '' );
 				if ( '' === $key ) { continue; }

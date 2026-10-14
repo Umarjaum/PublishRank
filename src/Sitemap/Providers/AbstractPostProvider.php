@@ -50,13 +50,14 @@ abstract class AbstractPostProvider implements SitemapProviderInterface {
 	protected function media_post_types() {
 		$raw = trim( (string) get_option( 'publishrank_seo_media_post_types', 'all' ) );
 		if ( '' === $raw || 'all' === strtolower( $raw ) ) {
-			$types = get_post_types( array( 'public' => true, 'publicly_queryable' => true ), 'names' );
+			// 'page' is public but not publicly_queryable; it must still be covered by image/video sitemaps.
+			$types = get_post_types( array( 'public' => true ), 'names' );
 			return array_values( array_diff( (array) $types, array( 'attachment', 'revision', 'nav_menu_item' ) ) );
 		}
 		$types = array();
 		foreach ( preg_split( '/[\s,]+/', $raw, -1, PREG_SPLIT_NO_EMPTY ) as $type ) {
 			$type = sanitize_key( $type ); $object = get_post_type_object( $type );
-			if ( $object && $object->public && $object->publicly_queryable && 'attachment' !== $type ) { $types[] = $type; }
+			if ( $object && $object->public && 'attachment' !== $type ) { $types[] = $type; }
 		}
 		return array_values( array_unique( $types ? $types : array( 'post', 'page' ) ) );
 	}

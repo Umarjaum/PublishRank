@@ -8,6 +8,8 @@ defined( 'ABSPATH' ) || exit;
  */
 final class IntegrityManager {
 	const OPTION = 'publishrank_integrity_manifest';
+	/** Bumped when packaged files are rebuilt without a plugin version change, so the baseline is re-created. */
+	const BUILD = 'r2';
 	const STATUS_OPTION = 'publishrank_integrity_status';
 	const SCHEMA = 1;
 
@@ -22,7 +24,7 @@ final class IntegrityManager {
 	public static function establish_baseline( $force = false ) {
 		$existing = get_option( self::OPTION, array() );
 		$version  = defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : 'unknown';
-		if ( ! $force && is_array( $existing ) && isset( $existing['version'], $existing['files'] ) && $version === $existing['version'] ) {
+		if ( ! $force && is_array( $existing ) && isset( $existing['version'], $existing['files'] ) && $version === $existing['version'] && ( $existing['build'] ?? '' ) === self::BUILD ) {
 			return;
 		}
 		$manifest = self::build_manifest();
@@ -39,7 +41,7 @@ final class IntegrityManager {
 			self::establish_baseline();
 			return;
 		}
-		if ( isset( $manifest['version'] ) && $manifest['version'] !== $version ) {
+		if ( ( isset( $manifest['version'] ) && $manifest['version'] !== $version ) || ( $manifest['build'] ?? '' ) !== self::BUILD ) {
 			self::establish_baseline( true );
 			return;
 		}
@@ -86,7 +88,7 @@ final class IntegrityManager {
 			}
 		}
 		ksort( $files );
-		return array( 'schema' => self::SCHEMA, 'version' => defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : 'unknown', 'created_at' => gmdate( 'c' ), 'files' => $files );
+		return array( 'schema' => self::SCHEMA, 'version' => defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : 'unknown', 'build' => self::BUILD, 'created_at' => gmdate( 'c' ), 'files' => $files );
 	}
 
 	public static function compare_manifest( $manifest ) {

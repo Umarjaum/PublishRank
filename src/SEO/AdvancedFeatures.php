@@ -17,12 +17,12 @@ final class AdvancedFeatures {
 		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_noindex_posts' ), 10, 2 );
 	}
 
-	/** Add editorial controls to posts without changing theme presentation. */
-	public function add_meta_box( $post_type = '', $post = null ) {
-		if ( $post_type && in_array( $post_type, PostMeta::post_types(), true ) ) {
-			add_meta_box( 'publishrank-seo-meta', __( 'PublishRank', 'publishrank' ), array( $this, 'render_meta_box' ), $post_type, 'normal', 'high' );
+		/** Add editorial controls to posts without changing theme presentation. */
+		public function add_meta_box( $post_type = '', $post = null ) {
+			if ( $post_type && in_array( $post_type, PostMeta::post_types(), true ) ) {
+				\add_meta_box( 'publishrank-seo-meta', __( 'PublishRank', 'publishrank' ), array( $this, 'render_meta_box' ), $post_type, 'normal', 'high' );
+			}
 		}
-	}
 
 	/** Article/news-only controls apply to editorial post types, not pages. */
 	private function is_article_type( $post_type ) {

@@ -42,7 +42,7 @@ final class InternalLinksPage {
 	}
 
 	public function sanitize_post_types( $value ) {
-		$public = get_post_types( array( 'public' => true, 'publicly_queryable' => true ), 'names' );
+		$public = get_post_types( array( 'public' => true ), 'names' ); // Includes 'page' (public but not publicly_queryable).
 		$out    = array();
 		foreach ( preg_split( '/[\s,]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY ) as $type ) {
 			$type = sanitize_key( $type );
@@ -193,7 +193,7 @@ final class InternalLinksPage {
 		echo '<form class="rhs-internal-links-autosubmit" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="publishrank_internal_links_batch" />';
 		wp_nonce_field( 'publishrank_internal_links_batch' );
-		submit_button( __( 'Continue graph scan', 'publishrank' ) );
+		submit_button( __( 'Continue graph scan', 'publishrank' ), 'primary', 'publishrank_continue_scan', false );
 		echo '</form>';
 	}
 
@@ -201,18 +201,18 @@ final class InternalLinksPage {
 		echo '<div class="rhs-card rhs-ilink-settings"><h2>' . esc_html__( 'Graph settings', 'publishrank' ) . '</h2>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="publishrank_internal_links_settings" />';
+		// Do not print settings_fields() here: it adds action=update, which overrides the admin-post action above and sends the form nowhere.
 		wp_nonce_field( 'publishrank_internal_links_settings' );
-		settings_fields( 'publishrank_internal_links' );
 		echo '<p><label><input type="checkbox" name="publishrank_internal_link_enabled" value="1" ' . checked( Store::enabled(), true, false ) . ' /> ' . esc_html__( 'Enable the internal-link content graph', 'publishrank' ) . '</label></p>';
 		echo '<p><label><strong>' . esc_html__( 'Orphan threshold', 'publishrank' ) . '</strong><br /><input type="number" min="0" max="5" name="publishrank_internal_link_min_inbound" value="' . esc_attr( Store::settings()['threshold'] ) . '" /></label> <span class="description">' . esc_html__( 'Content at or below this inbound-link count is reported.', 'publishrank' ) . '</span></p>';
 		echo '<p><label><strong>' . esc_html__( 'Recommendations per orphan', 'publishrank' ) . '</strong><br /><input type="number" min="1" max="10" name="publishrank_internal_link_max_recommendations" value="' . esc_attr( Store::settings()['max'] ) . '" /></label></p>';
 		echo '<p><label><strong>' . esc_html__( 'Post types', 'publishrank' ) . '</strong><br /><input type="text" class="large-text" name="publishrank_internal_link_post_types" value="' . esc_attr( Store::settings()['types'] ) . '" /></label><br /><span class="description">' . esc_html__( 'Comma-separated. Leave empty for all public content types.', 'publishrank' ) . '</span></p>';
-		submit_button( __( 'Save settings', 'publishrank' ) );
+		submit_button( __( 'Save settings', 'publishrank' ), 'primary', 'publishrank_save_settings', false );
 		echo '</form>';
 		echo '<form class="rhs-internal-links-confirm" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-confirm="' . esc_attr__( 'Rebuild the content graph and regenerate pending recommendations?', 'publishrank' ) . '">';
 		echo '<input type="hidden" name="action" value="publishrank_internal_links_scan" />';
 		wp_nonce_field( 'publishrank_internal_links_scan' );
-		submit_button( __( 'Run graph scan', 'publishrank' ), 'secondary' );
+		submit_button( __( 'Run graph scan', 'publishrank' ), 'secondary', 'publishrank_run_scan', false );
 		echo '</form></div>';
 	}
 

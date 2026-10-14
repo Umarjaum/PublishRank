@@ -124,10 +124,27 @@ final class MetaGenerator {
 		if ( $candidate && $primary_host && $candidate_host === $primary_host && ! $this->is_media_host( $candidate_host ) ) {
 			return $candidate;
 		}
-		$permalink      = PublicationProfile::normalize_url( (string) get_permalink( $post_id ) );
+		$permalink_raw = $this->permalink_for_post( $post_id );
+		$permalink      = PublicationProfile::normalize_url( (string) $permalink_raw );
 		$permalink_host = strtolower( (string) wp_parse_url( $permalink, PHP_URL_HOST ) );
 		return $permalink && ( ! $primary_host || $permalink_host === $primary_host ) ? $permalink : $primary;
 	}
+
+/** Use the selected primary category only when the site's permalink structure supports it. */
+private function permalink_for_post( $post_id ) {
+$mode = get_option( 'publishrank_seo_canonical_category_mode', 'permalink' );
+$structure = (string) get_option( 'permalink_structure', '' );
+if ( 'primary_category' !== $mode || false === strpos( $structure, '%category%' ) ) { return get_permalink( $post_id ); }
+$category_id = absint( PostMeta::get( $post_id, PostMeta::PRIMARY_CATEGORY, 0 ) );
+$categories = get_the_category( $post_id );
+$category = $category_id ? get_term( $category_id, 'category' ) : ( ! empty( $categories ) ? $categories[0] : null );
+if ( ! $category || is_wp_error( $category ) ) { return get_permalink( $post_id ); }
+$filter = static function ( $selected, $post_categories ) use ( $category ) { return $category; };
+add_filter( 'post_link_category', $filter, 10, 2 );
+$url = get_permalink( $post_id );
+remove_filter( 'post_link_category', $filter, 10 );
+return $url;
+}
 
 	/** @return string */
 	public function section() {

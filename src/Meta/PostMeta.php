@@ -2,6 +2,8 @@
 /** Post-level SEO fields and sanitization. */
 namespace PublishRankSEO\Meta;
 
+use PublishRankSEO\Schema\SchemaTypes;
+
 defined( 'ABSPATH' ) || exit;
 
 final class PostMeta {
@@ -39,6 +41,13 @@ final class PostMeta {
 	const ACCESSIBLE_FOR_FREE = '_publishrank_seo_accessible_for_free';
 	const CONTENT_TIER = '_publishrank_seo_content_tier';
 	const CITATIONS = '_publishrank_seo_citations';
+	const REVIEW_ITEM = '_publishrank_seo_review_item';
+	const REVIEW_RATING = '_publishrank_seo_review_rating';
+	const RECIPE_INGREDIENTS = '_publishrank_seo_recipe_ingredients';
+	const RECIPE_STEPS = '_publishrank_seo_recipe_steps';
+	const RECIPE_TIME = '_publishrank_seo_recipe_time';
+	const RECIPE_YIELD = '_publishrank_seo_recipe_yield';
+	const HREFLANG = '_publishrank_seo_hreflang';
 
 	/** Meta keys that editors may override and that are exposed to the block editor and REST API. */
 	public static function overridable() {
@@ -145,6 +154,9 @@ final class PostMeta {
 			$card = sanitize_text_field( wp_unslash( $_POST[ self::TWITTER_CARD ] ) );
 			update_post_meta( $post_id, self::TWITTER_CARD, in_array( $card, array( 'summary', 'summary_large_image' ), true ) ? $card : 'summary_large_image' );
 		}
+		foreach ( array( self::RECIPE_INGREDIENTS, self::RECIPE_STEPS, self::HREFLANG ) as $key ) {
+			if ( isset( $_POST[ $key ] ) ) { update_post_meta( $post_id, $key, sanitize_textarea_field( wp_unslash( $_POST[ $key ] ) ) ); }
+		}
 		if ( isset( $_POST[ self::SCHEMA_TYPE ] ) ) {
 			$type = sanitize_text_field( wp_unslash( $_POST[ self::SCHEMA_TYPE ] ) );
 			update_post_meta( $post_id, self::SCHEMA_TYPE, ( '' === $type || SchemaTypes::resolve( $type ) ) ? $type : '' );
@@ -152,7 +164,7 @@ final class PostMeta {
 		foreach ( array( self::VIDEO_URL, self::VIDEO_EMBED_URL, self::AUDIO_URL, self::VIDEO_THUMBNAIL ) as $key ) {
 			if ( isset( $_POST[ $key ] ) ) { update_post_meta( $post_id, $key, self::sanitize_url( $_POST[ $key ] ) ); }
 		}
-		foreach ( array( self::AUDIO_DURATION => 32, self::EVENT_START => 40, self::EVENT_LOCATION => 200 ) as $key => $length ) {
+		foreach ( array( self::AUDIO_DURATION => 32, self::EVENT_START => 40, self::EVENT_LOCATION => 200, self::REVIEW_ITEM => 200, self::REVIEW_RATING => 8, self::RECIPE_TIME => 32, self::RECIPE_YIELD => 60 ) as $key => $length ) {
 			if ( isset( $_POST[ $key ] ) ) { update_post_meta( $post_id, $key, self::sanitize_text( $_POST[ $key ], $length ) ); }
 		}
 		if ( isset( $_POST['publishrank_faq_items'] ) && is_array( $_POST['publishrank_faq_items'] ) ) {

@@ -16,17 +16,41 @@ final class LinkManager {
 		return (bool) get_option( 'publishrank_links_enabled', 1 );
 	}
 
-	/** Hosts (apex and www variants) that count as this site. @return array<string,bool> */
+	/** Exact hosts plus the site domain; all subdomains remain internal. */
 	private static function site_hosts() {
 		$hosts = array();
-		foreach ( array( home_url(), site_url() ) as $url ) {
+		foreach ( array( home_url(), site_url(), get_option( 'publishrank_primary_url', '' ) ) as $url ) {
 			$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
 			if ( '' === $host ) { continue; }
-			$hosts[ $host ] = true;
-			$hosts[ preg_replace( '/^www\./', '', $host ) ]  = true;
-			$hosts[ 'www.' . preg_replace( '/^www\./', '', $host ) ] = true;
+			$base = preg_replace( '/^www\./', '', $host );
+			$hosts[ $host ] = true; $hosts[ $base ] = true; $hosts[ 'www.' . $base ] = true;
 		}
 		return $hosts;
+	}
+
+	/** True for the site host or any subdomain of it. */
+	private static function is_site_host( $host ) {
+		$host = strtolower( trim( (string) $host ) );
+		if ( '' === $host ) { return true; }
+		foreach ( array_keys( self::site_hosts() ) as $site_host ) {
+			$site_host = preg_replace( '/^www\./', '', strtolower( $site_host ) );
+			if ( $host === $site_host || ( strlen( $host ) > strlen( $site_host ) && substr( $host, -strlen( '.' . $site_host ) ) === '.' . $site_host ) ) { return true; }
+		}
+		return false;
+	}
+
+	/** @return array<string,bool> Domains explicitly approved for follow links. */
+	private static function follow_domains() {
+		$domains = array();
+		$raw = preg_split( '/[\s,]+/', (string) get_option( 'publishrank_links_follow_domains', '' ), -1, PREG_SPLIT_NO_EMPTY );
+		foreach ( (array) $raw as $domain ) {
+			$domain = strtolower( trim( $domain ) );
+			$domain = preg_replace( '#^https?://#', '', $domain );
+			$domain = preg_replace( '#/.*$#', '', (string) $domain );
+			$domain = preg_replace( '/^www\./', '', $domain );
+			if ( '' !== $domain ) { $domains[ $domain ] = true; }
+		}
+		return $domains;
 	}
 
 	/** @return array<string,bool> Domains configured for nofollow, normalized. */
@@ -61,12 +85,16 @@ final class LinkManager {
 		$url = html_entity_decode( trim( $href[2] ?? $href[1] ?? '' ), ENT_QUOTES, 'UTF-8' );
 		if ( '' === $url || 0 === strpos( $url, '#' ) || preg_match( '#^(mailto:|tel:|javascript:|data:)#i', $url ) ) { return $tag; }
 		$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
-		if ( '' === $host || isset( self::site_hosts()[ $host ] ) ) { return $tag; } // Internal.
+		if ( '' === $host || self::is_site_host( $host ) ) { return $tag; } // Internal, including all site subdomains.
 
-		$rel_add   = array();
+		$rel_add = array();
+		$follow_domains = self::follow_domains();
+		$bare_host = preg_replace( '/^www\./', '', $host );
+		$approved = isset( $follow_domains[ $host ] ) || isset( $follow_domains[ $bare_host ] );
+		if ( ! $approved ) { $rel_add[] = 'nofollow'; }
+		if ( get_option( 'publishrank_links_sponsored', 0 ) ) { $rel_add[] = 'sponsored'; }
 		$nofollows = self::nofollow_domains();
-		if ( get_option( 'publishrank_links_sponsored', 0 ) ) { $rel_add[] = 'sponsored'; $rel_add[] = 'nofollow'; }
-		elseif ( isset( $nofollows[ $host ] ) || isset( $nofollows[ preg_replace( '/^www\./', '', $host ) ] ) ) { $rel_add[] = 'nofollow'; }
+		if ( isset( $nofollows[ $host ] ) || isset( $nofollows[ $bare_host ] ) ) { $rel_add[] = 'nofollow'; }
 		if ( preg_match( '/\btarget\s*=\s*(["\']?)_blank\1/i', $tag ) ) { $rel_add[] = 'noopener'; $rel_add[] = 'noreferrer'; }
 		if ( get_option( 'publishrank_links_new_tab', 0 ) && ! preg_match( '/\btarget\s*=/i', $tag ) ) {
 			$rel_add[] = 'noopener'; $rel_add[] = 'noreferrer';
@@ -96,7 +124,7 @@ final class LinkManager {
 				$url = html_entity_decode( trim( $url ), ENT_QUOTES, 'UTF-8' );
 				if ( '' === $url || 0 === strpos( $url, '#' ) || preg_match( '#^(mailto:|tel:|javascript:|data:)#i', $url ) ) { continue; }
 				$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
-				if ( '' === $host || isset( $hosts[ $host ] ) || 0 !== strpos( $url, 'http' ) ) { $internal++; } else { $external++; }
+				if ( '' === $host || self::is_site_host( $host ) || 0 !== strpos( $url, 'http' ) ) { $internal++; } else { $external++; }
 			}
 		}
 		update_post_meta( $post_id, self::COUNTS_META, array( 'internal' => $internal, 'external' => $external ) );

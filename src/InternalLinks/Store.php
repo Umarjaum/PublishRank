@@ -106,7 +106,9 @@ final class Store {
 	}
 
 	public static function allowed_types() {
-		$public = get_post_types( array( 'public' => true, 'publicly_queryable' => true ), 'names' );
+		// 'public' only: the built-in 'page' type is public but NOT publicly_queryable, so filtering on that flag silently
+		// dropped every page from the graph (no nodes, no edges to pages, no orphan report for pages).
+		$public = get_post_types( array( 'public' => true ), 'names' );
 		$exclude = array( 'attachment', 'revision', 'nav_menu_item', 'custom_css', 'oembed_cache', 'user_request', 'wp_block', 'wp_template', 'wp_template_part', 'wp_navigation' );
 		$public  = array_values( array_diff( (array) $public, $exclude ) );
 

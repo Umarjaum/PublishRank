@@ -38,9 +38,12 @@ final class SchemaSuite {
 		}
 	}
 
-	/** @param \WP_Post $post */
-	public function render_meta_box( $post ) {
-		$selected  = PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' );
+		/** @param \WP_Post $post */
+		public function render_meta_box( $post ) {
+			// Share the nonce used by PostMeta::save so the schema selector works in
+			// Gutenberg, Classic Editor, and page editors without a second save path.
+			wp_nonce_field( 'publishrank_seo_meta', 'publishrank_seo_meta_nonce' );
+			$selected  = PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' );
 		$permalink = get_permalink( $post );
 		echo '<div class="publishrank-schema-suite">';
 		$schema_label = ( 'page' === $post->post_type ) ? esc_html__( 'Schema type for this page', 'publishrank' ) : esc_html__( 'Schema type for this post', 'publishrank' );
@@ -55,18 +58,9 @@ final class SchemaSuite {
 			echo '</optgroup>';
 		}
 		echo '</select></p>';
-		echo '<p class="description">' . esc_html__( 'Automatic follows the smart defaults on the Schema settings screen (posts → NewsArticle, your About page → AboutPage, author pages → ProfilePage, and so on). Pick a type here only to override this specific page.', 'publishrank' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Automatic uses NewsArticle for news posts. Choose only Article, News Article, Live Blog Post, Video, or Image Gallery when this document needs an explicit type; publisher, author, WebPage, and breadcrumb nodes remain foundational and connected.', 'publishrank' ) . '</p>';
 
-		// Conditional detail panels (toggled by the inline script below).
-		echo '<div class="pr-schema-panel" data-types="FAQPage" style="display:none"><hr /><h4>' . esc_html__( 'FAQ questions & answers', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'Add up to 20 questions. If left empty, PublishRank auto-detects <details>/<summary> blocks in the content.', 'publishrank' ) . '</p>';
-		$faq_items = get_post_meta( $post->ID, PostMeta::FAQ_ITEMS, true );
-		if ( empty( $faq_items ) ) { $faq_items = array( array( 'q' => '', 'a' => '' ) ); }
-		foreach ( $faq_items as $i => $item ) {
-			echo '<p><input class="widefat" type="text" name="publishrank_faq_items[' . (int) $i . '][q]" value="' . esc_attr( isset( $item['q'] ) ? $item['q'] : '' ) . '" placeholder="' . esc_attr__( 'Question', 'publishrank' ) . '" />';
-			echo '<textarea class="widefat" rows="2" name="publishrank_faq_items[' . (int) $i . '][a]" placeholder="' . esc_attr__( 'Answer', 'publishrank' ) . '">' . esc_textarea( isset( $item['a'] ) ? $item['a'] : '' ) . '</textarea></p>';
-		}
-		echo '</div>';
-
+		// News-publisher detail panels.
 		\PublishRankSEO\Schema\LiveBlogSchema::render_panel( $post );
 
 		echo '<div class="pr-schema-panel" data-types="VideoObject" style="display:none"><hr /><h4>' . esc_html__( 'Video details', 'publishrank' ) . '</h4>';
@@ -74,20 +68,6 @@ final class SchemaSuite {
 			echo '<p><label><strong>' . esc_html( $label ) . '</strong><br /><input class="widefat" type="url" name="' . esc_attr( $key ) . '" value="' . esc_attr( PostMeta::get( $post->ID, $key ) ) . '" /></label></p>';
 		}
 		echo '<p><label><strong>' . esc_html__( 'Duration (ISO 8601, e.g. PT4M30S)', 'publishrank' ) . '</strong><br /><input class="widefat" type="text" name="' . esc_attr( PostMeta::VIDEO_DURATION ) . '" value="' . esc_attr( PostMeta::get( $post->ID, PostMeta::VIDEO_DURATION ) ) . '" /></label></p></div>';
-
-		echo '<div class="pr-schema-panel" data-types="AudioObject" style="display:none"><hr /><h4>' . esc_html__( 'Audio details', 'publishrank' ) . '</h4>';
-		echo '<p><label><strong>' . esc_html__( 'Audio file URL', 'publishrank' ) . '</strong><br /><input class="widefat" type="url" name="' . esc_attr( PostMeta::AUDIO_URL ) . '" value="' . esc_attr( PostMeta::get( $post->ID, PostMeta::AUDIO_URL ) ) . '" /></label></p>';
-		echo '<p><label><strong>' . esc_html__( 'Duration (ISO 8601)', 'publishrank' ) . '</strong><br /><input class="widefat" type="text" name="' . esc_attr( PostMeta::AUDIO_DURATION ) . '" value="' . esc_attr( PostMeta::get( $post->ID, PostMeta::AUDIO_DURATION ) ) . '" /></label></p></div>';
-
-		echo '<div class="pr-schema-panel" data-types="Event" style="display:none"><hr /><h4>' . esc_html__( 'Event details', 'publishrank' ) . '</h4>';
-		echo '<p><label><strong>' . esc_html__( 'Start date/time', 'publishrank' ) . '</strong><br /><input class="widefat" type="text" name="' . esc_attr( PostMeta::EVENT_START ) . '" value="' . esc_attr( PostMeta::get( $post->ID, PostMeta::EVENT_START ) ) . '" placeholder="2026-11-01 18:00" /></label></p>';
-		echo '<p><label><strong>' . esc_html__( 'Venue / location', 'publishrank' ) . '</strong><br /><input class="widefat" type="text" name="' . esc_attr( PostMeta::EVENT_LOCATION ) . '" value="' . esc_attr( PostMeta::get( $post->ID, PostMeta::EVENT_LOCATION ) ) . '" /></label></p></div>';
-
-		// Verify with Google — the button you asked for, on every post/page.
-		echo '<hr /><p><a class="button button-primary" href="' . esc_url( self::google_test_url( $permalink ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Verify Schema with Google', 'publishrank' ) . '</a> ';
-		echo '<a class="button" href="' . esc_url( 'https://validator.schema.org/validate?url=' . rawurlencode( $permalink ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Schema.org Validator', 'publishrank' ) . '</a></p>';
-		echo '<p class="description">' . esc_html__( 'Opens Google’s Rich Results Test preloaded with this page’s live URL. Save/publish first so Google sees the latest markup.', 'publishrank' ) . '</p>';
-		echo '</div>';
 
 
 	}

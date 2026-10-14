@@ -101,7 +101,6 @@ final class Scanner {
 			Store::insert_edge( $source_node_id, $target_node_id, $anchor, $source_url, (string) get_permalink( $target_post ), $scan_id );
 			Store::refresh_counts( $target_node_id );
 		}
-		$wpdb->delete( Store::table( 'edges' ), array( 'source_node_id' => absint( $source_node_id ) ), array( '%d' ) );
 	}
 
 	private static function content_targets( $post ) {

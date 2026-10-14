@@ -78,7 +78,7 @@ final class DashboardPage {
 					<div class="rhs-welcome-banner__image"><img src="<?php echo esc_url( Branding::image( 'publishrank-banner-publisher.png' ) ); ?>" alt="<?php esc_attr_e( 'PublishRank — Enterprise SEO Infrastructure for WordPress Publishers', 'publishrank' ); ?>" loading="lazy" /></div>
 				</div>
 			<div class="rhs-grid">
-			<div class="rhs-card rhs-score">
+			<div class="rhs-card rhs-score rhs-score--<?php echo esc_attr( $score >= 90 ? 'good' : ( $score >= 70 ? 'ok' : 'bad' ) ); ?>" style="--rhs-score:<?php echo (int) $score; ?>">
 				<p class="rhs-label"><?php esc_html_e( 'SEO health', 'publishrank' ); ?></p>
 				<p class="rhs-stat"><?php echo esc_html( (string) $score ); ?><small>%</small></p>
 				<h2><?php echo esc_html( $this->level( $score ) ); ?></h2>
@@ -113,9 +113,12 @@ final class DashboardPage {
 			</div>
 			<div class="rhs-card">
 				<h2><?php esc_html_e( 'Quick actions', 'publishrank' ); ?></h2>
-				<p>
-					<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( 'publishrank' ) ); ?>"><?php esc_html_e( 'Settings', 'publishrank' ); ?></a>
-					<a class="button" href="<?php echo esc_url( Branding::page_url( RedirectsPage::SLUG ) ); ?>"><?php esc_html_e( 'Redirects', 'publishrank' ); ?></a>
+					<p>
+						<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( 'publishrank' ) ); ?>"><?php esc_html_e( 'Settings', 'publishrank' ); ?></a>
+						<a class="button" href="<?php echo esc_url( admin_url( 'post-new.php' ) ); ?>"><?php esc_html_e( 'New article', 'publishrank' ); ?></a>
+						<a class="button" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=page' ) ); ?>"><?php esc_html_e( 'New page', 'publishrank' ); ?></a>
+						<a class="button" href="<?php echo esc_url( Branding::page_url( 'publishrank-schema' ) ); ?>"><?php esc_html_e( 'Schema settings', 'publishrank' ); ?></a>
+						<a class="button" href="<?php echo esc_url( Branding::page_url( RedirectsPage::SLUG ) ); ?>"><?php esc_html_e( 'Redirects', 'publishrank' ); ?></a>
 					<a class="button" href="<?php echo esc_url( Branding::page_url( RobotsPage::SLUG ) ); ?>"><?php esc_html_e( 'Robots.txt', 'publishrank' ); ?></a>
 					<a class="button" href="<?php echo esc_url( Branding::page_url( 'publishrank-seo-diagnostics' ) ); ?>"><?php esc_html_e( 'Diagnostics & scan', 'publishrank' ); ?></a>
 				</p>
@@ -150,8 +153,13 @@ final class DashboardPage {
 		$https    = 0 === strpos( (string) home_url(), 'https://' );
 		$checks[] = array( 'label' => __( 'HTTPS', 'publishrank' ), 'status' => $https ? 'PASS' : 'WARNING', 'message' => $https ? __( 'The site URL uses HTTPS.', 'publishrank' ) : __( 'Serve the site over HTTPS; Google News and Discover favour secure sites.', 'publishrank' ) );
 
-		$news     = (bool) get_option( 'publishrank_seo_news_enabled', true );
-		$checks[] = array( 'label' => __( 'News sitemap', 'publishrank' ), 'status' => $news ? 'PASS' : 'WARNING', 'message' => $news ? __( 'The Google News sitemap is enabled.', 'publishrank' ) : __( 'Enable the News sitemap in settings.', 'publishrank' ) );
+			$news     = (bool) get_option( 'publishrank_seo_news_enabled', true );
+			$checks[] = array( 'label' => __( 'News sitemap', 'publishrank' ), 'status' => $news ? 'PASS' : 'WARNING', 'message' => $news ? __( 'The Google News sitemap is enabled.', 'publishrank' ) : __( 'Enable the News sitemap in settings.', 'publishrank' ) );
+
+			$schema_enabled = (bool) get_option( 'publishrank_schema_enabled', true );
+			$page_type      = sanitize_text_field( (string) get_option( 'publishrank_schema_default_page_type', 'WebPage' ) );
+			$schema_message  = $schema_enabled ? sprintf( __( 'Organization, WebSite, WebPage (%s), breadcrumbs and eligible article/media entities are enabled.', 'publishrank' ), $page_type ?: 'WebPage' ) : __( 'Enable the structured-data graph so pages and eligible articles receive JSON-LD.', 'publishrank' );
+			$checks[]       = array( 'label' => __( 'Structured data coverage', 'publishrank' ), 'status' => $schema_enabled ? 'PASS' : 'WARNING', 'message' => $schema_message );
 
 		$logo     = (string) get_option( 'publishrank_seo_publisher_logo', '' ) || get_theme_mod( 'custom_logo' ) || ( function_exists( 'get_site_icon_url' ) && get_site_icon_url( 512 ) );
 		$checks[] = array( 'label' => __( 'Publisher logo', 'publishrank' ), 'status' => $logo ? 'PASS' : 'WARNING', 'message' => $logo ? __( 'A publisher logo is available for NewsArticle schema.', 'publishrank' ) : __( 'Add a publisher logo in settings.', 'publishrank' ) );

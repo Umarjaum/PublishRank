@@ -31,7 +31,7 @@ final class AdminAssets {
 			return;
 		}
 		wp_enqueue_style( 'dashicons' );
-		wp_enqueue_style( 'publishrank-seo-admin', Branding::asset_url( 'css/admin.css' ), array( 'dashicons' ), Branding::version() );
+		wp_enqueue_style( 'publishrank-seo-admin', Branding::asset_url( 'css/admin.css' ), array( 'dashicons' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/admin.css' ) );
 		wp_enqueue_media();
 		wp_enqueue_script( 'publishrank-seo-admin', Branding::asset_url( 'js/admin.js' ), array( 'jquery' ), Branding::version(), true );
 		wp_localize_script(

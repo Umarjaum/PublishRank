@@ -1,3 +1,9 @@
+## WordPress 7.1.3 compatibility gate
+
+A GitHub Actions workflow is provided at `.github/workflows/wordpress-7.1.3-compatibility.yml`.
+It installs WordPress 7.1.3, activates the plugin, runs PHP syntax checks, and executes standalone regression tests.
+Do not update the WordPress.org `Tested up to` metadata to 7.1.3 until that workflow passes and a staging smoke test has been reviewed. A passing activation/test workflow does not prove every theme, plugin, or admin workflow.
+
 # PublishRank v2.2 quality gate
 
 ## 2.2.0 build note

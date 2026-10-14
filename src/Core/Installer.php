@@ -106,6 +106,10 @@ final class Installer {
 			'publishrank_robots_sitemaps'            => 1,
 			'publishrank_robots_block_ai'            => 0,
 			'publishrank_robots_custom'              => '',
+			'publishrank_links_enabled' => 1,
+			'publishrank_links_follow_domains' => '',
+			'publishrank_links_nofollow_domains' => '',
+			'publishrank_links_sponsored' => 0,
 			'publishrank_internal_link_enabled'      => 1,
 			'publishrank_internal_link_min_inbound'  => 1,
 			'publishrank_internal_link_max_recommendations' => 5,
@@ -169,8 +173,8 @@ final class Installer {
 		if ( version_compare( (string) get_option( self::VERSION_OPTION, '0' ), '2.9.20', '<' ) ) {
 			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::bump_many( array( 'post', 'page', 'cpt', 'taxonomy', 'author', 'attachment', 'news', 'image', 'video' ) );
 		}
-		// 2.9.43: News sitemap no longer uses cursors and media sitemaps use smaller files; discard old checkpoints and cached XML.
-		if ( version_compare( (string) get_option( self::VERSION_OPTION, '0' ), '2.9.43', '<' ) ) {
+		// 2.9.44: preserve the news/media cache migration for upgrades that skipped 2.9.43.
+		if ( version_compare( (string) get_option( self::VERSION_OPTION, '0' ), '2.9.44', '<' ) ) {
 			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::bump_many( array( 'news', 'image', 'video' ) );
 		}
 		update_option( 'publishrank_seo_cache_epoch', time(), false );

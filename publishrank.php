@@ -3,7 +3,7 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrank.netlify.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.9.43
+ * Version: 2.9.46
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.9.43' );
+define( 'PUBLISHRANK_SEO_VERSION', '2.9.46' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
@@ -79,7 +79,7 @@ function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
 	}
 
 	$icon_url = add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank-toolbar-icon-v2.png', __FILE__ ) );
-	$icon     = '<img class="publishrank-toolbar-icon" src="' . esc_url( $icon_url ) . '" alt="" width="18" height="18" style="display:inline-block;width:18px;height:18px;margin:0 4px 0 0;vertical-align:middle;object-fit:contain;" /><span class="ab-label">' . esc_html__( 'PublishRank', 'publishrank' ) . '</span>';
+	$icon     = '<img class="publishrank-toolbar-icon" src="' . esc_url( $icon_url ) . '" alt="" width="18" height="18" /><span class="ab-label">' . esc_html__( 'PublishRank', 'publishrank' ) . '</span>';
 	$dashboard = admin_url( 'admin.php?page=publishrank-seo-dashboard' );
 	$settings  = admin_url( 'admin.php?page=publishrank' );
 
@@ -134,8 +134,9 @@ function publishrank_seo_admin_toolbar_styles() {
 	}
 	$icon_url = esc_url( add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank-toolbar-icon-v2.png', __FILE__ ) ) );
 	echo '<style id="publishrank-admin-toolbar-styles">';
-	echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item .publishrank-toolbar-icon{display:inline-block!important;width:18px!important;height:18px!important;margin:0 4px 0 0!important;vertical-align:middle!important;object-fit:cover!important;}';
-	echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item{display:flex;align-items:center;}';
+	echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item{display:inline-flex!important;align-items:center!important;gap:4px;white-space:nowrap;}';
+	echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item .publishrank-toolbar-icon{display:block!important;width:18px!important;height:18px!important;margin:0!important;vertical-align:middle!important;object-fit:contain!important;flex:0 0 18px;}';
+	echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item .ab-label{display:inline-block!important;margin:0!important;padding:0!important;line-height:inherit!important;}';
 	echo '#wpadminbar #wp-admin-bar-publishrank-wp-logo > .ab-item{padding-left:28px;background-image:url("' . $icon_url . '");background-position:7px center;background-repeat:no-repeat;background-size:16px 16px;}';
 	echo '</style>';
 }

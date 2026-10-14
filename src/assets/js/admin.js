@@ -61,7 +61,8 @@
 	$(function () {
 		$('.rhs-internal-links-autosubmit').each(function () {
 			var form = this;
-			setTimeout(function () { form.submit(); }, 500);
+			// WordPress' submit_button() prints <input name="submit">, which shadows form.submit(); call the native method.
+			setTimeout(function () { HTMLFormElement.prototype.submit.call(form); }, 500);
 		});
 	});
 

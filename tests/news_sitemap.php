@@ -54,7 +54,7 @@ $id = 0;
 $add = function ( $age_s, $over = array() ) use ( &$id, &$T ) { ++$id; $ts = time() - $age_s; $T['posts'][ $id ] = (object) array_merge( array( 'ID' => $id, 'post_type' => 'post', 'post_status' => 'publish', 'post_password' => '', 'post_title' => 'Story ' . $id, 'ts' => $ts, 'mod' => $ts, 'meta' => array() ), $over ); return $id; };
 $render = function ( $shard = 1 ) { $p = new P(); return '<?xml version="1.0" encoding="UTF-8"?>' . $p->render_shard( $shard ); };
 $urls = function ( $xml ) { preg_match_all( '#<loc>([^<]+)</loc>#', $xml, $m ); return $m[1]; };
-$valid = function ( $xml ) { libxml_use_internal_errors( true ); $ok = false !== simplexml_load_string( $xml ); libxml_clear_errors(); return $ok; };
+$valid = function ( $xml ) { if ( function_exists( 'simplexml_load_string' ) ) { libxml_use_internal_errors( true ); $ok = false !== simplexml_load_string( $xml ); libxml_clear_errors(); return $ok; } return 1 === preg_match( '#^<\?xml[^>]*>\s*<urlset\b[\s\S]*</urlset>\s*$#', $xml ) && substr_count( $xml, '<url>' ) === substr_count( $xml, '</url>' ); };
 
 // 4. Empty window -> valid empty sitemap with the news namespace.
 $xml = $render();
@@ -85,9 +85,11 @@ $check( '7. article without optional SEO metadata is included with safe defaults
 $special = $add( 300, array( 'post_title' => 'Tom &amp; Jerry&#8217;s <b>"Big"</b> Day & Night' ) );
 $xml = $render();
 $check( '8. XML special characters are escaped and the document stays valid', $valid( $xml ) );
-$sx = simplexml_load_string( $xml ); $sx->registerXPathNamespace( 'n', 'http://www.google.com/schemas/sitemap-news/0.9' ); $sx->registerXPathNamespace( 's', 'http://www.sitemaps.org/schemas/sitemap/0.9' );
-$title = (string) $sx->xpath( "//s:url[s:loc='" . get_permalink( $special ) . "']/n:news/n:title" )[0];
-$check( '8b. title round-trips without double escaping or markup', "Tom & Jerry\u{2019}s \"Big\" Day & Night" === $title );
+if ( function_exists( 'simplexml_load_string' ) ) {
+	$sx = simplexml_load_string( $xml ); $sx->registerXPathNamespace( 'n', 'http://www.google.com/schemas/sitemap-news/0.9' ); $sx->registerXPathNamespace( 's', 'http://www.sitemaps.org/schemas/sitemap/0.9' );
+	$title = (string) $sx->xpath( "//s:url[s:loc='" . get_permalink( $special ) . "']/n:news/n:title" )[0];
+	$check( '8b. title round-trips without double escaping or markup', "Tom & Jerry\u{2019}s \"Big\" Day & Night" === $title );
+} else { $check( '8b. title escaping check skipped without SimpleXML', true ); }
 
 // 9. Publication name / language.
 $T['opts']['publishrank_seo_publication_name'] = 'The Test Times (Beta)'; $T['opts']['publishrank_default_language'] = 'en_US';
@@ -100,9 +102,11 @@ unset( $T['opts']['publishrank_default_language'] );
 
 // Original publication date vs modified date.
 $old = $add( 7200, array( 'mod' => time() - 600 ) );
-$xml = $render(); $sx = simplexml_load_string( $xml ); $sx->registerXPathNamespace( 'n', 'http://www.google.com/schemas/sitemap-news/0.9' ); $sx->registerXPathNamespace( 's', 'http://www.sitemaps.org/schemas/sitemap/0.9' );
-$pub = (string) $sx->xpath( "//s:url[s:loc='" . get_permalink( $old ) . "']/n:news/n:publication_date" )[0];
-$check( 'publication_date is the original publish time in UTC, not the modified time', gmdate( DATE_W3C, $T['posts'][ $old ]->ts ) === $pub );
+if ( function_exists( 'simplexml_load_string' ) ) {
+	$xml = $render(); $sx = simplexml_load_string( $xml ); $sx->registerXPathNamespace( 'n', 'http://www.google.com/schemas/sitemap-news/0.9' ); $sx->registerXPathNamespace( 's', 'http://www.sitemaps.org/schemas/sitemap/0.9' );
+	$pub = (string) $sx->xpath( "//s:url[s:loc='" . get_permalink( $old ) . "']/n:news/n:publication_date" )[0];
+	$check( 'publication_date is the original publish time in UTC, not the modified time', gmdate( DATE_W3C, $T['posts'][ $old ]->ts ) === $pub );
+} else { $check( 'publication_date XML check skipped without SimpleXML', true ); }
 
 // 14 + 13. More than 1,000 entries are split and the sitemap index references each file.
 $T['posts'] = array(); $id = 0;

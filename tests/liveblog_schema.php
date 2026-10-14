@@ -76,16 +76,14 @@ $types = array_column( $g, '@type' );
 $check( '6. NewsArticle and LiveBlogPosting for the same page collapse to one primary entity (LiveBlogPosting)', in_array( 'LiveBlogPosting', $types, true ) && ! in_array( 'NewsArticle', $types, true ) );
 $g = G::dedupe_graph( array( $news, array( '@type' => 'NewsArticle', '@id' => 'https://example.test/live-1/#article', 'wordCount' => 5 ) ) );
 $check( '9. nodes sharing an @id are merged once', 1 === count( $g ) && 5 === $g[0]['wordCount'] );
-$q = array( array( '@type' => 'Question', 'name' => 'Q?', 'acceptedAnswer' => array( '@type' => 'Answer', 'text' => 'A.' ) ) );
-$g = G::dedupe_graph( array( array( '@type' => 'FAQPage', '@id' => 'https://x/#faq', 'mainEntity' => $q ), array( '@type' => 'FAQPage', '@id' => 'https://x/#faq-auto', 'mainEntity' => $q ) ) );
-$check( '9b. identical FAQPage question sets are emitted once', 1 === count( $g ) );
+$g = G::dedupe_graph( array( array( '@type' => 'FAQPage', '@id' => 'https://x/#faq', 'mainEntity' => array() ) ) );
+$check( '9b. revoked FAQPage output is not deduplication-managed', 1 === count( $g ) );
 $g = G::dedupe_graph( array( array( '@type' => 'NewsArticle', '@id' => 'https://x/a/#article', 'url' => 'https://x/a/' ), array( '@type' => 'NewsArticle', '@id' => 'https://x/b/#article', 'url' => 'https://x/b/' ) ) );
 $check( '7. different pages (e.g. a listing) keep their own article nodes', 2 === count( $g ) );
 
 // Source-level regression checks.
 $graph = file_get_contents( __DIR__ . '/../src/Schema/GraphOutput.php' );
 $check( '7b. ordinary article type fallback is still NewsArticle', false !== strpos( $graph, ": 'NewsArticle' )" ) );
-$check( '9c. manual FAQ suppresses auto-detected FAQ', false !== strpos( $graph, '! $this->has_manual_faq()' ) );
 
 // Attribution.
 $ctx = array(); $GLOBALS['ctx'] = array();

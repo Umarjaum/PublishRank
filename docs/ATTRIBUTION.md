@@ -1,7 +1,7 @@
-# Optional source attribution
+# PublishRank attribution and rights
 
-PublishRank can add a small HTML comment identifying the plugin and its website, or an optional visible footer credit. Both features are disabled by default and require an administrator to enable them in PublishRank settings.
+PublishRank is open-source software distributed under the GNU General Public License, version 2 or later. Copyright and project rights are held by **Muhammad Umar Jabbar**. The project author is identified in `publishrank.php`, `README.md`, and the license notice.
 
-The source comment is emitted only on ordinary public front-end HTML requests. It is not emitted in admin screens, feeds, REST or AJAX responses, embeds, robots output, or sitemap responses. It is not stored in post content.
+Public front-end attribution is optional and remains disabled by default. Site administrators may enable it in PublishRank settings. This preserves WordPress.org guideline compatibility and does not add an external link or credit to a site without the administrator's choice.
 
-This opt-in design follows WordPress.org Guideline 10: public credits and external links are not imposed on site owners without their explicit consent.
+Third-party components, if present, retain their own license notices.
