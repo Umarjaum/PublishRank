@@ -56,7 +56,9 @@ final class BreadcrumbEngine {
 
 	public function items() {
 		$items = array();
-		if ( ! $this->add_item( $items, PublicationProfile::publication_name(), PublicationProfile::primary_url(), array( 'source' => 'publication' ) ) && 'disable' === $this->mode() ) { return array(); }
+		$publication = PublicationProfile::publication_name();
+		if ( '' === trim( (string) $publication ) ) { $publication = get_bloginfo( 'name' ); }
+		if ( ! $this->add_item( $items, $publication, PublicationProfile::primary_url(), array( 'source' => 'publication' ) ) && 'disable' === $this->mode() ) { return array(); }
 		if ( is_page() ) {
 			$ancestors = array_reverse( get_post_ancestors( get_queried_object_id() ) );
 			foreach ( $ancestors as $ancestor ) {
@@ -77,7 +79,9 @@ final class BreadcrumbEngine {
 		} elseif ( is_post_type_archive() ) {
 			$object = get_queried_object(); if ( $object && ! empty( $object->labels->name ) ) { $this->add_item( $items, $object->labels->name, get_post_type_archive_link( $object->name ), array( 'source' => 'archive', 'type' => $object->name ) ); }
 		}
-		$current = wp_get_document_title(); $canonical = ( new MetaGenerator() )->canonical();
+		$current = wp_get_document_title();
+		if ( '' === trim( (string) $current ) && is_singular() ) { $current = get_the_title( get_queried_object_id() ); }
+		$canonical = ( new MetaGenerator() )->canonical();
 		if ( $current ) {
 			if ( '' === esc_url_raw( (string) $canonical ) ) {
 				$this->record_error( 'invalid_canonical', array( 'source' => 'current' ) );
@@ -114,7 +118,14 @@ final class BreadcrumbEngine {
 		return $html . '</ol></nav>';
 	}
 	public function schema() {
-		$list = array(); foreach ( $this->items() as $position => $item ) { $entry = array( '@type' => 'ListItem', 'position' => $position + 1, 'name' => wp_strip_all_tags( $item['name'] ) ); if ( ! empty( $item['url'] ) ) { $entry['item'] = esc_url_raw( $item['url'] ); } $list[] = $entry; }
+		$list = array();
+		foreach ( $this->items() as $item ) {
+			$name = sanitize_text_field( (string) ( $item['name'] ?? '' ) );
+			if ( '' === $name ) { continue; }
+			$entry = array( '@type' => 'ListItem', 'position' => count( $list ) + 1, 'name' => $name );
+			if ( ! empty( $item['url'] ) ) { $entry['item'] = esc_url_raw( $item['url'] ); }
+			$list[] = $entry;
+		}
 		return array( '@type' => 'BreadcrumbList', '@id' => trailingslashit( ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical() ) . '#breadcrumb', 'itemListElement' => $list );
 	}
 }

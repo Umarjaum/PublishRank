@@ -1,6 +1,6 @@
 <?php
 // Minimal WordPress stub: enough to execute PublishRank's wizard + settings page for verification.
-define( 'ABSPATH', '/tmp/' ); define( 'PUBLISHRANK_SEO_VERSION', '2.9.45' ); define( 'PUBLISHRANK_SEO_URL', 'http://x/wp-content/plugins/publishrank/' );
+define( 'ABSPATH', '/tmp/' ); define( 'PUBLISHRANK_SEO_VERSION', '2.9.47' ); define( 'PUBLISHRANK_SEO_URL', 'http://x/wp-content/plugins/publishrank/' );
 class RedirectException extends Exception { public $url; }
 $GLOBALS['opts'] = array(); $GLOBALS['registered'] = array(); $GLOBALS['caps'] = true; $GLOBALS['pagenow']='admin.php';
 function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['opts'] ) ? $GLOBALS['opts'][ $k ] : $d; }

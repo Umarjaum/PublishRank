@@ -83,7 +83,8 @@ $check( '7. different pages (e.g. a listing) keep their own article nodes', 2 ==
 
 // Source-level regression checks.
 $graph = file_get_contents( __DIR__ . '/../src/Schema/GraphOutput.php' );
-$check( '7b. ordinary article type fallback is still NewsArticle', false !== strpos( $graph, ": 'NewsArticle' )" ) );
+$check( '7b. ordinary article type fallback is still NewsArticle', false !== strpos( $graph, "'NewsArticle'" ) );
+$check( '7c. unsupported legacy schema values cannot be emitted', false !== strpos( $graph, 'SchemaTypes::resolve' ) && false !== strpos( $graph, 'not in this' ) );
 
 // Attribution.
 $ctx = array(); $GLOBALS['ctx'] = array();

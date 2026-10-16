@@ -198,11 +198,14 @@ final class GraphOutput {
 		$site_url = trailingslashit( PublicationProfile::primary_url() );
 		$author = $post instanceof \WP_Post ? get_userdata( $post->post_author ) : false;
 		$author_url = $author ? (string) get_author_posts_url( $post->post_author ) : $site_url;
-			$format = NewsroomSignals::format( $post );
-			$default_type = (string) get_option( 'publishrank_schema_default_post_type', 'NewsArticle' );
-			$default_type = ( array_key_exists( $default_type, SchemaTypes::article_types() ) ? $default_type : 'NewsArticle' );
-			$schema_type = (string) PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, $default_type );
-			$schema_type = LiveBlogSchema::is_live_blog( $post ) ? 'LiveBlogPosting' : ( ( array_key_exists( $schema_type, SchemaTypes::article_types() ) && 'LiveBlogPosting' !== $schema_type ) ? $schema_type : $default_type );
+			$default_type = SchemaTypes::resolve( get_option( 'publishrank_schema_default_post_type', 'NewsArticle' ) );
+			$default_type = in_array( $default_type, array( 'NewsArticle', 'Article' ), true ) ? $default_type : 'NewsArticle';
+			$schema_type = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, $default_type ) );
+			// Older releases stored broad values such as Report or Review. Never
+			// pass those values through to JSON-LD: they are not in this
+			// news-publisher allow-list or eligible article rich-result types.
+			if ( ! in_array( $schema_type, array( 'NewsArticle', 'Article', 'LiveBlogPosting' ), true ) ) { $schema_type = $default_type; }
+			$schema_type = LiveBlogSchema::is_live_blog( $post ) ? 'LiveBlogPosting' : $schema_type;
 		$description = (string) PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' );
 		$description = $description ? wp_strip_all_tags( $description ) : wp_strip_all_tags( get_the_excerpt( $post ) );
 		$author_node_id = trailingslashit( $author_url ) . '#author';
@@ -343,7 +346,7 @@ final class GraphOutput {
 		if ( 'attachment' === $post->post_type ) { return false; }
 		if ( 'page' === $post->post_type ) {
 			// Pages are WebPage nodes unless the editor explicitly chose an article schema type for this page.
-			$chosen = (string) PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' );
+			$chosen = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' ) );
 			return '' !== $chosen && array_key_exists( $chosen, SchemaTypes::article_types() );
 		}
 		return (bool) $type->publicly_queryable;

@@ -1,3 +1,8 @@
+= 2.9.47 =
+* Normalize legacy Report/Review schema metadata to supported Article or NewsArticle output.
+* Harden breadcrumb labels and ListItem positions when publisher or canonical data is incomplete.
+* Keep the public source repository documented for WordPress.org review.
+
 = 2.9.46 =
 * Fixed the blank white XML sitemap page: the sitemap stylesheet request ended in a PHP fatal error ("Cannot use output buffering in output buffering display handlers"), so the browser had nothing to render. The head-recovery fallback no longer opens an output buffer inside a buffer callback; it renders at shutdown instead.
 * Fixed the same fatal error blanking every front-end page whenever PublishRank's head output was off or missing, which also removed all JSON-LD from those pages.
