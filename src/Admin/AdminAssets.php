@@ -10,17 +10,19 @@ final class AdminAssets {
 	public function register() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'menu_alignment_css' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'menu_alignment_css' ) );
 		add_action( 'admin_bar_menu', array( $this, 'welcome_admin_bar' ), 90 );
 	}
 
 	/** Add a compact, branded welcome link to the admin toolbar. */
 	public function welcome_admin_bar( $wp_admin_bar ) {
-		if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) { return; }
+		if ( ! is_admin_bar_showing() || ! current_user_can( 'manage_options' ) || ! is_object( $wp_admin_bar ) ) { return; }
 		$wp_admin_bar->add_node( array( 'id' => 'publishrank-welcome', 'parent' => 'top-secondary', 'title' => '<span class="ab-icon dashicons dashicons-chart-line"></span><span class="ab-label">' . esc_html__( 'Welcome to PublishRank', 'publishrank' ) . '</span>', 'href' => esc_url( Branding::page_url( Branding::MENU_SLUG ) ), 'meta' => array( 'title' => __( 'Welcome to PublishRank', 'publishrank' ) ) ) );
 	}
 
 	/** Enqueue the small static stylesheet that keeps the top-level menu icon centered. */
 	public function menu_alignment_css() {
+		if ( function_exists( 'is_admin_bar_showing' ) && ! is_admin_bar_showing() && ! is_admin() ) { return; }
 		wp_enqueue_style( 'publishrank-seo-menu', Branding::asset_url( 'css/admin-menu.css' ), array(), Branding::version() );
 	}
 

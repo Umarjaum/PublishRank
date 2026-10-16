@@ -37,7 +37,7 @@ final class DashboardPage {
 			'manage_options',
 			Branding::MENU_SLUG,
 			array( $this, 'render' ),
-			add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank-menu-icon-v2.png' ) ),
+			add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank-menu-icon-20.png' ) ),
 			58
 		);
 		add_submenu_page( Branding::MENU_SLUG, __( 'Dashboard', 'publishrank' ), __( 'Dashboard', 'publishrank' ), 'manage_options', Branding::MENU_SLUG, array( $this, 'render' ) );
@@ -80,7 +80,7 @@ final class DashboardPage {
 			<div class="rhs-grid">
 			<div class="rhs-card rhs-score rhs-score--<?php echo esc_attr( $score >= 90 ? 'good' : ( $score >= 70 ? 'ok' : 'bad' ) ); ?>" style="--rhs-score:<?php echo (int) $score; ?>">
 				<p class="rhs-label"><?php esc_html_e( 'SEO health', 'publishrank' ); ?></p>
-				<p class="rhs-stat"><?php echo esc_html( (string) $score ); ?><small>%</small></p>
+				<div class="pr-ring" style="--pr-score:<?php echo (int) $score; ?>"><span class="pr-ring__num"><?php echo esc_html( (string) $score ); ?><small>%</small></span></div>
 				<h2><?php echo esc_html( $this->level( $score ) ); ?></h2>
 				<p><?php echo esc_html( sprintf( /* translators: 1: passed checks, 2: total checks. */ __( '%1$d of %2$d checks pass.', 'publishrank' ), $passed, $total ) ); ?></p>
 			</div>

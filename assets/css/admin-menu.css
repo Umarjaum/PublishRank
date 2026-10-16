@@ -1,9 +1,19 @@
 /* PublishRank admin menu and toolbar alignment. */
 #adminmenu #toplevel_page_publishrank-seo-dashboard>a{display:flex;align-items:center;min-height:34px}
-#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image{width:26px!important;height:26px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center;flex:0 0 26px}
-#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img{width:26px!important;height:26px!important;padding:0!important;margin:0!important;object-fit:contain;display:block}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image{width:26px!important;height:26px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center;flex:0 0 26px;background-position:center!important;background-repeat:no-repeat!important;background-size:20px 20px!important}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img{width:20px!important;height:20px!important;padding:0!important;margin:0 auto!important;object-fit:contain;display:block}
 #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name{line-height:34px;padding:0 0 0 4px!important;margin:0!important;white-space:nowrap}
 #wpadminbar #wp-admin-bar-publishrank-seo-toolbar>.ab-item{display:inline-flex!important;align-items:center!important;gap:4px;white-space:nowrap;line-height:32px}
 #wpadminbar #wp-admin-bar-publishrank-seo-toolbar>.ab-item .publishrank-toolbar-icon{display:block!important;width:18px!important;height:18px!important;margin:0!important;vertical-align:middle!important;object-fit:contain!important;flex:0 0 18px}
 #wpadminbar #wp-admin-bar-publishrank-seo-toolbar>.ab-item .ab-label{display:inline-block!important;line-height:inherit!important;margin:0!important;padding:0!important}
 #wpadminbar #wp-admin-bar-publishrank-wp-logo>.ab-item{padding-left:28px;background-position:7px center;background-repeat:no-repeat;background-size:16px 16px}
+/* "Welcome to PublishRank" toolbar item: keep icon and label centered inside the black admin bar. */
+#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item{display:inline-flex!important;align-items:center!important;gap:6px;height:32px!important;padding:0 12px!important;line-height:32px!important;white-space:nowrap}
+#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item .ab-icon{float:none!important;display:inline-flex!important;align-items:center;justify-content:center;width:20px!important;height:20px!important;margin:0!important;padding:0!important;top:0!important;line-height:20px!important}
+#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item .ab-icon:before{position:static!important;top:0!important;margin:0!important;font:normal 18px/1 dashicons!important;color:#6fd6a5!important}
+#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item .ab-label{display:inline-block!important;margin:0!important;padding:0!important;line-height:32px!important}
+#wpadminbar #wp-admin-bar-publishrank-welcome:hover>.ab-item,#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item:focus{background:#0f6b4a!important;color:#fff!important}
+#wpadminbar #wp-admin-bar-publishrank-welcome:hover>.ab-item .ab-icon:before{color:#fff!important}
+@media(max-width:782px){#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item{height:46px!important;line-height:46px!important}#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item .ab-label{line-height:46px!important}}
+/* Narrow screens and crowded toolbars: icon-only so the right side never wraps below the black admin bar. */
+@media(max-width:1200px){#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item{padding:0 8px!important;gap:0}#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item .ab-label{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}}
