@@ -1,3 +1,7 @@
+= 2.9.48 =
+* Maintenance release for the corrected news-publisher schema and breadcrumb output.
+* Updated WordPress.org submission metadata and release version consistency.
+
 = 2.9.47 =
 * Normalize legacy Report/Review schema metadata to supported Article or NewsArticle output.
 * Harden breadcrumb labels and ListItem positions when publisher or canonical data is incomplete.

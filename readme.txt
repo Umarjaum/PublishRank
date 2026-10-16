@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.47
+Stable tag: 2.9.48
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -93,7 +93,7 @@ PublishRank integrates optionally with IndexNow at `https://api.indexnow.org/ind
 Optional external link check: when an administrator ticks "check external links" while running the Publisher link audit, PublishRank sends HEAD (and, if needed, GET) requests from the site's server to the external URLs already linked in the site's own content, only to see whether they respond. Nothing else is sent, and no data is sent to PublishRank or any other third party. The check never runs automatically.
 
 == Changelog ==
-= 2.9.47 =
+= 2.9.48 =
 * Fixed the blank white XML sitemap page: the sitemap stylesheet request ended in a PHP fatal error ("Cannot use output buffering in output buffering display handlers"), so the browser had nothing to render. The head-recovery fallback no longer opens an output buffer inside a buffer callback; it renders at shutdown instead.
 * Fixed the same fatal error blanking every front-end page whenever PublishRank's head output was off or missing, which also removed all JSON-LD from those pages.
 * The sitemap stylesheet now has the same stale-rewrite-rule safety net as the sitemap XML, discards stray output before the XML declaration and is served as text/xsl.
