@@ -1,3 +1,55 @@
+= 2.9.55 =
+* Fixed technical source provenance not appearing when a theme omits `wp_head()` or when SEO metadata was already present. The fallback now injects the always-on provenance markers independently of metadata/schema recovery and avoids duplicates. Added regression tests for themes missing wp_head() and for pages where SEO metadata already exists.
+* Added guarded shutdown cleanup for PublishRank-owned frontend fallback output buffers; cleanup only flushes the matching topmost PublishRank buffer and does not close another plugin's buffer.
+* Added direct-web-access guards to all standalone regression tests and corrected the stale source-provenance test fixture and Branding fallback version.
+* Synchronized first-party runtime CSS with reviewable source copies and restored the onboarding quick-start styles used by the current onboarding markup.
+
+= 2.9.53 =
+* Fresh installs now start with clearly disclosed technical provenance and visible “Powered by PublishRank” attribution enabled; administrators retain an explicit off switch in Settings.
+
+= 2.9.52 =
+* Added a responsive activation welcome screen with a quick-start guide and clearer legal disclosure for optional public attribution.
+* Improved PublishRank toolbar and dashboard menu alignment across desktop, folded-sidebar and mobile admin layouts; shipped a white icon treatment for dark WordPress chrome.
+
+= 2.9.51 =
+* New: Site Verification page, first entry of the PublishRank menu. Verify ownership with Google Search Console, Bing, Yandex, Baidu, Naver, Seznam, Pinterest and Facebook domain meta tags, any other tag through a safe free-form box, or verification files (google….html, BingSiteAuth.xml and similar) uploaded or pasted in the page and served from the site root without FTP; a real copy is also written to the web root when it is writable.
+* Pasting a complete <meta> tag now works everywhere (previously the tag was stripped to garbage). Tags pasted in the wrong field are moved to the right engine.
+* Live check fetches the home page and each file the way a crawler does and reports Live, Warning (another plugin prints a conflicting value) or Problem, with the reason. Common page caches are purged on save. Tags are printed early in <head> with a last-resort injector for themes that omit wp_head().
+* Integrity baseline build bumped (r5) so adding the new files does not raise a false tamper warning.
+* New one-click "Sign in with Google" for Search Console through the PublishRank sign-in service (Supabase Edge Function): site owners no longer create or paste a Google OAuth client ID/secret. Refresh tokens and the OAuth client secret stay on the service; the site keeps only a revocable connection. A connection is issued only when the Google account has a Search Console property for the requesting domain.
+* Property is matched to the site automatically; data syncs on connect.
+* Live data layer: hourly background sync plus Heartbeat (15 s) updates for clicks, impressions, 48-hour hourly chart, top queries and pages, Google Discover and Google News totals, and a newsroom feed (published today, article SEO scores, IndexNow queue, 404 count). Live status bar under every PublishRank header. REST: GET /publishrank/v1/live, POST /publishrank/v1/live/refresh (administrators only).
+* Search Console data now includes provisional current-day numbers (dataState all) so newsroom changes appear sooner.
+* Publisher Account: Continue with Google is primary; other providers are shown only if enabled on the Supabase project.
+* Replaced duplicate dashboard action lists with seven direct-action workspace cards, including Traffic Guard, with no nested action menus.
+* Added opt-in local IP/CIDR block and allow rules plus trusted-proxy Cloudflare country rules. Invalid/untrusted geo headers fail open; admin, recovery, API and sitemap routes are exempt; Traffic Guard stores no visitor IPs.
+* Admin palette refreshed to warm paper, deep plum, evergreen and brass; the dashboard hero artwork and active PublishRank menu highlight now match. Bundled Font Awesome Free 7.3.1 assets include their license.
+* Disconnect revokes Google access and removes the service-side connection.
+* Advanced: own Google OAuth client is still supported and takes precedence when saved.
+* Live Preview in the post editor (block and classic): search snippet with pixel and character meters, Facebook and X cards, every meta tag, the exact JSON-LD (syntax-highlighted, copyable, with a Rich Results Test link) and a checks list. It is built from your unsaved edits by the same code that outputs the page, nothing is saved by previewing, and it refreshes as you type. REST: POST /publishrank/v1/preview/{id} (users who can edit the post).
+* Fixed: the article score card now reads the real SEO title, description and focus keyword fields and the block-editor title.
+* Fixed: JSON-LD identifiers could mix http and https on sites behind a proxy that does not forward HTTPS, leaving references unresolved. The configured scheme is now kept.
+* XML sitemaps: styled index and child pages gain a type switcher, and Topics and Authors now carry a lastmod in the index.
+* robots.txt: new SEO-tool crawler group (Ahrefs, Semrush, Majestic, Moz, DataForSEO, BLEXBot, PetalBot) with a one-click preset, optional WordPress housekeeping rules (xmlrpc.php, wp-login.php, ?author= enumeration, REST users list, comment feeds), WooCommerce cart and account rules, and protected paths that keep AI crawlers out of paywalled or members-only areas. Per-crawler groups now repeat the low-value and tracking rules instead of silently dropping them. Each section carries its own explanatory comment.
+* llms.txt: password-protected and noindex posts are never listed; About, Contact, Editorial policy, Corrections, Ethics, Team and Privacy pages are detected and listed first; authors, tags, custom post types and a machine-readable resources section (sitemaps, news sitemap, robots.txt, RSS) were added; archives move under the Optional section defined by the format; descriptions use the PublishRank meta description and carry the publish date. llms-full.txt now has per-article metadata (date, update, author, section), authority pages first, a per-article word cap, a clean header and no empty summary line. Both files are cached until content changes and answer conditional requests (ETag, Last-Modified, 304). The settings screen shows a preview with a review of common mistakes (physical file in the web root, credentials in text, size, robots.txt conflicts).
+
+= 2.9.50 =
+* Added publisher schema types: ReportageNewsArticle, AnalysisNewsArticle, OpinionNewsArticle, BackgroundNewsArticle, ReviewNewsArticle, SatireNewsArticle, AskPublicNewsArticle and BlogPosting, plus FAQPage, AboutPage, ContactPage, CollectionPage, AudioObject and PodcastEpisode.
+* Schema type is now selectable per post, page, category, tag and other taxonomy term (edit screen), plus site-wide defaults for category, tag, other archives, author pages and search results (PublishRank > Schema). FAQ Page takes questions and answers in the schema box and falls back to a standard web page when none are complete, so an empty FAQPage is never published.
+* Public attribution is optional and disabled by default. No promotional HTML comment, link or footer credit is forced into public pages; administrators can opt in to version/fingerprint markers or a visible footer credit in Settings.
+* Removed the forced head-comment module and its theme-recovery path; the SEO fallback now restores only missing metadata and JSON-LD. Generated sitemap audits verify child references against enabled providers and report duplicate URLs. Expanded live diagnostics to validate actual JSON-LD and check the sitemap index and up to ten same-origin child sitemap endpoints, including News Sitemap date freshness.
+* Documented Google OAuth/Search Console, Supabase Auth, IndexNow and Baidu outbound data and official terms/privacy links; corrected the inaccurate external-link-check description.
+* Added linear-gradient styling to the dashboard, settings screens and XML sitemap viewer. Public publisher pages are not styled by PublishRank.
+* Robustness: schema and head output are now fail-safe (a PHP error while building them can no longer break the public page); the integrity baseline rebuilds automatically so this update does not trigger a false tamper warning; fixed the stale 2.9.49 fallback version string.
+* Made Standard WebPage the explicit default schema for pages and made it selectable in the page editor.
+* Added automatic ImageObject nodes for singular pages and posts with safe image fallbacks.
+* Added multiple organization alternate-name variants and expanded PublishRank dashboard/toolbar shortcuts.
+* Fixed dashboard welcome contrast and SEO score ring typography.
+
+= 2.9.49 =
+* Synchronized the package version metadata across the plugin header, runtime constant, readme stable tag and release checks.
+* Removed the standalone local integration harness that invoked shell_exec and hard-coded localhost; it is not required for normal plugin operation.
+
 = 2.9.48 =
 * Maintenance release for the corrected news-publisher schema and breadcrumb output.
 * Updated WordPress.org submission metadata and release version consistency.

@@ -78,7 +78,9 @@ final class SitemapController {
 		header( 'X-Robots-Tag: noindex' );
 		header( 'Cache-Control: public, max-age=' . ( 'news' === $slug ? 60 : 300 ) );
 		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) ) { exit; }
-		$style = get_option( 'publishrank_sitemap_stylesheet', 1 ) ? '<?xml-stylesheet type="text/xsl" href="' . esc_url( SitemapStylesheet::url() ) . '"?>' : '';
+		// ?raw=1 returns the bare XML (no stylesheet) so people can inspect exactly what crawlers receive.
+		$raw   = isset( $_GET['raw'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display switch.
+		$style = ( ! $raw && get_option( 'publishrank_sitemap_stylesheet', 1 ) ) ? '<?xml-stylesheet type="text/xsl" href="' . esc_url( SitemapStylesheet::url( $slug, max( 1, absint( get_query_var( 'publishrank_sitemap_shard', 1 ) ) ) ) ) . '"?>' : '';
 		echo '<?xml version="1.0" encoding="UTF-8"?>' . $style . $xml; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		exit;
 	}

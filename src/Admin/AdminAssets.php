@@ -8,7 +8,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class AdminAssets {
 	public function register() {
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ), 999 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'menu_alignment_css' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'menu_alignment_css' ) );
 		add_action( 'admin_bar_menu', array( $this, 'welcome_admin_bar' ), 90 );
@@ -17,7 +17,7 @@ final class AdminAssets {
 	/** Add a compact, branded welcome link to the admin toolbar. */
 	public function welcome_admin_bar( $wp_admin_bar ) {
 		if ( ! is_admin_bar_showing() || ! current_user_can( 'manage_options' ) || ! is_object( $wp_admin_bar ) ) { return; }
-		$wp_admin_bar->add_node( array( 'id' => 'publishrank-welcome', 'parent' => 'top-secondary', 'title' => '<span class="ab-icon dashicons dashicons-chart-line"></span><span class="ab-label">' . esc_html__( 'Welcome to PublishRank', 'publishrank' ) . '</span>', 'href' => esc_url( Branding::page_url( Branding::MENU_SLUG ) ), 'meta' => array( 'title' => __( 'Welcome to PublishRank', 'publishrank' ) ) ) );
+		$wp_admin_bar->add_node( array( 'id' => 'publishrank-welcome', 'parent' => 'top-secondary', 'title' => '<span class="ab-icon dashicons dashicons-chart-line"></span><span class="ab-label">' . esc_html__( 'Welcome To SEO', 'publishrank' ) . '</span>', 'href' => esc_url( Branding::page_url( Branding::MENU_SLUG ) ), 'meta' => array( 'title' => __( 'Welcome To SEO', 'publishrank' ) ) ) );
 	}
 
 	/** Enqueue the small static stylesheet that keeps the top-level menu icon centered. */
@@ -29,12 +29,16 @@ final class AdminAssets {
 	public function enqueue() {
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 		$on_editor = $screen && 'post' === $screen->base && in_array( $screen->post_type, array( 'post', 'page' ), true );
-		if ( ! Branding::is_plugin_screen() && ! $on_editor ) {
-			return;
-		}
-		wp_enqueue_style( 'dashicons' );
-		wp_enqueue_style( 'publishrank-seo-admin', Branding::asset_url( 'css/admin.css' ), array( 'dashicons' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/admin.css' ) );
-		wp_enqueue_media();
+			if ( ! Branding::is_plugin_screen() && ! $on_editor ) {
+				return;
+			}
+			wp_enqueue_style( 'dashicons' );
+			wp_enqueue_style( 'publishrank-fa-core', Branding::asset_url( 'vendor/fontawesome-free-7.3.1/css/fontawesome.css' ), array(), '7.3.1' );
+			wp_enqueue_style( 'publishrank-fa-solid', Branding::asset_url( 'vendor/fontawesome-free-7.3.1/css/solid.css' ), array( 'publishrank-fa-core' ), '7.3.1' );
+			wp_enqueue_style( 'publishrank-fa-brands', Branding::asset_url( 'vendor/fontawesome-free-7.3.1/css/brands.css' ), array( 'publishrank-fa-core' ), '7.3.1' );
+			wp_enqueue_style( 'publishrank-seo-admin', Branding::asset_url( 'css/admin.css' ), array( 'dashicons', 'publishrank-fa-solid', 'publishrank-fa-brands' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/admin.css' ) );
+			wp_enqueue_style( 'publishrank-seo-palette', Branding::asset_url( 'css/palette.css' ), array( 'publishrank-seo-admin' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/palette.css' ) );
+			wp_enqueue_media();
 		wp_enqueue_script( 'publishrank-seo-admin', Branding::asset_url( 'js/admin.js' ), array( 'jquery' ), Branding::version(), true );
 		wp_localize_script(
 			'publishrank-seo-admin',
@@ -48,28 +52,34 @@ final class AdminAssets {
 		);
 	}
 
-	/** Branded page header using the PublishRank icon. */
-	public static function header( $title, $subtitle = '' ) {
-		$icon = 'dashicons-chart-line';
-		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$icons = array(
-			'publishrank-seo-dashboard' => 'dashicons-dashboard',
-			'publishrank-onboarding' => 'dashicons-admin-generic',
-			'publishrank-seo-settings' => 'dashicons-admin-settings',
-			'publishrank-seo-diagnostics' => 'dashicons-visibility',
-			'publishrank-seo-redirects' => 'dashicons-randomize',
-			'publishrank-seo-404' => 'dashicons-warning',
-			'publishrank-seo-robots' => 'dashicons-shield',
-			'publishrank-seo-sitemap-health' => 'dashicons-networking',
-			'publishrank-seo-insights' => 'dashicons-chart-bar',
-			'publishrank-seo-config-history' => 'dashicons-backup',
-			'publishrank-llms-txt' => 'dashicons-editor-code',
-		);
+		/** Branded page header using the PublishRank icon. */
+		public static function header( $title, $subtitle = '' ) {
+			$icon = 'fa-solid fa-chart-line';
+			$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$icons = array(
+				'publishrank-seo-dashboard'      => 'fa-solid fa-gauge-high',
+				'publishrank-onboarding'         => 'fa-solid fa-wand-magic-sparkles',
+				'publishrank-seo-settings'       => 'fa-solid fa-gear',
+				'publishrank-seo-diagnostics'    => 'fa-solid fa-stethoscope',
+				'publishrank-seo-redirects'      => 'fa-solid fa-arrow-right-arrow-left',
+				'publishrank-seo-404'            => 'fa-solid fa-triangle-exclamation',
+				'publishrank-seo-robots'         => 'fa-solid fa-shield-halved',
+				'publishrank-seo-sitemap-health' => 'fa-solid fa-sitemap',
+				'publishrank-seo-insights'       => 'fa-solid fa-chart-simple',
+				'publishrank-analytics'          => 'fa-solid fa-chart-line',
+				'publishrank-search-console'     => 'fa-solid fa-magnifying-glass',
+				'publishrank-auth'               => 'fa-solid fa-user-shield',
+				'publishrank-baidu'              => 'fa-solid fa-globe',
+				'publishrank-traffic-guard'      => 'fa-solid fa-shield-halved',
+				'publishrank-seo-config-history' => 'fa-solid fa-clock-rotate-left',
+				'publishrank-llms-txt'           => 'fa-solid fa-code',
+				'publishrank-verification'      => 'fa-solid fa-circle-check',
+			);
 		if ( isset( $icons[ $page ] ) ) {
 			$icon = $icons[ $page ];
-		}
-		echo '<div class="rhs-header">';
-		echo '<div class="rhs-header__icon" aria-hidden="true"><span class="dashicons ' . esc_attr( $icon ) . '"></span></div>';
+			}
+			echo '<div class="rhs-header">';
+			echo '<div class="rhs-header__icon" aria-hidden="true"><i class="' . esc_attr( $icon ) . '"></i></div>';
 		echo '<img class="rhs-header__logo" src="' . esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ) . '" width="40" height="40" alt="" />';
 		echo '<div class="rhs-header__text"><h1 class="rhs-header__title">' . esc_html( $title ) . '</h1>';
 		if ( '' !== (string) $subtitle ) {

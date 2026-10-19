@@ -24,3 +24,12 @@ Open **PublishRank → AI & llms.txt**. Configure:
 ## Recommended publisher setup
 
 Keep the concise file focused on authoritative resources. Include your homepage, key editorial/authority pages, topic hubs and a sensible number of recent articles. Never put passwords, private URLs, API keys or confidential information in the file.
+
+## 2.9.51 additions
+
+* **Safe by construction.** Password-protected and noindex posts are never listed or quoted in either file.
+* **Authority first.** About, Contact, Editorial policy, Corrections, Ethics, Team and Privacy pages are detected by slug (and by WordPress' privacy-policy setting) and listed under "About and editorial standards" before the articles.
+* **More sources.** Authors (with bios), tags, public custom post types and a "Machine-readable resources" section (sitemap index, News sitemap, robots.txt, RSS, llms-full.txt). Categories, tags and authors sit under the format's `## Optional` section unless you switch that off.
+* **llms-full.txt.** Each entry carries URL, publish and update dates, author and section. Authority pages come first, and a per-article word cap keeps one long story from using the whole budget.
+* **Performance.** Both files are cached until content, terms, authors or settings change, and they answer `If-None-Match` with 304.
+* **Review.** The settings screen previews the saved file and flags a physical `llms.txt` in the web root, credentials in the text, oversized files, a missing summary and robots.txt conflicts.

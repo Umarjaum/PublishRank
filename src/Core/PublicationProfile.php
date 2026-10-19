@@ -39,7 +39,9 @@ final class PublicationProfile {
 		$path = $base_only ? '/' : ( isset( $parts['path'] ) ? '/' . ltrim( $parts['path'], '/' ) : '/' );
 		$port = ! empty( $parts['port'] ) ? ':' . (int) $parts['port'] : '';
 		$query = $base_only ? '' : self::identifying_query( isset( $parts['query'] ) ? (string) $parts['query'] : '' );
-		return set_url_scheme( $parts['scheme'] . '://' . $host . $port . $path . $query );
+		// Keep the configured scheme. set_url_scheme() with no scheme guesses from the current request, which downgrades https to http
+		// behind proxies that do not forward the protocol and then mixes http and https ids inside one JSON-LD graph.
+		return strtolower( $parts['scheme'] ) . '://' . $host . $port . $path . $query;
 	}
 
 	/**
@@ -87,7 +89,7 @@ final class PublicationProfile {
 		$media_host = preg_replace( '#^https?://#i', '', $host );
 		$media_host = trim( (string) $media_host, '/' );
 		if ( ! $media_host || in_array( strtolower( $media_host ), array( 'localhost', '127.0.0.1', '::1' ), true ) ) { return $url; }
-		return $media_host ? set_url_scheme( 'https://' . $media_host . ( isset( $parts['path'] ) ? $parts['path'] : '/' ) . ( isset( $parts['query'] ) ? '?' . $parts['query'] : '' ) ) : $url;
+		return $media_host ? 'https://' . $media_host . ( isset( $parts['path'] ) ? $parts['path'] : '/' ) . ( isset( $parts['query'] ) ? '?' . $parts['query'] : '' ) : $url;
 	}
 
 	/** @param string $url @return string */
@@ -106,7 +108,7 @@ final class PublicationProfile {
 		}
 		$cdn_host = trim( (string) preg_replace( '#^https?://#i', '', $host ), '/' );
 		if ( ! $cdn_host || in_array( strtolower( $cdn_host ), array( 'localhost', '127.0.0.1', '::1' ), true ) ) { return $url; }
-		return $cdn_host ? set_url_scheme( 'https://' . $cdn_host . ( isset( $parts['path'] ) ? $parts['path'] : '/' ) . ( isset( $parts['query'] ) ? '?' . $parts['query'] : '' ) ) : $url;
+		return $cdn_host ? 'https://' . $cdn_host . ( isset( $parts['path'] ) ? $parts['path'] : '/' ) . ( isset( $parts['query'] ) ? '?' . $parts['query'] : '' ) : $url;
 	}
 
 	/** @param string $url @return string */
@@ -141,6 +143,7 @@ final class PublicationProfile {
 			'name'           => $get( 'publishrank_identity_name', 'publishrank_seo_publisher_name' ),
 			'legal_name'     => $get( 'publishrank_identity_legal_name', 'publishrank_schema_legal_name' ),
 			'alternate_name' => $get( 'publishrank_identity_alternate_name', 'publishrank_publication_short_name' ),
+				'alternate_names' => self::alternate_names( $get( 'publishrank_identity_alternate_names' ) ),
 			'description'    => $get( 'publishrank_identity_description', 'publishrank_schema_org_description' ),
 			'logo'           => $get( 'publishrank_identity_logo', 'publishrank_seo_publisher_logo' ),
 			'founding_date'  => $get( 'publishrank_identity_founding_date', 'publishrank_schema_founding_date' ),
@@ -163,7 +166,19 @@ final class PublicationProfile {
 	}
 
 	/** @return array<string, string> */
-	public static function person_identity() {
+	
+
+		/** @return string[] Organization aliases, one per line or comma-separated. */
+		public static function alternate_names( $raw ) {
+			$names = array();
+			foreach ( preg_split( '/[\r\n,]+/', (string) $raw ) as $name ) {
+				$name = sanitize_text_field( trim( $name ) );
+				if ( '' !== $name ) { $names[] = $name; }
+			}
+			return array_values( array_unique( array_slice( $names, 0, 50 ) ) );
+		}
+
+		public static function person_identity() {
 		$get = static function ( $key ) {
 			$value = get_option( $key, '' );
 			return is_string( $value ) ? trim( $value ) : '';

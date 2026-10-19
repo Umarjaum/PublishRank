@@ -4,12 +4,22 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-$publishrank_cleanup = static function () {
-	global $wpdb;
-	$like = $wpdb->esc_like( 'publishrank_' ) . '%';
+	$publishrank_cleanup = static function () {
+		global $wpdb;
+		$private_meta = array( 'publishrank_supabase_session_enc', 'publishrank_supabase_subject', 'publishrank_supabase_verified_at' );
+		$meta_placeholders = implode( ', ', array_fill( 0, count( $private_meta ), '%s' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->usermeta} WHERE meta_key IN ({$meta_placeholders})", ...$private_meta ) );
+		$post_meta = array( '_publishrank_baidu_submitted', '_publishrank_baidu_pending' );
+		$post_meta_placeholders = implode( ', ', array_fill( 0, count( $post_meta ), '%s' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ({$post_meta_placeholders})", ...$post_meta ) );
+		$like = $wpdb->esc_like( 'publishrank_' ) . '%';
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s", $like, $wpdb->esc_like( '_transient_publishrank_' ) . '%', $wpdb->esc_like( '_transient_timeout_publishrank_' ) . '%' ) );
-	wp_unschedule_hook( 'publishrank_indexnow_submit' );
+		wp_unschedule_hook( 'publishrank_gsc_sync' );
+		wp_unschedule_hook( 'publishrank_indexnow_submit' );
+		wp_unschedule_hook( 'publishrank_baidu_submit_post' );
 	wp_unschedule_hook( 'publishrank_daily_analytics_snapshot' );
 	require_once plugin_dir_path( __FILE__ ) . 'src/InternalLinks/Store.php';
 	\PublishRankSEO\InternalLinks\Store::drop();

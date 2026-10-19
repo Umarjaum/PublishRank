@@ -1,5 +1,5 @@
 <?php
-/** Optional public attribution for publishers who choose to credit PublishRank. */
+/** Transparent public attribution with a documented administrator-controlled off switch. */
 namespace PublishRankSEO\Core;
 
 defined( 'ABSPATH' ) || exit;
@@ -10,8 +10,7 @@ final class FrontendBranding {
 	const URL_OPTION     = 'publishrank_public_attribution_url';
 
 	public function register() {
-		// Public hooks are not registered at all unless attribution is explicitly
-		// enabled. This keeps the default front-end path free of attribution work.
+			// Installer defaults enable this on fresh installs; saved site choices win.
 		if ( self::enabled() ) {
 			add_action( 'wp_footer', array( $this, 'render' ), 30 );
 			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ), 30 );

@@ -41,14 +41,14 @@ final class OnboardingPage {
 	/** @return array<int, array{label:string, icon:string}> */
 	public static function steps() {
 		return array(
-			1 => array( 'label' => __( 'Welcome', 'publishrank' ), 'icon' => 'dashicons-flag' ),
-			2 => array( 'label' => __( 'Publisher', 'publishrank' ), 'icon' => 'dashicons-building' ),
-			3 => array( 'label' => __( 'Details', 'publishrank' ), 'icon' => 'dashicons-id' ),
-			4 => array( 'label' => __( 'Social', 'publishrank' ), 'icon' => 'dashicons-share' ),
-			5 => array( 'label' => __( 'Search', 'publishrank' ), 'icon' => 'dashicons-search' ),
-			6 => array( 'label' => __( 'Content', 'publishrank' ), 'icon' => 'dashicons-media-document' ),
-			7 => array( 'label' => __( 'Local', 'publishrank' ), 'icon' => 'dashicons-location' ),
-			8 => array( 'label' => __( 'Ready', 'publishrank' ), 'icon' => 'dashicons-yes-alt' ),
+			1 => array( 'label' => __( 'Welcome to PublishRank 🤗', 'publishrank' ), 'icon' => 'fa-solid fa-flag' ),
+			2 => array( 'label' => __( 'Publisher', 'publishrank' ), 'icon' => 'fa-solid fa-building' ),
+			3 => array( 'label' => __( 'Details', 'publishrank' ), 'icon' => 'fa-solid fa-id-card' ),
+			4 => array( 'label' => __( 'Social', 'publishrank' ), 'icon' => 'fa-solid fa-share-nodes' ),
+			5 => array( 'label' => __( 'Search', 'publishrank' ), 'icon' => 'fa-solid fa-magnifying-glass' ),
+			6 => array( 'label' => __( 'Content', 'publishrank' ), 'icon' => 'fa-solid fa-file-lines' ),
+			7 => array( 'label' => __( 'Local', 'publishrank' ), 'icon' => 'fa-solid fa-location-dot' ),
+			8 => array( 'label' => __( 'Ready', 'publishrank' ), 'icon' => 'fa-solid fa-circle-check' ),
 		);
 	}
 
@@ -72,6 +72,7 @@ final class OnboardingPage {
 					$f( 'publishrank_identity_type', 'identity', __( 'Publisher type', 'publishrank' ), array( 'san' => 'sanitize_identity_type', 'required' => true, 'default' => 'organization', 'wide' => true ) ),
 					$f( 'publishrank_identity_name', 'text', __( 'Publication / publisher name', 'publishrank' ), array( 'required' => true, 'default' => get_bloginfo( 'name' ), 'mirror' => array( 'publishrank_seo_publication_name', 'publishrank_seo_publisher_name' ), 'person_mirror' => 'publishrank_identity_person_name', 'fallback' => array( 'publishrank_seo_publisher_name' ), 'help' => __( 'Used as the publisher name in schema, Open Graph and the News sitemap.', 'publishrank' ) ) ),
 					$f( 'publishrank_identity_alternate_name', 'text', __( 'Short / alternate name', 'publishrank' ), array( 'mirror' => array( 'publishrank_publication_short_name' ), 'person_mirror' => 'publishrank_identity_person_alternate_name', 'fallback' => array( 'publishrank_publication_short_name' ) ) ),
+					$f( 'publishrank_identity_alternate_names', 'textarea', __( 'Organization name variants', 'publishrank' ), array( 'for' => 'org', 'san' => 'textarea', 'wide' => true, 'help' => __( 'Add one recognized publication or organization variant per line. These are emitted as Organization alternateName values.', 'publishrank' ) ) ),
 					$f( 'publishrank_identity_description', 'textarea', __( 'Short description', 'publishrank' ), array( 'wide' => true, 'san' => 'textarea', 'default' => get_bloginfo( 'description' ), 'mirror' => array( 'publishrank_schema_org_description' ), 'person_mirror' => 'publishrank_identity_person_description', 'fallback' => array( 'publishrank_schema_org_description' ), 'placeholder' => __( 'Independent news and analysis for…', 'publishrank' ) ) ),
 					$f( 'publishrank_identity_logo', 'image', __( 'Publisher logo / photo', 'publishrank' ), array( 'wide' => true, 'san' => 'sanitize_public_url', 'mirror' => array( 'publishrank_seo_publisher_logo' ), 'person_mirror' => 'publishrank_identity_person_image', 'fallback' => array( 'publishrank_seo_publisher_logo' ), 'help' => __( 'Square or wide logo, at least 112px tall. Used in schema and search knowledge surfaces.', 'publishrank' ) ) ),
 					$f( 'publishrank_seo_publisher_type', 'select', __( 'Organization type', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_publisher_type', 'default' => 'NewsMediaOrganization', 'options' => array( 'NewsMediaOrganization' => __( 'News media organization', 'publishrank' ), 'Organization' => __( 'Organization', 'publishrank' ) ) ) ),
@@ -248,9 +249,9 @@ final class OnboardingPage {
 		}
 		$icon       = add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank-header-icon-v2.png' ) );
 		$wizard_url = Branding::page_url( self::SLUG );
-		echo '<div class="notice notice-info prw-setup-notice" style="border-left-color:#262626;padding:14px 16px;max-width:1000px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
+		echo '<div class="notice notice-info prw-setup-notice" style="border-left-color:#5a4be2;padding:14px 16px;max-width:1000px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
 		echo '<img src="' . esc_url( $icon ) . '" alt="" width="48" height="48" style="width:48px;height:48px;object-fit:contain;flex:0 0 48px" />';
-		echo '<div style="flex:1;min-width:220px"><strong style="font-size:14px;color:#171717">' . esc_html__( 'First-time SEO configuration', 'publishrank' ) . '</strong><p style="margin:5px 0 0">' . esc_html__( 'Set up your publisher identity, social profiles, search appearance and content scope once in the setup wizard. PublishRank outputs your publisher details only after setup is completed.', 'publishrank' ) . '</p></div>';
+		echo '<div style="flex:1;min-width:220px"><strong style="font-size:14px;color:#1b2340">' . esc_html__( 'First-time SEO configuration', 'publishrank' ) . '</strong><p style="margin:5px 0 0">' . esc_html__( 'Set up your publisher identity, social profiles, search appearance and content scope once in the setup wizard. PublishRank outputs your publisher details only after setup is completed.', 'publishrank' ) . '</p></div>';
 		echo '<a href="' . esc_url( $wizard_url ) . '" class="button button-primary prw-notice-button">' . esc_html__( 'Start onboarding', 'publishrank' ) . '</a>';
 		echo '</div></div>';
 	}
@@ -558,11 +559,11 @@ final class OnboardingPage {
 						<?php if ( $closable ) : ?><a class="prw-modal__close" href="<?php echo esc_url( $close_url ); ?>" aria-label="<?php esc_attr_e( 'Close setup wizard', 'publishrank' ); ?>">&times;</a><?php endif; ?>
 					</header>
 					<div class="prw-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo esc_attr( $percent ); ?>"><span style="width:<?php echo esc_attr( $percent ); ?>%"></span></div>
-					<ol class="prw-stepper" aria-label="<?php esc_attr_e( 'Setup progress', 'publishrank' ); ?>">
-						<?php foreach ( $steps as $number => $data ) : $class = $number < $step ? 'is-done' : ( $number === $step ? 'is-active' : '' ); ?>
-							<li class="prw-stepper__item <?php echo esc_attr( $class ); ?>"><span class="prw-stepper__bubble"><span class="dashicons <?php echo esc_attr( $data['icon'] ); ?>" aria-hidden="true"></span></span><span class="prw-stepper__label"><?php echo esc_html( $data['label'] ); ?></span></li>
-						<?php endforeach; ?>
-					</ol>
+						<ol class="prw-stepper" aria-label="<?php esc_attr_e( 'Setup progress', 'publishrank' ); ?>">
+							<?php foreach ( $steps as $number => $data ) : $class = $number < $step ? 'is-done' : ( $number === $step ? 'is-active' : '' ); ?>
+								<li class="prw-stepper__item <?php echo esc_attr( $class ); ?>"><span class="prw-stepper__bubble"><i class="<?php echo esc_attr( $data['icon'] ); ?>" aria-hidden="true"></i></span><span class="prw-stepper__label"><?php echo esc_html( $data['label'] ); ?></span></li>
+							<?php endforeach; ?>
+						</ol>
 
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="prw-modal__form">
 						<input type="hidden" name="action" value="publishrank_onboarding_save" />
@@ -596,7 +597,7 @@ final class OnboardingPage {
 
 	private function render_step_body( $step, $is_person, $locked ) {
 		$lead = array(
-			1 => array( __( 'Let\'s set up your publication.', 'publishrank' ), __( 'This one-time setup tells search engines who publishes this site. It takes a few minutes and everything can be edited later from the Setup Wizard.', 'publishrank' ) ),
+			1 => array( __( 'Welcome to PublishRank 🤗', 'publishrank' ), __( 'Here is your quick-start guide. This one-time setup tells search engines who publishes this site, and everything can be edited later from the Setup Wizard.', 'publishrank' ) ),
 			2 => array( __( 'Who publishes this site?', 'publishrank' ), __( 'Powers your Organization/Person schema and keeps publisher information consistent across search surfaces. Fields marked * are required.', 'publishrank' ) ),
 			3 => array( $is_person ? __( 'About the publisher', 'publishrank' ) : __( 'Organization details', 'publishrank' ), __( 'All optional. Only add details that are public and accurate.', 'publishrank' ) ),
 			4 => array( __( 'Social profiles and sharing', 'publishrank' ), __( 'Official profiles become the schema sameAs list. Enter a handle or a full URL.', 'publishrank' ) ),
@@ -607,10 +608,12 @@ final class OnboardingPage {
 		);
 		echo '<h2>' . esc_html( $lead[ $step ][0] ) . '</h2><p class="rhs-lead">' . esc_html( $lead[ $step ][1] ) . '</p>';
 		if ( 1 === $step ) {
+			echo '<div class="prw-quick-start" role="note"><strong>' . esc_html__( 'Quick start', 'publishrank' ) . '</strong><ol><li>' . esc_html__( 'Add your publication identity and logo.', 'publishrank' ) . '</li><li>' . esc_html__( 'Review search appearance, social profiles and content scope.', 'publishrank' ) . '</li><li>' . esc_html__( 'Finish setup, then review ongoing controls in Settings.', 'publishrank' ) . '</li></ol></div>';
 			echo '<ul class="prw-checklist">';
-			foreach ( $this->environment_checks() as $check ) {
-				echo '<li class="' . ( $check['ok'] ? 'is-ok' : 'is-warn' ) . '"><span class="dashicons ' . ( $check['ok'] ? 'dashicons-yes' : 'dashicons-warning' ) . '" aria-hidden="true"></span>' . esc_html( $check['label'] ) . '</li>';
-			}
+				foreach ( $this->environment_checks() as $check ) {
+					$icon = $check['ok'] ? 'fa-circle-check' : 'fa-triangle-exclamation';
+					echo '<li class="' . ( $check['ok'] ? 'is-ok' : 'is-warn' ) . '"><i class="fa-solid ' . esc_attr( $icon ) . '" aria-hidden="true"></i>' . esc_html( $check['label'] ) . '</li>';
+				}
 			echo '</ul>';
 			if ( $locked ) {
 				echo '<p class="prw-lock-note">' . esc_html__( 'PublishRank screens unlock as soon as the required publisher fields are saved.', 'publishrank' ) . '</p>';
@@ -647,9 +650,10 @@ final class OnboardingPage {
 		if ( isset( $_GET['restored'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Recommended defaults restored.', 'publishrank' ) . '</p></div>';
 		}
-		echo '<div class="rhs-onboarding-card"><div class="rhs-setup-complete"><div class="rhs-setup-complete__icon" aria-hidden="true">✓</div><div class="rhs-setup-complete__copy"><span class="rhs-eyebrow">' . esc_html__( 'Setup complete', 'publishrank' ) . '</span><h2>' . esc_html__( 'Your PublishRank configuration', 'publishrank' ) . '</h2><small>' . esc_html__( 'One-time settings live in this wizard. Ongoing controls are in Settings.', 'publishrank' ) . '</small></div></div>';
-		$this->recap();
-		echo '<div class="rhs-onboarding-actions"><a class="button button-primary" href="' . esc_url( $self . '&edit=1&step=2' ) . '">' . esc_html__( 'Edit setup', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( Branding::MENU_SLUG ) ) . '">' . esc_html__( 'Go to dashboard', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( 'publishrank' ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '</a><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" onsubmit="return confirm(&quot;' . esc_attr__( 'Restore recommended defaults? Your current wizard-managed values will be replaced.', 'publishrank' ) . '&quot;);"><input type="hidden" name="action" value="publishrank_onboarding_defaults" />';
+			echo '<div class="rhs-onboarding-card"><div class="rhs-setup-complete"><div class="rhs-setup-complete__icon" aria-hidden="true">✓</div><div class="rhs-setup-complete__copy"><span class="rhs-eyebrow">' . esc_html__( 'Setup complete', 'publishrank' ) . '</span><h2>' . esc_html__( 'Your PublishRank configuration', 'publishrank' ) . '</h2><small>' . esc_html__( 'One-time settings live in this wizard. Ongoing controls are in Settings.', 'publishrank' ) . '</small></div></div>';
+			$this->recap();
+			echo '<div class="rhs-feature-callout"><div class="rhs-feature-icon" aria-hidden="true">ID</div><div><strong>' . esc_html__( 'Next: publisher account and data connections', 'publishrank' ) . '</strong><p>' . esc_html__( 'Configure the shared PublishRank sign-in, connect Search Console with read-only access, and review webmaster submission tools.', 'publishrank' ) . '</p></div><a class="button button-secondary" href="' . esc_url( Branding::page_url( 'publishrank-auth' ) ) . '">' . esc_html__( 'Set up connections', 'publishrank' ) . '</a></div>';
+			echo '<div class="rhs-onboarding-actions"><a class="button button-primary" href="' . esc_url( $self . '&edit=1&step=2' ) . '">' . esc_html__( 'Edit setup', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( Branding::MENU_SLUG ) ) . '">' . esc_html__( 'Go to dashboard', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( 'publishrank' ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '</a><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" onsubmit="return confirm(&quot;' . esc_attr__( 'Restore recommended defaults? Your current wizard-managed values will be replaced.', 'publishrank' ) . '&quot;);"><input type="hidden" name="action" value="publishrank_onboarding_defaults" />';
 		wp_nonce_field( 'publishrank_onboarding_defaults' );
 		echo '<button class="button" type="submit">' . esc_html__( 'Restore recommended defaults', 'publishrank' ) . '</button></form></div></div></div>';
 	}

@@ -18,6 +18,11 @@ final class TaxonomySitemapProvider implements SitemapProviderInterface {
 		}
 		return $out;
 	}
+	/** Newest change among published posts: a cheap, honest lastmod for the index (term archives change when posts do). */
+	public function get_lastmod() {
+		$q = get_posts( array( 'post_type' => 'any', 'post_status' => 'publish', 'posts_per_page' => 1, 'orderby' => 'modified', 'order' => 'DESC', 'fields' => 'ids', 'no_found_rows' => true, 'suppress_filters' => true ) );
+		return ! empty( $q ) ? (string) get_post_modified_time( DATE_W3C, true, (int) $q[0] ) : '';
+	}
 	public function get_shard_count() {
 		$count = 0;
 		foreach ( $this->taxonomies() as $taxonomy ) {

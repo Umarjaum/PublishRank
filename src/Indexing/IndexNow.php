@@ -83,6 +83,7 @@ final class IndexNow {
 		$url = get_permalink( $post );
 		if ( ! $url ) { return; }
 		if ( 'publish' === $new_status && 'publish' !== $old_status && $this->is_indexable_post( $post ) ) {
+			do_action( 'publishrank_post_indexable_published', $post, $url );
 			$this->queue_url( $url, (int) $post->ID, 'publish', 0 );
 		} elseif ( 'publish' === $old_status && 'publish' !== $new_status ) {
 			$this->queue_url( $url, (int) $post->ID, 'delete', 0 );
@@ -283,6 +284,7 @@ final class IndexNow {
 		$logs = array_slice( $logs, 0, self::MAX_LOGS );
 		update_option( self::LOG_OPTION, $logs, false );
 		update_option( 'publishrank_indexnow_last_status', (int) $http_status . ':' . gmdate( 'c' ), false );
+		\PublishRankSEO\AnalyticsCollector::record_indexnow_result( $result );
 	}
 
 
@@ -306,6 +308,7 @@ final class IndexNow {
 		update_option( self::LOG_OPTION, $logs, false );
 		$last = ! empty( $entries ) ? end( $entries ) : array();
 		update_option( 'publishrank_indexnow_last_status', (int) ( isset( $last['http_status'] ) ? $last['http_status'] : 0 ) . ':' . $time, false );
+		foreach ( $entries as $entry ) { if ( is_array( $entry ) && isset( $entry['result'] ) ) { \PublishRankSEO\AnalyticsCollector::record_indexnow_result( $entry['result'] ); } }
 	}
 
 	private function key() {
@@ -342,7 +345,7 @@ final class IndexNow {
 		return in_array( $type, $types, true ) && post_type_exists( $type ) && is_post_type_viewable( $type );
 	}
 
-	private function is_indexable_post( $post ) {
+	public function is_indexable_post( $post ) {
 		if ( ! $post instanceof \WP_Post || 'publish' !== $post->post_status || '' !== (string) $post->post_password || ! $this->allowed_type( $post->post_type ) ) { return false; }
 		$permalink = get_permalink( $post );
 		if ( ! $permalink || $this->is_excluded_url( $permalink ) ) { return false; }

@@ -37,13 +37,19 @@ final class RedirectStore {
 
 	public static function regex_is_valid( $pattern ) {
 		$pattern = (string) $pattern;
-		if ( '' === $pattern ) {
+		$length = function_exists( 'mb_strlen' ) ? mb_strlen( $pattern ) : strlen( $pattern );
+		if ( '' === $pattern || $length > 255 ) {
 			return false;
 		}
+		return false !== @preg_match( self::compile_regex( $pattern ), '' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+	}
+	/** Add per-pattern PCRE limits so a pathological expression cannot stall a request. */
+	public static function compile_regex( $pattern ) {
+		$pattern = (string) $pattern;
 		if ( 0 !== strpos( $pattern, '~' ) ) {
 			$pattern = '~' . str_replace( '~', '\\~', $pattern ) . '~';
 		}
-		return false !== @preg_match( $pattern, '' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		return '~' === substr( $pattern, 0, 1 ) ? '~(*LIMIT_MATCH=10000)(*LIMIT_DEPTH=1000)' . substr( $pattern, 1 ) : $pattern;
 	}
 
 	/** Targets must be a path on this site or a full URL on this site's host. */
@@ -71,7 +77,10 @@ final class RedirectStore {
 			return new \WP_Error( 'publishrank_redirect_source', __( 'Enter the old URL or path.', 'publishrank' ) );
 		}
 		if ( $regex ) {
-			$source = function_exists( 'mb_substr' ) ? mb_substr( $source, 0, 255 ) : substr( $source, 0, 255 );
+			$length = function_exists( 'mb_strlen' ) ? mb_strlen( $source ) : strlen( $source );
+			if ( $length > 255 ) {
+				return new \WP_Error( 'publishrank_redirect_regex_length', __( 'Regular expressions must be 255 characters or fewer.', 'publishrank' ) );
+			}
 			if ( ! self::regex_is_valid( $source ) ) {
 				return new \WP_Error( 'publishrank_redirect_regex', __( 'The regular expression is not valid.', 'publishrank' ) );
 			}

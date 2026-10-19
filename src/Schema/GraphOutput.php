@@ -1,6 +1,6 @@
 <?php
 /** Emits one connected JSON-LD graph for the current document. */
-// News-publisher article schema allow-list: NewsArticle, Article, LiveBlogPosting.
+// Primary article output is restricted to the centrally registered article family; other selections use their own builders.
 namespace PublishRankSEO\Schema;
 
 use PublishRankSEO\Core\OutputRegistry;
@@ -18,8 +18,25 @@ final class GraphOutput {
 	public function __construct( OutputRegistry $registry ) { $this->registry = $registry; }
 	public function register() { add_action( 'wp_head', array( $this, 'render' ), 20 ); }
 
-	/** Render one connected graph when PublishRank owns the JSON-LD slot. */
+	/**
+	 * Fail-safe entry point: a problem while building this output can never take the public page down.
+	 * Partial markup is discarded and the failure is recorded for the integrity/diagnostics screens.
+	 */
 	public function render() {
+		ob_start();
+		try {
+			$this->render_output();
+			echo ob_get_clean(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- markup was escaped where it was built.
+		} catch ( \Throwable $e ) {
+			ob_end_clean();
+			do_action( 'publishrank_module_failed', __CLASS__, 'runtime_exception', false, $e->getMessage() );
+			// Never fail silently: leave a visible hint in the page source so a missing graph can be diagnosed.
+			echo '<!-- PublishRank structured data skipped: ' . esc_html( str_replace( '--', '- -', substr( $e->getMessage(), 0, 160 ) ) ) . " -->\n";
+		}
+	}
+
+	/** Render one connected graph when PublishRank owns the JSON-LD slot. */
+	private function render_output() {
 		if ( is_admin() || wp_doing_ajax() || ! get_option( 'publishrank_schema_enabled', true ) || ! $this->registry->claim( 'jsonld', 'graph-output' ) ) { return; }
 		$identity = $this->identity_entity();
 		$graph = array( $identity, $this->website(), $this->webpage() );
@@ -41,7 +58,11 @@ final class GraphOutput {
 		$graph = apply_filters( 'publishrank_schema_graph', $graph, $this );
 		if ( ! is_array( $graph ) ) { $graph = array(); }
 		$graph = array_values( array_filter( $graph, 'is_array' ) );
-		if ( is_singular() && false === function_exists( 'yoast_breadcrumb' ) ) { $graph[] = ( new BreadcrumbEngine() )->schema(); }
+		if ( is_singular() && false === function_exists( 'yoast_breadcrumb' ) ) {
+			// An empty BreadcrumbList is invalid markup: only emit it when there are real items.
+			$crumbs = ( new BreadcrumbEngine() )->schema();
+			if ( ! empty( $crumbs['itemListElement'] ) ) { $graph[] = $crumbs; }
+		}
 		$entities = PublicationProfile::identity_is_person() ? 'person,website,webpage' : 'organization,website,webpage';
 		if ( $this->is_editorial_article() ) { $entities .= ',article'; }
 		if ( $list ) { $entities .= ',itemlist'; }
@@ -78,10 +99,9 @@ final class GraphOutput {
 			'@id'        => $url . '#organization',
 			'name'       => $org['name'] ? sanitize_text_field( $org['name'] ) : PublicationProfile::publisher_name(),
 			'url'        => $url,
-			'inLanguage' => sanitize_text_field( (string) get_option( 'publishrank_default_language', substr( (string) get_locale(), 0, 2 ) ) ),
 		);
 		if ( $org['legal_name'] )     { $organization['legalName'] = sanitize_text_field( $org['legal_name'] ); }
-		if ( $org['alternate_name'] ) { $organization['alternateName'] = sanitize_text_field( $org['alternate_name'] ); }
+		if ( ! empty( $org['alternate_names'] ) ) { $organization['alternateName'] = $org['alternate_names']; } elseif ( $org['alternate_name'] ) { $organization['alternateName'] = sanitize_text_field( $org['alternate_name'] ); }
 		if ( $org['description'] )    { $organization['description'] = wp_strip_all_tags( $org['description'] ); }
 		if ( $org['founding_date'] && preg_match( '/^\d{4}(?:-\d{2}(?:-\d{2})?)?$/', $org['founding_date'] ) ) {
 			$organization['foundingDate'] = $org['founding_date'];
@@ -127,7 +147,6 @@ final class GraphOutput {
 			'@id'        => $url . '#person',
 			'name'       => $person['name'] ? sanitize_text_field( $person['name'] ) : PublicationProfile::publisher_name(),
 			'url'        => $person['url'] ? esc_url_raw( $person['url'] ) : $url,
-			'inLanguage' => sanitize_text_field( (string) get_option( 'publishrank_default_language', substr( (string) get_locale(), 0, 2 ) ) ),
 		);
 		if ( $person['alternate_name'] ) { $node['alternateName'] = sanitize_text_field( $person['alternate_name'] ); }
 		if ( $person['description'] )    { $node['description'] = wp_strip_all_tags( $person['description'] ); }
@@ -180,6 +199,10 @@ final class GraphOutput {
 			$page['dateModified'] = get_post_modified_time( DATE_W3C, true, $post );
 			$page['breadcrumb'] = array( '@id' => $url . '#breadcrumb' );
 			if ( $this->is_editorial_article() ) { $page['mainEntity'] = array( '@id' => $url . '#article' ); }
+			if ( 'FAQPage' === $page['@type'] && $post instanceof \WP_Post ) {
+				$faq = ( new SchemaBuilder() )->faq_entities( $post );
+				if ( $faq ) { $page['mainEntity'] = $faq; } else { $page['@type'] = 'WebPage'; }
+			}
 			$found = $post instanceof \WP_Post ? \PublishRankSEO\Meta\SeoData::image_for_post( $post ) : null;
 			$image = $found ? (string) $found['url'] : (string) get_option( 'publishrank_seo_default_social_image', '' );
 			if ( $image ) {
@@ -198,13 +221,12 @@ final class GraphOutput {
 		$site_url = trailingslashit( PublicationProfile::primary_url() );
 		$author = $post instanceof \WP_Post ? get_userdata( $post->post_author ) : false;
 		$author_url = $author ? (string) get_author_posts_url( $post->post_author ) : $site_url;
-			$default_type = SchemaTypes::resolve( get_option( 'publishrank_schema_default_post_type', 'NewsArticle' ) );
-			$default_type = in_array( $default_type, array( 'NewsArticle', 'Article' ), true ) ? $default_type : 'NewsArticle';
+			$default_type = SchemaTypes::resolve_in( get_option( 'publishrank_schema_default_post_type', 'NewsArticle' ), SchemaTypes::default_article_types(), 'NewsArticle' );
 			$schema_type = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, $default_type ) );
 			// Older releases stored broad values such as Report or Review. Never
-			// pass those values through to JSON-LD: they are not in this
-			// news-publisher allow-list or eligible article rich-result types.
-			if ( ! in_array( $schema_type, array( 'NewsArticle', 'Article', 'LiveBlogPosting' ), true ) ) { $schema_type = $default_type; }
+			// pass those values through to JSON-LD: only the news-publisher article
+			// allow-list (SchemaTypes::article_types) may be emitted for the article node.
+			if ( ! array_key_exists( $schema_type, SchemaTypes::article_types() ) ) { $schema_type = $default_type; }
 			$schema_type = LiveBlogSchema::is_live_blog( $post ) ? 'LiveBlogPosting' : $schema_type;
 		$description = (string) PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' );
 		$description = $description ? wp_strip_all_tags( $description ) : wp_strip_all_tags( get_the_excerpt( $post ) );
@@ -245,8 +267,6 @@ final class GraphOutput {
 		}
 			$keywords = $this->keywords( $post );
 			if ( $keywords ) { $article['keywords'] = $keywords; }
-			$content_tier = sanitize_text_field( (string) PostMeta::get( $post->ID, PostMeta::CONTENT_TIER, '' ) );
-			if ( $content_tier ) { $article['contentTier'] = $content_tier; }
 			$citations = array_filter( array_map( 'esc_url_raw', preg_split( '/\r\n|\r|\n|,/', (string) PostMeta::get( $post->ID, PostMeta::CITATIONS, '' ) ) ) );
 			if ( $citations ) { $article['citation'] = array_values( $citations ); }
 		$video = $this->video_object( $post, $image );
@@ -279,6 +299,10 @@ final class GraphOutput {
 		$job_title = PostMeta::get( $post->ID, PostMeta::AUTHOR_JOB_TITLE, '' );
 		$image = PostMeta::get( $post->ID, PostMeta::AUTHOR_IMAGE, '' );
 		if ( $job_title ) { $node['jobTitle'] = wp_strip_all_tags( (string) $job_title ); }
+		if ( $user ) {
+			$expertise = SchemaBuilder::author_expertise( $user->ID );
+			if ( $expertise ) { $node['knowsAbout'] = $expertise; }
+		}
 		if ( $image ) { $node['image'] = $this->image_object( $image, trailingslashit( $author_url ) . '#author-image' ); }
 		elseif ( $user && function_exists( 'get_avatar_url' ) ) { $node['image'] = esc_url_raw( get_avatar_url( $user->ID ) ); }
 		return $node;
@@ -344,9 +368,10 @@ final class GraphOutput {
 		$type = $post instanceof \WP_Post ? get_post_type_object( $post->post_type ) : false;
 		if ( ! is_singular() || ! $post instanceof \WP_Post || ! $type || ! $type->public ) { return false; }
 		if ( 'attachment' === $post->post_type ) { return false; }
+		$chosen = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' ) );
+		if ( '' !== $chosen && ! array_key_exists( $chosen, SchemaTypes::article_types() ) ) { return false; }
 		if ( 'page' === $post->post_type ) {
 			// Pages are WebPage nodes unless the editor explicitly chose an article schema type for this page.
-			$chosen = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' ) );
 			return '' !== $chosen && array_key_exists( $chosen, SchemaTypes::article_types() );
 		}
 		return (bool) $type->publicly_queryable;
@@ -374,7 +399,7 @@ final class GraphOutput {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function dedupe_graph( array $graph ) {
-		$article_types = array( 'NewsArticle', 'Article', 'LiveBlogPosting' );
+		$article_types = array_keys( SchemaTypes::article_types() );
 		$type_of = static function ( $node ) { $t = $node['@type'] ?? ''; return is_array( $t ) ? (string) reset( $t ) : (string) $t; };
 		$by_id = array(); $out = array();
 		foreach ( $graph as $node ) {

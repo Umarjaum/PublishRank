@@ -70,7 +70,7 @@ final class DashboardPage {
 			?>
 				<div class="rhs-welcome-banner">
 					<div class="rhs-welcome-banner__copy">
-						<p class="rhs-welcome-banner__eyebrow"><?php esc_html_e( 'Welcome to PublishRank', 'publishrank' ); ?></p>
+						<p class="rhs-welcome-banner__eyebrow"><?php esc_html_e( 'Welcome To SEO', 'publishrank' ); ?></p>
 						<h2><?php esc_html_e( 'Your newsroom SEO is ready to grow.', 'publishrank' ); ?></h2>
 						<p><?php esc_html_e( 'PublishRank automatically connects article metadata, NewsArticle schema, News Sitemaps, IndexNow notifications, and technical SEO health in one workspace.', 'publishrank' ); ?></p>
 						<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( 'publishrank-onboarding' ) ); ?>"><?php esc_html_e( 'Review your setup', 'publishrank' ); ?></a>
@@ -109,23 +109,36 @@ final class DashboardPage {
 						<span><a class="button button-small" href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open', 'publishrank' ); ?></a> <button type="button" class="button button-small rhs-copy" data-copy="<?php echo esc_attr( $url ); ?>"><?php esc_html_e( 'Copy', 'publishrank' ); ?></button></span>
 					</div>
 				<?php endforeach; ?>
-				<p class="description"><?php esc_html_e( 'Submit these in Google Search Console and Bing Webmaster Tools.', 'publishrank' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Submit these in Google Search Console and Bing Webmaster Tools.', 'publishrank' ); ?></p>
+				</div>
 			</div>
-			<div class="rhs-card">
-				<h2><?php esc_html_e( 'Quick actions', 'publishrank' ); ?></h2>
-					<p>
-						<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( 'publishrank' ) ); ?>"><?php esc_html_e( 'Settings', 'publishrank' ); ?></a>
-						<a class="button" href="<?php echo esc_url( admin_url( 'post-new.php' ) ); ?>"><?php esc_html_e( 'New article', 'publishrank' ); ?></a>
-						<a class="button" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=page' ) ); ?>"><?php esc_html_e( 'New page', 'publishrank' ); ?></a>
-						<a class="button" href="<?php echo esc_url( Branding::page_url( 'publishrank-schema' ) ); ?>"><?php esc_html_e( 'Schema settings', 'publishrank' ); ?></a>
-						<a class="button" href="<?php echo esc_url( Branding::page_url( RedirectsPage::SLUG ) ); ?>"><?php esc_html_e( 'Redirects', 'publishrank' ); ?></a>
-					<a class="button" href="<?php echo esc_url( Branding::page_url( RobotsPage::SLUG ) ); ?>"><?php esc_html_e( 'Robots.txt', 'publishrank' ); ?></a>
-					<a class="button" href="<?php echo esc_url( Branding::page_url( 'publishrank-seo-diagnostics' ) ); ?>"><?php esc_html_e( 'Diagnostics & scan', 'publishrank' ); ?></a>
-				</p>
-				<?php do_action( 'publishrank_seo_dashboard_actions' ); ?>
-			</div>
-		</div>
-		<h2><?php esc_html_e( 'Technical health', 'publishrank' ); ?></h2>
+			<section class="pr-dashboard-workspace" aria-labelledby="pr-dashboard-workspace-title">
+				<div class="pr-dashboard-workspace__heading"><div><p class="pr-dashboard-kicker"><?php esc_html_e( 'Publisher workspace', 'publishrank' ); ?></p><h2 id="pr-dashboard-workspace-title"><?php esc_html_e( 'Move the work forward', 'publishrank' ); ?></h2><p><?php esc_html_e( 'Choose a focused workspace. Every card opens its settings directly—no nested action menus.', 'publishrank' ); ?></p></div></div>
+				<div class="pr-dashboard-actions">
+					<?php
+					$cards = array(
+						array( 'slug' => 'publishrank-seo-score', 'icon' => 'fa-chart-simple', 'tone' => 'plum', 'kicker' => __( 'Editorial quality', 'publishrank' ), 'title' => __( 'SEO score', 'publishrank' ), 'description' => __( 'Review practical content and technical checks across the site.', 'publishrank' ), 'button' => __( 'Open SEO score', 'publishrank' ) ),
+						array( 'slug' => 'publishrank-schema', 'icon' => 'fa-diagram-project', 'tone' => 'sage', 'kicker' => __( 'Structured data', 'publishrank' ), 'title' => __( 'Schema studio', 'publishrank' ), 'description' => __( 'Configure publisher, article, media, and eligible rich-result schemas.', 'publishrank' ), 'button' => __( 'Manage schema', 'publishrank' ) ),
+						array( 'slug' => 'publishrank-seo-sitemap-health', 'icon' => 'fa-sitemap', 'tone' => 'brass', 'kicker' => __( 'News discovery', 'publishrank' ), 'title' => __( 'Sitemap health', 'publishrank' ), 'description' => __( 'Inspect sitemap endpoints and publisher-focused discovery signals.', 'publishrank' ), 'button' => __( 'Review sitemaps', 'publishrank' ) ),
+						array( 'slug' => 'publishrank-analytics', 'icon' => 'fa-chart-line', 'tone' => 'sage', 'kicker' => __( 'Performance', 'publishrank' ), 'title' => __( 'Publisher analytics', 'publishrank' ), 'description' => __( 'See local publishing trends and connected search performance.', 'publishrank' ), 'button' => __( 'View analytics', 'publishrank' ) ),
+						array( 'slug' => 'publishrank-search-console', 'icon' => 'fa-magnifying-glass-chart', 'tone' => 'plum', 'kicker' => __( 'Search visibility', 'publishrank' ), 'title' => __( 'Search Console', 'publishrank' ), 'description' => __( 'Review read-only search metrics and connected property status.', 'publishrank' ), 'button' => __( 'Open Search Console', 'publishrank' ) ),
+						array( 'slug' => 'publishrank-traffic-guard', 'icon' => 'fa-shield-halved', 'tone' => 'rose', 'kicker' => __( 'Access policy', 'publishrank' ), 'title' => __( 'Traffic Guard', 'publishrank' ), 'description' => __( 'Set optional IP/CIDR and trusted-proxy country rules for public pages.', 'publishrank' ), 'button' => __( 'Configure Traffic Guard', 'publishrank' ) ),
+						array( 'slug' => RedirectsPage::SLUG, 'icon' => 'fa-arrow-right-arrow-left', 'tone' => 'ink', 'kicker' => __( 'Link maintenance', 'publishrank' ), 'title' => __( 'Redirects & 404s', 'publishrank' ), 'description' => __( 'Resolve broken URLs and manage permanent or temporary redirects.', 'publishrank' ), 'button' => __( 'Review redirects', 'publishrank' ) ),
+					);
+					foreach ( $cards as $card ) :
+					?>
+						<article class="pr-action-card pr-action-card--<?php echo esc_attr( $card['tone'] ); ?>">
+							<div class="pr-action-card__icon" aria-hidden="true"><i class="fa-solid <?php echo esc_attr( $card['icon'] ); ?>"></i></div>
+							<p class="pr-action-card__kicker"><?php echo esc_html( $card['kicker'] ); ?></p>
+							<h3><?php echo esc_html( $card['title'] ); ?></h3>
+							<p class="pr-action-card__description"><?php echo esc_html( $card['description'] ); ?></p>
+							<a class="button button-primary pr-action-card__button" href="<?php echo esc_url( Branding::page_url( $card['slug'] ) ); ?>"><?php echo esc_html( $card['button'] ); ?><span class="fa-solid fa-arrow-right" aria-hidden="true"></span></a>
+						</article>
+					<?php endforeach; ?>
+				</div>
+			</section>
+			<?php do_action( 'publishrank_seo_dashboard_actions' ); ?>
+			<h2><?php esc_html_e( 'Technical health', 'publishrank' ); ?></h2>
 		<div class="rhs-table-wrap"><table class="widefat striped">
 			<thead><tr><th><?php esc_html_e( 'Area', 'publishrank' ); ?></th><th><?php esc_html_e( 'Status', 'publishrank' ); ?></th><th><?php esc_html_e( 'What to do', 'publishrank' ); ?></th></tr></thead>
 			<tbody>

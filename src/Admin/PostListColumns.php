@@ -2,7 +2,7 @@
 /** Adds an SEO health column to the posts list. */
 namespace PublishRankSEO\Admin;
 
-use PublishRankSEO\Meta\PostMeta;
+use PublishRankSEO\SEO\EditorialAudit;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -49,58 +49,17 @@ final class PostListColumns {
 		}
 	}
 
-	/**
-	 * Score the editorial SEO basics of a post.
-	 *
-	 * @return array{score:int,issues:string[],noindex:bool}
-	 */
+	/** Score with the same criteria used by Insights and scheduled audits. @return array{score:int,issues:string[],noindex:bool} */
 	public static function audit( $post_id ) {
-		$issues = array();
-		$score  = 0;
-		$len    = static function ( $text ) {
-			return function_exists( 'mb_strlen' ) ? mb_strlen( (string) $text ) : strlen( (string) $text );
-		};
-
-		$title = (string) PostMeta::get( $post_id, PostMeta::TITLE, '' );
-		$title = '' !== $title ? $title : (string) get_the_title( $post_id );
-		$tl    = $len( $title );
-		if ( $tl >= 20 && $tl <= 65 ) {
-			$score += 25;
-		} else {
-			/* translators: %d: title length. */
-			$issues[] = sprintf( __( 'SEO title is %d characters; aim for 20 to 65.', 'publishrank' ), $tl );
-			$score   += $tl > 65 && $tl <= 80 ? 12 : 0;
+		$post = get_post( (int) $post_id );
+		if ( ! $post instanceof \WP_Post ) {
+			return array( 'score' => 0, 'issues' => array( __( 'Article could not be loaded for analysis.', 'publishrank' ) ), 'noindex' => false );
 		}
-
-		$description = (string) PostMeta::get( $post_id, PostMeta::DESCRIPTION, '' );
-		$dl          = $len( $description );
-		if ( $dl >= 70 && $dl <= 160 ) {
-			$score += 30;
-		} elseif ( 0 === $dl ) {
-			$issues[] = __( 'No meta description; one is generated from the content.', 'publishrank' );
-			$score   += 10;
-		} else {
-			/* translators: %d: description length. */
-			$issues[] = sprintf( __( 'Meta description is %d characters; aim for 70 to 160.', 'publishrank' ), $dl );
-			$score   += 15;
-		}
-
-		if ( '' !== (string) PostMeta::get( $post_id, PostMeta::PRIMARY_KEYPHRASE, '' ) || '' !== (string) PostMeta::get( $post_id, PostMeta::FOCUS_KEYWORD, '' ) ) {
-			$score += 20;
-		} else {
-			$issues[] = __( 'No primary keyphrase.', 'publishrank' );
-		}
-
-		if ( has_post_thumbnail( $post_id ) ) {
-			$score += 25;
-		} else {
-			$issues[] = __( 'No featured image for social sharing and Google News.', 'publishrank' );
-		}
-
-		$robots = strtolower( (string) PostMeta::get( $post_id, PostMeta::ROBOTS, '' ) );
+		$report = ( new EditorialAudit() )->analyze( $post );
+		$robots = strtolower( (string) get_post_meta( $post_id, '_publishrank_seo_robots', true ) );
 		return array(
-			'score'   => min( 100, $score ),
-			'issues'  => $issues,
+			'score'   => max( 0, min( 100, (int) $report['score'] ) ),
+			'issues'  => array_values( (array) $report['issues'] ),
 			'noindex' => false !== strpos( $robots, 'noindex' ),
 		);
 	}

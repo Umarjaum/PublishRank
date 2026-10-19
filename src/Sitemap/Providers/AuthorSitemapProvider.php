@@ -12,7 +12,10 @@ final class AuthorSitemapProvider implements SitemapProviderInterface {
 	public function get_slug() { return 'author'; }
 	public function is_enabled() { return (bool) get_option( 'publishrank_sitemap_authors_enabled', true ); }
 	public function get_shard_count() { $counts = count_users(); return max( 1, (int) ceil( (int) ( isset( $counts['total_users'] ) ? $counts['total_users'] : 0 ) / self::SHARD_SIZE ) ); }
-	public function get_lastmod() { return ''; }
+	public function get_lastmod() {
+		$q = get_posts( array( 'post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 1, 'orderby' => 'modified', 'order' => 'DESC', 'fields' => 'ids', 'no_found_rows' => true, 'suppress_filters' => true ) );
+		return ! empty( $q ) ? (string) get_post_modified_time( DATE_W3C, true, (int) $q[0] ) : '';
+	}
 	public function prepare_cursor( $steps = 2 ) { SitemapCursorStore::prepare_users( $this->get_slug(), $this->query_args(), self::SHARD_SIZE, $steps ); }
 	public function render_shard( $shard ) {
 		$users = SitemapCursorStore::user_page( $this->get_slug(), $this->query_args(), $shard, self::SHARD_SIZE );

@@ -34,6 +34,13 @@ final class LLMSTxtPage {
 			LLMSTxt::OPTION_CUSTOM       => $this->sanitize_custom( wp_unslash( $_POST[ LLMSTxt::OPTION_CUSTOM ] ?? '' ) ),
 			LLMSTxt::OPTION_FULL_ENABLED => ! empty( $_POST[ LLMSTxt::OPTION_FULL_ENABLED ] ),
 			LLMSTxt::OPTION_FULL_WORDS   => max( 1000, min( 10000, absint( $_POST[ LLMSTxt::OPTION_FULL_WORDS ] ?? 8000 ) ) ),
+			LLMSTxt::OPTION_FULL_PER_POST => max( 150, min( 3000, absint( $_POST[ LLMSTxt::OPTION_FULL_PER_POST ] ?? 1200 ) ) ),
+			LLMSTxt::OPTION_POLICY       => ! empty( $_POST[ LLMSTxt::OPTION_POLICY ] ),
+			LLMSTxt::OPTION_AUTHORS      => ! empty( $_POST[ LLMSTxt::OPTION_AUTHORS ] ),
+			LLMSTxt::OPTION_TAGS         => ! empty( $_POST[ LLMSTxt::OPTION_TAGS ] ),
+			LLMSTxt::OPTION_CPT          => ! empty( $_POST[ LLMSTxt::OPTION_CPT ] ),
+			LLMSTxt::OPTION_RESOURCES    => ! empty( $_POST[ LLMSTxt::OPTION_RESOURCES ] ),
+			LLMSTxt::OPTION_OPTIONAL     => ! empty( $_POST[ LLMSTxt::OPTION_OPTIONAL ] ),
 		);
 		foreach ( $fields as $key => $value ) { update_option( $key, $value ); }
 		flush_rewrite_rules( false );
@@ -53,6 +60,8 @@ final class LLMSTxtPage {
 			<p><?php esc_html_e( 'llms.txt is a plain Markdown file that gives compatible AI agents and retrieval systems a short, curated map of the most useful resources on your website. It helps them understand what your site is and where important content lives.', 'publishrank' ); ?></p>
 			<p><strong><?php esc_html_e( 'Important:', 'publishrank' ); ?></strong> <?php esc_html_e( 'It is not a replacement for robots.txt, does not grant or deny crawler access, and does not guarantee AI or search-engine usage. Access policies remain in robots.txt and other platform policies.', 'publishrank' ); ?></p></div>
 		</div>
+
+		<?php $this->render_preview(); ?>
 
 		<div class="rhs-grid rhs-ai-links">
 			<div class="rhs-card"><p class="rhs-label"><?php esc_html_e( 'Published file', 'publishrank' ); ?></p><code><?php echo esc_html( $url ); ?></code><p><a class="button button-small" href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open llms.txt', 'publishrank' ); ?></a></p></div>
@@ -74,7 +83,13 @@ final class LLMSTxtPage {
 				<?php $this->check( LLMSTxt::OPTION_HOME, __( 'Homepage', 'publishrank' ), __( 'Include the official homepage.', 'publishrank' ) ); ?>
 				<?php $this->check( LLMSTxt::OPTION_POSTS, __( 'Recent articles', 'publishrank' ), __( 'Include your latest published posts.', 'publishrank' ) ); ?>
 				<?php $this->check( LLMSTxt::OPTION_PAGES, __( 'Pages', 'publishrank' ), __( 'Include published pages such as About, Contact and Editorial Policy.', 'publishrank' ) ); ?>
+				<?php $this->check( LLMSTxt::OPTION_POLICY, __( 'About and editorial standards', 'publishrank' ), __( 'Detect About, Contact, Editorial policy, Corrections, Ethics, Team and Privacy pages automatically and list them first. They are the strongest trust signals for a news site.', 'publishrank' ) ); ?>
 				<?php $this->check( LLMSTxt::OPTION_CATEGORIES, __( 'Categories', 'publishrank' ), __( 'Include public category hubs so agents can understand topic structure.', 'publishrank' ) ); ?>
+				<?php $this->check( LLMSTxt::OPTION_AUTHORS, __( 'Authors', 'publishrank' ), __( 'List your reporters with their bio, so agents can see who stands behind the reporting.', 'publishrank' ) ); ?>
+				<?php $this->check( LLMSTxt::OPTION_TAGS, __( 'Tags', 'publishrank' ), __( 'Include the most used tags. Off by default because tag lists are often noisy.', 'publishrank' ), 0 ); ?>
+				<?php $this->check( LLMSTxt::OPTION_CPT, __( 'Custom content types', 'publishrank' ), __( 'Add the newest items of every public custom post type, such as reports or live blogs.', 'publishrank' ), 0 ); ?>
+				<?php $this->check( LLMSTxt::OPTION_RESOURCES, __( 'Machine-readable resources', 'publishrank' ), __( 'Link the sitemap index, Google News sitemap, robots.txt and RSS feed so an agent can find fresh articles quickly.', 'publishrank' ) ); ?>
+				<?php $this->check( LLMSTxt::OPTION_OPTIONAL, __( 'Group archives under "Optional"', 'publishrank' ), __( 'Puts categories, tags and authors in the Optional section defined by the llms.txt format, which agents with small context windows can skip.', 'publishrank' ) ); ?>
 				<p><label><strong><?php esc_html_e( 'Recent articles count', 'publishrank' ); ?></strong><br /><input type="number" min="1" max="100" name="<?php echo esc_attr( LLMSTxt::OPTION_POST_COUNT ); ?>" value="<?php echo esc_attr( get_option( LLMSTxt::OPTION_POST_COUNT, 20 ) ); ?>" /></label> <span class="description"><?php esc_html_e( '1–100. Keep the concise file focused; quality is more useful than dumping the whole site.', 'publishrank' ); ?></span></p>
 			</div>
 
@@ -89,6 +104,7 @@ final class LLMSTxtPage {
 				<p><?php esc_html_e( 'An extended companion can expose more article text to clients that explicitly support it. It is optional and should be treated as a convenience resource, not as an access-control mechanism.', 'publishrank' ); ?></p>
 				<?php $this->check( LLMSTxt::OPTION_FULL_ENABLED, __( 'Enable /llms-full.txt', 'publishrank' ), __( 'Generate an extended Markdown resource.', 'publishrank' ) ); ?>
 				<p><label><strong><?php esc_html_e( 'Maximum words', 'publishrank' ); ?></strong><br /><input type="number" min="1000" max="10000" name="<?php echo esc_attr( LLMSTxt::OPTION_FULL_WORDS ); ?>" value="<?php echo esc_attr( get_option( LLMSTxt::OPTION_FULL_WORDS, 8000 ) ); ?>" /></label> <span class="description"><?php esc_html_e( 'Maximum 10,000 words per generated extended resource.', 'publishrank' ); ?></span></p>
+				<p><label><strong><?php esc_html_e( 'Maximum words per article', 'publishrank' ); ?></strong><br /><input type="number" min="150" max="3000" name="<?php echo esc_attr( LLMSTxt::OPTION_FULL_PER_POST ); ?>" value="<?php echo esc_attr( get_option( LLMSTxt::OPTION_FULL_PER_POST, 1200 ) ); ?>" /></label> <span class="description"><?php esc_html_e( 'Stops one long article from using the whole budget, so more stories fit. Cut articles link back to the full text.', 'publishrank' ); ?></span></p>
 			</div>
 			<?php submit_button( __( 'Save AI configuration', 'publishrank' ), 'primary' ); ?>
 		</form>
@@ -105,8 +121,19 @@ final class LLMSTxtPage {
 		<?php
 	}
 
-	private function check( $key, $label, $description ) {
-		printf( '<p><label><input type="checkbox" name="%1$s" value="1" %2$s /> <strong>%3$s</strong></label><br /><span class="description">%4$s</span></p>', esc_attr( $key ), checked( get_option( $key, 1 ), 1, false ), esc_html( $label ), esc_html( $description ) );
+	private function check( $key, $label, $description, $default = 1 ) {
+		printf( '<p><label><input type="checkbox" name="%1$s" value="1" %2$s /> <strong>%3$s</strong></label><br /><span class="description">%4$s</span></p>', esc_attr( $key ), checked( (int) get_option( $key, $default ), 1, false ), esc_html( $label ), esc_html( $description ) );
+	}
+
+	/** What agents will receive right now, with a review of common mistakes. */
+	private function render_preview() {
+		$llms = new LLMSTxt(); $stats = $llms->stats(); $issues = $llms->analyze(); $text = $llms->build();
+		$icons = array( 'error' => '✕', 'warn' => '!', 'info' => 'i', 'ok' => '✓' );
+		echo '<div class="rhs-card"><h2><span class="dashicons dashicons-visibility" aria-hidden="true"></span> ' . esc_html__( 'Preview of the saved file', 'publishrank' ) . '</h2>';
+		/* translators: 1: links, 2: sections, 3: tokens */
+		echo '<p class="description">' . esc_html( sprintf( __( '%1$s links in %2$s sections, about %3$s tokens. Save to refresh this preview.', 'publishrank' ), number_format_i18n( $stats['links'] ), number_format_i18n( $stats['sections'] ), number_format_i18n( $stats['tokens'] ) ) ) . '</p>';
+		foreach ( $issues as $issue ) { echo '<p class="pr-llms-check is-' . esc_attr( $issue['level'] ) . '"><strong aria-hidden="true">' . esc_html( $icons[ $issue['level'] ] ?? 'i' ) . '</strong> ' . esc_html( $issue['msg'] ) . '</p>'; }
+		echo '<textarea readonly rows="16" class="large-text code" aria-label="' . esc_attr__( 'Generated llms.txt', 'publishrank' ) . '">' . esc_textarea( $text ) . '</textarea></div>';
 	}
 
 	private function sanitize_custom( $value ) {

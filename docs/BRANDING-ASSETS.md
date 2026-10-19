@@ -19,6 +19,6 @@ All files are generated from the original PublishRank logo and live in `assets/i
 | `publisher-logo-600x60.png` | 600x60 | Example of a Google-compliant publisher logo size. |
 | `publishrank-banner-publisher.png` | 1983x793 | Supplied PublishRank banner shown on the administrator dashboard; kept as uploaded. |
 
-PublishRank never uses its own artwork as a visitor-facing fallback image on a publisher's website. Publishers choose their own publisher logo and default social image in **PublishRank → Settings**. Optional source attribution is disabled by default. Administrators can explicitly enable product/version markers and a deterministic provenance fingerprint in PublishRank Settings; these contain no visitor tracking.
+PublishRank never uses its own artwork as a visitor-facing fallback image on a publisher's website. Publishers choose their own publisher logo and default social image in **PublishRank → Settings**. Technical source provenance markers are always enabled on public HTML pages and include product/version details plus a deterministic fingerprint. They contain no visitor tracking or promotional link. The visible footer credit remains optional and administrator-controlled.
 
 For WordPress.org, upload `icon-*`, `banner-*` files to the SVN `/assets` directory using exactly these names.

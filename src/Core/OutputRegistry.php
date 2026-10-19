@@ -28,6 +28,9 @@ final class OutputRegistry {
 		return true;
 	}
 
+	/** Forget all claims. Used by the editor Live Preview so it can render the head output more than once per request. */
+	public function reset() { $this->claimed = array(); }
+
 	/** @param string $slot Output slot. */
 	public function owner( $slot ) {
 		return isset( $this->claimed[ $slot ] ) ? $this->claimed[ $slot ] : null;

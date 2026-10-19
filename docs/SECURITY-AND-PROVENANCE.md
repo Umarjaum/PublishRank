@@ -1,19 +1,18 @@
-# Optional source attribution and release identification
+# Public attribution and release identification
 
-PublishRank's public HTML source attribution is optional and disabled by default to respect WordPress.org guideline 10. Administrators can explicitly enable it under **PublishRank → Settings → HTML source attribution**.
+## Public output is opt-in
 
-When enabled, the plugin emits:
+PublishRank does not force a promotional comment, link, hidden SEO link, or footer credit into publisher pages. Both **Version provenance metadata** and **PublishRank footer attribution** are disabled by default and controlled by an administrator in **PublishRank > Settings**.
 
-- A `publishrank-brand` meta tag.
-- A `publishrank-version` meta tag.
-- An HTML comment with the product, release version, and deterministic release fingerprint.
-- The separate `<!-- Powered by PublishRank -->` comment.
+PublishRank always adds local product/version/fingerprint markers to public HTML. When footer attribution is enabled, the configured footer credit is visible to visitors. These settings do not alter canonical, robots, sitemap, or structured-data output. The theme compatibility fallback restores only missing SEO head and JSON-LD output; it never adds attribution.
 
-These markers are generated locally. They do not track visitors, make network requests, or act as a license certificate. They can be disabled by turning off the setting; the plugin's SEO features continue to work normally.
+The neutral `SEO metadata output begin` and structured-data delimiters are implementation markers, not promotional links or hidden ranking content. They contain no remote request, visitor identifier, or tracking pixel.
 
 ## Verification checklist
 
-1. Enable HTML source attribution in PublishRank Settings if you want the markers.
-2. View the source of a public page and search for `Powered by PublishRank`.
-3. Confirm the version and fingerprint correspond to the installed release.
-4. Turn the setting off to confirm the markers are no longer emitted.
+1. With both attribution settings disabled, view a public page's source and confirm there is no forced `SEO powered by PublishRank` comment, PublishRank generator tag, or footer credit.
+2. Enable one setting at a time and confirm only the selected provenance markers or visible footer credit appear.
+3. Disable the setting again and confirm the optional output is removed from fresh uncached page output.
+4. Confirm themes missing `wp_head()` can still receive missing SEO metadata and JSON-LD through the fallback, without attribution being injected.
+
+The plugin version is reported separately in the WordPress administration area and package metadata. Public provenance output is not a license certificate.

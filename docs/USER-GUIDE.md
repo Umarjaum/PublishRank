@@ -79,7 +79,9 @@ Per-post controls are available in the **PublishRank** editor box:
 - Social title, description, and image.
 - Focus keyphrase and keyword-density guidance.
 - Primary category and cornerstone flag.
-- Schema type: `NewsArticle`, `Article`, or `BlogPosting`.
+- Schema type: NewsArticle/Article subtypes, `BlogPosting`, `LiveBlogPosting`, `FAQPage`, `VideoObject`, `ImageGallery`, `AudioObject`, `PodcastEpisode`, `Event`, `Product`, `Recipe`, or `Review`.
+- Type-specific schema details. Event requires a valid start date, venue, city and two-letter country code; Product offer markup requires price and a three-letter currency; Recipe requires ingredients and steps; Review requires the reviewed item and a 0–5 rating. Incomplete advanced details intentionally omit that entity rather than emit misleading JSON-LD.
+- Public media URLs may use HTTPS CDN, video, audio or image hosts; unsafe schemes and credentialed URLs are rejected.
 - Video thumbnail and ISO 8601 duration.
 - News sitemap eligibility.
 
@@ -108,6 +110,10 @@ Google News eligibility is determined by Google, not by a sitemap alone. Keep ar
 ## 5A. Editorial SEO audit
 
 The post editor includes a local editorial audit that checks headline length, meta-description length, article depth, subheadings, featured image, byline, publication/modification dates, and relevant links. It also reports word count and a lightweight reading-ease signal. These are editorial prompts, not ranking rules; journalists should review accuracy, originality, sourcing, legal risk, and reader value before publishing.
+
+## 5B. Publisher Analytics
+
+Open **PublishRank → Analytics** for local 7-, 30-, or 90-day SVG trends, an accessible daily table, and CSV export. Daily score trends are calculated from a capped sample of recent published articles; IndexNow graphs show endpoint responses, not engine-specific indexing. No visitor beacon or article body is sent to an analytics provider. This local dashboard does not report Search Console clicks, impressions, queries, positions, or coverage.
 
 ## 6. Structured data
 
@@ -148,7 +154,7 @@ wp publishrank sitemap validate
 wp publishrank sitemap audit --format=json
 ```
 
-Use **PublishRank → Sitemap Health** for a generated-XML audit, provider/shard/URL counts, lastmod coverage, and a clickable URL preview. The audit renders actual sitemap XML rather than only inspecting configuration. Under **Settings → News SEO and sitemaps**, configure a canonical sitemap index slug and optional legacy aliases. Submit only the canonical endpoint to search engines; aliases are for migration compatibility.
+Use **PublishRank → Sitemap Health** for a generated-XML audit, provider/shard/URL counts, lastmod coverage, and a clickable URL preview. The audit also verifies index child references against enabled provider shards and flags duplicate URLs. Run the administrator-triggered live scan under **PublishRank → Diagnostics** to fetch and parse the real sitemap index and up to ten same-origin child sitemaps, including News Sitemap publication dates in the previous 48-hour window. Network failures and unavailable XML parsers are marked Not Tested; oversized responses and off-origin child URLs are not fetched. Under **Settings → News SEO and sitemaps**, configure the canonical endpoint shown in the sitemap UI. Submit only the canonical endpoint to search engines; aliases are for migration compatibility.
 
 ## 8. Redirects and 404 monitoring
 
@@ -182,7 +188,27 @@ Open **PublishRank → IndexNow** to:
 
 When enabled, PublishRank queues eligible published content after saves and sends deletion notifications for eligible public posts. Password-protected, non-public and detected noindex content is excluded from automatic publication submissions. Temporary network, rate-limit and server failures receive bounded retries. Hosting must allow WordPress cron and outbound HTTPS requests to `https://api.indexnow.org/indexnow/`.
 
-The key is excluded from settings exports. Do not paste it into public issue trackers or support messages. IndexNow sends the site's host, key, key-location URL, and submitted public URL(s); it does not send visitor data or article content. Review the [IndexNow terms](https://www.indexnow.org/en_gb/terms) and [Microsoft privacy statement](https://privacy.microsoft.com/en-us/privacystatement). Disable IndexNow in **PublishRank → IndexNow** if the publisher does not want these outbound requests.
+The key is excluded from settings exports. Do not paste it into public issue trackers or support messages. IndexNow sends the site's host, key, key-location URL and submitted public URL(s); visitor analytics fields and article body text are not part of the request, though the endpoint can observe standard network metadata such as the server IP. Review the [IndexNow terms](https://www.indexnow.org/terms), [Yandex privacy policy](https://yandex.com/legal/privacy/), [Seznam privacy policy](https://o-seznam.cz/ochrana-udaju/) and [Microsoft privacy statement](https://privacy.microsoft.com/en-us/privacystatement). Disable IndexNow in **PublishRank → IndexNow** if the publisher does not want these outbound requests.
+
+## 10A. Google Search Console connection
+
+Open **PublishRank → Search Console** and configure a Google OAuth Web client for this WordPress site. Google requires a Google Cloud project, the Search Console API enabled, and the exact callback URI shown on the screen; the connected Google account must already have access to the property. PublishRank requests only `https://www.googleapis.com/auth/webmasters.readonly`, encrypts OAuth tokens at rest, lists only properties returned to that account, and refreshes aggregated daily clicks/impressions/CTR/position and a read-only sitemap status inventory only when an administrator asks. URL Inspection reads Google’s known index version; it does not inspect the live page or request indexing. This read-only scope does not submit/delete sitemaps. Google data is delayed, aggregated, and may omit low-volume rows. Disconnect deletes local tokens/data; revoke Google consent separately in your Google Account.
+
+## 10B. Publisher Account sign-in
+
+PublishRank ships with the shared Supabase project URL and public publishable key configured centrally; site owners do not need to enter keys. Under **PublishRank → Publisher Account**, the screen shows the exact callback URL for this WordPress site. The shared project must allow that callback in Supabase Auth, and OAuth provider credentials must be configured in the shared project before the corresponding buttons can complete sign-in. Available provider choices include Google, Apple, Microsoft/Azure, Bitbucket, Discord, Facebook, Figma, GitHub, GitLab, Kakao, Keycloak, LinkedIn, Notion, Slack, Spotify, X/Twitter, Twitch, WorkOS and Zoom. A first-time provider sign-in may create a Supabase identity if project sign-ups are enabled; each existing WordPress administrator links that identity through PKCE. PublishRank never creates WordPress users or assigns roles based on email. The extra sign-in gate is optional; local SEO, metadata, schema and sitemap features remain available when it is disabled. If enabled, the gate applies only to PublishRank admin screens; WordPress, the public site and unrelated wp-admin screens remain available. Use the nonce-protected emergency recovery action if Supabase is unavailable. Never use or enter a Supabase `service_role` key.
+
+## 10C. Baidu and shared search-engine notifications
+
+Open **PublishRank → Search Engines** after verifying the site in Baidu Search Resource Platform. Copy the current ordinary-inclusion endpoint from the account’s own submission tool. PublishRank accepts only HTTPS Baidu endpoints for this exact site, encrypts the endpoint (which contains the token), and never shows it again. Manual batches allow up to 2,000 unique same-host URLs; optional automatic submission is limited to newly published public/indexable posts, not edits or deletions. Recent responses retain counts and quota metadata, not the URLs or token. Baidu’s quotas vary and duplicate submissions can consume quota. A successful submission assists discovery; it does not guarantee crawling, indexing or ranking. Baidu analytics and sitemap dashboard data are not exposed by a documented public read API, so PublishRank does not claim to synchronize those metrics. You can separately submit the displayed XML sitemap in Baidu’s platform where your account supports it. IndexNow is a different shared protocol for participating engines and does not include Google or Baidu.
+
+## 10D. Traffic Guard: local IP and country rules
+
+Open **PublishRank → Traffic Guard** to configure the optional network rules. Traffic Guard is off by default. When enabled, it can deny exact IPv4/IPv6 addresses or CIDR networks, allowlist exceptions, and selected country codes. An allowlisted address takes precedence over IP and country denies. Administrator accounts bypass the rules; non-administrator requests follow the configured policy. The feature runs in WordPress and does not store visitor IPs or call an external GeoIP service. Hosting and web-server access logs may still record network addresses under their own retention policies.
+
+Country rules use the `CF-IPCountry` header. They work only when the request's direct peer (`REMOTE_ADDR`) is inside a trusted-proxy CIDR entered on the screen and the proxy supplies a valid country header. For Cloudflare, enable its IP Geolocation setting and confirm the current proxy ranges from [Cloudflare's IP ranges page](https://www.cloudflare.com/ips/). PublishRank reads `CF-Connecting-IP` or a trusted `X-Forwarded-For` chain only when the direct peer is in your configured trusted CIDRs; never add ranges unless your host or CDN confirms them. When the peer is not trusted or country data is missing or malformed, country blocking fails open. Cloudflare's `XX` unknown-country code is blocked only if you explicitly add `XX` to the rules. Cloudflare notes that IP geolocation is an estimate, so do not use it as the sole control for compliance-critical or precise location restrictions; see its [IP geolocation guidance](https://developers.cloudflare.com/network/ip-geolocation/) and [header reference](https://developers.cloudflare.com/fundamentals/reference/http-headers/).
+
+Rules are enforced on public front-end page requests. wp-admin, administrator requests, login and recovery, REST, XML-RPC, cron, feeds, robots.txt, llms.txt, and XML sitemap URLs are exempt to protect publisher operations and search discovery. A broad public-page restriction can still prevent readers and search crawlers from reaching articles, so keep rules narrow and review crawl/indexing reports after enabling them. Traffic Guard is not a WAF or DDoS defense; use the CDN or hosting firewall for volumetric attacks. Test a small rule on staging first and keep administrator access available.
 
 ## 11. Multilingual and international SEO
 
@@ -194,7 +220,7 @@ WPML and Polylang integrations are feature-detected. Always verify generated alt
 
 PublishRank detects common SEO plugins including Yoast SEO, Rank Math, All in One SEO, SEOPress, and The SEO Framework. A warning means you must choose one technical output owner or disable overlapping modules.
 
-The frontend scanner requests the site's own homepage and latest article, then counts titles, canonicals, descriptions, robots, Open Graph, JSON-LD, and PublishRank markers. Run it after:
+The administrator-triggered frontend scanner requests the site's own homepage and latest article without following redirects. It counts titles/canonicals/descriptions/robots/social tags, parses JSON-LD, checks Article-family fields, date formats and canonical consistency, detects malformed or duplicate entities, and checks live sitemap endpoints. Sitemap checks are limited to ten same-origin children and 2 MiB per response. Run the scan after:
 
 - Theme changes.
 - SEO plugin changes.
@@ -206,7 +232,7 @@ Expected output is one canonical, one description, one title, one robots directi
 
 ## 13. Provenance and official branding
 
-Optional frontend source attribution (disabled by default) can add local-only PublishRank provenance markers when explicitly enabled in Settings:
+Always-on technical source provenance adds local-only PublishRank markers to public HTML pages:
 
 - `publishrank-brand` meta tag.
 - `publishrank-version` meta tag.
@@ -244,13 +270,13 @@ Recommended rollback procedure:
 - [ ] Import/export backup exists.
 - [ ] Staging scan passes before production activation.
 - [ ] Google Search Console and Bing Webmaster Tools have the sitemap index.
-- [ ] If source attribution is enabled, provenance markers are visible in view-source.
+- [ ] Provenance markers should be visible in public HTML view-source; only the visible footer credit is optional.
 
 ## 16. Support boundaries
 
 PublishRank does not modify theme files, guarantee search results, or replace WordPress security, backups, editorial review, legal review, or platform-specific webmaster tools. Test all production changes on staging and keep a rollback path.
 
-Public HTML source attribution is optional and disabled by default. Enable it only when you want PublishRank source markers to appear in page HTML.
+Public HTML source provenance is always enabled and cannot be disabled in Settings. It identifies the active PublishRank version with local markers and makes no external network requests. The visible “Powered by PublishRank” footer credit remains optional and can be disabled.
 
 
 ### Publisher editorial genre

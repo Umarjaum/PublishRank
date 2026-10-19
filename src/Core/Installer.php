@@ -35,6 +35,7 @@ final class Installer {
 					'publishrank_seo_title_separator'        => '|',
 					'publishrank_meta_enabled'               => 1,
 					'publishrank_schema_enabled'             => 1,
+				'publishrank_schema_default_page_type'   => 'WebPage',
 					'publishrank_twitter_card'                => 'summary_large_image',
 					'publishrank_facebook_app_id'             => '',
 					'publishrank_home_title'                  => '',
@@ -50,8 +51,8 @@ final class Installer {
 			'publishrank_image_license_url'          => '',
 			'publishrank_seo_video_sitemap'          => 1,
 			'publishrank_seo_media_post_types'       => 'all',
-			'publishrank_source_attribution'         => 0,
-			'publishrank_public_attribution'         => 0,
+			// Technical source provenance is always enabled in code; only footer branding is configurable.
+			'publishrank_public_attribution'         => 1,
 			'publishrank_sitemap_post_types'         => 'post',
 			'publishrank_sitemap_pages_enabled'      => 1,
 			'publishrank_sitemap_cpt_enabled'        => 1,
@@ -69,6 +70,7 @@ final class Installer {
 			'publishrank_seo_publication_name'       => get_bloginfo( 'name' ),
 			'publishrank_seo_publisher_name'         => get_bloginfo( 'name' ),
 			'publishrank_seo_publisher_logo'         => '',
+				'publishrank_identity_alternate_names'  => '',
 				'publishrank_seo_publisher_type'         => 'NewsMediaOrganization',
 				'publishrank_schema_org_description'      => '',
 				'publishrank_schema_legal_name'           => '',
@@ -133,6 +135,13 @@ final class Installer {
 			'publishrank_llms_txt_custom'         => '',
 			'publishrank_llms_full_enabled'       => 0,
 			'publishrank_llms_full_words'         => 8000,
+			'publishrank_llms_txt_policy'         => 1,
+			'publishrank_llms_txt_authors'        => 1,
+			'publishrank_llms_txt_tags'           => 0,
+			'publishrank_llms_txt_cpt'            => 0,
+			'publishrank_llms_txt_resources'      => 1,
+			'publishrank_llms_txt_optional'       => 1,
+			'publishrank_llms_full_per_post'      => 1200,
 		);
 	}
 
@@ -158,6 +167,7 @@ final class Installer {
 		( new \PublishRankSEO\Sitemap\SitemapController() )->rewrite();
 		( new \PublishRankSEO\Sitemap\SitemapStylesheet() )->rewrite();
 		( new \PublishRankSEO\Indexing\IndexNow() )->rewrite();
+		( new \PublishRankSEO\AI\LLMSTxt() )->rewrite();
 		flush_rewrite_rules();
 	}
 
@@ -169,6 +179,7 @@ final class Installer {
 		self::install_defaults();
 		\PublishRankSEO\InternalLinks\Store::install();
 		( new \PublishRankSEO\Indexing\IndexNow() )->rewrite();
+		( new \PublishRankSEO\AI\LLMSTxt() )->rewrite();
 		// Shard boundaries changed in 2.9.20; bump versions so old cursor checkpoints and cached XML cannot be reused.
 		if ( version_compare( (string) get_option( self::VERSION_OPTION, '0' ), '2.9.20', '<' ) ) {
 			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::bump_many( array( 'post', 'page', 'cpt', 'taxonomy', 'author', 'attachment', 'news', 'image', 'video' ) );

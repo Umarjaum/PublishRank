@@ -1,15 +1,12 @@
 <?php
-/** Optional, privacy-safe source attribution for administrators who explicitly enable it. */
+/** Always-on, transparent, privacy-safe technical source provenance. */
 namespace PublishRankSEO\Security;
 
 defined( 'ABSPATH' ) || exit;
 
 final class TraceIntegrity {
 	public function register() {
-		// Public-facing attribution must never be imposed on publishers by default.
-		if ( ! get_option( 'publishrank_source_attribution', false ) ) {
-			return;
-		}
+		// Technical source provenance is always enabled. The visible footer credit is controlled separately.
 		add_action( 'wp_head', array( $this, 'frontend_trace' ), 0 );
 	}
 
@@ -18,14 +15,19 @@ final class TraceIntegrity {
 		return substr( hash( 'sha256', 'PublishRank|' . ( defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : 'unknown' ) . '|publishrank-seo' ), 0, 16 );
 	}
 
-	/** Emit source attribution only after the administrator explicitly opts in. */
+	/** Emit technical source attribution on public HTML pages, regardless of the footer-credit setting. */
+	/** Build the markers once so both wp_head and the theme-recovery path use identical output. */
+	public static function markup() {
+		$version = defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : 'unknown';
+		return '<!-- PublishRank provenance: brand=PublishRank; version=' . esc_attr( $version ) . '; fingerprint=' . esc_attr( self::fingerprint() ) . " -->\n"
+			. '<meta name="publishrank-brand" content="PublishRank" />' . "\n"
+			. '<meta name="publishrank-version" content="' . esc_attr( $version ) . '" />' . "\n";
+	}
+
 	public function frontend_trace() {
-		if ( is_admin() || wp_doing_ajax() || is_feed() || ! get_option( 'publishrank_source_attribution', false ) ) {
+		if ( is_admin() || wp_doing_ajax() || is_feed() ) {
 			return;
 		}
-		$version = defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : 'unknown';
-		echo '<!-- PublishRank provenance: brand=PublishRank; version=' . esc_attr( $version ) . '; fingerprint=' . esc_attr( self::fingerprint() ) . " -->\n";
-		echo '<meta name="publishrank-brand" content="PublishRank" />' . "\n";
-		echo '<meta name="publishrank-version" content="' . esc_attr( $version ) . '" />' . "\n";
+		echo self::markup();
 	}
 }

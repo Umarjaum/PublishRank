@@ -65,10 +65,10 @@ final class InsightsPage {
 
 	public function page() {
 		if ( ! current_user_can( 'manage_options' ) ) { return; }
-		$s = self::summary();
-		$bar = static function ( $part, $total ) {
-			$pct = $total > 0 ? round( ( $part / $total ) * 100 ) : 0;
-			return '<div style="background:#e5e5e5;border-radius:3px;height:12px;max-width:220px;display:inline-block;vertical-align:middle;"><div style="background:#2271b1;height:12px;width:' . (int) max( 2, $pct ) . '%;border-radius:3px;"></div></div> <span>' . (int) $part . ' (' . (int) $pct . '%)</span>';
+			$s = self::summary();
+			$bar = static function ( $part, $total ) {
+				$pct = $total > 0 ? round( ( $part / $total ) * 100 ) : 0;
+				return '<div class="pr-insights-meter" aria-hidden="true"><span style="width:' . (int) max( 2, $pct ) . '%"></span></div> <span>' . (int) $part . ' (' . (int) $pct . '%)</span>';
 		};
 		echo '<div class="wrap"><h1>' . esc_html__( 'PublishRank Insights', 'publishrank' ) . '</h1>';
 		echo '<p>' . esc_html__( 'Capped, local content intelligence. Sampling is limited to the most recent 200 published editorial articles; no external analytics service is used.', 'publishrank' ) . '</p>';
@@ -107,10 +107,10 @@ final class InsightsPage {
 		echo '<h2>' . esc_html__( 'Links & housekeeping', 'publishrank' ) . '</h2><ul style="max-width:720px;">';
 		echo '<li>' . esc_html( sprintf( /* translators: 1: internal links, 2: external links. */ __( 'Recorded internal links: %1$d; external links: %2$d.', 'publishrank' ), $s['links']['internal'], $s['links']['external'] ) ) . '</li>';
 		echo '<li>' . esc_html( sprintf( /* translators: 1: redirects, 2: unresolved 404s. */ __( 'Active redirect rules: %1$d; unresolved 404 paths: %2$d.', 'publishrank' ), $s['redirects'], $s['unresolved_404'] ) ) . '</li>';
-		$audit = $s['audit'];
-		if ( is_array( $audit ) && ! empty( $audit['ran_at'] ) ) {
-			$badge = 'PASS' === $audit['status'] ? '#46b450' : ( 'ERROR' === $audit['status'] ? '#dc3232' : '#ffb900' );
-			echo '<li>' . esc_html__( 'Last scheduled audit:', 'publishrank' ) . ' <strong style="color:' . esc_attr( $badge ) . '">' . esc_html( (string) $audit['status'] ) . '</strong> (' . esc_html( (string) $audit['ran_at'] ) . ')</li>';
+			$audit = $s['audit'];
+			if ( is_array( $audit ) && ! empty( $audit['ran_at'] ) ) {
+				$badge = 'PASS' === $audit['status'] ? 'pass' : ( 'ERROR' === $audit['status'] ? 'error' : 'warning' );
+				echo '<li>' . esc_html__( 'Last scheduled audit:', 'publishrank' ) . ' <strong class="pr-audit-badge pr-audit-badge--' . esc_attr( $badge ) . '">' . esc_html( (string) $audit['status'] ) . '</strong> (' . esc_html( (string) $audit['ran_at'] ) . ')</li>';
 		} else {
 			echo '<li>' . esc_html__( 'Scheduled audit has not run yet.', 'publishrank' ) . '</li>';
 		}

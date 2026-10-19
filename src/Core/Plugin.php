@@ -23,6 +23,7 @@ use PublishRankSEO\SEO\YoastParityFeatures;
 use PublishRankSEO\SEO\SiteConnections;
 use PublishRankSEO\SEO\LocalSEO;
 use PublishRankSEO\Indexing\IndexNow;
+use PublishRankSEO\Indexing\BaiduSubmission;
 use PublishRankSEO\SEO\BreadcrumbEngine;
 use PublishRankSEO\Security\TraceIntegrity;
 use PublishRankSEO\Security\IntegrityManager;
@@ -38,6 +39,7 @@ use PublishRankSEO\InternalLinks\InternalLinksModule;
 use PublishRankSEO\InternalLinks\PublisherLinkIntelligence;
 use PublishRankSEO\Admin\InsightsPage;
 use PublishRankSEO\Security\SecurityHeaders;
+use PublishRankSEO\Security\TrafficGuard;
 use PublishRankSEO\SEO\ReadingExperience;
 use PublishRankSEO\SEO\ArticleIntelligence;
 use PublishRankSEO\Links\LinkManager;
@@ -53,13 +55,22 @@ use PublishRankSEO\Admin\EditorScoreCard;
 use PublishRankSEO\Admin\IndexNowPage;
 use PublishRankSEO\Admin\PublisherToolkitPage;
 use PublishRankSEO\Admin\HelpDocumentationPage;
+use PublishRankSEO\Admin\SEOScorePage;
+use PublishRankSEO\Admin\ExpertisePage;
+use PublishRankSEO\Admin\AnalyticsPage;
+use PublishRankSEO\Admin\SearchConsolePage;
+use PublishRankSEO\Admin\AuthPage;
+use PublishRankSEO\Admin\BaiduSubmissionPage;
+use PublishRankSEO\Admin\SiteVerificationPage;
 use PublishRankSEO\AnalyticsCollector;
+use PublishRankSEO\Google\LiveSync;
 
 defined( 'ABSPATH' ) || exit;
 
 final class Plugin {
 	private $registry;
 	private $loader;
+	public function registry() { return $this->registry; }
 	public function boot() {
 		if ( did_action( 'publishrank_seo_loaded' ) ) {
 			return;
@@ -72,7 +83,6 @@ final class Plugin {
 		$this->loader = new ModuleLoader();
 		$this->loader->register( IntegrityManager::class, false );
 		$this->loader->register( FrontendBranding::class, false );
-		$this->loader->register( FrontendHeadComment::class, false );
 		$this->registry = new OutputRegistry();
 		$this->loader->register( HeadOutput::class, true, array( $this->registry ) );
 		$this->loader->register( FrontendOutputRecovery::class, true, array( $this->registry ) );
@@ -85,8 +95,11 @@ final class Plugin {
 			$this->loader->register( SiteConnections::class, false );
 		$this->loader->register( LocalSEO::class, false );
 		add_action( 'init', array( Installer::class, 'maybe_upgrade' ), 99 );
-			$this->loader->register( IndexNow::class, false );
+				$this->loader->register( IndexNow::class, false );
+			$this->loader->register( BaiduSubmission::class, false );
 		$this->loader->register( AnalyticsCollector::class, false );
+		$this->loader->register( LiveSync::class, false );
+		$this->loader->register( \PublishRankSEO\Admin\LivePreview::class, false );
 		$this->loader->register( RedirectController::class, false );
 		$this->loader->register( NotFoundMonitor::class, false );
 			$this->loader->register( AdvancedFeatures::class, false );
@@ -95,12 +108,13 @@ final class Plugin {
 		$this->loader->register( InternalLinksModule::class, false );
 		$this->loader->register( PublisherLinkIntelligence::class, false );
 		$this->loader->register( ArticleIntelligence::class, false );
-			$this->loader->register( BreadcrumbEngine::class, false );
-			$this->loader->register( TraceIntegrity::class, false );
-		$this->loader->register( SecurityHeaders::class, false );
-		$this->loader->register( ReadingExperience::class, false );
-		$this->loader->register( LinkManager::class, false );
-		$this->loader->register( ResourceHints::class, false );
+				$this->loader->register( BreadcrumbEngine::class, false );
+				$this->loader->register( TraceIntegrity::class, false );
+			$this->loader->register( SecurityHeaders::class, false );
+			$this->loader->register( TrafficGuard::class, false );
+			$this->loader->register( ReadingExperience::class, false );
+			$this->loader->register( LinkManager::class, false );
+			$this->loader->register( ResourceHints::class, false );
 		$this->loader->register( RestFields::class, false );
 		$this->loader->register( ScheduledAudit::class, false );
 		$this->loader->register( ConfigHistory::class, false );
@@ -110,6 +124,7 @@ final class Plugin {
 		if ( is_admin() ) {
 			$this->loader->register( DashboardPage::class, false, array( $this->registry, new JNewsAdapter() ) );
 			$this->loader->register( SettingsPage::class, false );
+			$this->loader->register( SiteVerificationPage::class, false );
 			$this->loader->register( OnboardingPage::class, false );
 			$this->loader->register( DiagnosticsPage::class, false, array( $this->registry, new JNewsAdapter() ) );
 			$this->loader->register( ImportExport::class, false );
@@ -119,7 +134,11 @@ final class Plugin {
 			$this->loader->register( RobotsPage::class, false );
 				$this->loader->register( PostListColumns::class, false );
 				$this->loader->register( SitemapHealthPage::class, false );
-			$this->loader->register( InsightsPage::class, false );
+				$this->loader->register( InsightsPage::class, false );
+				$this->loader->register( AnalyticsPage::class, false );
+				$this->loader->register( SearchConsolePage::class, false );
+				$this->loader->register( AuthPage::class, false );
+				$this->loader->register( BaiduSubmissionPage::class, false );
 			$this->loader->register( ConfigHistoryPage::class, false );
 				$this->loader->register( LLMSTxtPage::class, false );
 				$this->loader->register( ImageOptimizerPage::class, false );
@@ -127,7 +146,11 @@ final class Plugin {
 			$this->loader->register( IndexNowPage::class, false );
 			$this->loader->register( PublisherToolkitPage::class, false );
 			$this->loader->register( HelpDocumentationPage::class, false );
-			$this->loader->register( SchemaPage::class, false );
+				$this->loader->register( SchemaPage::class, false );
+				$this->loader->register( SEOScorePage::class, false );
+				$this->loader->register( ExpertisePage::class, false );
+				$this->loader->register( \PublishRankSEO\Admin\TrafficGuardPage::class, false );
+				$this->loader->register( \PublishRankSEO\Schema\TermSchema::class, false );
 		}
 
 		do_action( 'publishrank_seo_loaded', $this );

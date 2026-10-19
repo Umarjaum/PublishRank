@@ -14,7 +14,8 @@ final class EditorialAudit {
 		$words   = preg_split( '/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY );
 		$words   = is_array( $words ) ? $words : array();
 		$count   = count( $words );
-		$title   = trim( wp_strip_all_tags( (string) $post->post_title ) );
+		$seo_title = (string) PostMeta::get( $post->ID, PostMeta::TITLE, '' );
+		$title     = trim( wp_strip_all_tags( '' !== $seo_title ? $seo_title : (string) $post->post_title ) );
 		$description = PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' );
 		$issues  = array();
 		$passed  = 0;

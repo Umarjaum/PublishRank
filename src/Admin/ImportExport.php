@@ -75,10 +75,11 @@ final class ImportExport {
 		'publishrank_robots_sitemaps',
 		'publishrank_robots_block_ai',
 		'publishrank_robots_custom',
-		'publishrank_seo_redirects',
-		'publishrank_seo_404_monitor',
-		'publishrank_seo_404_log',
-	);
+			'publishrank_seo_redirects',
+			'publishrank_seo_404_monitor',
+			'publishrank_seo_404_log',
+			'publishrank_traffic_guard',
+		);
 
 	/** Register admin actions. */
 	public function register() {
@@ -128,10 +129,20 @@ final class ImportExport {
 		exit;
 	}
 
-	/** @param string $key @param mixed $value @return mixed */
-	private function sanitize( $key, $value ) {
-		if ( 'publishrank_indexnow_enabled' === $key ) {
-				return (bool) $value;
+		/** @param string $key @param mixed $value @return mixed */
+		private function sanitize( $key, $value ) {
+			if ( 'publishrank_traffic_guard' === $key ) {
+				if ( ! is_array( $value ) ) {
+					return array();
+				}
+				$blocked = \PublishRankSEO\Security\TrafficGuard::inspect_networks( isset( $value['blocked_ips'] ) ? $value['blocked_ips'] : '' );
+				$allowed = \PublishRankSEO\Security\TrafficGuard::inspect_networks( isset( $value['allow_ips'] ) ? $value['allow_ips'] : '' );
+				$proxies = \PublishRankSEO\Security\TrafficGuard::inspect_networks( isset( $value['trusted_proxies'] ) ? $value['trusted_proxies'] : '' );
+				$countries = \PublishRankSEO\Security\TrafficGuard::inspect_country_codes( isset( $value['blocked_countries'] ) ? $value['blocked_countries'] : '' );
+				return array( 'enabled' => ! empty( $value['enabled'] ), 'blocked_ips' => $blocked['valid'], 'allow_ips' => $allowed['valid'], 'trusted_proxies' => $proxies['valid'], 'blocked_countries' => $countries['valid'] );
+			}
+			if ( 'publishrank_indexnow_enabled' === $key ) {
+					return (bool) $value;
 			}
 			if ( 'publishrank_indexnow_key_location' === $key ) {
 				return esc_url_raw( (string) $value );

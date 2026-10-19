@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 final class IntegrityManager {
 	const OPTION = 'publishrank_integrity_manifest';
 	/** Bumped when packaged files are rebuilt without a plugin version change, so the baseline is re-created. */
-	const BUILD = 'r2';
+	const BUILD = 'r5';
 	const STATUS_OPTION = 'publishrank_integrity_status';
 	const SCHEMA = 1;
 

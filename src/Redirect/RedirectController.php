@@ -30,9 +30,8 @@ final class RedirectController {
 	private function matches( $rule, $path ) {
 		$source = (string) ( $rule['source'] ?? '' );
 		if ( ! empty( $rule['regex'] ) ) {
-			$pattern = $source;
-			if ( 0 !== strpos( $pattern, '~' ) ) { $pattern = '~' . str_replace( '~', '\\~', $pattern ) . '~'; }
-			$result = @preg_match( $pattern, $path );
+			if ( strlen( $path ) > 2048 || ! RedirectStore::regex_is_valid( $source ) ) { return false; }
+			$result = @preg_match( RedirectStore::compile_regex( $source ), $path );
 			return 1 === $result;
 		}
 		return $this->normalise_path( $source ) === $path;

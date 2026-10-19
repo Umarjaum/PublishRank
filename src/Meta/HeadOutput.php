@@ -49,18 +49,30 @@ final class HeadOutput {
 		return '' !== $generated ? $generated : $title;
 	}
 
+	/**
+	 * Fail-safe entry point: a problem while building this output can never take the public page down.
+	 * Partial markup is discarded and the failure is recorded for the integrity/diagnostics screens.
+	 */
 	public function render() {
+		ob_start();
+		try {
+			$this->render_output();
+			echo ob_get_clean(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- markup was escaped where it was built.
+		} catch ( \Throwable $e ) {
+			ob_end_clean();
+			do_action( 'publishrank_module_failed', __CLASS__, 'runtime_exception', false, $e->getMessage() );
+		}
+	}
+
+	private function render_output() {
 		if ( is_admin() || wp_doing_ajax() || ! get_option( 'publishrank_meta_enabled', true ) ) {
 			return;
 		}
-		$source_attribution = (bool) get_option( 'publishrank_source_attribution', false );
-		// Keep a neutral delimiter for output-recovery logic; product credits are opt-in.
+		// Always disclose technical provenance in the public source. This is separate from the optional visible footer credit.
 		echo "<!-- SEO metadata output begin -->\n";
-		if ( $source_attribution ) {
-			echo '<!-- PublishRank: begin; version=' . esc_html( PUBLISHRANK_SEO_VERSION ) . '; output=technical,social,news -->' . "\n";
-			echo '<meta name="generator" content="PublishRank ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
-			echo '<meta name="publishrank" content="active" />' . "\n";
-		}
+		echo '<!-- PublishRank: begin; version=' . esc_html( PUBLISHRANK_SEO_VERSION ) . '; output=technical,social,news -->' . "\n";
+		echo '<meta name="generator" content="PublishRank ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
+		echo '<meta name="publishrank" content="active" />' . "\n";
 		echo "<!-- Technical metadata begin -->\n";
 		$description = $this->meta->description();
 		if ( $this->registry->claim( 'description' ) && '' !== $description ) {
