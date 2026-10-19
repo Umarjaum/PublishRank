@@ -1,4 +1,4 @@
-=== PublishRank ===
+## PublishRank
 Contributors: umarjaum
 Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
@@ -13,7 +13,7 @@ Free SEO plugin for news publishers with News SEO, XML sitemaps, schema, metadat
 
 Compatibility target: WordPress 7.1. This package includes a compatibility test plan in docs/WORDPRESS-7.1.3-COMPATIBILITY.md. The plugin remains installable on PHP 7.4+ and passed syntax checks on PHP 8.3.6; PHP 8.5 is the forward compatibility target. Complete staging checks before production use.
 
-== Description ==
+## Description
 
 PublishRank is a free, open-source WordPress SEO plugin for site owners, bloggers, news publishers, newspapers, magazines and editorial teams. It brings core technical SEO workflows into one publisher-focused plugin and can be evaluated as an alternative to Yoast SEO, Rank Math and other WordPress SEO plugins. Compare the feature set with your current setup before switching; features and workflows are not identical across plugins.
 
@@ -35,11 +35,10 @@ Features include:
 * Always-on technical source provenance markers; the visible footer credit remains optional and administrator-controlled.
 
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
-
-== Source code ==
+## Source code 
 PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained source repository is [github.com/Umarjaum/PublishRank](https://github.com/Umarjaum/PublishRank). First-party runtime assets in `assets/` are shipped unminified and human-readable, with corresponding first-party sources in `src/assets/`. Font Awesome Free 7.3.1 is bundled locally under `assets/vendor/fontawesome-free-7.3.1/` with its upstream license. There is no build step or third-party asset CDN request.
 
-== Installation ==
+## Installation
 
 1. Upload the `publishrank` folder to `/wp-content/plugins/`, or install the ZIP through **Plugins → Add New → Upload Plugin**.
 2. Activate **PublishRank** from the Plugins screen.
@@ -47,50 +46,50 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 4. Review metadata ownership, schema, sitemap and robots settings before using the plugin on a production site.
 5. Submit the sitemap index in your search engine webmaster tools when ready.
 
-== Frequently Asked Questions ==
+## Frequently Asked Questions 
 
-= Does PublishRank add anything to my page source? =
+# Does PublishRank add anything to my page source? =
 Technical HTML-source provenance markers are always enabled on public HTML pages and cannot be disabled in settings. The visible public-site footer credit is optional and can be turned off by an administrator. Source markers are not added to feeds, REST/AJAX responses or sitemaps. Separately, PublishRank displays a small branded link in the WordPress admin footer.
 
-= Which articles appear in the News sitemap? =
+# Which articles appear in the News sitemap? 
 Published, public, indexable articles from the configured post types whose original publish time is inside the publication window (48 hours by default). Drafts, scheduled, private and password-protected posts, noindex posts and posts you excluded are left out. An empty sitemap is valid.
 
-= How do I mark a live blog? =
+# How do I mark a live blog? 
 Edit the post, open the Schema box, choose "Live Blog Post" as the schema type, and add timestamped updates in the Live coverage panel. Ordinary posts are never marked up as live blogs automatically.
 
-= Is PublishRank free? =
+# Is PublishRank free? 
 Yes. PublishRank is released under the GPLv2-or-later license. The plugin does not require a paid AI API key for its core functionality. Optional integrations such as IndexNow require an administrator to enable them.
 
-= Is PublishRank an alternative to Yoast SEO or Rank Math? =
+# Is PublishRank an alternative to Yoast SEO or Rank Math? 
 PublishRank is another free WordPress SEO plugin option, with a focus on technical SEO and publisher workflows such as News XML sitemaps, redirects, robots controls, schema, and link auditing. It is not a drop-in clone of Yoast SEO or Rank Math, and feature coverage differs. Review compatibility and avoid letting multiple plugins output duplicate titles, canonicals, robots directives or schema.
 
-= Is PublishRank only for news websites? =
-No. It is designed with publishers in mind but can also be used on blogs, business websites and other WordPress sites.
+# Is PublishRank only for news websites? 
+Yes. It is designed with publishers in mind but can also be used on blogs, business websites and other WordPress sites.
 
-= Does PublishRank require a paid API key? =
+# Does PublishRank require a paid API key? 
 No. The core plugin runs locally. IndexNow is optional and uses the public IndexNow service when enabled by an administrator.
 
-= Does IndexNow guarantee indexing or submit URLs to Google? =
+# Does IndexNow guarantee indexing or submit URLs to Google? 
 No. IndexNow requests are shared with participating search engines, but acceptance does not guarantee crawling or indexing. Google does not support IndexNow.
 
-= Can I use PublishRank with another SEO plugin? =
+ # Can I use PublishRank with another SEO plugin? 
 The plugin can detect several SEO plugins, but two plugins outputting titles, canonicals, robots tags or schema at the same time can create duplicates. Configure only one plugin to own each output.
 
-= Does PublishRank add a public credit by default? =
+# Does PublishRank add a public credit by default? 
 Technical source provenance is disclosed in PublishRank Settings and always remains enabled on public HTML pages. Only the visible footer credit can be disabled under PublishRank Settings.
 
-= Where can I find documentation and support? =
+# Where can I find documentation and support? 
 Visit the [PublishRank website](https://publishrank.netlify.app/) for documentation and support information.
 
-== Privacy ==
+## Privacy 
 
 PublishRank does not include visitor analytics or send publisher content to PublishRank. Core metadata and schema are generated locally. On fresh installs, the visible footer credit, “Powered by PublishRank”, starts enabled and is rendered transparently; an administrator can disable it at any time in Settings. The technical source marker is likewise configurable and does not contain an external link. Optional integrations below make requests only when configured or explicitly run; remote services and OAuth providers may receive the originating server or browser IP address and standard connection metadata. Review the relevant provider policies and your own privacy obligations before enabling an integration.
 
-== Terms and Conditions ==
+## Terms and Conditions 
 
 PublishRank is provided under the GPLv2-or-later license. The plugin does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. Technical provenance markers are always present in public HTML source. The clearly disclosed “Powered by PublishRank” footer credit remains optional and can be disabled from the WordPress dashboard.
 
-== External Services ==
+## External Services 
 
 **Google Search Console and Google sign-in (optional).** When an administrator selects **Sign in with Google** on the Search Console screen, the browser is sent to the PublishRank sign-in service (a Supabase Edge Function at `pgduryvupdltsqzqoiav.supabase.co`) and from there to Google's OAuth page. PublishRank requests only the `openid`, `email` and `webmasters.readonly` scopes, so no Google OAuth client ID has to be created by the site owner. The service receives this site's admin URL, a random state value and a PKCE challenge; after Google returns, it stores the Google account email, an encrypted refresh token and a hash of a random connection secret, and it verifies that the Google account has a Search Console property for this site's domain before handing over a connection. This site stores only the connection id, the connection secret (encrypted with WordPress salts) and short-lived access tokens; Google refresh tokens and the OAuth client secret never reach the WordPress site. On connection, then hourly (WP-Cron) and when an administrator clicks Refresh, the plugin asks the service for a short-lived access token and sends the selected property, date ranges and search type to the Google Search Console API (daily, hourly, query, page, Discover and Google News totals). A URL Inspection action also sends the entered public page URL, property and WordPress locale. Returned metrics are cached locally. **Disconnect** revokes the grant at Google, deletes the connection at the sign-in service and deletes local cached data. Administrators may instead save their own Google OAuth client under Advanced, in which case tokens are exchanged directly with Google as before. Google may also be opened in the administrator's browser for the optional Rich Results Test, which receives the public URL the administrator chose to test. Google policies: [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), [Google APIs Terms](https://developers.google.com/terms), and [Google Privacy Policy](https://policies.google.com/privacy). PublishRank's use of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements.
 
@@ -106,18 +105,18 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. The optional public footer credit, if enabled, links to the PublishRank website. No promotional credit is inserted by default.
 
-== Changelog ==
+## Changelog 
 = 2.9.55 =
 * Fixed fallback injection of technical provenance and SEO head output for themes that omit `wp_head()`, without duplicate markers.
 * Explicitly flush PublishRank-owned frontend fallback buffers at shutdown when safe, without closing buffers owned by other plugins.
 * Added direct-web-access guards to standalone regression scripts and aligned version fixtures/fallbacks with 2.9.55.
 
-= 2.9.54 =
+# 2.9.54 
 * Made technical source provenance markers always-on and removed the administrator toggle.
 * Kept the visible “Powered by PublishRank” footer credit optional and administrator-controlled.
 * Updated settings copy and documentation to distinguish source markers from visible footer branding.
 
-= 2.9.52 =
+# 2.9.52 
 * Added a responsive activation welcome screen with a quick-start guide and clearer legal disclosure for optional public attribution.
 * Improved PublishRank toolbar and dashboard menu alignment across desktop, folded-sidebar and mobile admin layouts; shipped a white icon treatment for dark WordPress chrome.
 * New one-click **Sign in with Google** for Search Console: no OAuth client ID or secret to create. The site is matched to its Search Console property automatically.
