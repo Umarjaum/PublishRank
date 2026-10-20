@@ -91,3 +91,8 @@ Implementation provenance: PublishRank's publisher toolkit is a custom implement
 - Preserved the existing Live Preview SERP and connected schema graph systems.
 - Added validated Facebook publisher Page and per-author profile attribution.
 - Added optional cached, non-destructive social-share image watermarking with position, opacity, size and margin controls.
+
+2.9.57
+- Fixed real-time SERP preview field serialization for unsaved SEO metadata.
+- Improved Gutenberg content/meta change detection and reduced preview debounce latency.
+- Added reliable retry and manual refresh behavior without page reloads.
