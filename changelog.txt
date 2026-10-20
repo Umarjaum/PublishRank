@@ -96,3 +96,7 @@ Implementation provenance: PublishRank's publisher toolkit is a custom implement
 - Fixed real-time SERP preview field serialization for unsaved SEO metadata.
 - Improved Gutenberg content/meta change detection and reduced preview debounce latency.
 - Added reliable retry and manual refresh behavior without page reloads.
+
+2.9.58
+- Added a visitor-facing Website View to Live Preview for visible heading, summary, URL, social image, and schema consistency.
+- Added advanced GitHub README documentation.

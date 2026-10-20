@@ -39,7 +39,7 @@ final class LivePreview {
 	}
 
 	public function render_meta_box( $post ) {
-		$tabs = array( 'search' => __( 'Search snippet', 'publishrank' ), 'social' => __( 'Social card', 'publishrank' ), 'meta' => __( 'Meta tags', 'publishrank' ), 'json' => __( 'JSON-LD', 'publishrank' ), 'checks' => __( 'Checks', 'publishrank' ) );
+			$tabs = array( 'search' => __( 'Search snippet', 'publishrank' ), 'website' => __( 'Website view', 'publishrank' ), 'social' => __( 'Social card', 'publishrank' ), 'meta' => __( 'Meta tags', 'publishrank' ), 'json' => __( 'JSON-LD', 'publishrank' ), 'checks' => __( 'Checks', 'publishrank' ) );
 		echo '<div id="pr-preview" class="pr-preview" data-post-id="' . esc_attr( (int) $post->ID ) . '">';
 		echo '<div class="pr-preview__bar"><span class="pr-live-pill" data-pr-pv-pill><i class="pr-live-dot"></i><span>' . esc_html__( 'Live', 'publishrank' ) . '</span></span><span class="pr-preview__status" data-pr-pv-status>' . esc_html__( 'Starting…', 'publishrank' ) . '</span><button type="button" class="button" data-pr-pv-refresh>' . esc_html__( 'Refresh', 'publishrank' ) . '</button></div>';
 		echo '<p class="pr-preview__note">' . esc_html__( 'Built from your unsaved edits using the same code that outputs your page. Nothing is saved by previewing.', 'publishrank' ) . '</p>';
@@ -171,8 +171,8 @@ final class LivePreview {
 		$permalink = get_permalink( $clone );
 
 		SeoData::flush( $id );
-		return array(
-			'title' => $title, 'description' => $get( 'name:description' ), 'canonical' => $canonical ? $canonical : $permalink, 'robots' => $get( 'name:robots' ),
+			return array(
+				'title' => $title, 'description' => $get( 'name:description' ), 'visible_title' => (string) $clone->post_title, 'visible_description' => wp_trim_words( wp_strip_all_tags( get_the_excerpt( $clone ) ), 45, '…' ), 'canonical' => $canonical ? $canonical : $permalink, 'robots' => $get( 'name:robots' ),
 			'site_name' => (string) get_bloginfo( 'name' ), 'favicon' => (string) get_site_icon_url( 32 ), 'date' => get_post_time( 'c', true, $clone ),
 			'permalink' => $permalink, 'published' => 'publish' === $clone->post_status,
 			'social' => array(

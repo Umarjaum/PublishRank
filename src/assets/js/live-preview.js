@@ -124,11 +124,32 @@
 		m.appendChild(meter(t.title, px(d.title || '', tfont), 600, t.pixels));
 		m.appendChild(meter(t.description, (d.description || '').length, 160, t.chars));
 		p.appendChild(m);
-		if (!d.description) { p.appendChild(el('p', 'pr-pv-hint', '⚠ ' + (issueText(d, 'Description') || ''))); }
-	}
-	function issueText(d, area) { var f = (d.issues || []).filter(function (i) { return i.area === area; })[0]; return f ? f.msg : ''; }
+			if (!d.description) { p.appendChild(el('p', 'pr-pv-hint', '⚠ ' + (issueText(d, 'Description') || ''))); }
+		}
+		function issueText(d, area) { var f = (d.issues || []).filter(function (i) { return i.area === area; })[0]; return f ? f.msg : ''; }
+		function renderWebsite(d) {
+			var p = panel('website'); p.replaceChildren();
+			p.appendChild(el('p', 'pr-preview__note', 'This view shows the content and resolved SEO values visitors and crawlers receive together. The active theme still controls the final visual layout.'));
+			var card = el('article', 'pr-website-card');
+			card.appendChild(el('div', 'pr-website-card__eyebrow', d.site_name || 'Website'));
+			card.appendChild(el('h3', 'pr-website-card__title', d.visible_title || d.title || 'Untitled'));
+			if (d.visible_description) { card.appendChild(el('p', 'pr-website-card__summary', d.visible_description)); }
+			var link = el('a', 'pr-website-card__url', d.canonical || d.permalink || ''); link.href = safeUrl(d.canonical || d.permalink) || '#'; link.target = '_blank'; link.rel = 'noopener noreferrer'; card.appendChild(link);
+			p.appendChild(card);
+			var table = el('table', 'widefat striped pr-pv-table'), body = el('tbody');
+			var row = function (label, value, ok) { var tr = el('tr'); tr.appendChild(el('td', 'pr-pv-table__k', label)); var td = el('td', 'pr-pv-table__v', value || '—'); if (ok !== undefined) { td.appendChild(el('span', 'pr-website-check ' + (ok ? 'is-good' : 'is-warn'), ok ? ' ✓ consistent' : ' ! review')); } tr.appendChild(td); body.appendChild(tr); };
+			row('Visible heading', d.visible_title || '', true);
+			row('Search title', d.title || '', !d.visible_title || !d.title || d.visible_title === d.title);
+			row('Visible summary', d.visible_description || '', true);
+			row('Meta description', d.description || '', !d.visible_description || !d.description || d.visible_description === d.description);
+			row('Canonical URL', d.canonical || d.permalink || '', !!(d.canonical || d.permalink));
+			row('Social image', d.social && d.social.image ? d.social.image : '', !!(d.social && d.social.image));
+			row('Structured data', (d.nodes || []).map(function (n) { return n.type || ''; }).filter(Boolean).join(', '), (d.nodes || []).length > 0);
+			table.appendChild(body); p.appendChild(table);
+			p.appendChild(el('p', 'pr-pv-hint', 'Search engines and social networks may still rewrite titles, descriptions, images, or snippets.'));
+		}
 
-	function renderSocial(d) {
+		function renderSocial(d) {
 		var p = panel('social'), s = d.social || {}; p.replaceChildren();
 		var sw = el('div', 'pr-pv-switch');
 		['facebook', 'x'].forEach(function (k) { var b = el('button', 'pr-pv-switch__btn' + (state.social === k ? ' is-active' : ''), t[k]); b.type = 'button'; b.addEventListener('click', function () { state.social = k; renderSocial(state.last); }); sw.appendChild(b); });
@@ -204,7 +225,7 @@
 		if ($count) { $count.hidden = !bad; $count.textContent = bad; $count.className = 'pr-preview__count' + (err ? ' is-error' : ''); }
 	}
 
-	function render(d) { renderSearch(d); renderSocial(d); renderMeta(d); renderJson(d); renderChecks(d); }
+		function render(d) { renderSearch(d); renderWebsite(d); renderSocial(d); renderMeta(d); renderJson(d); renderChecks(d); }
 
 	/* ---------- tabs + events ---------- */
 	root.addEventListener('click', function (e) {
