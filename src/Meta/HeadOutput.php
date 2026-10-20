@@ -4,6 +4,7 @@ namespace PublishRankSEO\Meta;
 
 use PublishRankSEO\Core\OutputRegistry;
 use PublishRankSEO\Core\PublicationProfile;
+use PublishRankSEO\SEO\SocialWatermark;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -125,13 +126,17 @@ final class HeadOutput {
 						if ( $image_details['type'] ) { echo '<meta property="og:image:type" content="' . esc_attr( $image_details['type'] ) . '" />' . "\n"; }
 							if ( 0 === strpos( strtolower( $image ), 'https://' ) ) { echo '<meta property="og:image:secure_url" content="' . esc_url( $image ) . '" />' . "\n"; }
 						}
-						if ( $this->is_editorial_article() ) {
-						$publisher = $this->publisher_profile();
-						if ( $publisher ) { echo '<meta property="article:publisher" content="' . esc_url( $publisher ) . '" />' . "\n"; }
-						$author_url = get_author_posts_url( (int) get_post_field( 'post_author', get_queried_object_id() ) );
-						if ( $author_url ) { echo '<meta property="article:author" content="' . esc_url( $author_url ) . '" />' . "\n"; }
-					}
-					$app_id = sanitize_text_field( (string) get_option( 'publishrank_facebook_app_id', '' ) );
+							if ( $this->is_editorial_article() ) {
+							$publisher = $this->publisher_profile();
+							if ( $publisher ) { echo '<meta property="article:publisher" content="' . esc_url( $publisher ) . '" />' . "\n"; }
+							$author_id = (int) get_post_field( 'post_author', get_queried_object_id() );
+							$author_url = (string) get_user_meta( $author_id, '_publishrank_author_facebook', true );
+							if ( ! $author_url ) { $author_url = get_author_posts_url( $author_id ); }
+							if ( $author_url ) { echo '<meta property="article:author" content="' . esc_url( $author_url ) . '" />' . "\n"; }
+						}
+						$facebook_page = esc_url_raw( (string) get_option( 'publishrank_facebook_page_url', '' ) );
+						if ( $facebook_page ) { echo '<meta property="fb:pages" content="' . esc_attr( $facebook_page ) . '" />' . "\n"; }
+						$app_id = sanitize_text_field( (string) get_option( 'publishrank_facebook_app_id', '' ) );
 					if ( $app_id ) { echo '<meta property="fb:app_id" content="' . esc_attr( $app_id ) . '" />' . "\n"; }
 					echo "<!-- Open Graph metadata end -->\n";
 			}
@@ -193,13 +198,17 @@ final class HeadOutput {
 				$url = 'override' === ( $found['source'] ?? '' ) ? PublicationProfile::normalize_url( (string) $found['url'] ) : (string) $found['url'];
 				if ( $url ) {
 					$url = PublicationProfile::asset_url( $url );
-					$this->image_info = array_merge( $found, array( 'url' => $url ) );
-					return $url;
+						$this->image_info = array_merge( $found, array( 'url' => $url ) );
+						$processed = SocialWatermark::url( $url, $this->image_info );
+						$this->image_info['original_url'] = $url;
+						$this->image_info['url'] = $processed;
+						return $processed;
 				}
 			}
 		}
-		$default = (string) get_option( 'publishrank_seo_default_social_image', '' );
-		return $default ? PublicationProfile::asset_url( $default ) : '';
+			$default = (string) get_option( 'publishrank_seo_default_social_image', '' );
+			$default = $default ? PublicationProfile::asset_url( $default ) : '';
+			return $default ? SocialWatermark::url( $default ) : '';
 	}
 
 	/** @param string $url @return string Override, then attachment alt text, caption or post title. */
@@ -238,7 +247,9 @@ final class HeadOutput {
 
 		/** @return string */
 		private function publisher_profile() {
-			$profiles = PublicationProfile::social_profiles();
+			$configured = esc_url_raw( (string) get_option( 'publishrank_facebook_page_url', '' ) );
+			if ( $configured ) { return $configured; }
+				$profiles = PublicationProfile::social_profiles();
 			foreach ( $profiles as $profile ) {
 				if ( false !== strpos( strtolower( $profile ), 'facebook.com' ) ) { return $profile; }
 			}

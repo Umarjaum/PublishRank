@@ -159,7 +159,8 @@ final class SchemaSuite {
 		wp_nonce_field( 'publishrank_author_schema', 'publishrank_author_schema_nonce' );
 		echo '<h2>' . esc_html__( 'PublishRank Author Schema', 'publishrank' ) . '</h2><table class="form-table">';
 		echo '<tr><th><label for="pr_author_job">' . esc_html__( 'Job title', 'publishrank' ) . '</label></th><td><input class="regular-text" type="text" id="pr_author_job" name="pr_author_job_title" value="' . esc_attr( (string) get_user_meta( $user->ID, '_publishrank_author_job_title', true ) ) . '" /><p class="description">' . esc_html__( 'Shown as jobTitle in the author’s structured data.', 'publishrank' ) . '</p></td></tr>';
-		echo '<tr><th><label for="pr_author_social">' . esc_html__( 'Profile URLs (sameAs)', 'publishrank' ) . '</label></th><td><textarea class="large-text" rows="4" id="pr_author_social" name="pr_author_social">' . esc_textarea( (string) get_user_meta( $user->ID, '_publishrank_author_social', true ) ) . '</textarea><p class="description">' . esc_html__( 'One URL per line: X/Twitter, LinkedIn, Mastodon, portfolio, etc. Google uses these to confirm author identity (E-E-A-T).', 'publishrank' ) . '</p></td></tr>';
+			echo '<tr><th><label for="pr_author_social">' . esc_html__( 'Profile URLs (sameAs)', 'publishrank' ) . '</label></th><td><textarea class="large-text" rows="4" id="pr_author_social" name="pr_author_social">' . esc_textarea( (string) get_user_meta( $user->ID, '_publishrank_author_social', true ) ) . '</textarea><p class="description">' . esc_html__( 'One URL per line: X/Twitter, LinkedIn, Mastodon, portfolio, etc. Google uses these to confirm author identity (E-E-A-T).', 'publishrank' ) . '</p></td></tr>';
+			echo '<tr><th><label for="pr_author_facebook">' . esc_html__( 'Facebook profile URL', 'publishrank' ) . '</label></th><td><input class="regular-text" type="url" id="pr_author_facebook" name="pr_author_facebook" value="' . esc_attr( (string) get_user_meta( $user->ID, '_publishrank_author_facebook', true ) ) . '" /><p class="description">' . esc_html__( 'Optional author profile URL used for the existing article:author attribution. Facebook may ignore authorship metadata.', 'publishrank' ) . '</p></td></tr>';
 		echo '<tr><th><label for="pr_author_expertise">' . esc_html__( 'Expertise topics', 'publishrank' ) . '</label></th><td><textarea class="large-text" rows="3" id="pr_author_expertise" name="pr_author_expertise">' . esc_textarea( (string) get_user_meta( $user->ID, '_publishrank_author_expertise', true ) ) . '</textarea><p class="description">' . esc_html__( 'Add accurate coverage areas, one per line or separated by commas (for example: climate policy, public health, local government). These are emitted as knowsAbout in Person structured data.', 'publishrank' ) . '</p></td></tr>';
 		echo '</table>';
 	}
@@ -170,7 +171,11 @@ final class SchemaSuite {
 		update_user_meta( $user_id, '_publishrank_author_job_title', PostMeta::sanitize_text( isset( $_POST['pr_author_job_title'] ) ? $_POST['pr_author_job_title'] : '', 120 ) );
 		$social = isset( $_POST['pr_author_social'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pr_author_social'] ) ) : '';
 		$social = implode( "\n", SchemaBuilder::author_social_urls_from_text( $social ) );
-		update_user_meta( $user_id, '_publishrank_author_social', $social );
+			update_user_meta( $user_id, '_publishrank_author_social', $social );
+			$facebook = esc_url_raw( wp_unslash( $_POST['pr_author_facebook'] ?? '' ) );
+			$parts = wp_parse_url( $facebook );
+			if ( empty( $parts['host'] ) || false === strpos( strtolower( (string) $parts['host'] ), 'facebook.com' ) ) { $facebook = ''; }
+			update_user_meta( $user_id, '_publishrank_author_facebook', $facebook );
 		$expertise = isset( $_POST['pr_author_expertise'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pr_author_expertise'] ) ) : '';
 		$expertise = implode( "\n", SchemaBuilder::author_expertise_from_text( $expertise ) );
 		update_user_meta( $user_id, '_publishrank_author_expertise', $expertise );

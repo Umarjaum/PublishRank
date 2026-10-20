@@ -86,3 +86,8 @@ PublishRank changelog
 - See docs/RELEASE-2.9.43.md for the prior sitemap and schema release notes.
 
 Implementation provenance: PublishRank's publisher toolkit is a custom implementation; it contains No Rank Math source code.
+
+2.9.56
+- Preserved the existing Live Preview SERP and connected schema graph systems.
+- Added validated Facebook publisher Page and per-author profile attribution.
+- Added optional cached, non-destructive social-share image watermarking with position, opacity, size and margin controls.
