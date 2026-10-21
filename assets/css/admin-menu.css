@@ -1,8 +1,8 @@
 /* PublishRank admin menu and toolbar alignment. */
-#adminmenu #toplevel_page_publishrank-seo-dashboard>a{display:flex;align-items:center;min-height:34px}
+#adminmenu #toplevel_page_publishrank-seo-dashboard>a{display:flex;align-items:center;min-height:34px;padding-left:8px!important}
 #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image{width:26px!important;height:26px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center;flex:0 0 26px;background-position:center!important;background-repeat:no-repeat!important;background-size:20px 20px!important}
-#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img{width:20px!important;height:20px!important;padding:0!important;margin:0 auto!important;object-fit:contain;display:block}
-#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name{line-height:34px;padding:0 0 0 4px!important;margin:0!important;white-space:nowrap}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img{width:20px!important;height:20px!important;padding:0!important;margin:0 auto!important;object-fit:contain;display:block;filter:brightness(0) invert(1)}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name{line-height:34px;padding:0 0 0 7px!important;margin:0!important;white-space:nowrap}
 #wpadminbar #wp-admin-bar-publishrank-seo-toolbar>.ab-item{display:inline-flex!important;align-items:center!important;gap:4px;white-space:nowrap;line-height:32px}
 #wpadminbar #wp-admin-bar-publishrank-seo-toolbar>.ab-item .publishrank-toolbar-icon{display:block!important;width:18px!important;height:18px!important;margin:0!important;vertical-align:middle!important;object-fit:contain!important;flex:0 0 18px}
 #wpadminbar #wp-admin-bar-publishrank-seo-toolbar>.ab-item .ab-label{display:inline-block!important;line-height:inherit!important;margin:0!important;padding:0!important}

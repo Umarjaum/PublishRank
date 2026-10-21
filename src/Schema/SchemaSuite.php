@@ -34,7 +34,7 @@ final class SchemaSuite {
 	/** Dedicated schema meta box on every public post type. */
 	public function add_meta_box( $post_type = '', $post = null ) {
 		if ( $post_type && in_array( $post_type, PostMeta::post_types(), true ) ) {
-			add_meta_box( 'publishrank-schema', __( 'Schema (Structured Data)', 'publishrank' ), array( $this, 'render_meta_box' ), $post_type, 'normal', 'high' );
+				add_meta_box( 'publishrank-schema', __( 'Schema Selection', 'publishrank' ), array( $this, 'render_meta_box' ), $post_type, 'normal', 'high' );
 		}
 	}
 
@@ -62,10 +62,14 @@ final class SchemaSuite {
 		echo '</select></p>';
 		echo '<p class="description">' . esc_html__( 'Automatic uses the configured page default (Standard Web Page) for pages and NewsArticle for news posts. Select a matching type only when the content and required details support it. Event, Product, Recipe and Review schemas appear only when their required fields are complete. Publisher, author, WebPage and breadcrumb nodes remain connected.', 'publishrank' ) . '</p>';
 
-		// News-publisher detail panels.
-		\PublishRankSEO\Schema\LiveBlogSchema::render_panel( $post );
+			// News-publisher detail panels.
+			\PublishRankSEO\Schema\LiveBlogSchema::render_panel( $post );
+			echo '<div class="pr-schema-panel" data-types="WebStory" style="display:none"><hr /><h4>' . esc_html__( 'Web Story details', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'PublishRank emits standards-compliant Article markup for a Web Story and connects it to the same single publisher, WebSite and WebPage nodes used by the rest of the site. Use the actual portrait poster and square publisher logo used by the story.', 'publishrank' ) . '</p>';
+			$this->schema_text_field( $post->ID, PostMeta::WEB_STORY_POSTER, __( 'Portrait poster image URL', 'publishrank' ) );
+			$this->schema_text_field( $post->ID, PostMeta::WEB_STORY_PUBLISHER_LOGO, __( 'Story publisher logo URL (optional)', 'publishrank' ) );
+			echo '</div>';
 
-		echo '<div class="pr-schema-panel" data-types="VideoObject" style="display:none"><hr /><h4>' . esc_html__( 'Video details', 'publishrank' ) . '</h4>';
+			echo '<div class="pr-schema-panel" data-types="VideoObject" style="display:none"><hr /><h4>' . esc_html__( 'Video details', 'publishrank' ) . '</h4>';
 		foreach ( array( PostMeta::VIDEO_URL => __( 'Video file URL (contentUrl)', 'publishrank' ), PostMeta::VIDEO_EMBED_URL => __( 'Embed URL (embedUrl)', 'publishrank' ), PostMeta::VIDEO_THUMBNAIL => __( 'Thumbnail URL', 'publishrank' ) ) as $key => $label ) {
 			echo '<p><label><strong>' . esc_html( $label ) . '</strong><br /><input class="widefat" type="url" name="' . esc_attr( $key ) . '" value="' . esc_attr( PostMeta::get( $post->ID, $key ) ) . '" /></label></p>';
 		}

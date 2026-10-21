@@ -27,6 +27,7 @@ use PublishRankSEO\Indexing\BaiduSubmission;
 use PublishRankSEO\SEO\BreadcrumbEngine;
 use PublishRankSEO\Security\TraceIntegrity;
 use PublishRankSEO\Security\IntegrityManager;
+use PublishRankSEO\Security\AdminAccess;
 use PublishRankSEO\Sitemap\SitemapStylesheet;
 use PublishRankSEO\Robots\RobotsTxt;
 use PublishRankSEO\Admin\AdminAssets;
@@ -82,6 +83,7 @@ final class Plugin {
 
 		$this->loader = new ModuleLoader();
 		$this->loader->register( IntegrityManager::class, false );
+		$this->loader->register( AdminAccess::class, false );
 		$this->loader->register( FrontendBranding::class, false );
 		$this->registry = new OutputRegistry();
 		$this->loader->register( HeadOutput::class, true, array( $this->registry ) );

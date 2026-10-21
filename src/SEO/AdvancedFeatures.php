@@ -20,7 +20,7 @@ final class AdvancedFeatures {
 		/** Add editorial controls to posts without changing theme presentation. */
 		public function add_meta_box( $post_type = '', $post = null ) {
 			if ( $post_type && in_array( $post_type, PostMeta::post_types(), true ) ) {
-				\add_meta_box( 'publishrank-seo-meta', __( 'PublishRank', 'publishrank' ), array( $this, 'render_meta_box' ), $post_type, 'normal', 'high' );
+					\add_meta_box( 'publishrank-seo-meta', __( 'SEO Overrides', 'publishrank' ), array( $this, 'render_meta_box' ), $post_type, 'normal', 'high' );
 			}
 		}
 
@@ -62,9 +62,7 @@ final class AdvancedFeatures {
 	/** @param \WP_Post $post Render fields. */
 	public function render_meta_box( $post ) {
 		wp_nonce_field( 'publishrank_seo_meta', 'publishrank_seo_meta_nonce' );
-			$analysis = ( new KeywordDensityChecker() )->analyze( $post );
-			$audit    = ( new EditorialAudit() )->analyze( $post );
-		$fields = array(
+			$fields = array(
 			PostMeta::TITLE => __( 'SEO title', 'publishrank' ),
 			PostMeta::DESCRIPTION => __( 'Meta description', 'publishrank' ),
 			PostMeta::CANONICAL => __( 'Canonical URL', 'publishrank' ),
@@ -95,12 +93,7 @@ final class AdvancedFeatures {
 		$this->render_resolved_summary( $post );
 			echo '<div class="notice notice-success inline"><p><strong>' . esc_html__( 'Automatic SEO is active.', 'publishrank' ) . '</strong> ' . esc_html__( 'Write the article title and content normally. PublishRank automatically generates the SEO title, meta description, social metadata, NewsArticle schema, author, dates, canonical URL and image fallbacks. The fields below are optional overrides.', 'publishrank' ) . '</p></div>';
 			echo '<p>' . esc_html__( 'These optional fields control technical search output only; the JNews theme remains responsible for presentation.', 'publishrank' ) . '</p>';
-			if ( $analysis['keyword'] ) {
-			echo '<div class="notice notice-info inline"><p><strong>' . esc_html__( 'Keyword density', 'publishrank' ) . '</strong>: ' . esc_html( $analysis['keyword'] ) . ' — ' . esc_html( (string) $analysis['count'] ) . ' occurrence(s), ' . esc_html( (string) $analysis['density'] ) . '%, ' . esc_html( $analysis['status'] ) . '.</p><p class="description">' . esc_html__( 'Healthy guidance is 0.5%–3%; this is an editorial signal, not a ranking guarantee.', 'publishrank' ) . '</p></div>';
-		} else {
-			echo '<p class="description">' . esc_html__( 'Enter a focus keyphrase to calculate its density automatically from the title and content.', 'publishrank' ) . '</p>';
-		}
-		foreach ( $fields as $key => $label ) {
+			foreach ( $fields as $key => $label ) {
 				$type = false !== strpos( $key, 'description' ) || PostMeta::CITATIONS === $key ? 'textarea' : 'text';
 			$value = PostMeta::get( $post->ID, $key );
 			echo '<p><label for="' . esc_attr( $key ) . '"><strong>' . esc_html( $label ) . '</strong></label><br />';
@@ -111,12 +104,7 @@ final class AdvancedFeatures {
 			}
 			echo '</p>';
 		}
-		echo '<div class="notice ' . esc_attr( $audit['score'] >= 75 ? 'notice-success' : ( $audit['score'] >= 50 ? 'notice-warning' : 'notice-error' ) ) . ' inline"><p><strong>' . esc_html__( 'Editorial SEO audit', 'publishrank' ) . '</strong>: ' . esc_html( (string) $audit['score'] ) . '/100 — ' . esc_html( sprintf( /* translators: 1: word count, 2: reading ease. */ __( '%1$d words; reading ease %2$s.', 'publishrank' ), (int) $audit['words'], (string) $audit['reading_ease'] ) ) . '</p>';
-		if ( ! empty( $audit['issues'] ) ) {
-			echo '<ul>'; foreach ( array_slice( $audit['issues'], 0, 5 ) as $issue ) { echo '<li>' . esc_html( $issue ) . '</li>'; } echo '</ul>';
-		} else { echo '<p>' . esc_html__( 'Core editorial checks pass. Review the article as a journalist before publishing.', 'publishrank' ) . '</p>'; }
-		echo '</div>';
-		echo '<hr style="margin:14px 0;" /><h3 style="margin:0 0 4px;">' . esc_html__( 'Keyphrase strategy', 'publishrank' ) . '</h3>';
+			echo '<hr style="margin:14px 0;" /><h3 style="margin:0 0 4px;">' . esc_html__( 'Keyphrase strategy', 'publishrank' ) . '</h3>';
 		echo '<p class="description">' . esc_html__( 'Primary and secondary keyphrases feed density analysis, schema keywords and Google News keywords.', 'publishrank' ) . '</p>';
 		$value = PostMeta::get( $post->ID, PostMeta::PRIMARY_KEYPHRASE );
 		echo '<p><label for="' . esc_attr( PostMeta::PRIMARY_KEYPHRASE ) . '"><strong>' . esc_html__( 'Primary keyphrase', 'publishrank' ) . '</strong></label><br />';

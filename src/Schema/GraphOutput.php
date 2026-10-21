@@ -92,6 +92,10 @@ final class GraphOutput {
 			$logo_url = $theme_logo ? wp_get_attachment_image_url( (int) $theme_logo, 'full' ) : '';
 		}
 		if ( ! $logo_url && function_exists( 'get_site_icon_url' ) ) { $logo_url = get_site_icon_url( 512 ); }
+		if ( ! $logo_url && is_singular() ) {
+			$current = get_queried_object();
+			if ( $current instanceof \WP_Post ) { $logo_url = (string) PostMeta::get( $current->ID, PostMeta::WEB_STORY_PUBLISHER_LOGO, '' ); }
+		}
 
 		$country = strtoupper( sanitize_text_field( $org['country'] ) );
 		$organization = array(
@@ -226,7 +230,8 @@ final class GraphOutput {
 			// Older releases stored broad values such as Report or Review. Never
 			// pass those values through to JSON-LD: only the news-publisher article
 			// allow-list (SchemaTypes::article_types) may be emitted for the article node.
-			if ( ! array_key_exists( $schema_type, SchemaTypes::article_types() ) ) { $schema_type = $default_type; }
+			if ( ! array_key_exists( $schema_type, SchemaTypes::article_types() ) && 'WebStory' !== $schema_type ) { $schema_type = $default_type; }
+			if ( 'WebStory' === $schema_type || $this->is_web_story_post( $post ) ) { $schema_type = 'Article'; }
 			$schema_type = LiveBlogSchema::is_live_blog( $post ) ? 'LiveBlogPosting' : $schema_type;
 		$description = (string) PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' );
 		$description = $description ? wp_strip_all_tags( $description ) : wp_strip_all_tags( get_the_excerpt( $post ) );
@@ -245,7 +250,9 @@ final class GraphOutput {
 				'isAccessibleForFree' => '1' !== (string) PostMeta::get( $post->ID, PostMeta::ACCESSIBLE_FOR_FREE, '1' ) ? false : true,
 			'isPartOf' => array( '@id' => $site_url . '#website' ),
 			'author' => array( '@id' => $author_node_id ),
-			'publisher' => array( '@id' => $this->identity_id(), 'name' => $identity['name'] ),
+			// Keep publisher data in the single shared identity node. Repeating name/logo here
+			// allowed publication and organization settings to drift into conflicting values.
+			'publisher' => array( '@id' => $this->identity_id() ),
 			'mainEntityOfPage' => array( '@id' => trailingslashit( $permalink ) . '#webpage' ),
 				'articleSection' => $this->article_section( $post ),
 				'genre' => NewsroomSignals::genre( $post ),
@@ -254,9 +261,9 @@ final class GraphOutput {
 			'copyrightYear' => (int) get_post_time( 'Y', true, $post ),
 			'copyrightHolder' => array( '@id' => $this->identity_id() ),
 		);
-		if ( isset( $identity['logo'] ) ) { $article['publisher']['logo'] = $identity['logo']; }
 		$found = \PublishRankSEO\Meta\SeoData::image_for_post( $post );
-		$image = $found ? (string) $found['url'] : (string) get_option( 'publishrank_seo_default_social_image', '' );
+		$story_poster = $this->is_web_story_post( $post ) ? (string) PostMeta::get( $post->ID, PostMeta::WEB_STORY_POSTER, '' ) : '';
+		$image = $story_poster ? $story_poster : ( $found ? (string) $found['url'] : (string) get_option( 'publishrank_seo_default_social_image', '' ) );
 		if ( $image ) {
 			$image_id = function_exists( 'attachment_url_to_postid' ) ? absint( attachment_url_to_postid( $image ) ) : 0;
 			$image_meta = $image_id ? wp_get_attachment_metadata( $image_id ) : array();
@@ -369,12 +376,18 @@ final class GraphOutput {
 		if ( ! is_singular() || ! $post instanceof \WP_Post || ! $type || ! $type->public ) { return false; }
 		if ( 'attachment' === $post->post_type ) { return false; }
 		$chosen = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' ) );
-		if ( '' !== $chosen && ! array_key_exists( $chosen, SchemaTypes::article_types() ) ) { return false; }
+		if ( '' !== $chosen && ! array_key_exists( $chosen, SchemaTypes::article_types() ) && 'WebStory' !== $chosen ) { return false; }
 		if ( 'page' === $post->post_type ) {
 			// Pages are WebPage nodes unless the editor explicitly chose an article schema type for this page.
 			return '' !== $chosen && array_key_exists( $chosen, SchemaTypes::article_types() );
 		}
 		return (bool) $type->publicly_queryable;
+	}
+	/** Detect the Web Stories editor profile or the common Web Stories plugin post types. */
+	private function is_web_story_post( $post ) {
+		if ( ! $post instanceof \WP_Post ) { return false; }
+		$chosen = SchemaTypes::resolve( PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' ) );
+		return 'WebStory' === $chosen || in_array( $post->post_type, array( 'web-story', 'web_stories', 'web-story-page' ), true );
 	}
 
 	/** @return array<string, mixed>|null */

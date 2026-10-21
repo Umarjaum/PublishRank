@@ -21,7 +21,7 @@ final class SchemaTypes {
             'Collection Page' => 'Collection Page', 'FAQ Page' => 'FAQ Page',
             'Profile Page' => 'Profile Page', 'Search Results Page' => 'Search Results Page',
             'Event' => 'Event', 'Product' => 'Product', 'Recipe' => 'Recipe', 'Review' => 'Review',
-            'Articles' => 'Articles', 'Media & Images' => 'Media & Images', 'Events & rich results' => 'Events & rich results', 'Pages' => 'Page schema', 'FAQs' => 'FAQs',
+            'Articles' => 'Articles', 'Web Stories' => 'Web Stories', 'Web Story' => 'Web Story (Article)', 'Media & Images' => 'Media & Images', 'Events & rich results' => 'Events & rich results', 'Pages' => 'Page schema', 'FAQs' => 'FAQs',
         );
         return isset( $labels[ $key ] ) ? $labels[ $key ] : $key;
     }
@@ -45,6 +45,8 @@ final class SchemaTypes {
             'LiveBlogPosting' => self::label( 'Live Blog Post' ),
         );
     }
+    /** Web Stories use valid Article markup; WebStory is an editor-only profile, not a schema.org type. */
+    public static function web_story_types() { return array( 'WebStory' => self::label( 'Web Story' ) ); }
     /** Article types that can be a site-wide default (LiveBlogPosting needs per-post live-blog data). */
     public static function default_article_types() {
         $types = self::article_types();
@@ -100,7 +102,7 @@ final class SchemaTypes {
         );
     }
     public static function all() {
-        return array_merge( self::article_types(), self::page_types(), self::media_types(), self::rich_entity_types(), self::archive_types(), self::author_types(), self::search_types() );
+        return array_merge( self::article_types(), self::web_story_types(), self::page_types(), self::media_types(), self::rich_entity_types(), self::archive_types(), self::author_types(), self::search_types() );
     }
     public static function resolve( $key ) {
         $raw = trim( (string) $key );
@@ -110,7 +112,7 @@ final class SchemaTypes {
     }
     /** Types an editor may store on a single post or page. */
     public static function selectable() {
-        return array_merge( self::article_types(), self::page_types(), self::media_types(), self::rich_entity_types() );
+        return array_merge( self::article_types(), self::web_story_types(), self::page_types(), self::media_types(), self::rich_entity_types() );
     }
     /** Resolve $key only when it belongs to $allowed (an associative type => label map); otherwise return $fallback. */
     public static function resolve_in( $key, array $allowed, $fallback = '' ) {
@@ -119,6 +121,6 @@ final class SchemaTypes {
     }
     /** Grouped map for the editor. Foundational WebPage is automatic unless a page picks one. */
     public static function grouped() {
-        return array( self::label( 'Articles' ) => self::article_types(), self::label( 'Media & Images' ) => self::media_types(), self::label( 'Events & rich results' ) => self::rich_entity_types() );
+        return array( self::label( 'Articles' ) => self::article_types(), self::label( 'Web Stories' ) => self::web_story_types(), self::label( 'Media & Images' ) => self::media_types(), self::label( 'Events & rich results' ) => self::rich_entity_types() );
     }
 }

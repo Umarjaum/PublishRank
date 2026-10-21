@@ -3,9 +3,15 @@
  * Article SEO Intelligence.
  *
  * A fully local analysis engine: it scores an article across keyphrase, headline, snippet,
- * structure, readability, media, links and newsroom signals, and derives keyphrase and
- * meta-description suggestions from the article text itself. It never calls an external
- * API, service, model or CDN; every result is computed from the post and the site database.
+ * structure, readability, media, links and newsroom signals, and derives keyphrase, meta
+ * description, headline, image-alt and internal-link suggestions from the article text and
+ * the local database. It never calls an external API, service, model or CDN.
+ *
+ * v2.9-upgrade: adds severities, "why it matters", one-click fix metadata, an interactive
+ * fix studio (keyphrase/description/headline/alt/internal links) with Apply/Regenerate/
+ * Cancel, an advanced score dashboard (SVG ring, category bars, priority issues, tally,
+ * honest previous-score comparison) and an enriched floating score widget. Scoring weights
+ * and check IDs are unchanged; all stored meta keys and hooks are preserved.
  */
 namespace PublishRankSEO\SEO;
 
@@ -18,6 +24,8 @@ final class ArticleIntelligence {
 	const SUMMARY_META = '_publishrank_seo_intel_summary';
 	const AJAX_ACTION  = 'publishrank_article_intel';
 	const BATCH_ACTION = 'publishrank_intel_batch';
+	const SUGGEST_ACTION = 'publishrank_intel_suggest';
+	const APPLY_ACTION   = 'publishrank_intel_apply';
 	const MAX_WORDS    = 6000;
 
 	/* ------------------------------------------------------------------ *
@@ -29,52 +37,32 @@ final class ArticleIntelligence {
 	}
 
 	public function register() {
-		if ( ! self::enabled() ) {
-			return;
-		}
-		// Generic hooks are intentional: public custom post types are normally registered
-		// on init, after plugins_loaded. We resolve the post type at runtime instead.
-		add_action( 'save_post', array( $this, 'store_on_save' ), 40, 3 );
-		add_action( 'add_meta_boxes', array( $this, 'meta_box' ), 10, 2 );
-		add_action( 'wp_ajax_' . self::AJAX_ACTION, array( $this, 'ajax' ) );
+			if ( ! self::enabled() ) {
+				return;
+			}
+			add_action( 'save_post', array( $this, 'store_on_save' ), 40, 3 );
+			add_action( 'wp_ajax_' . self::AJAX_ACTION, array( $this, 'ajax' ) );
+		add_action( 'wp_ajax_' . self::SUGGEST_ACTION, array( $this, 'suggest' ) );
+		add_action( 'wp_ajax_' . self::APPLY_ACTION, array( $this, 'apply' ) );
 		add_action( 'admin_post_' . self::BATCH_ACTION, array( $this, 'batch' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 	}
 
-	/**
-	 * Editorial post types eligible for local article intelligence.
-	 * Built-in posts are always included; public non-hierarchical CPTs that expose
-	 * the editor in REST are included by default and can be filtered by deployments.
-	 *
-	 * @return string[]
-	 */
 	public static function supported_post_types() {
 		$types = get_post_types( array( 'public' => true, 'show_ui' => true, 'exclude_from_search' => false ), 'names' );
 		$out   = array();
 		foreach ( $types as $post_type ) {
-			if ( 'post' === $post_type ) {
-				$out[] = $post_type;
-				continue;
-			}
-			if ( in_array( $post_type, array( 'page', 'attachment' ), true ) || is_post_type_hierarchical( $post_type ) ) {
-				continue;
-			}
-			if ( post_type_supports( $post_type, 'editor' ) && post_type_supports( $post_type, 'title' ) ) {
-				$out[] = $post_type;
-			}
+			if ( 'post' === $post_type ) { $out[] = $post_type; continue; }
+			if ( in_array( $post_type, array( 'page', 'attachment' ), true ) || is_post_type_hierarchical( $post_type ) ) { continue; }
+			if ( post_type_supports( $post_type, 'editor' ) && post_type_supports( $post_type, 'title' ) ) { $out[] = $post_type; }
 		}
 		return array_values( array_unique( (array) apply_filters( 'publishrank_article_intelligence_post_types', $out ) ) );
 	}
 
-	/** Add the intelligence panel to each supported editorial editor. */
 	public function meta_box( $post_type, $post = null ) {
-		if ( $post instanceof \WP_Post ) {
-			$post_type = $post->post_type;
-		}
+		if ( $post instanceof \WP_Post ) { $post_type = $post->post_type; }
 		$post_type = is_string( $post_type ) && '' !== $post_type ? $post_type : 'post';
-		if ( ! in_array( $post_type, self::supported_post_types(), true ) ) {
-			return;
-		}
+		if ( ! in_array( $post_type, self::supported_post_types(), true ) ) { return; }
 		add_meta_box(
 			'publishrank_article_intelligence',
 			__( 'PublishRank Article SEO Intelligence', 'publishrank' ),
@@ -85,15 +73,10 @@ final class ArticleIntelligence {
 		);
 	}
 
-	/** Load the live-analysis script only on the post editor. */
 	public function enqueue( $hook ) {
-		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) {
-			return;
-		}
+		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) { return; }
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || ! in_array( $screen->post_type, self::supported_post_types(), true ) ) {
-			return;
-		}
+		if ( ! $screen || ! in_array( $screen->post_type, self::supported_post_types(), true ) ) { return; }
 		$version = \PublishRankSEO\Core\Branding::version();
 		wp_enqueue_style( 'publishrank-article-intel', \PublishRankSEO\Core\Branding::asset_url( 'css/article-intel.css' ), array(), $version );
 		wp_enqueue_script( 'publishrank-article-intel', \PublishRankSEO\Core\Branding::asset_url( 'js/article-intel.js' ), array( 'jquery' ), $version, true );
@@ -101,57 +84,160 @@ final class ArticleIntelligence {
 			'publishrank-article-intel',
 			'publishrankIntel',
 			array(
-				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-				'nonce'     => wp_create_nonce( self::AJAX_ACTION ),
-				'action'    => self::AJAX_ACTION,
-				'postId'    => isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				'analyzing' => __( 'Analyzing…', 'publishrank' ),
-				'failed'    => __( 'Analysis could not be completed. Save the draft and try again.', 'publishrank' ),
+				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+				'nonce'         => wp_create_nonce( self::AJAX_ACTION ),
+				'action'        => self::AJAX_ACTION,
+				'suggestAction' => self::SUGGEST_ACTION,
+				'suggestNonce'  => wp_create_nonce( self::SUGGEST_ACTION ),
+				'applyAction'   => self::APPLY_ACTION,
+				'applyNonce'    => wp_create_nonce( self::APPLY_ACTION ),
+				'postId'        => isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'analyzing'     => __( 'Analyzing…', 'publishrank' ),
+				'failed'        => __( 'Analysis could not be completed. Save the draft and try again.', 'publishrank' ),
+				'i18n'          => array(
+					'applied'    => __( 'Saved.', 'publishrank' ),
+					'applyFail'  => __( 'Could not save the value. Please try again.', 'publishrank' ),
+					'copied'     => __( 'Link copied.', 'publishrank' ),
+					'copyFail'   => __( 'Copy failed — select the URL manually.', 'publishrank' ),
+					'empty'      => __( 'Enter a value first.', 'publishrank' ),
+					'justNow'    => __( 'just now', 'publishrank' ),
+					'noSuggest'  => __( 'No reliable suggestion could be derived from the current content.', 'publishrank' ),
+				),
 			)
 		);
 	}
 
-	/** Persist the latest score so lists, Insights and the REST API stay cheap. */
 	public function store_on_save( $post_id, $post, $update = true ) {
-		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || ! $post instanceof \WP_Post ) {
-			return;
-		}
-		if ( 'auto-draft' === $post->post_status || ! in_array( $post->post_type, self::supported_post_types(), true ) ) {
-			return;
-		}
+		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || ! $post instanceof \WP_Post ) { return; }
+		if ( 'auto-draft' === $post->post_status || ! in_array( $post->post_type, self::supported_post_types(), true ) ) { return; }
 		self::store( $post );
 	}
 
-	/** Live analysis of unsaved editor content. */
-	public function ajax() {
-		check_ajax_referer( self::AJAX_ACTION, 'nonce' );
+	/* ------------------------------------------------------------------ *
+	 * Request data collection (shared by analyze/suggest endpoints)
+	 * ------------------------------------------------------------------ */
+
+	private static function collect_request_data() {
 		$post_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$allowed = $post_id ? current_user_can( 'edit_post', $post_id ) : current_user_can( 'edit_posts' );
 		if ( ! $allowed ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyze this article.', 'publishrank' ) ), 403 );
 		}
-		$text  = static function ( $key, $limit ) {
+		$text = static function ( $key, $limit ) {
 			$value = isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			return self::substr( $value, $limit );
 		};
 		$content = isset( $_POST['content'] ) ? wp_kses_post( wp_unslash( $_POST['content'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$post    = $post_id ? get_post( $post_id ) : null;
 		$data    = $post instanceof \WP_Post ? self::data_from_post( $post ) : self::blank_data();
-		$data    = array_merge(
-			$data,
+		return array(
+			'post_id' => $post_id,
+			'data'    => array_merge(
+				$data,
+				array(
+					'post_id'       => $post_id,
+					'title'         => $text( 'title', 300 ),
+					'content'       => self::substr( $content, 400000 ),
+					'excerpt'       => $text( 'excerpt', 500 ),
+					'slug'          => sanitize_title( $text( 'slug', 200 ) ),
+					'seo_title'     => $text( 'seo_title', 255 ),
+					'description'   => $text( 'description', 320 ),
+					'keyphrase'     => $text( 'keyphrase', 100 ),
+					'has_thumbnail' => ! empty( $_POST['has_thumbnail'] ) ? true : ( $post instanceof \WP_Post && has_post_thumbnail( $post ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				)
+			),
+		);
+	}
+
+	/** Live analysis of unsaved editor content. */
+	public function ajax() {
+		check_ajax_referer( self::AJAX_ACTION, 'nonce' );
+		$req       = self::collect_request_data();
+		$report    = self::analyze( $req['data'], true );
+		$previous  = $req['post_id'] ? self::stored( $req['post_id'] ) : null;
+		wp_send_json_success(
 			array(
-				'post_id'       => $post_id,
-				'title'         => $text( 'title', 300 ),
-				'content'       => self::substr( $content, 400000 ),
-				'slug'          => sanitize_title( $text( 'slug', 200 ) ),
-				'seo_title'     => $text( 'seo_title', 255 ),
-				'description'   => $text( 'description', 320 ),
-				'keyphrase'     => $text( 'keyphrase', 100 ),
-				'has_thumbnail' => ! empty( $_POST['has_thumbnail'] ) ? true : ( $post instanceof \WP_Post && has_post_thumbnail( $post ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				'score'    => $report['score'],
+				'html'     => self::render_report( $report, $previous ),
+				'stats'    => $report['stats'],
+				'previous' => $previous,
 			)
 		);
-		$report = self::analyze( $data, true );
-		wp_send_json_success( array( 'score' => $report['score'], 'html' => self::render_report( $report ), 'stats' => $report['stats'] ) );
+	}
+
+	/** Generate (or regenerate) one kind of suggestion from the current editor payload. */
+	public function suggest() {
+		check_ajax_referer( self::SUGGEST_ACTION, 'nonce' );
+		$req     = self::collect_request_data();
+		$d       = $req['data'];
+		$kind    = isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$variant = isset( $_POST['variant'] ) ? absint( wp_unslash( $_POST['variant'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$html    = self::clean_html( (string) $d['content'] );
+		$paras   = self::paragraphs( $html );
+		$words   = array_slice( self::tokens( implode( ' ', $paras ) ), 0, self::MAX_WORDS );
+		$title   = trim( wp_strip_all_tags( (string) $d['title'] ) );
+		$out     = array();
+		switch ( $kind ) {
+			case 'keyphrase':
+				$out = self::suggest_keyphrases( $title, $words, self::headings( $html ), (string) $d['terms'] );
+				break;
+			case 'description':
+				$one = self::suggest_description( $paras, (string) $d['excerpt'], $variant );
+				$out = '' !== $one ? array( 'text' => $one, 'length' => self::len( $one ) ) : array();
+				break;
+			case 'headline':
+				$one = self::suggest_headline( $title, trim( (string) $d['keyphrase'] ) );
+				$out = '' !== $one ? array( 'text' => $one, 'length' => self::len( $one ) ) : array();
+				break;
+			case 'alt':
+				$out = self::suggest_alt_texts( $html, (int) $d['post_id'] );
+				break;
+			case 'links':
+				$out = self::suggest_internal_links( (int) $d['post_id'], $title, $words );
+				break;
+			default:
+				wp_send_json_error( array( 'message' => __( 'Unknown suggestion kind.', 'publishrank' ) ), 400 );
+		}
+		wp_send_json_success( array( 'kind' => $kind, 'items' => $out ) );
+	}
+
+	/** Persist one editor-approved SEO value. Never writes without an explicit request. */
+	public function apply() {
+		check_ajax_referer( self::APPLY_ACTION, 'nonce' );
+		$post_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to update this article.', 'publishrank' ) ), 403 );
+		}
+		$field = isset( $_POST['field'] ) ? sanitize_key( wp_unslash( $_POST['field'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$value = isset( $_POST['value'] ) ? (string) wp_unslash( $_POST['value'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$ok    = false;
+		switch ( $field ) {
+			case 'keyphrase':
+				update_post_meta( $post_id, PostMeta::FOCUS_KEYWORD, sanitize_text_field( self::substr( $value, 100 ) ) );
+				$ok = true;
+				break;
+			case 'description':
+				update_post_meta( $post_id, PostMeta::DESCRIPTION, sanitize_textarea_field( self::substr( $value, 300 ) ) );
+				$ok = true;
+				break;
+			case 'seo_title':
+				update_post_meta( $post_id, PostMeta::TITLE, sanitize_text_field( self::substr( $value, 255 ) ) );
+				$ok = true;
+				break;
+			case 'alt':
+				$att = isset( $_POST['attachment_id'] ) ? absint( wp_unslash( $_POST['attachment_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				if ( $att && wp_attachment_is_image( $att ) && current_user_can( 'edit_post', $att ) ) {
+					update_post_meta( $att, '_wp_attachment_image_alt', sanitize_text_field( self::substr( $value, 255 ) ) );
+					$ok = true;
+				}
+				break;
+		}
+		if ( ! $ok ) {
+			wp_send_json_error( array( 'message' => __( 'Nothing was saved.', 'publishrank' ) ), 400 );
+		}
+		$post = get_post( $post_id );
+		if ( $post instanceof \WP_Post ) { self::store( $post ); }
+		wp_send_json_success( array( 'stored' => self::stored( $post_id ) ) );
 	}
 
 	/** Analyze the next batch of articles that have no stored score. */
@@ -173,12 +259,8 @@ final class ArticleIntelligence {
 		$done = 0;
 		foreach ( $ids as $id ) {
 			$post = get_post( $id );
-			if ( $post instanceof \WP_Post ) {
-				self::store( $post );
-				$done++;
-			}
+			if ( $post instanceof \WP_Post ) { self::store( $post ); $done++; }
 		}
-		/* translators: %d: number of analyzed articles. */
 		\PublishRankSEO\Admin\AdminAssets::done( 'publishrank-insights', 'success', sprintf( _n( 'Analyzed %d article.', 'Analyzed %d articles.', $done, 'publishrank' ), $done ) );
 	}
 
@@ -186,18 +268,23 @@ final class ArticleIntelligence {
 	 * Data helpers
 	 * ------------------------------------------------------------------ */
 
-	/** @return array<string,mixed> */
 	public static function blank_data() {
 		return array(
 			'post_id' => 0, 'title' => '', 'content' => '', 'excerpt' => '', 'slug' => '', 'seo_title' => '',
-			'description' => '', 'keyphrase' => '', 'has_thumbnail' => false, 'has_author' => false,
+			'description' => '', 'keyphrase' => '', 'terms' => '', 'has_thumbnail' => false, 'has_author' => false,
 			'modified' => 0, 'citations' => '', 'home_host' => '',
 		);
 	}
 
-	/** @param \WP_Post $post @return array<string,mixed> */
 	public static function data_from_post( $post ) {
-		$id = (int) $post->ID;
+		$id    = (int) $post->ID;
+		$terms = array();
+		if ( function_exists( 'wp_get_post_terms' ) ) {
+			foreach ( array( 'category', 'post_tag' ) as $tax ) {
+				$ts = wp_get_post_terms( $id, $tax, array( 'fields' => 'names' ) );
+				if ( ! is_wp_error( $ts ) ) { $terms = array_merge( $terms, $ts ); }
+			}
+		}
 		return array_merge(
 			self::blank_data(),
 			array(
@@ -209,6 +296,7 @@ final class ArticleIntelligence {
 				'seo_title'     => (string) PostMeta::get( $id, PostMeta::TITLE, '' ),
 				'description'   => (string) PostMeta::get( $id, PostMeta::DESCRIPTION, '' ),
 				'keyphrase'     => (string) PostMeta::get( $id, PostMeta::FOCUS_KEYWORD, '' ),
+				'terms'         => implode( ', ', array_unique( array_filter( $terms ) ) ),
 				'has_thumbnail' => (bool) has_post_thumbnail( $post ),
 				'has_author'    => (bool) ( PostMeta::get( $id, PostMeta::AUTHOR_NAME, '' ) || get_userdata( (int) $post->post_author ) ),
 				'modified'      => (int) get_post_modified_time( 'U', true, $post ),
@@ -217,46 +305,53 @@ final class ArticleIntelligence {
 		);
 	}
 
-	/** Analyze and persist a post. @param \WP_Post $post @return array<string,mixed> */
 	public static function store( $post ) {
 		$report = self::analyze( self::data_from_post( $post ), true );
 		$fail   = array();
 		foreach ( $report['checks'] as $check ) {
-			if ( 'bad' === $check['status'] ) {
-				$fail[] = $check['id'];
-			}
+			if ( 'bad' === $check['status'] ) { $fail[] = $check['id']; }
 		}
+		$prev        = get_post_meta( $post->ID, self::SUMMARY_META, true );
+		$prev_score  = is_array( $prev ) && isset( $prev['score'] ) ? (int) $prev['score'] : null;
 		update_post_meta( $post->ID, self::SCORE_META, (int) $report['score'] );
-		update_post_meta( $post->ID, self::SUMMARY_META, array( 'score' => (int) $report['score'], 'fail' => array_slice( $fail, 0, 8 ), 'at' => gmdate( 'c' ) ) );
+		update_post_meta(
+			$post->ID,
+			self::SUMMARY_META,
+			array(
+				'score'      => (int) $report['score'],
+				'fail'       => array_slice( $fail, 0, 8 ),
+				'at'         => gmdate( 'c' ),
+				'prev_score' => $prev_score,
+			)
+		);
+		delete_transient( 'pr_intel_links_' . (int) $post->ID );
 		return $report;
 	}
 
-	/** @return array{score:int,fail:string[],at:string}|null */
+	/** @return array{score:int,fail:string[],at:string,prev_score:?int}|null */
 	public static function stored( $post_id ) {
 		$summary = get_post_meta( $post_id, self::SUMMARY_META, true );
-		return is_array( $summary ) && isset( $summary['score'] ) ? array( 'score' => (int) $summary['score'], 'fail' => (array) ( $summary['fail'] ?? array() ), 'at' => (string) ( $summary['at'] ?? '' ) ) : null;
+		return is_array( $summary ) && isset( $summary['score'] )
+			? array(
+				'score'      => (int) $summary['score'],
+				'fail'       => (array) ( $summary['fail'] ?? array() ),
+				'at'         => (string) ( $summary['at'] ?? '' ),
+				'prev_score' => isset( $summary['prev_score'] ) ? (int) $summary['prev_score'] : null,
+			)
+			: null;
 	}
 
 	/* ------------------------------------------------------------------ *
 	 * Analysis
 	 * ------------------------------------------------------------------ */
 
-	/**
-	 * Run every check. Pass $site = true to include database-backed checks
-	 * (keyphrase cannibalization, duplicate headlines, inbound internal links).
-	 *
-	 * @param array<string,mixed> $d Article data, see blank_data().
-	 * @return array<string,mixed>
-	 */
 	public static function analyze( array $d, $site = true ) {
 		$d    = array_merge( self::blank_data(), $d );
 		$html = self::clean_html( (string) $d['content'] );
 		$paragraphs = self::paragraphs( $html );
 		$text       = implode( "\n", $paragraphs );
 		$words      = self::tokens( $text );
-		if ( count( $words ) > self::MAX_WORDS ) {
-			$words = array_slice( $words, 0, self::MAX_WORDS );
-		}
+		if ( count( $words ) > self::MAX_WORDS ) { $words = array_slice( $words, 0, self::MAX_WORDS ); }
 		$word_count = count( $words );
 		$headings   = self::headings( $html );
 		$images     = self::images( $html );
@@ -288,8 +383,8 @@ final class ArticleIntelligence {
 			} else {
 				$add( 'keyphrase_length', 'keyphrase', 'ok', 1, __( 'Keep the focus keyphrase between one and six words.', 'publishrank' ) );
 			}
-				$in_title = self::phrase_count( self::stems( self::tokens( $serp_title ) ), $phrase ) > 0;
-				$keyphrase_coverage['title'] = $in_title;
+			$in_title = self::phrase_count( self::stems( self::tokens( $serp_title ) ), $phrase ) > 0;
+			$keyphrase_coverage['title'] = $in_title;
 			if ( $in_title ) {
 				$early = self::phrase_position( self::stems( self::tokens( $serp_title ) ), $phrase ) <= 3;
 				$add( 'keyphrase_title', 'keyphrase', $early ? 'good' : 'ok', 3, $early ? __( 'The focus keyphrase appears at the start of the search title.', 'publishrank' ) : __( 'The focus keyphrase is in the search title; moving it closer to the start usually helps.', 'publishrank' ) );
@@ -297,61 +392,59 @@ final class ArticleIntelligence {
 				$add( 'keyphrase_title', 'keyphrase', 'bad', 3, __( 'Add the focus keyphrase to the headline or SEO title.', 'publishrank' ) );
 			}
 			if ( '' !== $description ) {
-					$in_desc = self::phrase_count( self::stems( self::tokens( $description ) ), $phrase ) > 0;
-					$keyphrase_coverage['description'] = $in_desc;
+				$in_desc = self::phrase_count( self::stems( self::tokens( $description ) ), $phrase ) > 0;
+				$keyphrase_coverage['description'] = $in_desc;
 				$add( 'keyphrase_description', 'keyphrase', $in_desc ? 'good' : 'bad', 2, $in_desc ? __( 'The meta description contains the focus keyphrase.', 'publishrank' ) : __( 'Mention the focus keyphrase in the meta description.', 'publishrank' ) );
 			}
 			$slug_words = array_filter( explode( '-', strtolower( (string) $d['slug'] ) ) );
 			$ascii      = (bool) preg_match( '/^[a-z0-9 \'\-]+$/i', $keyphrase );
 			if ( $ascii && $slug_words ) {
 				$slug_stems = self::stems( array_values( $slug_words ) );
-					$missing    = array_diff( $phrase, $slug_stems );
-					$keyphrase_coverage['slug'] = empty( $missing );
+				$missing    = array_diff( $phrase, $slug_stems );
+				$keyphrase_coverage['slug'] = empty( $missing );
 				$add( 'keyphrase_slug', 'keyphrase', $missing ? 'ok' : 'good', 1, $missing ? __( 'Consider including the focus keyphrase words in the URL slug.', 'publishrank' ) : __( 'The URL slug contains the focus keyphrase.', 'publishrank' ) );
 			}
 			if ( $paragraphs ) {
 				$first = self::stems( self::tokens( $paragraphs[0] ) );
-					$in_first = self::phrase_count( array_slice( $first, 0, 80 ), $phrase ) > 0;
-					$keyphrase_coverage['intro'] = $in_first;
+				$in_first = self::phrase_count( array_slice( $first, 0, 80 ), $phrase ) > 0;
+				$keyphrase_coverage['intro'] = $in_first;
 				$add( 'keyphrase_intro', 'keyphrase', $in_first ? 'good' : 'bad', 2, $in_first ? __( 'The focus keyphrase appears in the opening paragraph.', 'publishrank' ) : __( 'Use the focus keyphrase within the opening paragraph.', 'publishrank' ) );
 			}
 			$sub = array_filter( $headings, static function ( $h ) { return $h['level'] >= 2 && $h['level'] <= 4; } );
 			if ( $sub ) {
 				$hit = false;
-					foreach ( $sub as $h ) {
-						if ( self::phrase_count( self::stems( self::tokens( $h['text'] ) ), $phrase ) > 0 ) { $hit = true; break; }
-					}
-					$keyphrase_coverage['heading'] = $hit;
+				foreach ( $sub as $h ) {
+					if ( self::phrase_count( self::stems( self::tokens( $h['text'] ) ), $phrase ) > 0 ) { $hit = true; break; }
+				}
+				$keyphrase_coverage['heading'] = $hit;
 				$add( 'keyphrase_heading', 'keyphrase', $hit ? 'good' : 'ok', 1, $hit ? __( 'A subheading contains the focus keyphrase.', 'publishrank' ) : __( 'Use the focus keyphrase (or a close variation) in at least one subheading.', 'publishrank' ) );
 			}
 			if ( $images ) {
 				$hit = false;
-					foreach ( $images as $img ) {
-						if ( '' !== $img['alt'] && self::phrase_count( self::stems( self::tokens( $img['alt'] ) ), $phrase ) > 0 ) { $hit = true; break; }
-					}
-					$keyphrase_coverage['alt'] = $hit;
+				foreach ( $images as $img ) {
+					if ( '' !== $img['alt'] && self::phrase_count( self::stems( self::tokens( $img['alt'] ) ), $phrase ) > 0 ) { $hit = true; break; }
+				}
+				$keyphrase_coverage['alt'] = $hit;
 				$add( 'keyphrase_alt', 'keyphrase', $hit ? 'good' : 'ok', 1, $hit ? __( 'An image alt text contains the focus keyphrase.', 'publishrank' ) : __( 'Describe at least one image using the focus keyphrase where it is accurate.', 'publishrank' ) );
 			}
-				$stemmed = self::stems( $words );
-				$found   = self::phrase_count( $stemmed, $phrase );
-				$keyphrase_occurrences = $found;
-				$keyphrase_coverage['body'] = $found > 0;
-				$keyphrase_density = ( $found * $pcount / max( 1, $word_count ) ) * 100;
-				if ( $word_count >= 100 ) {
-					$density = ( $found * $pcount / max( 1, $word_count ) ) * 100;
-					$keyphrase_density = $density;
+			$stemmed = self::stems( $words );
+			$found   = self::phrase_count( $stemmed, $phrase );
+			$keyphrase_occurrences = $found;
+			$keyphrase_coverage['body'] = $found > 0;
+			$keyphrase_density = ( $found * $pcount / max( 1, $word_count ) ) * 100;
+			if ( $word_count >= 100 ) {
+				$density = $keyphrase_density;
 				if ( 0 === $found ) {
 					$add( 'keyphrase_density', 'keyphrase', 'bad', 2, __( 'The focus keyphrase does not appear in the article body.', 'publishrank' ) );
 				} elseif ( $density > 3.0 ) {
-					/* translators: %s: keyphrase density percentage. */
 					$add( 'keyphrase_density', 'keyphrase', 'bad', 2, sprintf( __( 'Keyphrase density is %s%%, which reads as stuffing. Vary the wording.', 'publishrank' ), self::num( $density ) ) );
 				} elseif ( $density < 0.3 ) {
-					/* translators: %s: keyphrase density percentage. */
 					$add( 'keyphrase_density', 'keyphrase', 'ok', 2, sprintf( __( 'Keyphrase density is %s%%; mention the topic a little more naturally.', 'publishrank' ), self::num( $density ) ) );
 				} else {
-					/* translators: %s: keyphrase density percentage. */
 					$add( 'keyphrase_density', 'keyphrase', 'good', 2, sprintf( __( 'Keyphrase density is a healthy %s%%.', 'publishrank' ), self::num( $density ) ) );
 				}
+			} else {
+				$add( 'keyphrase_density_short', 'keyphrase', 'info', 0, __( 'Keyphrase density is not evaluated for articles under 100 words.', 'publishrank' ) );
 			}
 		}
 
@@ -361,7 +454,6 @@ final class ArticleIntelligence {
 			$add( 'headline_missing', 'headline', 'bad', 3, __( 'Add a headline.', 'publishrank' ) );
 		} else {
 			$status = ( $tlen >= 30 && $tlen <= 65 ) ? 'good' : ( ( $tlen >= 20 && $tlen <= 80 ) ? 'ok' : 'bad' );
-			/* translators: %d: headline length in characters. */
 			$add( 'headline_length', 'headline', $status, 2, 'good' === $status ? sprintf( __( 'The headline length (%d characters) works well.', 'publishrank' ), $tlen ) : sprintf( __( 'The headline is %d characters; aim for 30 to 65.', 'publishrank' ), $tlen ) );
 			$hwords = count( self::tokens( $title ) );
 			$add( 'headline_words', 'headline', ( $hwords >= 5 && $hwords <= 14 ) ? 'good' : 'ok', 1, ( $hwords >= 5 && $hwords <= 14 ) ? __( 'The headline has a readable number of words.', 'publishrank' ) : __( 'Aim for roughly 5 to 14 words in the headline.', 'publishrank' ) );
@@ -375,7 +467,6 @@ final class ArticleIntelligence {
 		/* ---- Snippet ---- */
 		$pixels = self::pixel_width( $serp_title );
 		if ( '' !== $serp_title ) {
-			/* translators: 1: estimated pixel width, 2: pixel limit. */
 			$add( 'snippet_title_width', 'snippet', $pixels <= 580 ? 'good' : ( $pixels <= 640 ? 'ok' : 'bad' ), 2, $pixels <= 580 ? sprintf( __( 'The search title should fit without truncation (about %1$d of %2$d px).', 'publishrank' ), $pixels, 580 ) : sprintf( __( 'The search title may be truncated in results (about %1$d of %2$d px).', 'publishrank' ), $pixels, 580 ) );
 		}
 		$dlen = self::len( $description );
@@ -384,19 +475,15 @@ final class ArticleIntelligence {
 		} elseif ( $dlen >= 70 && $dlen <= 160 ) {
 			$add( 'snippet_description', 'snippet', 'good', 2, __( 'The meta description length is good.', 'publishrank' ) );
 		} else {
-			/* translators: %d: meta description length. */
 			$add( 'snippet_description', 'snippet', 'ok', 2, sprintf( __( 'The meta description is %d characters; aim for 70 to 160.', 'publishrank' ), $dlen ) );
 		}
 
 		/* ---- Structure ---- */
 		if ( $word_count < 150 ) {
-			/* translators: %d: word count. */
 			$add( 'structure_length', 'structure', 'bad', 2, sprintf( __( 'Only %d words: too thin for most news coverage. Add context, sourcing and detail.', 'publishrank' ), $word_count ) );
 		} elseif ( $word_count < 300 ) {
-			/* translators: %d: word count. */
 			$add( 'structure_length', 'structure', 'ok', 2, sprintf( __( '%d words: acceptable for a brief, but 300+ gives readers and search engines more to work with.', 'publishrank' ), $word_count ) );
 		} else {
-			/* translators: %d: word count. */
 			$add( 'structure_length', 'structure', 'good', 2, sprintf( __( '%d words: a substantial article.', 'publishrank' ), $word_count ) );
 		}
 		$h2plus = array_filter( $headings, static function ( $h ) { return $h['level'] >= 2; } );
@@ -411,16 +498,14 @@ final class ArticleIntelligence {
 		foreach ( $headings as $h ) {
 			if ( 1 === $h['level'] ) { $h1 = true; }
 			if ( $h['level'] > $prev + 1 && $prev >= 2 ) { $skipped = true; }
-			$prev = max( $prev, $h['level'] ) === $h['level'] ? $h['level'] : $h['level'];
+			$prev = $h['level'];
 		}
 		if ( $headings ) {
 			$add( 'structure_hierarchy', 'structure', ( $skipped || $h1 ) ? 'ok' : 'good', 1, $h1 ? __( 'The content contains an H1; the theme already outputs the headline as H1, so use H2 and below.', 'publishrank' ) : ( $skipped ? __( 'Heading levels skip a step (for example H2 to H4). Keep the hierarchy sequential.', 'publishrank' ) : __( 'The heading hierarchy is clean.', 'publishrank' ) ) );
 		}
 		if ( $paragraphs ) {
 			$long = 0;
-			foreach ( $paragraphs as $p ) {
-				if ( count( self::tokens( $p ) ) > 150 ) { $long++; }
-			}
+			foreach ( $paragraphs as $p ) { if ( count( self::tokens( $p ) ) > 150 ) { $long++; } }
 			$add( 'structure_paragraphs', 'structure', 0 === $long ? 'good' : 'ok', 1, 0 === $long ? __( 'Paragraph lengths are comfortable.', 'publishrank' ) : __( 'Some paragraphs exceed 150 words; split them for easier reading.', 'publishrank' ) );
 			$lede = count( self::tokens( $paragraphs[0] ) );
 			if ( $word_count >= 150 ) {
@@ -432,15 +517,11 @@ final class ArticleIntelligence {
 		$sentence_count = count( $sentences );
 		if ( $sentence_count >= 3 ) {
 			$long_sentences = 0;
-			foreach ( $sentences as $s ) {
-				if ( count( self::tokens( $s ) ) > 25 ) { $long_sentences++; }
-			}
+			foreach ( $sentences as $s ) { if ( count( self::tokens( $s ) ) > 25 ) { $long_sentences++; } }
 			$share = $long_sentences / $sentence_count;
-			/* translators: %d: percentage of long sentences. */
 			$add( 'read_sentence_length', 'readability', $share <= 0.25 ? 'good' : ( $share <= 0.4 ? 'ok' : 'bad' ), 2, $share <= 0.25 ? sprintf( __( 'Only %d%% of sentences are long (25+ words).', 'publishrank' ), round( $share * 100 ) ) : sprintf( __( '%d%% of sentences exceed 25 words; shorten some.', 'publishrank' ), round( $share * 100 ) ) );
 			if ( $latin && $word_count >= 50 ) {
 				$ease = self::flesch( $words, $sentence_count );
-				/* translators: %s: Flesch reading ease score. */
 				$add( 'read_flesch', 'readability', $ease >= 60 ? 'good' : ( $ease >= 45 ? 'ok' : 'bad' ), 2, $ease >= 60 ? sprintf( __( 'Flesch reading ease is %s: easy to read.', 'publishrank' ), self::num( $ease ) ) : sprintf( __( 'Flesch reading ease is %s: prefer shorter sentences and simpler words.', 'publishrank' ), self::num( $ease ) ) );
 				$passive = 0; $transition = 0;
 				foreach ( $sentences as $s ) {
@@ -448,11 +529,11 @@ final class ArticleIntelligence {
 					if ( preg_match( self::transition_pattern(), $s ) ) { $transition++; }
 				}
 				$p_share = $passive / $sentence_count;
-				/* translators: %d: percentage of sentences in passive voice. */
 				$add( 'read_passive', 'readability', $p_share <= 0.1 ? 'good' : ( $p_share <= 0.2 ? 'ok' : 'bad' ), 1, $p_share <= 0.1 ? sprintf( __( 'Passive voice is kept low (%d%% of sentences).', 'publishrank' ), round( $p_share * 100 ) ) : sprintf( __( '%d%% of sentences look passive; prefer active constructions.', 'publishrank' ), round( $p_share * 100 ) ) );
 				$t_share = $transition / $sentence_count;
-				/* translators: %d: percentage of sentences containing transition words. */
 				$add( 'read_transitions', 'readability', $t_share >= 0.2 ? 'good' : ( $t_share >= 0.1 ? 'ok' : 'bad' ), 1, $t_share >= 0.2 ? sprintf( __( '%d%% of sentences use transition words, which helps flow.', 'publishrank' ), round( $t_share * 100 ) ) : sprintf( __( 'Only %d%% of sentences use transition words; connect ideas more clearly.', 'publishrank' ), round( $t_share * 100 ) ) );
+			} elseif ( ! $latin ) {
+				$add( 'read_language', 'readability', 'info', 0, __( 'Readability formulas are tuned for Latin-script text and were not applied to this article.', 'publishrank' ) );
 			}
 			if ( $sentence_count >= 6 ) {
 				$run = 1; $max_run = 1; $last = '';
@@ -468,18 +549,38 @@ final class ArticleIntelligence {
 		}
 
 		/* ---- Media ---- */
-		$add( 'media_featured', 'media', $d['has_thumbnail'] ? 'good' : 'bad', 2, $d['has_thumbnail'] ? __( 'A featured image is set for previews and Google News.', 'publishrank' ) : __( 'Set a featured image for article cards, social previews and Google News.', 'publishrank' ) );
+		$add( 'media_featured', 'media', $d['has_thumbnail'] ? 'good' : 'bad', 2, $d['has_thumbnail'] ? __( 'A featured image is set for previews and Google News.', 'publishrank' ) : __( 'Set a featured image so the article previews well in search and news surfaces.', 'publishrank' ) );
 		if ( $images ) {
-			$no_alt = 0;
-			foreach ( $images as $img ) {
-				if ( '' === $img['alt'] ) { $no_alt++; }
+			$missing_alt = 0;
+			foreach ( $images as $img ) { if ( '' === $img['alt'] ) { $missing_alt++; } }
+			$total = count( $images );
+			if ( 0 === $missing_alt ) {
+				$add( 'media_alt', 'media', 'good', 1, __( 'All images have alternative text.', 'publishrank' ) );
+			} else {
+				$add( 'media_alt', 'media', ( $missing_alt / $total ) > 0.5 ? 'bad' : 'ok', 1, sprintf( _n( '%d image is missing alt text.', '%d images are missing alt text.', $missing_alt, 'publishrank' ), $missing_alt ) );
 			}
-			/* translators: %d: number of images without alt text. */
-				$add( 'media_alt', 'media', 0 === $no_alt ? 'good' : ( $no_alt < count( $images ) ? 'ok' : 'bad' ), 1, 0 === $no_alt ? __( 'Every image in the article has alt text.', 'publishrank' ) : sprintf( _n( '%d image is missing alt text.', '%d images are missing alt text.', $no_alt, 'publishrank' ), $no_alt ) );
-				$quality = self::image_quality( $html );
-				$add( 'media_weight', 'media', 0 === $quality['large'] ? 'good' : ( $quality['large'] < 2 ? 'ok' : 'bad' ), 2, 0 === $quality['large'] ? __( 'Article images are within the recommended file-size budget.', 'publishrank' ) : sprintf( _n( '%d image is larger than 350 KB; compress it before publishing.', '%d images are larger than 350 KB; compress them before publishing.', $quality['large'], 'publishrank' ), $quality['large'] ) );
-				$add( 'media_dimensions', 'media', 0 === $quality['oversize'] ? 'good' : 'ok', 1, 0 === $quality['oversize'] ? __( 'Images are sized for the configured maximum width.', 'publishrank' ) : sprintf( _n( '%d image exceeds the configured maximum width; resize it.', '%d images exceed the configured maximum width; resize them.', $quality['oversize'], 'publishrank' ), $quality['oversize'] ) );
-				$add( 'media_format', 'media', 0 === $quality['legacy'] ? 'good' : 'ok', 1, 0 === $quality['legacy'] ? __( 'Images use modern WebP/AVIF formats where available.', 'publishrank' ) : sprintf( _n( '%d image uses a legacy format; convert it to WebP or AVIF when practical.', '%d images use legacy formats; convert them to WebP or AVIF when practical.', $quality['legacy'], 'publishrank' ), $quality['legacy'] ) );
+		}
+		$quality = self::image_quality( $html );
+		if ( 0 === ( $quality['large'] + $quality['oversize'] + $quality['legacy'] ) ) {
+			$add( 'media_weight', 'media', 'good', 1, __( 'Article images are within the recommended file-size budget.', 'publishrank' ) );
+			$add( 'media_dimensions', 'media', 'good', 1, __( 'Images are sized for the configured maximum width.', 'publishrank' ) );
+			$add( 'media_format', 'media', 'good', 1, __( 'Images use modern WebP/AVIF formats where available.', 'publishrank' ) );
+		} else {
+			if ( $quality['large'] ) {
+				$add( 'media_weight', 'media', 'ok', 1, sprintf( _n( '%d image file exceeds 350 KB; compress it to speed up the page.', '%d image files exceed 350 KB; compress them to speed up the page.', $quality['large'], 'publishrank' ), $quality['large'] ) );
+			} else {
+				$add( 'media_weight', 'media', 'good', 1, __( 'Article images are within the recommended file-size budget.', 'publishrank' ) );
+			}
+			if ( $quality['oversize'] ) {
+				$add( 'media_dimensions', 'media', 'ok', 1, sprintf( _n( '%d image is wider than the configured maximum; serve a smaller size.', '%d images are wider than the configured maximum; serve smaller sizes.', $quality['oversize'], 'publishrank' ), $quality['oversize'] ) );
+			} else {
+				$add( 'media_dimensions', 'media', 'good', 1, __( 'Images are sized for the configured maximum width.', 'publishrank' ) );
+			}
+			if ( $quality['legacy'] ) {
+				$add( 'media_format', 'media', 'ok', 1, sprintf( _n( '%d image uses a legacy format; convert it to WebP or AVIF when practical.', '%d images use legacy formats; convert them to WebP or AVIF when practical.', $quality['legacy'], 'publishrank' ), $quality['legacy'] ) );
+			} else {
+				$add( 'media_format', 'media', 'good', 1, __( 'Images use modern WebP/AVIF formats where available.', 'publishrank' ) );
+			}
 		}
 
 		/* ---- Links ---- */
@@ -490,7 +591,6 @@ final class ArticleIntelligence {
 		}
 		$need = $word_count >= 600 ? 2 : 1;
 		if ( $word_count >= 150 ) {
-			/* translators: %d: internal links found. */
 			$add( 'links_internal', 'links', $internal >= $need ? 'good' : ( $internal > 0 ? 'ok' : 'bad' ), 2, $internal >= $need ? sprintf( _n( '%d internal link found.', '%d internal links found.', $internal, 'publishrank' ), $internal ) : __( 'Link to related coverage on your own site to help readers and crawlers.', 'publishrank' ) );
 			$cited = $external > 0 || '' !== trim( (string) $d['citations'] );
 			$add( 'links_external', 'links', $cited ? 'good' : 'ok', 1, $cited ? __( 'The article attributes or cites outside sources.', 'publishrank' ) : __( 'Link to or cite primary sources where you report from them.', 'publishrank' ) );
@@ -508,18 +608,28 @@ final class ArticleIntelligence {
 		if ( $d['modified'] > 0 ) {
 			$age = (int) floor( ( time() - (int) $d['modified'] ) / 86400 );
 			if ( $age > 365 ) {
-				/* translators: %d: days since the last update. */
 				$add( 'news_fresh', 'news', 'ok', 1, sprintf( __( 'Last updated %d days ago; review it for accuracy and refresh if the story has moved on.', 'publishrank' ), $age ) );
 			}
 		}
 
 		/* ---- Site-level checks ---- */
 		if ( $site ) {
-			foreach ( self::site_checks( $d, $keyphrase, $title ) as $check ) {
-				$checks[] = $check;
-			}
+			foreach ( self::site_checks( $d, $keyphrase, $title ) as $check ) { $checks[] = $check; }
 		}
 
+		/* ---- Enrich: severity, why-it-matters, fix action ---- */
+		$bad_count = 0; $ok_count = 0; $info_count = 0; $high_count = 0;
+		foreach ( $checks as $i => $check ) {
+			$checks[ $i ]['severity'] = self::severity_for( $check['id'], $check['status'] );
+			$checks[ $i ]['why']      = self::why_for( $check['id'] );
+			$fix = self::fix_for( $check['id'], $check['status'] );
+			if ( $fix ) { $checks[ $i ]['fix'] = $fix; }
+			if ( 'bad' === $check['status'] ) { $bad_count++; if ( in_array( $checks[ $i ]['severity'], array( 'critical', 'high' ), true ) ) { $high_count++; } }
+			elseif ( 'ok' === $check['status'] ) { $ok_count++; }
+			elseif ( 'info' === $check['status'] ) { $info_count++; }
+		}
+
+		/* ---- Score (weights unchanged from v2.9) ---- */
 		$earned = 0.0; $max = 0.0; $groups = array();
 		foreach ( $checks as $check ) {
 			$g = $check['group'];
@@ -536,29 +646,37 @@ final class ArticleIntelligence {
 		}
 
 		return array(
-			'score'       => $score,
-			'rating'      => $score >= 80 ? 'good' : ( $score >= 55 ? 'ok' : 'bad' ),
-			'groups'      => $groups,
-			'checks'      => $checks,
-				'stats'       => array(
-					'words'        => $word_count,
-					'images'       => count( $images ),
-					'focus_keyword' => $keyphrase,
-					'focus_keyword_occurrences' => $keyphrase_occurrences,
-					'focus_keyword_density' => round( $keyphrase_density, 2 ),
-					'focus_keyword_coverage' => count( array_filter( $keyphrase_coverage ) ),
-					'focus_keyword_coverage_total' => '' !== $keyphrase ? count( $keyphrase_coverage ) : 0,
-					'sentences'    => $sentence_count,
+			'score'  => $score,
+			'rating' => $score >= 80 ? 'good' : ( $score >= 55 ? 'ok' : 'bad' ),
+			'groups' => $groups,
+			'checks' => $checks,
+			'stats'  => array(
+				'words'        => $word_count,
+				'images'       => count( $images ),
+				'focus_keyword' => $keyphrase,
+				'focus_keyword_occurrences' => $keyphrase_occurrences,
+				'focus_keyword_density' => round( $keyphrase_density, 2 ),
+				'focus_keyword_coverage' => count( array_filter( $keyphrase_coverage ) ),
+				'focus_keyword_coverage_total' => '' !== $keyphrase ? count( $keyphrase_coverage ) : 0,
+				'sentences'    => $sentence_count,
 				'paragraphs'   => count( $paragraphs ),
 				'reading_min'  => max( 1, (int) ceil( $word_count / 238 ) ),
 				'internal'     => $internal,
 				'external'     => $external,
 				'headings'     => count( $headings ),
 				'serp_pixels'  => $pixels,
+				'issues_bad'   => $bad_count,
+				'issues_ok'    => $ok_count,
+				'issues_info'  => $info_count,
+				'issues_high'  => $high_count,
+				'generated_at' => gmdate( 'c' ),
 			),
 			'suggestions' => array(
-				'keyphrases'  => $word_count >= 80 ? self::suggest_keyphrases( $title, $words, $headings ) : array(),
+				'keyphrases'  => $word_count >= 80 ? self::suggest_keyphrases( $title, $words, $headings, (string) $d['terms'] ) : array(),
 				'description' => '' === $description ? self::suggest_description( $paragraphs, (string) $d['excerpt'] ) : '',
+				'headline'    => self::suggest_headline( $title, $keyphrase ),
+				'alt'         => $site ? self::suggest_alt_texts( $html, (int) $d['post_id'] ) : array(),
+				'links'       => ( $site && $word_count >= 80 ) ? self::suggest_internal_links( (int) $d['post_id'], $title, $words ) : array(),
 			),
 		);
 	}
@@ -567,9 +685,7 @@ final class ArticleIntelligence {
 	private static function site_checks( array $d, $keyphrase, $title ) {
 		$checks = array();
 		$pid    = (int) $d['post_id'];
-		if ( ! function_exists( 'get_posts' ) ) {
-			return $checks;
-		}
+		if ( ! function_exists( 'get_posts' ) ) { return $checks; }
 		if ( '' !== $keyphrase ) {
 			$others = get_posts(
 				array(
@@ -586,7 +702,6 @@ final class ArticleIntelligence {
 			if ( $others ) {
 				$names = array();
 				foreach ( $others as $other ) { $names[] = '“' . wp_strip_all_tags( get_the_title( $other ) ) . '”'; }
-				/* translators: %s: list of article titles. */
 				$checks[] = array( 'id' => 'site_cannibalization', 'group' => 'site', 'status' => 'bad', 'weight' => 2, 'message' => sprintf( __( 'Other articles target the same focus keyphrase and may compete with this one: %s', 'publishrank' ), implode( ', ', $names ) ) );
 			} else {
 				$checks[] = array( 'id' => 'site_cannibalization', 'group' => 'site', 'status' => 'good', 'weight' => 2, 'message' => __( 'No other article uses this focus keyphrase.', 'publishrank' ) );
@@ -598,6 +713,7 @@ final class ArticleIntelligence {
 			$in    = implode( ',', array_fill( 0, count( $types ), '%s' ) );
 			$args  = array_merge( $types, array( $title, $pid ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in contains only generated %s placeholders from the validated post-type list.
 			$dupe = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type IN ($in) AND post_status IN ('publish','future','pending','draft') AND post_title = %s AND ID <> %d LIMIT 1", $args ) );
 			$checks[] = array( 'id' => 'site_duplicate_title', 'group' => 'site', 'status' => $dupe ? 'bad' : 'good', 'weight' => 1, 'message' => $dupe ? __( 'Another article already uses this exact headline.', 'publishrank' ) : __( 'The headline is unique on this site.', 'publishrank' ) );
 		}
@@ -605,25 +721,75 @@ final class ArticleIntelligence {
 			$node = \PublishRankSEO\InternalLinks\Store::node_for_object( $pid );
 			if ( $node ) {
 				$in = (int) $node->inbound_count;
-				/* translators: %d: number of inbound internal links. */
-				$checks[] = array( 'id' => 'site_inbound', 'group' => 'site', 'status' => $in >= 2 ? 'good' : ( $in === 1 ? 'ok' : 'bad' ), 'weight' => 1, 'message' => $in >= 1 ? sprintf( _n( '%d other article links here.', '%d other articles link here.', $in, 'publishrank' ), $in ) : __( 'No other article links to this one yet (orphan). See Internal Links for suggestions.', 'publishrank' ) );
+				$checks[] = array( 'id' => 'site_inbound', 'group' => 'site', 'status' => $in >= 2 ? 'good' : ( 1 === $in ? 'ok' : 'bad' ), 'weight' => 1, 'message' => $in >= 1 ? sprintf( _n( '%d other article links here.', '%d other articles link here.', $in, 'publishrank' ), $in ) : __( 'No other article links to this one yet (orphan). See Internal Links for suggestions.', 'publishrank' ) );
 			}
 		}
 		return $checks;
 	}
 
 	/* ------------------------------------------------------------------ *
+	 * Severity / why / fix mapping
+	 * ------------------------------------------------------------------ */
+
+	private static function severity_for( $id, $status ) {
+		if ( 'info' === $status ) { return 'info'; }
+		if ( 'good' === $status ) { return 'none'; }
+		if ( 'ok' === $status ) { return 'low'; }
+		$critical = array( 'keyphrase_missing', 'headline_missing', 'snippet_description', 'structure_length' );
+		$high     = array( 'keyphrase_title', 'keyphrase_intro', 'keyphrase_density', 'headline_tone', 'media_alt', 'media_featured', 'links_internal', 'news_byline' );
+		if ( in_array( $id, $critical, true ) ) { return 'critical'; }
+		if ( in_array( $id, $high, true ) ) { return 'high'; }
+		return 'medium';
+	}
+
+	private static function why_for( $id ) {
+		$map = array(
+			'keyphrase_missing'    => __( 'Without a focus keyphrase the analyzer cannot verify that the article targets a clear subject.', 'publishrank' ),
+			'keyphrase_title'      => __( 'Search engines weigh the title heavily; a missing subject weakens relevance signals.', 'publishrank' ),
+			'keyphrase_intro'      => __( 'Stating the subject early confirms to readers and crawlers what the article covers.', 'publishrank' ),
+			'keyphrase_density'    => __( 'An absent or overstuffed keyphrase reads as off-topic or spammy.', 'publishrank' ),
+			'headline_missing'     => __( 'Articles without a headline produce poor search and news listings.', 'publishrank' ),
+			'headline_length'      => __( 'Titles that are too short or too long are truncated or ignored in results.', 'publishrank' ),
+			'headline_tone'        => __( 'Sensational headlines reduce trust and can affect news-surface eligibility.', 'publishrank' ),
+			'snippet_description'  => __( 'Without a meta description, search engines choose an arbitrary snippet for you.', 'publishrank' ),
+			'snippet_title_width'  => __( 'Over-wide search titles are cut off in results, hiding the subject.', 'publishrank' ),
+			'structure_length'     => __( 'Thin content rarely satisfies readers or ranks for competitive queries.', 'publishrank' ),
+			'structure_subheadings'=> __( 'Subheadings make long articles scannable for readers and search engines.', 'publishrank' ),
+			'read_sentence_length' => __( 'Long sentences are harder to read, especially on mobile.', 'publishrank' ),
+			'read_flesch'          => __( 'Harder text keeps fewer readers and can dampen engagement.', 'publishrank' ),
+			'read_passive'         => __( 'Active voice is clearer and more direct.', 'publishrank' ),
+			'read_transitions'     => __( 'Transition words guide readers through the argument.', 'publishrank' ),
+			'media_featured'       => __( 'Featured images control how the article appears in shares and news surfaces.', 'publishrank' ),
+			'media_alt'            => __( 'Alt text makes images accessible and helps image search understand them.', 'publishrank' ),
+			'links_internal'       => __( 'Internal links help readers discover related coverage and distribute crawl attention.', 'publishrank' ),
+			'links_external'       => __( 'Citing primary sources supports credibility and E-E-A-T signals.', 'publishrank' ),
+			'links_anchor_text'    => __( 'Descriptive anchors tell readers and crawlers what the destination covers.', 'publishrank' ),
+			'news_byline'          => __( 'A named byline is a strong trust and news-eligibility signal.', 'publishrank' ),
+			'site_cannibalization' => __( 'Multiple articles on one keyphrase compete with each other in search.', 'publishrank' ),
+			'site_duplicate_title' => __( 'Duplicate headlines confuse search engines about which article to rank.', 'publishrank' ),
+			'site_inbound'         => __( 'Orphan pages are crawled rarely and receive little internal authority.', 'publishrank' ),
+		);
+		return isset( $map[ $id ] ) ? $map[ $id ] : '';
+	}
+
+	private static function fix_for( $id, $status ) {
+		if ( 'good' === $status || 'info' === $status ) { return null; }
+		$map = array(
+			'keyphrase_missing'   => 'keyphrase',
+			'snippet_description' => 'description',
+			'headline_length'     => 'headline',
+			'headline_tone'       => 'headline',
+			'media_alt'           => 'alt',
+			'links_internal'      => 'links',
+		);
+		return isset( $map[ $id ] ) ? $map[ $id ] : null;
+	}
+
+	/* ------------------------------------------------------------------ *
 	 * Suggestions
 	 * ------------------------------------------------------------------ */
 
-	/**
-	 * Rank 1–3 word phrases by frequency, weighting headline and subheading occurrences.
-	 *
-	 * @param string[] $words Lowercase body tokens.
-	 * @param array<int,array{level:int,text:string}> $headings
-	 * @return array<int,array{phrase:string,count:int}>
-	 */
-	public static function suggest_keyphrases( $title, array $words, array $headings ) {
+	public static function suggest_keyphrases( $title, array $words, array $headings, $terms = '' ) {
 		$stop   = self::stopwords();
 		$scores = array(); $counts = array();
 		$feed   = static function ( array $tokens, $boost, $count_body ) use ( &$scores, &$counts, $stop ) {
@@ -643,6 +809,7 @@ final class ArticleIntelligence {
 		$feed( $words, 1, true );
 		$feed( self::tokens( $title ), 3, false );
 		foreach ( $headings as $h ) { $feed( self::tokens( $h['text'] ), 2, false ); }
+		if ( '' !== trim( (string) $terms ) ) { $feed( self::tokens( (string) $terms ), 2.5, false ); }
 		arsort( $scores );
 		$picked = array();
 		foreach ( $scores as $phrase => $score ) {
@@ -660,26 +827,174 @@ final class ArticleIntelligence {
 		return $picked;
 	}
 
-	/** Build a meta description from the excerpt or the opening sentences. @param string[] $paragraphs */
-	public static function suggest_description( array $paragraphs, $excerpt = '' ) {
+	/** Build a meta description from the excerpt or the opening sentences. $variant rotates the sentence window deterministically. */
+	public static function suggest_description( array $paragraphs, $excerpt = '', $variant = 0 ) {
 		$source = trim( wp_strip_all_tags( (string) $excerpt ) );
-		if ( '' === $source && $paragraphs ) {
-			$source = implode( ' ', array_slice( $paragraphs, 0, 3 ) );
-		}
+		if ( '' === $source && $paragraphs ) { $source = implode( ' ', array_slice( $paragraphs, 0, 5 ) ); }
 		$source = trim( preg_replace( '/\s+/u', ' ', $source ) );
 		if ( self::len( $source ) < 40 ) { return ''; }
+		$sentences = (array) preg_split( '/(?<=[.!?۔؟])\s+/u', $source, -1, PREG_SPLIT_NO_EMPTY );
+		if ( ! $sentences ) { return ''; }
+		$start = min( absint( $variant ), max( 0, count( $sentences ) - 1 ) );
 		$out = '';
-		foreach ( (array) preg_split( '/(?<=[.!?۔؟])\s+/u', $source, -1, PREG_SPLIT_NO_EMPTY ) as $sentence ) {
-			$next = '' === $out ? $sentence : $out . ' ' . $sentence;
+		for ( $i = $start; $i < count( $sentences ); $i++ ) {
+			$next = '' === $out ? $sentences[ $i ] : $out . ' ' . $sentences[ $i ];
 			if ( self::len( $next ) > 158 ) { break; }
 			$out = $next;
 		}
+		if ( '' === $out ) { $out = $sentences[ $start ]; }
 		if ( self::len( $out ) < 70 ) {
 			$out = self::substr( $source, 155 );
 			$cut = strrpos( $out, ' ' );
 			if ( false !== $cut && $cut > 90 ) { $out = substr( $out, 0, $cut ); }
 			$out = rtrim( $out, " ,;:-" ) . '…';
 		}
+		return self::substr( $out, 158 );
+	}
+
+	/**
+	 * Suggest an improved search headline derived from the actual title.
+	 * Returns '' when the title already passes or no reliable improvement exists.
+	 */
+	public static function suggest_headline( $title, $keyphrase = '' ) {
+		$out = trim( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( (string) $title ) ) );
+		if ( '' === $out ) { return ''; }
+		$changed  = false;
+		$clean    = trim( (string) preg_replace( '/\s*[!?]{2,}/u', '', $out ) );
+		if ( $clean !== $out && '' !== $cool = $clean ) { $out = $cool; $changed = true; }
+		$words = preg_split( '/\s+/u', $out );
+		foreach ( $words as $i => $w ) {
+			if ( preg_match( '/^\p{Lu}{4,}$/u', $w ) && ! in_array( $w, array( 'NASA', 'UNICEF', 'NATO', 'COVID', 'FIFA', 'UEFA' ), true ) ) {
+				$words[ $i ] = self::substr( $w, 1 ) ? ( function_exists( 'mb_convert_case' ) ? mb_convert_case( $w, MB_CASE_TITLE, 'UTF-8' ) : ucfirst( strtolower( $w ) ) ) : $w;
+				$changed = true;
+			}
+		}
+		$out = implode( ' ', $words );
+		if ( self::len( $out ) > 65 ) {
+			$cut = self::substr( $out, 62 );
+			$pos = mb_strrpos( $cut, ' ', 0, 'UTF-8' );
+			if ( false !== $pos && $pos > 30 ) { $out = rtrim( mb_substr( $cut, 0, $pos, 'UTF-8' ), " ,;:-" ); $changed = true; }
+		}
+		if ( '' !== trim( (string) $keyphrase ) ) {
+			$kp   = trim( (string) $keyphrase );
+			$have = self::phrase_count( self::stems( self::tokens( $out ) ), self::stems( self::tokens( $kp ) ) ) > 0;
+			if ( ! $have && ( self::len( $out ) + self::len( $kp ) + 2 ) <= 65 ) {
+				$out = $kp . ': ' . $out;
+				$changed = true;
+			}
+		}
+		return $changed && $out !== trim( (string) $title ) ? $out : '';
+	}
+
+	/**
+	 * Alt-text suggestions for images missing alt. Suggestions only come from the
+	 * filename (cleaned) or attachment metadata — never invented visual detail.
+	 * @return array<int,array{identifier:string,suggestion:string,attachment_id:int}>
+	 */
+	private static function suggest_alt_texts( $html, $post_id ) {
+		$out = array();
+		if ( ! preg_match_all( '/<img\b[^>]*>/i', (string) $html, $m ) ) { return $out; }
+		static $att_cache = array();
+		foreach ( $m[0] as $tag ) {
+			if ( ! preg_match( '/\balt\s*=\s*(?:"([^"]*)"|\'([^\']*)\')/i', $tag, $a ) || '' !== trim( html_entity_decode( isset( $a[2] ) ? $a[2] : $a[1], ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) ) { continue; }
+			if ( ! preg_match( '/\bsrc\s*=\s*(?:"([^"]+)"|\'([^\']+)\')/i', $tag, $s ) ) { continue; }
+			$url  = html_entity_decode( isset( $s[2] ) && '' !== $s[2] ? $s[2] : $s[1], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+			$base = sanitize_file_name( rawurldecode( (string) wp_basename( (string) wp_parse_url( $url, PHP_URL_PATH ) ) ) );
+			if ( '' === $base ) { continue; }
+			$att = 0;
+			if ( ! isset( $att_cache[ $url ] ) ) {
+				$att_cache[ $url ] = function_exists( 'attachment_url_to_postid' ) ? (int) attachment_url_to_postid( $url ) : 0;
+			}
+			$att = $att_cache[ $url ];
+			$from_meta = '';
+			if ( $att ) {
+				$cap = get_post_field( 'post_excerpt', $att );
+				if ( '' !== trim( (string) $cap ) ) { $from_meta = trim( wp_strip_all_tags( (string) $cap ) ); }
+			}
+			$name = preg_replace( '/\.[a-z0-9]{2,5}$/i', '', $base );
+			$name = (string) preg_replace( '/[-_](\d{2,5}x\d{2,5}|scaled|cropped)$/i', '', $name );
+			$name = str_replace( array( '-', '_' ), ' ', $name );
+			$name = trim( (string) preg_replace( '/\s+/u', ' ', $name ) );
+			$tokens = self::tokens( $name );
+			$suggestion = '';
+			if ( '' !== $from_meta && self::len( $from_meta ) >= 3 ) {
+				$suggestion = self::substr( $from_meta, 120 );
+			} elseif ( count( $tokens ) >= 2 && count( array_filter( $tokens, 'ctype_alpha' ) ) >= 2 ) {
+				$suggestion = function_exists( 'mb_convert_case' ) ? mb_convert_case( $name, MB_CASE_TITLE, 'UTF-8' ) : ucwords( strtolower( $name ) );
+				$suggestion = self::substr( $suggestion, 120 );
+			}
+			if ( '' === $suggestion ) { continue; }
+			$out[] = array(
+				'identifier'   => $base,
+				'suggestion'   => $suggestion,
+				'attachment_id'=> $att,
+			);
+			if ( count( $out ) >= 10 ) { break; }
+		}
+		return $out;
+	}
+
+	/**
+	 * Internal-link suggestions from published content, scored by shared significant terms.
+	 * Results are transient-cached per post and invalidated on save.
+	 * @return array<int,array{title:string,url:string,reason:string,post_id:int}>
+	 */
+	private static function suggest_internal_links( $post_id, $title, array $words, $limit = 5 ) {
+		$post_id = (int) $post_id;
+		if ( ! $post_id || ! function_exists( 'get_posts' ) ) { return array(); }
+		$hash = md5( strtolower( trim( (string) $title ) ) . '|' . implode( ' ', array_slice( $words, 0, 400 ) ) );
+		$key  = 'pr_intel_links_' . $post_id;
+		$cached = get_transient( $key );
+		if ( is_array( $cached ) && isset( $cached['h'], $cached['items'] ) && $cached['h'] === $hash ) { return $cached['items']; }
+
+		$stop  = self::stopwords();
+		$freq  = array();
+		foreach ( $words as $w ) {
+			if ( isset( $stop[ $w ] ) || self::len( $w ) < 4 || ctype_digit( $w ) ) { continue; }
+			$freq[ $w ] = ( $freq[ $w ] ?? 0 ) + 1;
+		}
+		arsort( $freq );
+		$terms = array_slice( array_keys( $freq ), 0, 12 );
+		if ( ! $terms ) { return array(); }
+		$term_stems = array_flip( self::stems( $terms ) );
+
+		$candidates = get_posts(
+			array(
+				'post_type'        => self::supported_post_types(),
+				'post_status'      => 'publish',
+				'posts_per_page'   => 60,
+				'post__not_in'     => array( $post_id ),
+				'orderby'          => 'modified',
+				'order'            => 'DESC',
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+			)
+		);
+		$scored = array();
+		foreach ( $candidates as $cid ) {
+			$ctitle = wp_strip_all_tags( get_the_title( (int) $cid ) );
+			if ( '' === $ctitle ) { continue; }
+			$ctokens = self::stems( self::tokens( $ctitle ) );
+			$shared  = array();
+			$score   = 0;
+			foreach ( $ctokens as $t ) {
+				if ( isset( $term_stems[ $t ] ) ) { $score += 2; $shared[ $t ] = true; }
+			}
+			if ( $score < 2 ) { continue; }
+			$scored[ $cid ] = array( 'score' => $score, 'shared' => array_keys( $shared ), 'title' => $ctitle );
+		}
+		uasort( $scored, static function ( $a, $b ) { return $b['score'] <=> $a['score']; } );
+		$out = array();
+		foreach ( array_slice( $scored, 0, $limit, true ) as $cid => $row ) {
+			$out[] = array(
+				'title'    => $row['title'],
+				'url'      => (string) get_permalink( (int) $cid ),
+				'reason'   => sprintf( __( 'Shares topics: %s', 'publishrank' ), implode( ', ', array_slice( $row['shared'], 0, 3 ) ) ),
+				'post_id'  => (int) $cid,
+			);
+		}
+		set_transient( $key, array( 'h' => $hash, 'items' => $out ), 6 * HOUR_IN_SECONDS );
 		return $out;
 	}
 
@@ -687,22 +1002,20 @@ final class ArticleIntelligence {
 	 * Rendering
 	 * ------------------------------------------------------------------ */
 
-	/** Group labels in display order. @return array<string,string> */
 	public static function group_labels() {
 		return array(
-			'keyphrase'   => __( 'Keyphrase', 'publishrank' ),
-			'headline'    => __( 'Headline', 'publishrank' ),
-			'snippet'     => __( 'Search snippet', 'publishrank' ),
-			'structure'   => __( 'Structure', 'publishrank' ),
+			'keyphrase'   => __( 'Focus keyphrase', 'publishrank' ),
+			'headline'    => __( 'SEO headline', 'publishrank' ),
+			'snippet'     => __( 'Search snippet & meta description', 'publishrank' ),
+			'structure'   => __( 'Content structure', 'publishrank' ),
 			'readability' => __( 'Readability', 'publishrank' ),
-			'media'       => __( 'Media', 'publishrank' ),
-			'links'       => __( 'Links', 'publishrank' ),
+			'media'       => __( 'Media & image accessibility', 'publishrank' ),
+			'links'       => __( 'Internal & external links', 'publishrank' ),
 			'news'        => __( 'Newsroom signals', 'publishrank' ),
 			'site'        => __( 'Across your site', 'publishrank' ),
 		);
 	}
 
-	/** Human label for a stored failing-check id. */
 	public static function check_label( $id ) {
 		$labels = array(
 			'keyphrase_missing' => __( 'No focus keyphrase', 'publishrank' ), 'keyphrase_title' => __( 'Keyphrase not in title', 'publishrank' ),
@@ -714,30 +1027,141 @@ final class ArticleIntelligence {
 			'read_flesch' => __( 'Hard to read', 'publishrank' ), 'read_passive' => __( 'Passive voice', 'publishrank' ),
 			'read_transitions' => __( 'Few transition words', 'publishrank' ), 'media_featured' => __( 'No featured image', 'publishrank' ),
 			'media_alt' => __( 'Images without alt text', 'publishrank' ), 'links_internal' => __( 'No internal links', 'publishrank' ),
-				'news_byline' => __( 'No byline', 'publishrank' ), 'media_weight' => __( 'Image file size', 'publishrank' ), 'media_dimensions' => __( 'Image dimensions', 'publishrank' ), 'media_format' => __( 'Image format', 'publishrank' ), 'site_cannibalization' => __( 'Keyphrase cannibalization', 'publishrank' ),
+			'news_byline' => __( 'No byline', 'publishrank' ), 'media_weight' => __( 'Image file size', 'publishrank' ),
+			'media_dimensions' => __( 'Image dimensions', 'publishrank' ), 'media_format' => __( 'Image format', 'publishrank' ),
+			'site_cannibalization' => __( 'Keyphrase cannibalization', 'publishrank' ),
 			'site_duplicate_title' => __( 'Duplicate headline', 'publishrank' ), 'site_inbound' => __( 'Orphan article', 'publishrank' ),
 		);
 		return isset( $labels[ $id ] ) ? $labels[ $id ] : (string) $id;
 	}
 
-	/** Escaped HTML for a report; used by the meta box and the AJAX response. @param array<string,mixed> $report */
-	public static function render_report( array $report ) {
+	private static function severity_label( $severity ) {
+		$map = array(
+			'critical' => __( 'Critical', 'publishrank' ),
+			'high'     => __( 'High', 'publishrank' ),
+			'medium'   => __( 'Medium', 'publishrank' ),
+			'low'      => __( 'Low', 'publishrank' ),
+		);
+		return isset( $map[ $severity ] ) ? $map[ $severity ] : '';
+	}
+
+	/** SVG progress ring. */
+	private static function ring_svg( $score, $rating, $size = 112, $stroke = 10 ) {
+		$score  = max( 0, min( 100, (int) $score ) );
+		$size   = (int) $size; $stroke = (int) $stroke;
+		$r      = ( $size - $stroke ) / 2 - 2;
+		$c      = 2 * M_PI * $r;
+		$offset = $c * ( 1 - $score / 100 );
+		$cy     = $size / 2;
+		$fs     = max( 16, (int) ( $size * 0.24 ) );
+		return sprintf(
+			'<svg class="pr-ring pr-ring--%1$s" width="%2$d" height="%2$d" viewBox="0 0 %2$d %2$d" role="img" aria-label="%3$s"><circle class="pr-ring__bg" cx="%4$s" cy="%4$s" r="%5$s" stroke-width="%6$d"/><circle class="pr-ring__val" cx="%4$s" cy="%4$s" r="%5$s" stroke-width="%6$d" stroke-dasharray="%7$s" stroke-dashoffset="%8$s" transform="rotate(-90 %4$s %4$s)"/><text x="%4$s" y="%4$s" class="pr-ring__text" style="font-size:%9$dpx">%10$d</text></svg>', // phpcs:ignore WordPress.Security.EscapeOutput -- all interpolated values are ints or a fixed translated label.
+			esc_attr( $rating ),
+			$size,
+			esc_attr( sprintf( __( 'SEO score %d out of 100', 'publishrank' ), $score ) ),
+			$cy,
+			round( $r, 2 ),
+			$stroke,
+			round( $c, 2 ),
+			round( $offset, 2 ),
+			$fs,
+			$score
+		);
+	}
+
+	/** Escaped HTML for a report; used by the meta box and the AJAX response. */
+	public static function render_report( array $report, $previous = null ) {
 		$labels = self::group_labels();
-		$icons  = array( 'good' => '●', 'ok' => '●', 'bad' => '●', 'info' => '○' );
 		$s      = $report['stats'];
-		$out    = '<div class="pr-intel__summary pr-intel__summary--' . esc_attr( $report['rating'] ) . '"><span class="pr-intel__score">' . esc_html( (string) $report['score'] ) . '</span><span class="pr-intel__of">/100</span>';
-		/* translators: 1: word count, 2: reading minutes, 3: image count, 4: internal links, 5: external links. */
-		$out   .= '<span class="pr-intel__stats">' . esc_html( sprintf( __( '%1$d words · %2$d min read · %3$d images · %4$d internal / %5$d external links', 'publishrank' ), $s['words'], $s['reading_min'], $s['images'], $s['internal'], $s['external'] ) ) . '</span></div>';
+		$score  = (int) $report['score'];
+		$rating = $report['rating'];
+		$status_label = 'good' === $rating ? __( 'Well optimized', 'publishrank' ) : ( 'ok' === $rating ? __( 'Needs improvement', 'publishrank' ) : __( 'Needs work', 'publishrank' ) );
+		$out = '<div class="pr-dash">';
+
+		/* --- Header: ring + status + comparison --- */
+		$out .= '<div class="pr-dash__head pr-dash__head--' . esc_attr( $rating ) . '">';
+		$out .= '<div class="pr-dash__ring">' . self::ring_svg( $score, $rating, 112, 10 ) . '</div>';
+		$out .= '<div class="pr-dash__status"><span class="pr-dash__label">' . esc_html( $status_label ) . '</span>';
+		$out .= '<span class="pr-dash__stats">' . esc_html( sprintf( __( '%1$d words · %2$d min read · %3$d images · %4$d internal / %5$d external links', 'publishrank' ), $s['words'], $s['reading_min'], $s['images'], $s['internal'], $s['external'] ) ) . '</span>';
+		$out .= '<span class="pr-dash__explainer">' . esc_html__( 'A local summary of on-page SEO checks. It is not a Google ranking metric.', 'publishrank' ) . '</span>';
+		$current_fails = array();
+		foreach ( $report['checks'] as $check ) { if ( 'bad' === $check['status'] ) { $current_fails[] = $check['id']; } }
+		if ( is_array( $previous ) && isset( $previous['score'] ) ) {
+			$delta    = $score - (int) $previous['score'];
+			$resolved = array_diff( (array) $previous['fail'], $current_fails );
+			$new      = array_diff( $current_fails, (array) $previous['fail'] );
+			$cls      = $delta > 0 ? 'up' : ( $delta < 0 ? 'down' : 'same' );
+			$out .= '<span class="pr-dash__delta pr-dash__delta--' . esc_attr( $cls ) . '">';
+			$out .= esc_html( sprintf(
+				/* translators: 1: signed score change, 2: resolved issue count, 3: new issue count. */
+				__( '%1$s vs last saved analysis · %2$d resolved · %3$d new', 'publishrank' ),
+				( $delta > 0 ? '+' : '' ) . $delta,
+				count( $resolved ),
+				count( $new )
+			) ) . '</span>';
+		} else {
+			$out .= '<span class="pr-dash__delta pr-dash__delta--first">' . esc_html__( 'First analysis for this article — scores are saved when the post is saved.', 'publishrank' ) . '</span>';
+		}
 		if ( ! empty( $s['focus_keyword'] ) ) {
-			$out .= '<div class="pr-intel__keyword-metrics"><strong>' . esc_html__( 'Focus keyphrase', 'publishrank' ) . ':</strong> ' . esc_html( $s['focus_keyword'] ) . ' · ' . esc_html( sprintf( __( '%1$d occurrence(s), %2$s%% density, %3$d/%4$d placement signals', 'publishrank' ), $s['focus_keyword_occurrences'], $s['focus_keyword_density'], $s['focus_keyword_coverage'], $s['focus_keyword_coverage_total'] ) ) . '</div>';
+			$out .= '<span class="pr-dash__kpi"><strong>' . esc_html__( 'Focus keyphrase:', 'publishrank' ) . '</strong> ' . esc_html( $s['focus_keyword'] ) . ' · ' . esc_html( sprintf( __( '%1$d occurrence(s), %2$s%% density, %3$d/%4$d placement signals', 'publishrank' ), $s['focus_keyword_occurrences'], $s['focus_keyword_density'], $s['focus_keyword_coverage'], $s['focus_keyword_coverage_total'] ) ) . '</span>';
 		}
-		$out   .= '<div class="pr-intel__groups">';
+		$out .= '</div></div>';
+
+		/* --- Category bars --- */
+		$out .= '<div class="pr-dash__cats" role="list">';
 		foreach ( $labels as $key => $label ) {
-			if ( ! isset( $report['groups'][ $key ] ) || 0 === count( self::checks_in( $report, $key, true ) ) ) { continue; }
-			$val  = (int) $report['groups'][ $key ];
-			$out .= '<span class="pr-intel__chip pr-intel__chip--' . esc_attr( $val >= 80 ? 'good' : ( $val >= 55 ? 'ok' : 'bad' ) ) . '">' . esc_html( $label ) . ' ' . esc_html( (string) $val ) . '</span>';
+			$items = self::checks_in( $report, $key, false );
+			if ( ! $items ) { continue; }
+			$val     = isset( $report['groups'][ $key ] ) ? (int) $report['groups'][ $key ] : 0;
+			$issues  = count( array_filter( $items, static function ( $c ) { return 'bad' === $c['status']; } ) );
+			$warn    = count( array_filter( $items, static function ( $c ) { return 'ok' === $c['status']; } ) );
+			$cls     = $val >= 80 ? 'good' : ( $val >= 55 ? 'ok' : 'bad' );
+			$out .= '<div class="pr-cat pr-cat--' . esc_attr( $cls ) . '" role="listitem">';
+			$out .= '<div class="pr-cat__top"><span class="pr-cat__name">' . esc_html( $label ) . '</span><span class="pr-cat__val">' . esc_html( (string) $val ) . '<i>/100</i></span></div>';
+			$out .= '<div class="pr-cat__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr( (string) $val ) . '" aria-label="' . esc_attr( $label ) . '"><span style="width:' . esc_attr( (string) $val ) . '%"></span></div>';
+			$out .= '<div class="pr-cat__meta">' . esc_html( sprintf( _n( '%d issue', '%d issues', $issues, 'publishrank' ), $issues ) . ( $warn ? ' · ' . sprintf( _n( '%d improvement', '%d improvements', $warn, 'publishrank' ), $warn ) : '' ) ) . '</div>';
+			$out .= '</div>';
 		}
+		$out .= '<div class="pr-cat pr-cat--na" role="listitem"><div class="pr-cat__top"><span class="pr-cat__name">' . esc_html__( 'Structured data', 'publishrank' ) . '</span><span class="pr-cat__val pr-cat__val--na">' . esc_html__( 'n/a', 'publishrank' ) . '</span></div><div class="pr-cat__meta">' . esc_html__( 'Not evaluated by the article analyzer — see the PublishRank Schema suite.', 'publishrank' ) . '</div></div>';
 		$out .= '</div>';
+
+		/* --- Tally --- */
+		$passed = count( array_filter( $report['checks'], static function ( $c ) { return 'good' === $c['status']; } ) );
+		$out .= '<div class="pr-dash__tally"><span><b>' . esc_html( (string) $s['issues_bad'] ) . '</b> ' . esc_html__( 'issues detected', 'publishrank' ) . '</span><span><b>' . esc_html( (string) $s['issues_ok'] ) . '</b> ' . esc_html__( 'suggested improvements', 'publishrank' ) . '</span><span><b>' . esc_html( (string) $passed ) . '</b> ' . esc_html__( 'checks passed', 'publishrank' ) . '</span><span><b>' . esc_html( (string) $s['issues_info'] ) . '</b> ' . esc_html__( 'not evaluated', 'publishrank' ) . '</span></div>';
+
+		/* --- Priority issues --- */
+		$priority = array_values(
+			array_filter(
+				$report['checks'],
+				static function ( $c ) { return 'bad' === $c['status'] || ( 'ok' === $c['status'] && ! empty( $c['fix'] ) ); }
+			)
+		);
+		$rank = array( 'critical' => 0, 'high' => 1, 'medium' => 2, 'low' => 3 );
+		usort(
+			$priority,
+			static function ( $a, $b ) use ( $rank ) {
+				$ra = 'bad' === $a['status'] ? $rank[ $a['severity'] ] : 4;
+				$rb = 'bad' === $b['status'] ? $rank[ $b['severity'] ] : 4;
+				return $ra === $rb ? 0 : ( $ra < $rb ? -1 : 1 );
+			}
+		);
+		$priority = array_slice( $priority, 0, 6 );
+		if ( $priority ) {
+			$out .= '<div class="pr-dash__issues"><h3 class="pr-dash__subtitle">' . esc_html__( 'Priority issues', 'publishrank' ) . '</h3><ul class="pr-issues">';
+			foreach ( $priority as $item ) {
+				$sev = 'bad' === $item['status'] ? $item['severity'] : 'low';
+				$out .= '<li class="pr-issue pr-issue--' . esc_attr( $sev ) . '"><span class="pr-issue__badge">' . esc_html( self::severity_label( $sev ) ) . '</span><div class="pr-issue__body"><p class="pr-issue__msg">' . esc_html( $item['message'] ) . '</p>';
+				if ( ! empty( $item['why'] ) ) { $out .= '<p class="pr-issue__why">' . esc_html( $item['why'] ) . '</p>'; }
+				$out .= '</div>';
+				if ( ! empty( $item['fix'] ) ) { $out .= '<button type="button" class="button button-small pr-issue__fix" data-kind="' . esc_attr( $item['fix'] ) . '">' . esc_html__( 'Fix', 'publishrank' ) . '</button>'; }
+				$out .= '</li>';
+			}
+			$out .= '</ul></div>';
+		}
+
+		/* --- Full check list (existing details groups, preserved) --- */
+		$icons = array( 'good' => '●', 'ok' => '●', 'bad' => '●', 'info' => '○' );
+		$out .= '<div class="pr-intel__groups">';
 		foreach ( $labels as $key => $label ) {
 			$items = self::checks_in( $report, $key, false );
 			if ( ! $items ) { continue; }
@@ -750,38 +1174,74 @@ final class ArticleIntelligence {
 			}
 			$out .= '</ul></details>';
 		}
+		$out .= '</div>';
+
+		/* --- Fix studio --- */
+		$out .= self::render_studio( $report );
+		return $out . '</div>';
+	}
+
+	/** Interactive fix studio: keyphrase, description, headline, alt text, internal links. */
+	private static function render_studio( array $report ) {
 		$sug = $report['suggestions'];
-		if ( ! empty( $sug['keyphrases'] ) || ! empty( $sug['description'] ) ) {
-			$out .= '<div class="pr-intel__suggest"><strong>' . esc_html__( 'Suggestions from your article text', 'publishrank' ) . '</strong>';
-			if ( ! empty( $sug['keyphrases'] ) ) {
-				$out .= '<p>' . esc_html__( 'Likely keyphrases:', 'publishrank' ) . ' ';
-				foreach ( $sug['keyphrases'] as $k ) {
-					$out .= '<button type="button" class="button button-small pr-intel__use-keyphrase" data-phrase="' . esc_attr( $k['phrase'] ) . '">' . esc_html( $k['phrase'] ) . ' <span class="pr-intel__count">×' . esc_html( (string) $k['count'] ) . '</span></button> ';
-				}
-				$out .= '</p>';
+		$has = ! empty( $sug['keyphrases'] ) || '' !== $sug['description'] || '' !== $sug['headline'] || ! empty( $sug['alt'] ) || ! empty( $sug['links'] );
+		$out  = '<section class="pr-studio" aria-label="' . esc_attr__( 'SEO fix assistant', 'publishrank' ) . '"><h3 class="pr-dash__subtitle">' . esc_html__( 'Fix assistant', 'publishrank' ) . '</h3>';
+		$out .= '<p class="pr-studio__note">' . esc_html__( 'Every suggestion below is derived from this article. Review, edit, then apply — nothing changes until you apply it.', 'publishrank' ) . '</p>';
+
+		if ( ! empty( $sug['keyphrases'] ) ) {
+			$out .= '<div class="pr-studio__block" data-studio="keyphrase"><h4>' . esc_html__( 'Focus keyphrase', 'publishrank' ) . '</h4><div class="pr-studio__chips">';
+			foreach ( $sug['keyphrases'] as $k ) {
+				$out .= '<button type="button" class="button button-small pr-studio__chip" data-phrase="' . esc_attr( $k['phrase'] ) . '">' . esc_html( $k['phrase'] ) . ' <span class="pr-intel__count">×' . esc_html( (string) $k['count'] ) . '</span></button>';
 			}
-			if ( ! empty( $sug['description'] ) ) {
-				$out .= '<p>' . esc_html__( 'Draft meta description:', 'publishrank' ) . ' <em>' . esc_html( $sug['description'] ) . '</em> <button type="button" class="button button-small pr-intel__use-description" data-text="' . esc_attr( $sug['description'] ) . '">' . esc_html__( 'Use this', 'publishrank' ) . '</button></p>';
+			$out .= '</div><div class="pr-studio__row"><input type="text" class="pr-studio__input" id="pr-studio-keyphrase" maxlength="100" placeholder="' . esc_attr__( 'Select a suggestion or type your own', 'publishrank' ) . '" /><button type="button" class="button button-primary pr-studio__apply" data-field="keyphrase">' . esc_html__( 'Apply keyphrase', 'publishrank' ) . '</button><button type="button" class="button pr-studio__regen" data-kind="keyphrase">' . esc_html__( 'Regenerate', 'publishrank' ) . '</button><span class="pr-studio__feedback" aria-live="polite"></span></div></div>';
+		}
+
+		if ( '' !== $sug['description'] ) {
+			$out .= '<div class="pr-studio__block" data-studio="description"><h4>' . esc_html__( 'Meta description', 'publishrank' ) . '</h4><div class="pr-studio__row pr-studio__row--stack"><textarea class="pr-studio__textarea" id="pr-studio-description" maxlength="300" rows="2">' . esc_textarea( $sug['description'] ) . '</textarea><span class="pr-studio__count" id="pr-studio-description-count">' . esc_html( sprintf( __( '%d characters (target 70–160)', 'publishrank' ), self::len( $sug['description'] ) ) ) . '</span></div><div class="pr-studio__row"><button type="button" class="button button-primary pr-studio__apply" data-field="description">' . esc_html__( 'Apply description', 'publishrank' ) . '</button><button type="button" class="button pr-studio__regen" data-kind="description">' . esc_html__( 'Regenerate', 'publishrank' ) . '</button><button type="button" class="button pr-studio__cancel" data-target="pr-studio-description">' . esc_html__( 'Cancel', 'publishrank' ) . '</button><span class="pr-studio__feedback" aria-live="polite"></span></div></div>';
+		} elseif ( (int) $report['stats']['words'] > 0 && '' === trim( (string) self::suggest_description( array(), '' ) ) ) {
+			$out .= '<div class="pr-studio__block" data-studio="description"><h4>' . esc_html__( 'Meta description', 'publishrank' ) . '</h4><p class="pr-studio__why">' . esc_html__( 'The article is too short to draft a reliable description. Add at least a couple of sentences summarizing the subject.', 'publishrank' ) . '</p></div>';
+		}
+
+		if ( '' !== $sug['headline'] ) {
+			$out .= '<div class="pr-studio__block" data-studio="headline"><h4>' . esc_html__( 'SEO headline', 'publishrank' ) . '</h4><p class="pr-studio__why">' . esc_html__( 'An improved search title derived from your headline. Your WordPress post title stays unchanged; this saves the SEO title only.', 'publishrank' ) . '</p><div class="pr-studio__row"><input type="text" class="pr-studio__input" id="pr-studio-headline" maxlength="255" value="' . esc_attr( $sug['headline'] ) . '" /><button type="button" class="button button-primary pr-studio__apply" data-field="seo_title">' . esc_html__( 'Apply SEO title', 'publishrank' ) . '</button><button type="button" class="button pr-studio__regen" data-kind="headline">' . esc_html__( 'Regenerate', 'publishrank' ) . '</button><span class="pr-studio__feedback" aria-live="polite"></span></div></div>';
+		}
+
+		if ( ! empty( $sug['alt'] ) ) {
+			$out .= '<div class="pr-studio__block" data-studio="alt"><h4>' . esc_html__( 'Image alt text', 'publishrank' ) . '</h4><p class="pr-studio__why">' . esc_html__( 'These images have no alternative text. Suggestions come from the filename or attachment metadata only — verify they are accurate.', 'publishrank' ) . '</p>';
+			foreach ( $sug['alt'] as $i => $item ) {
+				$att = (int) $item['attachment_id'];
+				$out .= '<div class="pr-studio__row pr-studio__alt" data-index="' . esc_attr( (string) $i ) . '"><label class="pr-studio__file">' . esc_html( $item['identifier'] ) . ( $att ? '' : ' <em>(' . esc_html__( 'not attached; edit alt in your content', 'publishrank' ) . ')</em>' ) . '</label><input type="text" class="pr-studio__input" maxlength="255" value="' . esc_attr( $item['suggestion'] ) . '"' . ( $att ? '' : ' disabled' ) . ' />' . ( $att ? '<button type="button" class="button button-small pr-studio__apply" data-field="alt" data-attachment="' . esc_attr( (string) $att ) . '">' . esc_html__( 'Save alt text', 'publishrank' ) . '</button>' : '' ) . '<span class="pr-studio__feedback" aria-live="polite"></span></div>';
 			}
 			$out .= '</div>';
 		}
-		return $out;
+
+		if ( ! empty( $sug['links'] ) ) {
+			$out .= '<div class="pr-studio__block" data-studio="links"><h4>' . esc_html__( 'Internal link suggestions', 'publishrank' ) . '</h4><p class="pr-studio__why">' . esc_html__( 'Relevant published articles on this site. Copy a link and add it where it helps the reader — nothing is inserted automatically.', 'publishrank' ) . '</p>';
+			foreach ( $sug['links'] as $item ) {
+				$out .= '<div class="pr-studio__row pr-studio__link"><span class="pr-studio__link-title">' . esc_html( $item['title'] ) . '</span><span class="pr-studio__link-reason">' . esc_html( $item['reason'] ) . '</span><code class="pr-studio__link-url">' . esc_html( $item['url'] ) . '</code><button type="button" class="button button-small pr-studio__copy" data-url="' . esc_attr( $item['url'] ) . '">' . esc_html__( 'Copy link', 'publishrank' ) . '</button></div>';
+			}
+			$out .= '</div>';
+		}
+
+		if ( ! $has ) {
+			$out .= '<p class="pr-studio__why">' . esc_html__( 'No automatic fixes are available yet — add more content and the assistant will derive suggestions from it.', 'publishrank' ) . '</p>';
+		}
+		return $out . '</section>';
 	}
 
-	/** Panel markup for the post editor meta box. @param \WP_Post $post */
+	/** Panel markup for the post editor meta box. */
 	public static function render_panel( $post ) {
-		$report = self::analyze( self::data_from_post( $post ), true );
+		$report   = self::analyze( self::data_from_post( $post ), true );
+		$previous = self::stored( (int) $post->ID );
 		echo '<div class="pr-intel" id="pr-intel" data-score="' . esc_attr( (string) $report['score'] ) . '">';
 		echo '<div class="pr-intel__head"><strong>' . esc_html__( 'Article SEO intelligence', 'publishrank' ) . '</strong> <button type="button" class="button button-small" id="pr-intel-refresh">' . esc_html__( 'Re-analyze', 'publishrank' ) . '</button> <span class="description">' . esc_html__( 'Computed locally on your server. No external service is contacted.', 'publishrank' ) . '</span></div>';
-		echo '<div class="pr-intel__body" id="pr-intel-body">' . self::render_report( $report ) . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput -- render_report escapes every dynamic value.
+		echo '<div class="pr-intel__body" id="pr-intel-body">' . self::render_report( $report, $previous ) . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput -- render_report escapes every dynamic value.
 	}
 
-	/**
-	 * Site-wide rollup from stored scores for Insights.
-	 *
-	 * @param int[] $ids Post IDs to summarize.
-	 * @return array<string,mixed>
-	 */
+	/* ------------------------------------------------------------------ *
+	 * Site-wide rollup (Insights) — unchanged behavior
+	 * ------------------------------------------------------------------ */
+
 	public static function overview( array $ids ) {
 		$scored = 0; $sum = 0; $dist = array( 'low' => 0, 'mid' => 0, 'high' => 0 ); $fails = array();
 		foreach ( $ids as $id ) {
@@ -795,14 +1255,13 @@ final class ArticleIntelligence {
 		return array( 'total' => count( $ids ), 'scored' => $scored, 'average' => $scored ? (int) round( $sum / $scored ) : 0, 'distribution' => $dist, 'top_issues' => array_slice( $fails, 0, 6, true ) );
 	}
 
-	/** Focus keyphrases used by more than one article. @return array<int,array{keyphrase:string,count:int}> */
 	public static function cannibalized_keyphrases( $limit = 10 ) {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$types = self::supported_post_types();
 		$in    = implode( ',', array_fill( 0, count( $types ), '%s' ) );
 		$args  = array_merge( array( PostMeta::FOCUS_KEYWORD ), $types, array( (int) $limit ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in contains only generated %s placeholders from the validated post-type list.
 		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT m.meta_value AS keyphrase, COUNT(*) AS total FROM {$wpdb->postmeta} m INNER JOIN {$wpdb->posts} p ON p.ID = m.post_id WHERE m.meta_key = %s AND m.meta_value <> '' AND p.post_type IN ($in) AND p.post_status = 'publish' GROUP BY m.meta_value HAVING COUNT(*) > 1 ORDER BY total DESC LIMIT %d", $args ) );
 		$out  = array();
 		foreach ( (array) $rows as $row ) { $out[] = array( 'keyphrase' => (string) $row->keyphrase, 'count' => (int) $row->total ); }
@@ -813,7 +1272,6 @@ final class ArticleIntelligence {
 	 * Text utilities (pure, no WordPress state)
 	 * ------------------------------------------------------------------ */
 
-	/** @return array<int,array<string,mixed>> */
 	private static function checks_in( array $report, $group, $scored_only ) {
 		$out = array();
 		foreach ( $report['checks'] as $check ) {
@@ -829,7 +1287,6 @@ final class ArticleIntelligence {
 		return (string) preg_replace( '#<(script|style|noscript|iframe)\b.*?</\1>#is', '', $html );
 	}
 
-	/** @return string[] */
 	private static function paragraphs( $html ) {
 		$html = (string) preg_replace( '/\[\/?[a-z][a-z0-9_\-]*(?:\s[^\]]*)?\]/i', ' ', $html );
 		$html = (string) preg_replace( '#</(?:p|div|li|h[1-6]|blockquote|tr|figcaption)>|<br\s*/?>#i', "\n", $html );
@@ -842,7 +1299,6 @@ final class ArticleIntelligence {
 		return $out;
 	}
 
-	/** @param string[] $paragraphs @return string[] */
 	private static function sentences( array $paragraphs ) {
 		$out = array();
 		foreach ( $paragraphs as $p ) {
@@ -853,7 +1309,6 @@ final class ArticleIntelligence {
 		return $out;
 	}
 
-	/** @return array<int,array{level:int,text:string}> */
 	private static function headings( $html ) {
 		$out = array();
 		if ( preg_match_all( '#<h([1-6])\b[^>]*>(.*?)</h\1>#is', $html, $m, PREG_SET_ORDER ) ) {
@@ -864,7 +1319,6 @@ final class ArticleIntelligence {
 		return $out;
 	}
 
-	/** @return array<int,array{alt:string}> */
 	private static function images( $html ) {
 		$out = array();
 		if ( preg_match_all( '/<img\b[^>]*>/i', $html, $m ) ) {
@@ -879,15 +1333,23 @@ final class ArticleIntelligence {
 		return $out;
 	}
 
-	/** @return array{large:int,oversize:int,legacy:int} */
 	private static function image_quality( $html ) {
 		$out = array( 'large' => 0, 'oversize' => 0, 'legacy' => 0 ); $max = (int) get_option( 'publishrank_image_max_width', 2000 );
 		if ( ! preg_match_all( '/<img\b[^>]*\bsrc\s*=\s*(?:"([^"]+)"|\'([^\']+)\')/i', $html, $matches, PREG_SET_ORDER ) ) { return $out; }
-		foreach ( $matches as $match ) { $url = html_entity_decode( ( isset( $match[2] ) && '' !== $match[2] ? $match[2] : $match[1] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ); $id = function_exists( 'attachment_url_to_postid' ) ? attachment_url_to_postid( $url ) : 0; if ( ! $id ) { continue; } $file = get_attached_file( $id ); if ( $file && is_readable( $file ) && filesize( $file ) > 350 * 1024 ) { $out['large']++; } $meta = wp_get_attachment_metadata( $id ); if ( ! empty( $meta['width'] ) && (int) $meta['width'] > $max ) { $out['oversize']++; } $ext = strtolower( pathinfo( (string) $file, PATHINFO_EXTENSION ) ); if ( $ext && ! in_array( $ext, array( 'webp', 'avif' ), true ) ) { $out['legacy']++; } }
+		foreach ( $matches as $match ) {
+			$url = html_entity_decode( ( isset( $match[2] ) && '' !== $match[2] ? $match[2] : $match[1] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+			$id = function_exists( 'attachment_url_to_postid' ) ? attachment_url_to_postid( $url ) : 0;
+			if ( ! $id ) { continue; }
+			$file = get_attached_file( $id );
+			if ( $file && is_readable( $file ) && filesize( $file ) > 350 * 1024 ) { $out['large']++; }
+			$meta = wp_get_attachment_metadata( $id );
+			if ( ! empty( $meta['width'] ) && (int) $meta['width'] > $max ) { $out['oversize']++; }
+			$ext = strtolower( pathinfo( (string) $file, PATHINFO_EXTENSION ) );
+			if ( $ext && ! in_array( $ext, array( 'webp', 'avif' ), true ) ) { $out['legacy']++; }
+		}
 		return $out;
 	}
 
-	/** @return array<int,array{internal:bool,text:string}> */
 	private static function links( $html, $home_host ) {
 		$home = '' !== $home_host ? strtolower( $home_host ) : ( function_exists( 'home_url' ) ? strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) : '' );
 		$home = (string) preg_replace( '/^www\./', '', $home );
@@ -905,7 +1367,6 @@ final class ArticleIntelligence {
 		return $out;
 	}
 
-	/** Longest run of words between headings (or from start/end). */
 	private static function longest_gap_without_heading( $html ) {
 		$parts = preg_split( '#<h[1-6]\b[^>]*>.*?</h[1-6]>#is', $html );
 		$max   = 0;
@@ -915,14 +1376,12 @@ final class ArticleIntelligence {
 		return $max;
 	}
 
-	/** @return string[] */
 	public static function tokens( $text ) {
 		$text = self::lower( (string) $text );
 		preg_match_all( '/[\p{L}\p{M}\p{N}]+(?:[\'’][\p{L}]+)*/u', $text, $m );
 		return isset( $m[0] ) ? $m[0] : array();
 	}
 
-	/** Light English stemming for matching only; non-ASCII tokens are returned unchanged. @param string[] $tokens @return string[] */
 	private static function stems( array $tokens ) {
 		$out = array();
 		foreach ( $tokens as $t ) {
@@ -936,7 +1395,6 @@ final class ArticleIntelligence {
 		return $out;
 	}
 
-	/** @param string[] $haystack @param string[] $needle */
 	private static function phrase_count( array $haystack, array $needle ) {
 		$n = count( $needle ); $h = count( $haystack ); $count = 0;
 		if ( 0 === $n || $h < $n ) { return 0; }
@@ -946,7 +1404,6 @@ final class ArticleIntelligence {
 		return $count;
 	}
 
-	/** Zero-based index of the first match, or PHP_INT_MAX. @param string[] $haystack @param string[] $needle */
 	private static function phrase_position( array $haystack, array $needle ) {
 		$n = count( $needle ); $h = count( $haystack );
 		for ( $i = 0; $n > 0 && $i <= $h - $n; $i++ ) {
@@ -960,7 +1417,6 @@ final class ArticleIntelligence {
 		return $letters > 0 && ( preg_match_all( '/[A-Za-z]/', (string) $text ) / $letters ) >= 0.7;
 	}
 
-	/** @param string[] $words */
 	private static function flesch( array $words, $sentences ) {
 		$count = max( 1, count( $words ) ); $syllables = 0;
 		foreach ( $words as $w ) {
@@ -972,7 +1428,6 @@ final class ArticleIntelligence {
 		return round( 206.835 - 1.015 * ( $count / max( 1, $sentences ) ) - 84.6 * ( $syllables / $count ), 1 );
 	}
 
-	/** Approximate Arial 20px width of a title as rendered in search results. */
 	public static function pixel_width( $text ) {
 		$width = 0.0;
 		foreach ( preg_split( '//u', (string) $text, -1, PREG_SPLIT_NO_EMPTY ) as $ch ) {
@@ -990,7 +1445,6 @@ final class ArticleIntelligence {
 		return '/\b(?:however|therefore|moreover|furthermore|meanwhile|consequently|additionally|besides|because|although|though|while|whereas|instead|otherwise|nevertheless|nonetheless|similarly|likewise|finally|first|second|third|next|then|afterward|previously|subsequently|as a result|for example|for instance|in addition|in contrast|on the other hand|according to|in fact|so that|since|unless|despite)\b/i';
 	}
 
-	/** @return array<string,bool> */
 	private static function stopwords() {
 		static $set = null;
 		if ( null === $set ) {

@@ -58,6 +58,8 @@ final class PostMeta {
 	const PRODUCT_CURRENCY = '_publishrank_seo_product_currency';
 	const PRODUCT_AVAILABILITY = '_publishrank_seo_product_availability';
 	const HREFLANG = '_publishrank_seo_hreflang';
+	const WEB_STORY_POSTER = '_publishrank_web_story_poster';
+	const WEB_STORY_PUBLISHER_LOGO = '_publishrank_web_story_publisher_logo';
 
 	/** Meta keys that editors may override and that are exposed to the block editor and REST API. */
 	public static function overridable() {
@@ -169,7 +171,7 @@ final class PostMeta {
 			foreach ( array( self::CANONICAL ) as $key ) {
 				if ( isset( $_POST[ $key ] ) ) { update_post_meta( $post_id, $key, self::sanitize_url( $_POST[ $key ] ) ); }
 			}
-			foreach ( array( self::OG_IMAGE, self::VIDEO_THUMBNAIL, self::AUTHOR_IMAGE ) as $key ) {
+			foreach ( array( self::OG_IMAGE, self::VIDEO_THUMBNAIL, self::AUTHOR_IMAGE, self::WEB_STORY_POSTER, self::WEB_STORY_PUBLISHER_LOGO ) as $key ) {
 				if ( isset( $_POST[ $key ] ) ) { update_post_meta( $post_id, $key, self::sanitize_public_url( $_POST[ $key ] ) ); }
 			}
 		if ( isset( $_POST[ self::ROBOTS ] ) ) {

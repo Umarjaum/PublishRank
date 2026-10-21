@@ -1,1 +1,36 @@
-.pr-editor-score-card{position:fixed;right:20px;bottom:20px;z-index:100000;width:250px;padding:14px;background:#061b3a;color:#ffffff;border:1px solid #1b6cff;border-radius:12px;box-shadow:0 8px 28px rgba(0, 0, 0,.22);font-size:12px}.pr-editor-score-card__brand{display:flex;gap:6px;align-items:center;color:#9ed8ff;font-size:14px}.pr-editor-score-card__score{display:flex;align-items:baseline;gap:4px;margin:8px 0}.pr-editor-score-card__number{font-size:38px;font-weight:800;color:#19d3ff}.pr-editor-score-card__metrics{display:flex;gap:6px;flex-wrap:wrap;color:#e5e5e5}.pr-editor-score-card__metrics span{padding:4px 6px;background:rgba(255, 255, 255,.1);border-radius:5px}.pr-editor-score-card p{color:#e5e5e5;line-height:1.45}.pr-editor-score-card.is-good .pr-editor-score-card__number{color:#61e294}.pr-editor-score-card.is-ok .pr-editor-score-card__number{color:#ffd166}.pr-editor-score-card.is-bad .pr-editor-score-card__number{color:#ff8991}@media(max-width:782px){.pr-editor-score-card{right:10px;bottom:10px;width:220px}}
+/* PublishRank floating SEO score widget */
+.pr-editor-score-card{position:fixed;right:20px;bottom:20px;z-index:100000;width:174px;padding:10px 12px;background:#fff;color:#1d2327;border:1px solid #dcdcde;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);font-size:12px}
+.pr-editor-score-card__top{display:flex;gap:10px;align-items:center}
+.pr-editor-score-card__titles{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;min-width:0}
+.pr-editor-score-card__brand{color:#1d2327;font-size:13px}
+.pr-editor-score-card__status-text{color:#646970;font-size:11px}
+.pr-editor-score-card__toggle{flex:0 0 auto;width:22px;height:22px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:transparent;color:#fff;cursor:pointer;line-height:1;padding:0}
+.pr-editor-score-card__toggle:focus-visible{outline:2px solid #19d3ff;outline-offset:2px}
+.pr-editor-score-card__ring .pr-ring__bg{stroke:#dcdcde}
+.pr-editor-score-card__ring .pr-ring__val--good{stroke:#61e294}
+.pr-editor-score-card__ring .pr-ring__val--ok{stroke:#ffd166}
+.pr-editor-score-card__ring .pr-ring__val--bad{stroke:#ff8991}
+.pr-editor-score-card__ring .pr-ring__text{fill:#16803c!important;color:#16803c!important;font-weight:700}
+.pr-editor-score-card__body{margin-top:8px}
+.pr-editor-score-card.is-collapsed .pr-editor-score-card__body{display:none}
+.pr-editor-score-card__metrics{display:flex;gap:6px;flex-wrap:wrap;color:#e5e5e5;margin-bottom:8px}
+.pr-editor-score-card__metrics span{padding:4px 6px;background:rgba(255,255,255,.1);border-radius:5px}
+.pr-editor-score-card__metrics b{color:#19d3ff}
+.pr-editor-score-card__keyphrase-pill.has-keyphrase{background:rgba(97,226,148,.18)}
+.pr-editor-score-card__keyphrase-pill.has-keyphrase b{color:#61e294}
+.pr-editor-score-card__issues b{color:#ff8991}
+.pr-editor-score-card__at-line{margin:0 0 8px;color:#9fb3cc;font-size:11px}
+.pr-editor-score-card__actions{display:flex;gap:6px;flex-wrap:wrap}
+.pr-editor-score-card__actions .button{font-size:12px}
+.pr-editor-score-card.is-good .pr-editor-score-card__status-text{color:#61e294}
+.pr-editor-score-card.is-ok .pr-editor-score-card__status-text{color:#ffd166}
+.pr-editor-score-card.is-bad .pr-editor-score-card__status-text{color:#ff8991}
+.pr-intel__busy .pr-editor-score-card__actions{pointer-events:none}
+@media(max-width:782px){
+  .pr-editor-score-card{right:10px;bottom:10px;width:auto;max-width:calc(100vw - 20px);padding:10px 12px}
+  .pr-editor-score-card__metrics span:nth-child(n+3){display:none}
+  .pr-editor-score-card.is-collapsed .pr-editor-score-card__metrics{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .pr-editor-score-card *{transition:none!important}
+}
