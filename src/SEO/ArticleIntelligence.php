@@ -152,6 +152,8 @@ final class ArticleIntelligence {
 					'title'         => $text( 'title', 300 ),
 					'content'       => self::substr( $content, 400000 ),
 					'excerpt'       => $text( 'excerpt', 3200 ),
+					'tags'          => self::sanitize_term_list( isset( $_POST['tags'] ) ? wp_unslash( $_POST['tags'] ) : $data['tags'], 20, 100 ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
+					'categories'    => self::sanitize_term_list( isset( $_POST['categories'] ) ? wp_unslash( $_POST['categories'] ) : $data['categories'], 20, 100 ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
 				'slug'          => sanitize_title( $text( 'slug', 200 ) ),
 				'seo_title'     => $text( 'seo_title', 255 ),
 				'description'   => $text( 'description', 320 ),
@@ -199,9 +201,28 @@ final class ArticleIntelligence {
 	public static function blank_data() {
 		return array(
 			'post_id' => 0, 'title' => '', 'content' => '', 'excerpt' => '', 'slug' => '', 'seo_title' => '',
-			'description' => '', 'keyphrase' => '', 'has_thumbnail' => false, 'has_author' => false,
+			'description' => '', 'keyphrase' => '', 'tags' => array(), 'categories' => array(), 'has_thumbnail' => false, 'has_author' => false,
 			'modified' => 0, 'citations' => '', 'home_host' => '',
 		);
+	}
+
+	/** Clean taxonomy names supplied by a saved post or an editor AJAX payload. @return string[] */
+	private static function sanitize_term_list( $terms, $max_items = 20, $max_length = 100 ) {
+		if ( ! is_array( $terms ) ) { $terms = array( $terms ); }
+		$out = array();
+		foreach ( array_slice( $terms, 0, (int) $max_items ) as $term ) {
+			if ( ! is_scalar( $term ) ) { continue; }
+			$term = self::substr( sanitize_text_field( (string) $term ), (int) $max_length );
+			if ( '' !== $term && ! in_array( $term, $out, true ) ) { $out[] = $term; }
+		}
+		return $out;
+	}
+
+	/** Get taxonomy display names from the persisted post. @return string[] */
+	private static function post_term_names( $post_id, $taxonomy ) {
+		if ( ! taxonomy_exists( $taxonomy ) ) { return array(); }
+		$terms = wp_get_post_terms( (int) $post_id, $taxonomy, array( 'fields' => 'names' ) );
+		return is_wp_error( $terms ) ? array() : self::sanitize_term_list( $terms );
 	}
 
 	/** @param \WP_Post $post @return array<string,mixed> */
@@ -216,8 +237,10 @@ final class ArticleIntelligence {
 				'excerpt'       => (string) $post->post_excerpt,
 				'slug'          => (string) $post->post_name,
 				'seo_title'     => (string) PostMeta::get( $id, PostMeta::TITLE, '' ),
-				'description'   => (string) PostMeta::get( $id, PostMeta::DESCRIPTION, '' ),
-				'keyphrase'     => (string) PostMeta::get( $id, PostMeta::FOCUS_KEYWORD, '' ),
+					'description'   => (string) PostMeta::get( $id, PostMeta::DESCRIPTION, '' ),
+					'keyphrase'     => (string) PostMeta::get( $id, PostMeta::FOCUS_KEYWORD, '' ),
+					'tags'          => self::post_term_names( $id, 'post_tag' ),
+					'categories'    => self::post_term_names( $id, 'category' ),
 				'has_thumbnail' => (bool) has_post_thumbnail( $post ),
 				'has_author'    => (bool) ( PostMeta::get( $id, PostMeta::AUTHOR_NAME, '' ) || get_userdata( (int) $post->post_author ) ),
 				'modified'      => (int) get_post_modified_time( 'U', true, $post ),
@@ -272,11 +295,17 @@ final class ArticleIntelligence {
 		$links      = self::links( $html, (string) $d['home_host'] );
 		$sentences  = self::sentences( $paragraphs );
 		$latin      = self::is_latin( $text );
+		$tags       = self::sanitize_term_list( $d['tags'], 20, 100 );
+		$categories = self::sanitize_term_list( $d['categories'], 20, 100 );
 		$keyphrase  = trim( (string) $d['keyphrase'] );
 		$keyphrase_occurrences = 0;
 		$keyphrase_density = 0.0;
 		$keyphrase_coverage = array( 'title' => false, 'description' => false, 'slug' => false, 'intro' => false, 'heading' => false, 'alt' => false, 'body' => false );
 		$title      = trim( wp_strip_all_tags( (string) $d['title'] ) );
+		$keyphrase_source = '' !== $keyphrase ? 'manual' : '';
+		if ( '' === $keyphrase && $tags ) { $keyphrase = $tags[0]; $keyphrase_source = 'tag'; }
+		if ( '' === $keyphrase && $categories ) { $keyphrase = $categories[0]; $keyphrase_source = 'category'; }
+		if ( '' === $keyphrase ) { $keyphrase = self::suggest_title_keyphrase( $title ); if ( '' !== $keyphrase ) { $keyphrase_source = 'headline'; } }
 		$seo_title  = trim( (string) $d['seo_title'] );
 		$serp_title = '' !== $seo_title ? $seo_title : $title;
 		$description = trim( (string) $d['description'] );
@@ -544,10 +573,22 @@ final class ArticleIntelligence {
 			$groups[ $g ] = $v['max'] > 0 ? (int) round( ( $v['earned'] / $v['max'] ) * 100 ) : 0;
 		}
 
-		$keyphrase_suggestions = $word_count >= 80 ? self::suggest_keyphrases( $title, $words, $headings ) : array();
+		$keyphrase_suggestions = array();
+		foreach ( array_merge( $tags, $categories ) as $term ) {
+			$source = in_array( $term, $tags, true ) ? 'tag' : 'category';
+			if ( '' !== $term && ! self::has_suggestion( $keyphrase_suggestions, $term ) ) {
+				$keyphrase_suggestions[] = array( 'phrase' => $term, 'count' => self::phrase_count( $words, self::tokens( $term ) ), 'source' => $source );
+			}
+			if ( count( $keyphrase_suggestions ) >= 6 ) { break; }
+		}
+		$article_suggestions = $word_count >= 80 ? self::suggest_keyphrases( $title, $words, $headings ) : array();
+		foreach ( $article_suggestions as $suggestion ) {
+			if ( count( $keyphrase_suggestions ) >= 6 ) { break; }
+			if ( ! self::has_suggestion( $keyphrase_suggestions, $suggestion['phrase'] ) ) { $suggestion['source'] = 'article'; $keyphrase_suggestions[] = $suggestion; }
+		}
 		if ( ! $keyphrase_suggestions ) {
 			$title_phrase = self::suggest_title_keyphrase( $title );
-			if ( '' !== $title_phrase ) { $keyphrase_suggestions[] = array( 'phrase' => $title_phrase, 'count' => 0 ); }
+			if ( '' !== $title_phrase ) { $keyphrase_suggestions[] = array( 'phrase' => $title_phrase, 'count' => 0, 'source' => 'headline' ); }
 		}
 
 		return array(
@@ -555,11 +596,12 @@ final class ArticleIntelligence {
 			'rating'      => $score >= 80 ? 'good' : ( $score >= 55 ? 'ok' : 'bad' ),
 			'groups'      => $groups,
 			'checks'      => $checks,
-			'fields'      => array( 'title' => $title, 'seo_title' => $seo_title, 'description' => $description, 'keyphrase' => $keyphrase ),
+			'fields'      => array( 'title' => $title, 'seo_title' => $seo_title, 'description' => $description, 'keyphrase' => trim( (string) $d['keyphrase'] ), 'keyphrase_source' => $keyphrase_source ),
 			'stats'       => array(
 				'words'        => $word_count,
 				'images'       => count( $images ),
-				'focus_keyword' => $keyphrase,
+					'focus_keyword' => $keyphrase,
+					'focus_keyword_source' => $keyphrase_source,
 				'focus_keyword_occurrences' => $keyphrase_occurrences,
 				'focus_keyword_density' => round( $keyphrase_density, 2 ),
 				'focus_keyword_coverage' => count( array_filter( $keyphrase_coverage ) ),
@@ -641,6 +683,15 @@ final class ArticleIntelligence {
 			return ! isset( $stop[ $word ] ) && self::len( $word ) > 2 && ! ctype_digit( $word );
 		} ) );
 		return implode( ' ', array_slice( $tokens, 0, 3 ) );
+	}
+
+	/** @param array<int,array<string,mixed>> $suggestions */
+	private static function has_suggestion( array $suggestions, $phrase ) {
+		$needle = self::lower( trim( (string) $phrase ) );
+		foreach ( $suggestions as $suggestion ) {
+			if ( isset( $suggestion['phrase'] ) && self::lower( trim( (string) $suggestion['phrase'] ) ) === $needle ) { return true; }
+		}
+		return false;
 	}
 
 	/**
@@ -770,7 +821,9 @@ final class ArticleIntelligence {
 		if ( ! empty( $sug['description'] ) ) { $out .= '<button type="button" class="button button-small pr-intel__apply-suggestion" data-meta-key="_publishrank_seo_description" data-value="' . esc_attr( $sug['description'] ) . '">' . esc_html__( 'Use draft', 'publishrank' ) . '</button>'; }
 		$out .= '</span></label></div><p class="description pr-intel__save-status" role="status">' . esc_html__( 'These values sync with PublishRank SEO settings. Save or update the article to keep them.', 'publishrank' ) . '</p></details>';
 		if ( ! empty( $s['focus_keyword'] ) ) {
-			$out .= '<div class="pr-intel__keyword-metrics"><strong>' . esc_html__( 'Focus keyphrase', 'publishrank' ) . ':</strong> ' . esc_html( $s['focus_keyword'] ) . ' · ' . esc_html( sprintf( __( '%1$d occurrence(s), %2$s%% density, %3$d/%4$d placement signals', 'publishrank' ), $s['focus_keyword_occurrences'], $s['focus_keyword_density'], $s['focus_keyword_coverage'], $s['focus_keyword_coverage_total'] ) ) . '</div>';
+			$source_labels = array( 'tag' => __( 'from article tags', 'publishrank' ), 'category' => __( 'from article category', 'publishrank' ), 'headline' => __( 'from headline', 'publishrank' ) );
+			$source_note = isset( $source_labels[ $s['focus_keyword_source'] ?? '' ] ) ? ' · ' . $source_labels[ $s['focus_keyword_source'] ] : '';
+			$out .= '<div class="pr-intel__keyword-metrics"><strong>' . esc_html__( 'Focus keyphrase', 'publishrank' ) . ':</strong> ' . esc_html( $s['focus_keyword'] ) . esc_html( $source_note ) . ' · ' . esc_html( sprintf( __( '%1$d occurrence(s), %2$s%% density, %3$d/%4$d placement signals', 'publishrank' ), $s['focus_keyword_occurrences'], $s['focus_keyword_density'], $s['focus_keyword_coverage'], $s['focus_keyword_coverage_total'] ) ) . '</div>';
 		}
 		$out   .= '<div class="pr-intel__groups">';
 		foreach ( $labels as $key => $label ) {
@@ -792,11 +845,13 @@ final class ArticleIntelligence {
 			$out .= '</ul></details>';
 		}
 		if ( ! empty( $sug['keyphrases'] ) || ! empty( $sug['description'] ) ) {
-			$out .= '<div class="pr-intel__suggest"><strong>' . esc_html__( 'Suggestions from your article text', 'publishrank' ) . '</strong>';
+			$out .= '<div class="pr-intel__suggest"><strong>' . esc_html__( 'Suggestions from your article', 'publishrank' ) . '</strong>';
 			if ( ! empty( $sug['keyphrases'] ) ) {
-				$out .= '<p>' . esc_html__( 'Likely keyphrases:', 'publishrank' ) . ' ';
+				$out .= '<p>' . esc_html__( 'Keyphrases from tags and article text:', 'publishrank' ) . ' ';
 				foreach ( $sug['keyphrases'] as $k ) {
-					$source = ! empty( $k['count'] ) ? ' <span class="pr-intel__count">×' . esc_html( (string) $k['count'] ) . '</span>' : ' <span class="pr-intel__count">' . esc_html__( 'headline', 'publishrank' ) . '</span>';
+					$source_names = array( 'tag' => __( 'tag', 'publishrank' ), 'category' => __( 'category', 'publishrank' ), 'article' => __( 'article text', 'publishrank' ), 'headline' => __( 'headline', 'publishrank' ) );
+					$source_name = isset( $source_names[ $k['source'] ?? '' ] ) ? $source_names[ $k['source'] ] : __( 'article text', 'publishrank' );
+					$source = ' <span class="pr-intel__count">' . ( ! empty( $k['count'] ) ? '×' . esc_html( (string) $k['count'] ) . ' · ' : '' ) . esc_html( $source_name ) . '</span>';
 					$out .= '<button type="button" class="button button-small pr-intel__use-keyphrase" data-phrase="' . esc_attr( $k['phrase'] ) . '">' . esc_html( $k['phrase'] ) . $source . '</button> ';
 				}
 				$out .= '</p>';
