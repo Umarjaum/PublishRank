@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 $GLOBALS['pr_test_options'] = array( 'publishrank_links_enabled' => 1, 'publishrank_links_follow_domains' => 'partner.example', 'publishrank_links_nofollow_domains' => '', 'publishrank_links_sponsored' => 0, 'publishrank_primary_url' => 'https://news.example.com' );
 function get_option( $key, $default = false ) { return array_key_exists( $key, $GLOBALS['pr_test_options'] ) ? $GLOBALS['pr_test_options'][ $key ] : $default; }

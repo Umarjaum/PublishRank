@@ -87,16 +87,22 @@ final class IndexNowPage {
 		$queue = get_option( 'publishrank_indexnow_queue', array() );
 		if ( ! is_array( $queue ) ) { $queue = array(); }
 		$next_run = wp_next_scheduled( 'publishrank_indexnow_flush_queue' );
+		$output = fopen( 'php://output', 'w' );
+		if ( ! is_resource( $output ) ) {
+			wp_die( esc_html__( 'Unable to create the IndexNow history export.', 'publishrank' ) );
+		}
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename=publishrank-indexnow-history.csv' );
-		$output = fopen( 'php://output', 'w' );
-		fputcsv( $output, array( 'time_utc', 'url', 'result', 'http_status', 'message', 'event' ) );
-		foreach ( array_slice( $logs, 0, 100 ) as $entry ) {
-			if ( ! is_array( $entry ) ) { continue; }
-			fputcsv( $output, array( isset( $entry['time'] ) ? $entry['time'] : '', isset( $entry['url'] ) ? $entry['url'] : '', isset( $entry['result'] ) ? $entry['result'] : '', isset( $entry['http_status'] ) ? $entry['http_status'] : '', isset( $entry['message'] ) ? $entry['message'] : '', isset( $entry['event'] ) ? $entry['event'] : '' ) );
+		try {
+			fputcsv( $output, array( 'time_utc', 'url', 'result', 'http_status', 'message', 'event' ) );
+			foreach ( array_slice( $logs, 0, 100 ) as $entry ) {
+				if ( ! is_array( $entry ) ) { continue; }
+				fputcsv( $output, array( isset( $entry['time'] ) ? $entry['time'] : '', isset( $entry['url'] ) ? $entry['url'] : '', isset( $entry['result'] ) ? $entry['result'] : '', isset( $entry['http_status'] ) ? $entry['http_status'] : '', isset( $entry['message'] ) ? $entry['message'] : '', isset( $entry['event'] ) ? $entry['event'] : '' ) );
+			}
+		} finally {
+			if ( is_resource( $output ) ) { fclose( $output ); }
 		}
-		fclose( $output );
 		exit;
 	}
 

@@ -56,9 +56,10 @@ final class PublisherLinkIntelligence {
 		$ids = array();
 		if ( $types ) {
 			$type_placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
-			$sql = "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$type_placeholders}) AND ID > %d ORDER BY ID ASC LIMIT 15";
-			$args = array_merge( $types, array( (int) $state['last_id'] ) );
-			$ids = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( $sql, $args ) ) );
+				$sql = "SELECT ID FROM %i WHERE post_status = 'publish' AND post_type IN ({$type_placeholders}) AND ID > %d ORDER BY ID ASC LIMIT %d";
+				$args = array_merge( array( $wpdb->posts ), $types, array( (int) $state['last_id'], 15 ) );
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- The identifier uses %i; placeholder count is generated from Store::allowed_types(), and all data is bound by prepare().
+				$ids = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( $sql, $args ) ) );
 		}
 		$results = get_option( self::RESULTS_OPTION, array() );
 		$results = is_array( $results ) ? $results : array();

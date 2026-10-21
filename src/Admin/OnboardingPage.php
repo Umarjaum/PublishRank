@@ -290,11 +290,11 @@ final class OnboardingPage {
 		}
 		$uploads = wp_upload_dir();
 		return array(
-			'wp'       => array( 'ok' => version_compare( $wp_version, '6.3', '>=' ), 'label' => sprintf( __( 'WordPress %s (6.3+ required)', 'publishrank' ), $wp_version ) ),
-			'php'      => array( 'ok' => version_compare( PHP_VERSION, '7.4', '>=' ), 'label' => sprintf( __( 'PHP %s (7.4+ required)', 'publishrank' ), PHP_VERSION ) ),
+			'wp'       => array( 'ok' => version_compare( $wp_version, '6.3', '>=' ), 'label' => sprintf( __( /* translators: %s: installed WordPress version. */ 'WordPress %s (6.3+ required)', 'publishrank' ), $wp_version ) ),
+			'php'      => array( 'ok' => version_compare( PHP_VERSION, '7.4', '>=' ), 'label' => sprintf( __( /* translators: %s: installed PHP version. */ 'PHP %s (7.4+ required)', 'publishrank' ), PHP_VERSION ) ),
 			'ssl'      => array( 'ok' => is_ssl(), 'label' => __( 'HTTPS active', 'publishrank' ) ),
 			'perm'     => array( 'ok' => get_option( 'permalink_structure' ) !== '', 'label' => __( 'Pretty permalinks enabled', 'publishrank' ) ),
-			'conflict' => array( 'ok' => '' === $conflict, 'label' => $conflict ? sprintf( __( 'Another SEO plugin detected: %s — running both is not recommended.', 'publishrank' ), $conflict ) : __( 'No conflicting SEO plugin detected', 'publishrank' ) ),
+			'conflict' => array( 'ok' => '' === $conflict, 'label' => $conflict ? sprintf( __( /* translators: %s: name of the other active SEO plugin. */ 'Another SEO plugin detected: %s — running both is not recommended.', 'publishrank' ), $conflict ) : __( 'No conflicting SEO plugin detected', 'publishrank' ) ),
 			'uploads'  => array( 'ok' => empty( $uploads['error'] ), 'label' => empty( $uploads['error'] ) ? __( 'Uploads directory writable', 'publishrank' ) : $uploads['error'] ),
 		);
 	}
@@ -361,16 +361,19 @@ final class OnboardingPage {
 	}
 
 	public function save() {
-		AdminAssets::guard( 'publishrank_onboarding_save' );
-		$step      = isset( $_POST['step'] ) ? absint( $_POST['step'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to do this.', 'publishrank' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'publishrank_onboarding_save' );
+		$step      = isset( $_POST['step'] ) ? absint( $_POST['step'] ) : 1;
 		$step      = max( 1, min( self::TOTAL_STEPS, $step ) );
-		$edit      = ! empty( $_POST['edit_mode'] ) ? '&edit=1' : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$edit      = ! empty( $_POST['edit_mode'] ) ? '&edit=1' : '';
 		$settings  = new SettingsPage();
 		$identity  = PublicationProfile::identity_type();
 		$errors    = array();
 
-		if ( 2 === $step && isset( $_POST['publishrank_identity_type'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$identity = $settings->sanitize_identity_type( wp_unslash( $_POST['publishrank_identity_type'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( 2 === $step && isset( $_POST['publishrank_identity_type'] ) ) {
+			$identity = $settings->sanitize_identity_type( wp_unslash( $_POST['publishrank_identity_type'] ) );
 		}
 		$is_person = 'person' === $identity;
 
@@ -378,7 +381,7 @@ final class OnboardingPage {
 			if ( ( 'org' === $field['for'] && $is_person ) || ( 'person' === $field['for'] && ! $is_person ) ) {
 				continue;
 			}
-			$raw   = isset( $_POST[ $field['key'] ] ) ? wp_unslash( $_POST[ $field['key'] ] ) : ( 'toggle' === $field['type'] ? 0 : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput
+			$raw   = isset( $_POST[ $field['key'] ] ) ? wp_unslash( $_POST[ $field['key'] ] ) : ( 'toggle' === $field['type'] ? 0 : '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- sanitized by the field-specific cleaner immediately below.
 			$clean = $this->clean( $field, $raw, $settings );
 			if ( 'publishrank_identity_person_url' === $field['key'] && '' === $clean ) { $clean = esc_url_raw( home_url( '/' ) ); }
 			if ( $field['required'] && '' === trim( (string) $clean ) ) { $errors[] = $field['label']; }
@@ -388,7 +391,7 @@ final class OnboardingPage {
 		}
 
 		if ( 7 === $step ) {
-			$local_input = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? wp_unslash( $_POST['local_seo'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput
+			$local_input = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? wp_unslash( $_POST['local_seo'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- sanitized by LocalSEO::sanitize_profile() below.
 			update_option( 'publishrank_local_seo_profile', \PublishRankSEO\SEO\LocalSEO::sanitize_profile( $local_input ) );
 		}
 

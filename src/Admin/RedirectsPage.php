@@ -62,7 +62,10 @@ final class RedirectsPage {
 	}
 
 	public function handle_delete() {
-		AdminAssets::guard( 'publishrank_seo_redirect_delete' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to manage redirects.', 'publishrank' ) );
+		}
+		check_admin_referer( 'publishrank_seo_redirect_delete' );
 		$id = isset( $_GET['id'] ) ? sanitize_key( wp_unslash( $_GET['id'] ) ) : '';
 		RedirectStore::delete( $id );
 		AdminAssets::done( self::SLUG, 'success', __( 'Redirect removed.', 'publishrank' ) );

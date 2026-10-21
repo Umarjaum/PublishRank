@@ -69,11 +69,13 @@ final class HeadOutput {
 		if ( is_admin() || wp_doing_ajax() || ! get_option( 'publishrank_meta_enabled', true ) ) {
 			return;
 		}
-		// Always disclose technical provenance in the public source. This is separate from the optional visible footer credit.
-		echo "<!-- SEO metadata output begin -->\n";
-		echo '<!-- PublishRank: begin; version=' . esc_html( PUBLISHRANK_SEO_VERSION ) . '; output=technical,social,news -->' . "\n";
-		echo '<meta name="generator" content="PublishRank ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
-		echo '<meta name="publishrank" content="active" />' . "\n";
+			// Product/version provenance is shown only when the administrator opts in under Settings.
+			echo "<!-- SEO metadata output begin -->\n";
+			if ( get_option( 'publishrank_source_attribution', false ) ) {
+				echo '<!-- PublishRank: begin; version=' . esc_html( PUBLISHRANK_SEO_VERSION ) . '; output=technical,social,news -->' . "\n";
+				echo '<meta name="generator" content="PublishRank ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
+				echo '<meta name="publishrank" content="active" />' . "\n";
+			}
 		echo "<!-- Technical metadata begin -->\n";
 		$description = $this->meta->description();
 		if ( $this->registry->claim( 'description' ) && '' !== $description ) {

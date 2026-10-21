@@ -171,7 +171,7 @@ final class DashboardPage {
 
 			$schema_enabled = (bool) get_option( 'publishrank_schema_enabled', true );
 			$page_type      = sanitize_text_field( (string) get_option( 'publishrank_schema_default_page_type', 'WebPage' ) );
-			$schema_message  = $schema_enabled ? sprintf( __( 'Organization, WebSite, WebPage (%s), breadcrumbs and eligible article/media entities are enabled.', 'publishrank' ), $page_type ?: 'WebPage' ) : __( 'Enable the structured-data graph so pages and eligible articles receive JSON-LD.', 'publishrank' );
+			$schema_message  = $schema_enabled ? sprintf( /* translators: %s: WebPage schema type. */ __( 'Organization, WebSite, WebPage (%s), breadcrumbs and eligible article/media entities are enabled.', 'publishrank' ), $page_type ?: 'WebPage' ) : __( 'Enable the structured-data graph so pages and eligible articles receive JSON-LD.', 'publishrank' );
 			$checks[]       = array( 'label' => __( 'Structured data coverage', 'publishrank' ), 'status' => $schema_enabled ? 'PASS' : 'WARNING', 'message' => $schema_message );
 
 		$logo     = (string) get_option( 'publishrank_seo_publisher_logo', '' ) || get_theme_mod( 'custom_logo' ) || ( function_exists( 'get_site_icon_url' ) && get_site_icon_url( 512 ) );

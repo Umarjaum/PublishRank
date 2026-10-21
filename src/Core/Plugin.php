@@ -65,7 +65,9 @@ use PublishRankSEO\Admin\SiteVerificationPage;
 use PublishRankSEO\AnalyticsCollector;
 use PublishRankSEO\Google\LiveSync;
 
-defined( 'ABSPATH' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 final class Plugin {
 	private $registry;
@@ -110,6 +112,7 @@ final class Plugin {
 		$this->loader->register( ArticleIntelligence::class, false );
 				$this->loader->register( BreadcrumbEngine::class, false );
 				$this->loader->register( TraceIntegrity::class, false );
+				$this->loader->register( FrontendHeadComment::class, false );
 			$this->loader->register( SecurityHeaders::class, false );
 			$this->loader->register( TrafficGuard::class, false );
 			$this->loader->register( ReadingExperience::class, false );

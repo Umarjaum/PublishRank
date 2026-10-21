@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /**
  * News sitemap behavioural tests using a small in-memory WordPress fake (no WordPress install required).
  * Run: php tests/news_sitemap.php   (exit code 0 = all passed)

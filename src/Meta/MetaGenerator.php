@@ -210,7 +210,7 @@ return $url;
 
 	private function page_suffix() {
 		$page = max( 1, (int) get_query_var( 'paged' ), (int) get_query_var( 'page' ) );
-		return $page > 1 ? sprintf( __( 'Page %d', 'publishrank' ), $page ) : '';
+		return $page > 1 ? sprintf( /* translators: %d: current page number in a paginated page title. */ __( 'Page %d', 'publishrank' ), $page ) : '';
 	}
 
 	private function is_media_host( $host ) {

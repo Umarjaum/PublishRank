@@ -24,7 +24,7 @@ final class NotFoundMonitor {
 		$hits   = (int) get_transient( $bucket );
 		if ( $hits >= 60 ) { return; }
 		set_transient( $bucket, $hits + 1, 90 );
-		$agent = strtolower( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
+		$agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? strtolower( sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_USER_AGENT'] ) ) ) : '';
 		$category = false !== strpos( $agent, 'bot' ) || false !== strpos( $agent, 'spider' ) || false !== strpos( $agent, 'crawler' ) ? 'crawler' : ( false !== strpos( $agent, 'mobile' ) ? 'mobile' : 'browser' );
 		$log = get_option( 'publishrank_seo_404_log', array() ); $log = is_array( $log ) ? $log : array(); $found = false;
 		foreach ( $log as &$entry ) {

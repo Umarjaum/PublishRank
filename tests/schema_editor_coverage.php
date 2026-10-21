@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /** Schema reachability and editor compatibility checks. */
 $root = dirname( __DIR__ );
 $read = static function ( $file ) use ( $root ) {
@@ -16,12 +17,12 @@ $checks = array(
 	'news-only schema types are registered' => false !== strpos( $types, "'NewsArticle'" ) && false !== strpos( $types, "'Article'" ) && false !== strpos( $types, "'LiveBlogPosting'" ) && false !== strpos( $types, "'VideoObject'" ) && false !== strpos( $types, "'ImageGallery'" ),
 	'page type is emitted through the WebPage node' => false !== strpos( $graph, "'@type' => ( new SchemaBuilder() )->current_webpage_type()" ),
 	'pages retain foundational WebPage behavior' => false !== strpos( $builder, "return 'WebPage';" ),
-	'revoked page subtypes are absent' => false === strpos( $types, "'QAPage'" ) && false === strpos( $types, "'AboutPage'" ),
+	'revoked QAPage subtype is absent while AboutPage remains supported' => false === strpos( $types, "'QAPage'" ) && false !== strpos( $types, "'AboutPage'" ),
 	'image gallery emits image objects' => false !== strpos( $builder, "'ImageGallery' === \$type" ) && false !== strpos( $builder, "'#gallery-image-'" ),
 	'video and image gallery nodes remain reachable' => false !== strpos( $builder, "'VideoObject' === \$type" ) && false !== strpos( $builder, "'ImageGallery' === \$type" ),
 	'page and post schema editor has a verified nonce' => false !== strpos( $suite, "wp_nonce_field( 'publishrank_seo_meta', 'publishrank_seo_meta_nonce' )" ) && false !== strpos( $post_meta, "'publishrank_seo_meta_nonce'" ),
 	'revoked FAQ panel is absent' => false === strpos( $suite, 'data-types="FAQPage,QAPage"' ),
-	'dashboard links directly to new post and page editors' => false !== strpos( $dashboard, "admin_url( 'post-new.php' )" ) && false !== strpos( $dashboard, "post-new.php?post_type=page" ),
+	'dashboard uses direct workspace action cards without nested dropdown menus' => false !== strpos( $dashboard, 'pr-dashboard-workspace' ) && false !== strpos( $dashboard, 'pr-action-card' ) && false === strpos( $dashboard, '<select' ),
 );
 $failed = 0;
 foreach ( $checks as $label => $ok ) { echo ( $ok ? 'PASS: ' : 'FAIL: ' ) . $label . "\n"; if ( ! $ok ) { $failed++; } }

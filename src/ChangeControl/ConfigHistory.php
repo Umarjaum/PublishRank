@@ -16,6 +16,6 @@ final class ConfigHistory {
 		if ( wp_doing_ajax() && ! current_user_can( 'manage_options' ) ) { return; }
 		if ( serialize( $old ) === serialize( $new ) ) { return; }
 		$last = SnapshotStore::all();
-		if ( ! empty( $last[0]['data'][ $option ] ) && serialize( $last[0]['data'][ $option ] ) === serialize( $old ) ) { SnapshotStore::snapshot( sprintf( __( 'Changed %s', 'publishrank' ), $option ) ); }
+		if ( ! empty( $last[0]['data'][ $option ] ) && serialize( $last[0]['data'][ $option ] ) === serialize( $old ) ) { SnapshotStore::snapshot( sprintf( /* translators: %s: name of the changed configuration setting. */ __( 'Changed %s', 'publishrank' ), $option ) ); }
 	}
 }

@@ -56,7 +56,7 @@ final class IntegrityManager {
 		$missing = isset( $status['missing'] ) ? count( (array) $status['missing'] ) : 0;
 		$changed = isset( $status['changed'] ) ? count( (array) $status['changed'] ) : 0;
 		$unexpected = isset( $status['unexpected'] ) ? count( (array) $status['unexpected'] ) : 0;
-		echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'PublishRank integrity warning:', 'publishrank' ) . '</strong> ' . esc_html( sprintf( __( '%d missing, %d changed and %d unexpected PHP files were detected. PublishRank will continue with defensive module loading where possible.', 'publishrank' ), $missing, $changed, $unexpected ) ) . '</p></div>';
+		echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'PublishRank integrity warning:', 'publishrank' ) . '</strong> ' . esc_html( sprintf( /* translators: 1: missing PHP file count, 2: changed PHP file count, 3: unexpected PHP file count. */ __( '%1$d missing, %2$d changed and %3$d unexpected PHP files were detected. PublishRank will continue with defensive module loading where possible.', 'publishrank' ), $missing, $changed, $unexpected ) ) . '</p></div>';
 	}
 
 	public function status( $status ) {

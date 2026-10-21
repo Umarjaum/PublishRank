@@ -252,7 +252,7 @@ final class TrafficGuard {
 			return false;
 		}
 		$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '/';
-		$path = parse_url( $uri, PHP_URL_PATH );
+		$path = wp_parse_url( $uri, PHP_URL_PATH );
 		$path = is_string( $path ) ? $path : '/';
 		if ( preg_match( '~(?:^|/)wp-admin(?:/|$)|(?:^|/)wp-login\.php$|(?:^|/)wp-cron\.php$|(?:^|/)wp-json(?:/|$)~i', $path ) || preg_match( '/\.(?:xml|txt)$/i', $path ) ) {
 			return false;

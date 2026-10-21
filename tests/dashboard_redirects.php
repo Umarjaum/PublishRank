@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /** Static checks for dashboard presentation, redirect safety, and release invariants. */
 $root = dirname( __DIR__ );
 $read = static function ( $relative ) use ( $root ) {
@@ -16,16 +17,19 @@ $assets = $read( 'src/Admin/AdminAssets.php' );
 $css = $read( 'assets/css/admin.css' );
 $store = $read( 'src/Redirect/RedirectStore.php' );
 $controller = $read( 'src/Redirect/RedirectController.php' );
+$not_found = $read( 'src/Monitor/NotFoundMonitor.php' );
 $plugin = $read( 'publishrank.php' );
 
 $assert( strpos( $dashboard, 'Your newsroom SEO is ready to grow.' ) !== false && strpos( $dashboard, 'publishrank-banner-publisher.png' ) !== false, 'dashboard welcome copy and publisher artwork remain present' );
 $assert( strpos( $assets, 'publishrank-header-icon-v2.png' ) !== false && strpos( $assets, 'Branding::version()' ) !== false, 'branded admin header uses cache-busted PublishRank artwork' );
-$assert( strpos( $css, '.wrap .rhs-welcome-banner h2' ) !== false && strpos( $css, 'color:#fff!important' ) !== false && strpos( $css, '.wrap .rhs-header__title' ) !== false, 'dashboard header and welcome copy have explicit high-contrast guards' );
+$assert( strpos( $css, '.wrap .rhs-welcome-banner h2' ) !== false && strpos( $css, 'color:#ffffff!important' ) !== false && strpos( $css, '.wrap .rhs-header__title' ) !== false, 'dashboard header and welcome copy have explicit high-contrast guards' );
 $assert( strpos( $store, "array( 301, 302, 303, 307, 308, 410, 451 )" ) !== false, 'redirect status allow-list is explicit' );
 $assert( strpos( $store, 'if ( $host && ( ! $home || strtolower( $host ) !== strtolower( $home ) ) )' ) !== false, 'stored redirect targets reject off-site hosts' );
 $assert( strpos( $store, 'publishrank_redirect_loop' ) !== false && strpos( $controller, 'is_loop' ) !== false, 'redirect creation and runtime both guard against loops' );
 $assert( strpos( $controller, 'wp_safe_redirect' ) !== false && strpos( $controller, 'nocache_headers' ) !== false, 'runtime redirects use safe redirect handling and no-cache responses for removals' );
-$assert( preg_match( '/Version:\s*2\.9\.48/', $plugin ) === 1 && strpos( $plugin, "PUBLISHRANK_SEO_VERSION', '2.9.48'" ) !== false, 'plugin version is 2.9.48' );
+$assert( strpos( $controller, 'sanitize_text_field( wp_unslash( (string) $_SERVER[\'QUERY_STRING\'] ) )' ) !== false && strpos( $controller, 'sanitize_key( (string) $query_key )' ) !== false, 'preserved redirect query parameters are sanitized' );
+$assert( strpos( $not_found, 'sanitize_text_field( wp_unslash( (string) $_SERVER[\'HTTP_USER_AGENT\'] ) )' ) !== false, '404 monitor sanitizes User-Agent before classification' );
+$assert( preg_match( '/Version:\s*2\.9\.58/', $plugin ) === 1 && strpos( $plugin, "PUBLISHRANK_SEO_VERSION', '2.9.58'" ) !== false, 'plugin version remains 2.9.58' );
 
 $failed = count( array_filter( $checks, static function ( $ok ) { return ! $ok; } ) );
 echo $failed ? "Dashboard/redirect checks failed: {$failed}\n" : "Dashboard/redirect checks passed.\n";

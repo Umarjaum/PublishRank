@@ -99,16 +99,15 @@ final class SitemapStylesheet {
 
 	/** Build the XSLT document for one sitemap. Public so the admin health screen and tests can reuse it. */
 	public static function build( $type = 'index', $part = 1 ) {
-		$css_file = PUBLISHRANK_SEO_PATH . 'assets/css/sitemap.css';
-		$css      = is_readable( $css_file ) ? (string) file_get_contents( $css_file ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Bundled asset.
+		$css_url = plugins_url( 'assets/css/sitemap.css', PUBLISHRANK_SEO_FILE );
 		$meta     = 'index' === $type ? array( 'label' => __( 'Sitemap index', 'publishrank' ), 'desc' => __( 'The master list of every sitemap on this site', 'publishrank' ), 'abbr' => 'XML' ) : self::type( $type );
 		$home     = home_url( '/' );
 		$window   = class_exists( '\PublishRankSEO\Sitemap\News\NewsSitemapProvider' ) ? ( new \PublishRankSEO\Sitemap\News\NewsSitemapProvider() )->window_hours() : 48;
 		$prefix   = trailingslashit( $home ) . SitemapUrls::shard_prefix() . '-';
 		$maps     = array( 'LABELS' => 'label', 'DESCS' => 'desc', 'ABBRS' => 'abbr' );
-		$tokens   = array(
-			'%%CSS%%'    => esc_html( $css ),
-			'%%LOGO%%'   => esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ),
+			$tokens   = array(
+				'%%CSSURL%%' => esc_url( $css_url ),
+				'%%LOGO%%'   => esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ),
 			'%%SITE%%'   => esc_html( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ) ),
 			'%%HOME%%'   => esc_url( wp_make_link_relative( $home ) ?: '/' ),
 			'%%INDEX%%'  => esc_url( wp_make_link_relative( SitemapUrls::index_url() ) ),
@@ -180,7 +179,7 @@ final class SitemapStylesheet {
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="noindex"/>
 <title><xsl:text>%%TLABEL%% &#183; XML sitemap &#183; %%SITE%%</xsl:text></title>
-<style type="text/css">%%CSS%%</style>
+<link rel="stylesheet" type="text/css" href="%%CSSURL%%"/>
 </head>
 <body>
 <header class="top"><div class="wrap top__in">

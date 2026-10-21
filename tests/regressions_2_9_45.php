@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /** Regression checks for the 2.9.45 sitemap / schema / graph-scan fixes (source-level, no WordPress needed). */
 $root = dirname( __DIR__ );
 $read = static function ( $file ) use ( $root ) { return (string) file_get_contents( $root . '/' . $file ); };

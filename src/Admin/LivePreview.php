@@ -243,7 +243,7 @@ final class LivePreview {
 			$data = json_decode( $raw, true );
 			if ( null === $data && JSON_ERROR_NONE !== json_last_error() ) {
 				$blocks[] = array( 'pretty' => $raw, 'valid' => false, 'error' => json_last_error_msg(), 'types' => array() );
-				$issues[] = array( 'level' => 'error', 'area' => 'JSON-LD', 'msg' => sprintf( /* translators: %s JSON parse error */ __( 'JSON-LD block %1$d is not valid JSON (%2$s). Google will ignore it.', 'publishrank' ), $i + 1, json_last_error_msg() ) );
+				$issues[] = array( 'level' => 'error', 'area' => 'JSON-LD', 'msg' => sprintf( /* translators: 1: JSON-LD block number, 2: JSON parsing error message. */ __( 'JSON-LD block %1$d is not valid JSON (%2$s). Google will ignore it.', 'publishrank' ), $i + 1, json_last_error_msg() ) );
 				continue;
 			}
 			$list = isset( $data['@graph'] ) && is_array( $data['@graph'] ) ? $data['@graph'] : array( $data );
@@ -254,7 +254,7 @@ final class LivePreview {
 				$types = array_merge( $types, array_map( 'strval', $t ) );
 				$nodes[] = array( 'type' => implode( ', ', array_map( 'strval', $t ) ), 'id' => (string) ( $node['@id'] ?? '' ), 'name' => (string) ( is_scalar( $node['headline'] ?? null ) ? $node['headline'] : ( is_scalar( $node['name'] ?? null ) ? $node['name'] : '' ) ) );
 				if ( isset( $node['@id'] ) && is_string( $node['@id'] ) ) {
-					if ( isset( $defined[ $node['@id'] ] ) && count( $node ) > 1 ) { $issues[] = array( 'level' => 'warn', 'area' => 'JSON-LD', 'msg' => sprintf( __( 'Duplicate @id: %s is defined more than once.', 'publishrank' ), $node['@id'] ) ); }
+					if ( isset( $defined[ $node['@id'] ] ) && count( $node ) > 1 ) { $issues[] = array( 'level' => 'warn', 'area' => 'JSON-LD', 'msg' => sprintf( /* translators: %s: duplicated JSON-LD @id value. */ __( 'Duplicate @id: %s is defined more than once.', 'publishrank' ), $node['@id'] ) ); }
 					if ( count( $node ) > 1 ) { $defined[ $node['@id'] ] = $node; }
 				}
 				$walk( $node, static function ( $arr ) use ( &$refs ) { if ( isset( $arr['@id'] ) && 1 === count( $arr ) && is_string( $arr['@id'] ) ) { $refs[ $arr['@id'] ] = true; } } );
@@ -264,7 +264,7 @@ final class LivePreview {
 		}
 		$home = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		foreach ( array_keys( $refs ) as $ref ) {
-			if ( ! isset( $defined[ $ref ] ) && (string) wp_parse_url( $ref, PHP_URL_HOST ) === $home ) { $issues[] = array( 'level' => 'warn', 'area' => 'JSON-LD', 'msg' => sprintf( __( 'A node refers to %s but that entity is not in the graph.', 'publishrank' ), $ref ) ); }
+			if ( ! isset( $defined[ $ref ] ) && (string) wp_parse_url( $ref, PHP_URL_HOST ) === $home ) { $issues[] = array( 'level' => 'warn', 'area' => 'JSON-LD', 'msg' => sprintf( /* translators: %s: referenced entity identifier. */ __( 'A node refers to %s but that entity is not in the graph.', 'publishrank' ), $ref ) ); }
 		}
 		return array( 'blocks' => $blocks, 'nodes' => $nodes, 'issues' => $issues );
 	}
@@ -294,7 +294,7 @@ final class LivePreview {
 			if ( ! $has( 'name' ) ) { $add( 'warn', __( 'Organization has no name.', 'publishrank' ) ); }
 			if ( ! $has( 'logo' ) ) { $add( 'warn', __( 'Organization has no logo; Google News prefers a publisher logo.', 'publishrank' ) ); }
 		}
-		if ( in_array( 'VideoObject', $types, true ) ) { foreach ( array( 'name', 'thumbnailUrl', 'uploadDate' ) as $f ) { if ( ! $has( $f ) ) { $add( 'error', sprintf( __( 'VideoObject is missing %s.', 'publishrank' ), $f ) ); } } }
+		if ( in_array( 'VideoObject', $types, true ) ) { foreach ( array( 'name', 'thumbnailUrl', 'uploadDate' ) as $f ) { if ( ! $has( $f ) ) { $add( 'error', sprintf( /* translators: %s: missing VideoObject property name. */ __( 'VideoObject is missing %s.', 'publishrank' ), $f ) ); } } }
 		return $out;
 	}
 
@@ -304,12 +304,12 @@ final class LivePreview {
 		$len = static function ( $s ) { return function_exists( 'mb_strlen' ) ? mb_strlen( $s ) : strlen( $s ); };
 		$desc = isset( $meta['name:description'][0] ) ? $meta['name:description'][0] : '';
 		if ( '' === trim( $title ) ) { $add( 'error', __( 'No title.', 'publishrank' ), 'Title' ); }
-		elseif ( $len( $title ) > 60 ) { $add( 'warn', sprintf( __( 'Title is %d characters; Google usually shows about 60.', 'publishrank' ), $len( $title ) ), 'Title' ); }
-		elseif ( $len( $title ) < 25 ) { $add( 'info', sprintf( __( 'Title is short (%d characters). A fuller headline often earns more clicks.', 'publishrank' ), $len( $title ) ), 'Title' ); }
+		elseif ( $len( $title ) > 60 ) { $add( 'warn', sprintf( /* translators: %d: title character count. */ __( 'Title is %d characters; Google usually shows about 60.', 'publishrank' ), $len( $title ) ), 'Title' ); }
+		elseif ( $len( $title ) < 25 ) { $add( 'info', sprintf( /* translators: %d: title character count. */ __( 'Title is short (%d characters). A fuller headline often earns more clicks.', 'publishrank' ), $len( $title ) ), 'Title' ); }
 		if ( '' === $desc ) { $add( 'warn', __( 'No meta description. Google will pick its own snippet.', 'publishrank' ), 'Description' ); }
-		elseif ( $len( $desc ) > 160 ) { $add( 'warn', sprintf( __( 'Description is %d characters; Google usually shows about 155–160.', 'publishrank' ), $len( $desc ) ), 'Description' ); }
-		elseif ( $len( $desc ) < 70 ) { $add( 'info', sprintf( __( 'Description is short (%d characters).', 'publishrank' ), $len( $desc ) ), 'Description' ); }
-		foreach ( array( 'name:description' => 'description', 'name:robots' => 'robots' ) as $key => $name ) { if ( isset( $meta[ $key ] ) && count( $meta[ $key ] ) > 1 ) { $add( 'error', sprintf( __( 'More than one %s tag is output.', 'publishrank' ), $name ) ); } }
+		elseif ( $len( $desc ) > 160 ) { $add( 'warn', sprintf( /* translators: %d: description character count. */ __( 'Description is %d characters; Google usually shows about 155–160.', 'publishrank' ), $len( $desc ) ), 'Description' ); }
+		elseif ( $len( $desc ) < 70 ) { $add( 'info', sprintf( /* translators: %d: description character count. */ __( 'Description is short (%d characters).', 'publishrank' ), $len( $desc ) ), 'Description' ); }
+		foreach ( array( 'name:description' => 'description', 'name:robots' => 'robots' ) as $key => $name ) { if ( isset( $meta[ $key ] ) && count( $meta[ $key ] ) > 1 ) { $add( 'error', sprintf( /* translators: %s: metadata tag name. */ __( 'More than one %s tag is output.', 'publishrank' ), $name ) ); } }
 		if ( ( $parsed['canonical_count'] ?? 0 ) > 1 ) { $add( 'error', __( 'More than one canonical link is output.', 'publishrank' ), 'Canonical' ); }
 		if ( empty( $parsed['canonical'] ) ) { $add( 'warn', __( 'No canonical link.', 'publishrank' ), 'Canonical' ); }
 		elseif ( 0 !== strpos( $parsed['canonical'], 'https://' ) && is_ssl() ) { $add( 'warn', __( 'Canonical is not https.', 'publishrank' ), 'Canonical' ); }
@@ -319,7 +319,7 @@ final class LivePreview {
 		if ( empty( $meta['property:og:image'][0] ) ) { $add( 'warn', __( 'No social image. Add a featured image or a social image override.', 'publishrank' ), 'Social' ); }
 		else {
 			$w = isset( $meta['property:og:image:width'][0] ) ? (int) $meta['property:og:image:width'][0] : 0;
-			if ( $w && $w < 1200 ) { $add( 'info', sprintf( __( 'Social image is %d px wide; Discover recommends at least 1200 px.', 'publishrank' ), $w ), 'Social' ); }
+			if ( $w && $w < 1200 ) { $add( 'info', sprintf( /* translators: %d: social image width in pixels. */ __( 'Social image is %d px wide; Discover recommends at least 1200 px.', 'publishrank' ), $w ), 'Social' ); }
 		}
 		if ( empty( $meta['name:twitter:card'][0] ) ) { $add( 'info', __( 'No X/Twitter card tag.', 'publishrank' ), 'Social' ); }
 		if ( empty( $out ) || ! array_filter( $out, static function ( $i ) { return in_array( $i['level'], array( 'error', 'warn' ), true ); } ) ) { $add( 'ok', __( 'Title, description, canonical, robots and social tags look good.', 'publishrank' ), 'Meta' ); }

@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /** Standalone regression tests for Traffic Guard parsing and proxy trust. */
 if ( 'cli' !== PHP_SAPI && ! defined( 'ABSPATH' ) ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
@@ -18,6 +19,7 @@ if ( ! function_exists( 'is_preview' ) ) { function is_preview() { return false;
 if ( ! function_exists( 'is_trackback' ) ) { function is_trackback() { return false; } }
 if ( ! function_exists( 'is_embed' ) ) { function is_embed() { return false; } }
 if ( ! function_exists( 'get_query_var' ) ) { function get_query_var() { return false; } }
+if ( ! function_exists( 'wp_parse_url' ) ) { function wp_parse_url( $url, $component = -1 ) { return parse_url( $url, $component ); } }
 require __DIR__ . '/../src/Security/TrafficGuard.php';
 
 use PublishRankSEO\Security\TrafficGuard as Guard;
@@ -25,7 +27,7 @@ use PublishRankSEO\Security\TrafficGuard as Guard;
 $failed = 0;
 function check_guard( $label, $condition ) {
 	global $failed;
-	echo ( $condition ? 'PASS ' : 'FAIL ' ) . $label . "\n";
+	fwrite( STDOUT, ( $condition ? 'PASS ' : 'FAIL ' ) . $label . "\n");
 	if ( ! $condition ) { $failed++; }
 }
 function invoke_guard_private( $method, $args = array() ) {
@@ -79,7 +81,7 @@ $_SERVER = array( 'REQUEST_URI' => '/article/' );
 check_guard( 'ordinary front-end path can be evaluated', invoke_guard_private( 'is_blockable_request' ) );
 
 if ( $failed ) {
-	echo "\n$failed Traffic Guard regression check(s) failed.\n";
+	fwrite( STDOUT, "\n$failed Traffic Guard regression check(s) failed.\n");
 	exit( 1 );
 }
-echo "\nAll Traffic Guard regression checks passed.\n";
+fwrite( STDOUT, "\nAll Traffic Guard regression checks passed.\n");

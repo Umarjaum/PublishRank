@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /** Standalone tests for Publisher Link Intelligence parsing and classification. */
 $GLOBALS['pr_test_options'] = array( 'publishrank_seo_redirects' => array() );

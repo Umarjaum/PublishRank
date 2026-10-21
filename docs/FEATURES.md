@@ -9,8 +9,8 @@
 | Canonicals | HTML `<link rel="canonical">` | Primary-host validation and paginated archive support. |
 | Robots | HTML robots meta | Search/404/feed noindex defaults and image preview support. |
 | Social metadata | Open Graph and X/Twitter | Featured image, default image, and per-post overrides. |
-| Public attribution | Always-on technical version/fingerprint provenance markers; only the visible footer credit is optional and controlled in Settings. No promotional head comment or link is forced into public pages. |
-| Provenance (optional) | HTML comment and namespaced meta tags | Product, version, and deterministic release fingerprint; no tracking. |
+| Public attribution | Source markers, the optional powered-by head comment, and visible footer credit are all explicit administrator opt-ins, disabled by default, and controlled in Settings. |
+| Provenance (optional) | HTML comment and namespaced meta tags | Product, version, and deterministic release fingerprint; no tracking or network requests. |
 
 ## News publisher features
 

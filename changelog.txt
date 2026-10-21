@@ -1,5 +1,10 @@
+= 2.9.58 =
+* Hardened public output escaping, prepared SQL identifiers/values, filesystem handling, admin nonces/capabilities and translation context.
+* Made public source provenance and visible footer credit explicit administrator opt-ins, disabled by default, and added a one-time migration from releases that enabled public attribution by default.
+* Aligned the readme stable tag with the existing 2.9.58 plugin version; no version bump was made.
+
 = 2.9.55 =
-* Fixed technical source provenance not appearing when a theme omits `wp_head()` or when SEO metadata was already present. The fallback now injects the always-on provenance markers independently of metadata/schema recovery and avoids duplicates. Added regression tests for themes missing wp_head() and for pages where SEO metadata already exists.
+* Fixed technical source provenance recovery for themes that omit `wp_head()` or already contain SEO metadata, without duplicate markers. Public provenance output is now opt-in and disabled by default.
 * Added guarded shutdown cleanup for PublishRank-owned frontend fallback output buffers; cleanup only flushes the matching topmost PublishRank buffer and does not close another plugin's buffer.
 * Added direct-web-access guards to all standalone regression tests and corrected the stale source-provenance test fixture and Branding fallback version.
 * Synchronized first-party runtime CSS with reviewable source copies and restored the onboarding quick-start styles used by the current onboarding markup.

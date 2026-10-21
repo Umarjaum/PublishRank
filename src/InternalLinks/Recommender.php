@@ -54,11 +54,11 @@ final class Recommender {
 	private static function candidate_ids( $target_node_id ) {
 		global $wpdb;
 		$terms = Store::table( 'terms' );
-		$ids   = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( "SELECT s.node_id AS node_id, COUNT(*) AS shared_count FROM {$terms} s INNER JOIN {$terms} t ON t.term = s.term WHERE t.node_id = %d AND s.node_id != %d GROUP BY s.node_id ORDER BY shared_count DESC, s.node_id DESC LIMIT 100", $target_node_id, $target_node_id ) ) );
+		$ids   = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT s.node_id AS node_id, COUNT(*) AS shared_count FROM %i s INNER JOIN %i t ON t.term = s.term WHERE t.node_id = %d AND s.node_id != %d GROUP BY s.node_id ORDER BY shared_count DESC, s.node_id DESC LIMIT 100', $terms, $terms, absint( $target_node_id ), absint( $target_node_id ) ) ) );
 
 		if ( count( $ids ) < 25 ) {
 			$nodes  = Store::table( 'nodes' );
-			$recent = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( "SELECT node_id FROM {$nodes} WHERE node_id != %d ORDER BY node_id DESC LIMIT 50", $target_node_id ) ) );
+			$recent = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT node_id FROM %i WHERE node_id != %d ORDER BY node_id DESC LIMIT 50', $nodes, absint( $target_node_id ) ) ) );
 			foreach ( $recent as $id ) {
 				if ( ! in_array( $id, $ids, true ) ) {
 					$ids[] = $id;

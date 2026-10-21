@@ -7,13 +7,13 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	$publishrank_cleanup = static function () {
 		global $wpdb;
 		$private_meta = array( 'publishrank_supabase_session_enc', 'publishrank_supabase_subject', 'publishrank_supabase_verified_at' );
-		$meta_placeholders = implode( ', ', array_fill( 0, count( $private_meta ), '%s' ) );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->usermeta} WHERE meta_key IN ({$meta_placeholders})", ...$private_meta ) );
+		foreach ( $private_meta as $meta_key ) {
+			$wpdb->delete( $wpdb->usermeta, array( 'meta_key' => $meta_key ), array( '%s' ) );
+		}
 		$post_meta = array( '_publishrank_baidu_submitted', '_publishrank_baidu_pending' );
-		$post_meta_placeholders = implode( ', ', array_fill( 0, count( $post_meta ), '%s' ) );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ({$post_meta_placeholders})", ...$post_meta ) );
+		foreach ( $post_meta as $meta_key ) {
+			$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => $meta_key ), array( '%s' ) );
+		}
 		$like = $wpdb->esc_like( 'publishrank_' ) . '%';
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s", $like, $wpdb->esc_like( '_transient_publishrank_' ) . '%', $wpdb->esc_like( '_transient_timeout_publishrank_' ) . '%' ) );

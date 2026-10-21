@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 $root = dirname( __DIR__ );
 $read = static function ( $file ) use ( $root ) { return file_get_contents( $root . '/' . ltrim( $file, '/' ) ); };

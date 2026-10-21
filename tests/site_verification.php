@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /**
  * Standalone regression test for SiteConnections parsing and validation.
  * Run: php tests/site_verification.php   (no WordPress required; WP functions are stubbed)
@@ -13,7 +14,7 @@ require __DIR__ . '/../src/SEO/SiteConnections.php';
 use PublishRankSEO\SEO\SiteConnections as S;
 
 $fail = 0;
-function check( $label, $ok ) { global $fail; echo ( $ok ? 'PASS ' : 'FAIL ' ) . $label . "\n"; if ( ! $ok ) { $fail++; } }
+function check( $label, $ok ) { global $fail; fwrite( STDOUT, ( $ok ? 'PASS ' : 'FAIL ' ) . $label . "\n"); if ( ! $ok ) { $fail++; } }
 
 check( 'bare token kept', 'AbC-123_x.y' === S::normalize_token( ' AbC-123_x.y ' ) );
 check( 'full meta tag (double quotes)', 'AbC123' === S::normalize_token( '<meta name="google-site-verification" content="AbC123" />' ) );
@@ -33,7 +34,7 @@ foreach ( array( '', '../x.html', '.htaccess', 'a/b.html', 'shell.php', 'x.html.
 
 check( 'google file content ok', '' === S::content_error( 'google-site-verification: google1234abcd.html' ) );
 check( 'bing xml content ok', '' === S::content_error( '<?xml version="1.0"?><users><user>ABCDEF</user></users>' ) );
-check( 'php refused', '' !== S::content_error( '<?php echo 1;' ) );
+check( 'php refused', '' !== S::content_error( '<?php fwrite( STDOUT, 1);' ) );
 check( 'script refused', '' !== S::content_error( '<html><script>alert(1)</script></html>' ) );
 check( 'empty refused', '' !== S::content_error( "  \n" ) );
 check( 'oversize refused', '' !== S::content_error( str_repeat( 'a', S::MAX_BYTES + 1 ) ) );
@@ -45,5 +46,5 @@ $m = S::markup();
 check( 'markup has google tag', false !== strpos( $m, '<meta name="google-site-verification" content="AbC123" />' ) );
 check( 'markup has custom tag', false !== strpos( $m, 'name="ahrefs-site-verification" content="zz9"' ) );
 
-echo $fail ? "\n$fail FAILED\n" : "\nAll passed\n";
+fwrite( STDOUT, $fail ? "\n$fail FAILED\n" : "\nAll passed\n");
 exit( $fail ? 1 : 0 );

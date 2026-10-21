@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 require __DIR__ . '/support/wp-stub.php';
 use PublishRankSEO\Admin\OnboardingPage; use PublishRankSEO\Admin\SettingsPage;
 $fail = 0; function t( $label, $ok ) { global $fail; echo ( $ok ? 'PASS ' : 'FAIL ' ) . $label . "\n"; if ( ! $ok ) $fail++; }

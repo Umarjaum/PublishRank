@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 // Minimal WordPress stub: enough to execute PublishRank's wizard + settings page for verification.
 define( 'ABSPATH', '/tmp/' ); define( 'PUBLISHRANK_SEO_VERSION', '2.9.48' ); define( 'PUBLISHRANK_SEO_URL', 'http://x/wp-content/plugins/publishrank/' );
 class RedirectException extends Exception { public $url; }

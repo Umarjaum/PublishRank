@@ -1,21 +1,25 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
-/** Regression checks for retained local analytics and removed GSC OAuth UI. */
+/** Regression checks for local privacy-preserving analytics and read-only Search Console support. */
 $root = dirname( __DIR__ );
-$plugin = file_get_contents( $root . '/src/Core/Plugin.php' );
-$collector = file_get_contents( $root . '/src/AnalyticsCollector.php' );
-$help = file_get_contents( $root . '/src/Admin/HelpDocumentationPage.php' );
+$read = static function ( $file ) use ( $root ) { return (string) file_get_contents( $root . '/' . $file ); };
+$plugin = $read( 'src/Core/Plugin.php' );
+$collector = $read( 'src/AnalyticsCollector.php' );
+$analytics_page = $read( 'src/Admin/AnalyticsPage.php' );
+$search_client = $read( 'src/Google/SearchConsoleClient.php' );
+$search_page = $read( 'src/Admin/SearchConsolePage.php' );
+$readme = $read( 'readme.txt' );
 $checks = array(
-    'daily snapshot collector is registered' => false !== strpos( $plugin, 'AnalyticsCollector::class' ),
-    'Google Search Console OAuth admin page is not registered' => false === strpos( $plugin, 'AnalyticsPage::class' ),
-    'Google Search Console OAuth implementation is removed' => ! file_exists( $root . '/src/Admin/AnalyticsPage.php' ),
-    'daily snapshots are capped to 30 days' => false !== strpos( $collector, 'const MAX_DAYS = 30' ),
-    'IndexNow accepted and failed data are recorded' => false !== strpos( $collector, 'indexnow_accepted' ) && false !== strpos( $collector, 'indexnow_failed' ),
-    'feature documentation screen is registered' => false !== strpos( $plugin, 'HelpDocumentationPage::class' ),
-    'documentation includes contextual info icon system' => false !== strpos( $help, 'pr-help-icon' ) && false !== strpos( $help, 'aria-label' ),
-    'documentation explains the removed Google connection' => false !== strpos( $help, 'does not currently provide the Google Search Console OAuth connection screen' ),
+	'daily local analytics collector is registered' => false !== strpos( $plugin, 'AnalyticsCollector::class' ),
+	'analytics retention is bounded to 90 days' => false !== strpos( $collector, 'const MAX_DAYS = 90' ) && false !== strpos( $collector, 'array_slice( $snaps, -self::MAX_DAYS' ),
+	'IndexNow accepted and failed outcomes are aggregated without visitor analytics' => false !== strpos( $collector, 'indexnow_accepted' ) && false !== strpos( $collector, 'indexnow_failed' ) && false === strpos( $collector, 'REMOTE_ADDR' ),
+	'Google Search Console analytics page is registered' => false !== strpos( $plugin, 'AnalyticsPage::class' ) && false !== strpos( $plugin, 'SearchConsolePage::class' ),
+	'Google OAuth scope is explicitly read-only' => false !== strpos( $search_client, 'webmasters.readonly' ) && false === strpos( $search_client, 'webmasters' . '.edit' ),
+	'Search Console does not request publisher-managed OAuth setup by default' => false !== strpos( $analytics_page, 'Search Console' ) && false !== strpos( $search_client, 'webmasters.readonly' ),
+	'account/provider integrations are disclosed as optional' => false !== strpos( $readme, 'Google Search Console and Google sign-in (optional)' ) && false !== strpos( $readme, 'Supabase Auth and configured identity providers (optional)' ),
 );
 $failed = 0;
-foreach ( $checks as $label => $passed ) { echo ( $passed ? 'PASS: ' : 'FAIL: ' ) . $label . PHP_EOL; if ( ! $passed ) { $failed++; } }
+foreach ( $checks as $label => $passed ) { fwrite( STDOUT, ( $passed ? 'PASS: ' : 'FAIL: ' ) . $label . PHP_EOL ); if ( ! $passed ) { ++$failed; } }
 if ( $failed ) { exit( 1 ); }
-echo "Analytics/help checks passed.\n";
+fwrite( STDOUT, "Analytics and Search Console checks passed.\n" );

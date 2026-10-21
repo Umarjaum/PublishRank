@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.55
+Stable tag: 2.9.58
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -32,7 +32,7 @@ Features include:
 * Configurable llms.txt and optional llms-full.txt resources.
 * Editorial SEO analysis, internal-link recommendations, sitemap diagnostics and WP-CLI commands.
 * Publisher Toolkit with permission-aware bulk SEO metadata editing, role-based access for the toolkit, and optional image alt-text assistance that preserves existing descriptions.
-* Always-on technical source provenance markers; the visible footer credit remains optional and administrator-controlled.
+* Optional, administrator-controlled source provenance markers and visible footer attribution, both disabled by default.
 
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
 
@@ -50,7 +50,7 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 == Frequently Asked Questions ==
 
 = Does PublishRank add anything to my page source? =
-Technical HTML-source provenance markers are always enabled on public HTML pages and cannot be disabled in settings. The visible public-site footer credit is optional and can be turned off by an administrator. Source markers are not added to feeds, REST/AJAX responses or sitemaps. Separately, PublishRank displays a small branded link in the WordPress admin footer.
+Public source provenance markers and the visible footer credit are both optional, disabled by default, and controlled in **PublishRank → Settings**. When enabled, source markers are omitted from feeds, REST/AJAX responses and sitemaps. PublishRank also displays a small branded link in the WordPress admin footer.
 
 = Which articles appear in the News sitemap? =
 Published, public, indexable articles from the configured post types whose original publish time is inside the publication window (48 hours by default). Drafts, scheduled, private and password-protected posts, noindex posts and posts you excluded are left out. An empty sitemap is valid.
@@ -77,18 +77,18 @@ No. IndexNow requests are shared with participating search engines, but acceptan
 The plugin can detect several SEO plugins, but two plugins outputting titles, canonicals, robots tags or schema at the same time can create duplicates. Configure only one plugin to own each output.
 
 = Does PublishRank add a public credit by default? =
-Technical source provenance is disclosed in PublishRank Settings and always remains enabled on public HTML pages. Only the visible footer credit can be disabled under PublishRank Settings.
+Both source provenance markers and the visible footer credit are optional, disabled by default, and can be enabled or disabled in PublishRank Settings.
 
 = Where can I find documentation and support? =
 Visit the [PublishRank website](https://publishrank.netlify.app/) for documentation and support information.
 
 == Privacy ==
 
-PublishRank does not include visitor analytics or send publisher content to PublishRank. Core metadata and schema are generated locally. On fresh installs, the visible footer credit, “Powered by PublishRank”, starts enabled and is rendered transparently; an administrator can disable it at any time in Settings. The technical source marker is likewise configurable and does not contain an external link. Optional integrations below make requests only when configured or explicitly run; remote services and OAuth providers may receive the originating server or browser IP address and standard connection metadata. Review the relevant provider policies and your own privacy obligations before enabling an integration.
+PublishRank does not include visitor analytics or send publisher content to PublishRank. Core metadata and schema are generated locally. Public source provenance markers and the “Powered by PublishRank” footer credit are both off on fresh installs and appear only after an administrator enables them in Settings; both can be disabled at any time. Optional integrations below make requests only when configured or explicitly run; remote services and OAuth providers may receive the originating server or browser IP address and standard connection metadata. Review the relevant provider policies and your own privacy obligations before enabling an integration.
 
 == Terms and Conditions ==
 
-PublishRank is provided under the GPLv2-or-later license. The plugin does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. Technical provenance markers are always present in public HTML source. The clearly disclosed “Powered by PublishRank” footer credit remains optional and can be disabled from the WordPress dashboard.
+PublishRank is provided under the GPLv2-or-later license. The plugin does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. Public provenance markers and the “Powered by PublishRank” footer credit are optional, off by default, and controlled by the site administrator in the WordPress dashboard.
 
 == External Services ==
 
@@ -107,6 +107,11 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. The optional public footer credit, if enabled, links to the PublishRank website. No promotional credit is inserted by default.
 
 == Changelog ==
+= 2.9.58 =
+* Hardened output escaping, SQL preparation, file handling, admin nonces/capabilities and translation context for the WordPress.org review findings.
+* Public source provenance markers and footer credits are both explicit administrator opt-ins and disabled by default. Upgrades from versions that enabled a public credit by default migrate that credit off once.
+* Aligned the stable tag with the existing plugin version; no plugin version bump was made.
+
 = 2.9.55 =
 * Fixed fallback injection of technical provenance and SEO head output for themes that omit `wp_head()`, without duplicate markers.
 * Explicitly flush PublishRank-owned frontend fallback buffers at shutdown when safe, without closing buffers owned by other plugins.

@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /** Source-level regression checks for the IndexNow module. */
 $root = dirname( __DIR__ );
@@ -39,6 +40,6 @@ $checks = array(
     'default public posts and pages' => false !== strpos( $page, "'post,page'" ),
 );
 $failed = array();
-foreach ( $checks as $name => $passed ) { echo ( $passed ? 'PASS: ' : 'FAIL: ' ) . $name . PHP_EOL; if ( ! $passed ) { $failed[] = $name; } }
+foreach ( $checks as $name => $passed ) { fwrite( STDOUT, ( $passed ? 'PASS: ' : 'FAIL: ' ) . $name . PHP_EOL); if ( ! $passed ) { $failed[] = $name; } }
 if ( $failed ) { exit( 1 ); }
-echo 'IndexNow checks passed.' . PHP_EOL;
+fwrite( STDOUT, 'IndexNow checks passed.' . PHP_EOL);

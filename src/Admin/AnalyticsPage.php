@@ -34,7 +34,7 @@ final class AnalyticsPage {
 			if ( ! is_array( $row ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $date ) ) { continue; }
 			fputcsv( $out, array( $date, (int) ( $row['published_posts'] ?? 0 ), (int) ( $row['seo_score_average'] ?? 0 ), (int) ( $row['seo_score_sample_size'] ?? 0 ), (int) ( $row['seo_score_strong'] ?? 0 ), (int) ( $row['seo_score_improving'] ?? 0 ), (int) ( $row['seo_score_priority'] ?? 0 ), (int) ( $row['indexnow_accepted'] ?? 0 ), (int) ( $row['indexnow_failed'] ?? 0 ), (int) ( $row['indexnow_events'] ?? 0 ) ) );
 		}
-		fclose( $out );
+
 		exit;
 	}
 
@@ -57,18 +57,18 @@ final class AnalyticsPage {
 		echo '<div class="pr-analytics-toolbar"><div><strong>' . esc_html__( 'Reporting period', 'publishrank' ) . '</strong><div class="pr-analytics-ranges">';
 		foreach ( array( 7, 30, 90 ) as $days ) {
 			$url = add_query_arg( array( 'page' => self::SLUG, 'range' => $days ), admin_url( 'admin.php' ) );
-			echo '<a class="button ' . ( $range === $days ? 'button-primary' : '' ) . '" href="' . esc_url( $url ) . '"' . ( $range === $days ? ' aria-current="page"' : '' ) . '>' . esc_html( sprintf( _n( '%d day', '%d days', $days, 'publishrank' ), $days ) ) . '</a>';
+			echo '<a class="button ' . ( $range === $days ? 'button-primary' : '' ) . '" href="' . esc_url( $url ) . '"' . ( $range === $days ? ' aria-current="page"' : '' ) . '>' . esc_html( sprintf( _n( /* translators: %d: number of days in the reporting period. */ '%d day', '%d days', $days, 'publishrank' ), $days ) ) . '</a>';
 		}
 		echo '</div></div><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="publishrank_analytics_export">'; wp_nonce_field( 'publishrank_analytics_export' ); submit_button( __( 'Export local data (CSV)', 'publishrank' ), 'secondary', 'submit', false ); echo '</form></div>';
-		echo '<div class="rhs-grid pr-analytics-kpis"><section class="rhs-card"><p class="rhs-label">' . esc_html__( 'Latest sampled SEO score', 'publishrank' ) . '</p><p class="rhs-stat">' . esc_html( $sample ? (string) $score : '—' ) . ( $sample ? '<small>/100</small>' : '' ) . '</p><p>' . esc_html( sprintf( __( '%1$d eligible articles sampled; recalculated daily.', 'publishrank' ), $sample ) ) . '</p><a href="' . esc_url( Branding::page_url( 'publishrank-seo-score' ) ) . '">' . esc_html__( 'Run current SEO audit', 'publishrank' ) . '</a></section>';
+		echo '<div class="rhs-grid pr-analytics-kpis"><section class="rhs-card"><p class="rhs-label">' . esc_html__( 'Latest sampled SEO score', 'publishrank' ) . '</p><p class="rhs-stat">' . esc_html( $sample ? (string) $score : '—' ) . ( $sample ? '<small>/100</small>' : '' ) . '</p><p>' . esc_html( sprintf( __( /* translators: %d: number of eligible articles sampled. */ '%1$d eligible articles sampled; recalculated daily.', 'publishrank' ), $sample ) ) . '</p><a href="' . esc_url( Branding::page_url( 'publishrank-seo-score' ) ) . '">' . esc_html__( 'Run current SEO audit', 'publishrank' ) . '</a></section>';
 		echo '<section class="rhs-card"><p class="rhs-label">' . esc_html__( 'Published articles', 'publishrank' ) . '</p><p class="rhs-stat">' . esc_html( (string) $published ) . '</p><p>' . esc_html__( 'Current published count across supported editorial post types.', 'publishrank' ) . '</p></section>';
-		echo '<section class="rhs-card"><p class="rhs-label">' . esc_html__( 'IndexNow accepted', 'publishrank' ) . '</p><p class="rhs-stat">' . esc_html( (string) $accepted ) . '</p><p>' . esc_html( sprintf( __( '%d failed response(s) in this period.', 'publishrank' ), $failed ) ) . '</p><a href="' . esc_url( Branding::page_url( 'publishrank-indexnow' ) ) . '">' . esc_html__( 'Review submission log', 'publishrank' ) . '</a></section>';
+		echo '<section class="rhs-card"><p class="rhs-label">' . esc_html__( 'IndexNow accepted', 'publishrank' ) . '</p><p class="rhs-stat">' . esc_html( (string) $accepted ) . '</p><p>' . esc_html( sprintf( __( /* translators: %d: number of failed IndexNow responses. */ '%d failed response(s) in this period.', 'publishrank' ), $failed ) ) . '</p><a href="' . esc_url( Branding::page_url( 'publishrank-indexnow' ) ) . '">' . esc_html__( 'Review submission log', 'publishrank' ) . '</a></section>';
 		echo '<section class="rhs-card"><p class="rhs-label">' . esc_html__( 'Last local snapshot', 'publishrank' ) . '</p><p class="rhs-stat pr-analytics-stat-date">' . esc_html( $last_date ?: '—' ) . '</p><p>' . esc_html__( 'WordPress scheduled snapshots run daily; WP-Cron depends on site traffic.', 'publishrank' ) . '</p></section></div>';
 		if ( ! $data ) {
 			echo '<div class="notice notice-info"><p>' . esc_html__( 'No daily snapshots are available yet. The first snapshot is created on the next scheduled visit or when a published article changes.', 'publishrank' ) . '</p></div>';
 		} else {
-			echo '<div class="pr-analytics-grid"><section class="rhs-card pr-analytics-chart-card"><h2>' . esc_html__( 'Editorial SEO score trend', 'publishrank' ) . '</h2><p class="description">' . esc_html__( 'Daily average from a capped sample of the 50 most recent published articles. This is a local editorial checklist, not a search ranking, traffic, or Google score.', 'publishrank' ) . '</p>' . $this->line_chart( $data, 'seo_score_average', 100, __( 'Average editorial score', 'publishrank' ) ) . '</section>';
-			echo '<section class="rhs-card pr-analytics-chart-card"><h2>' . esc_html__( 'IndexNow response activity', 'publishrank' ) . '</h2><p class="description">' . esc_html__( 'Accepted means the shared endpoint acknowledged the request; it does not confirm crawling or indexing by a specific engine.', 'publishrank' ) . '</p>' . $this->dual_chart( $data ) . '<p class="pr-analytics-legend"><span class="pr-analytics-legend__accepted">' . esc_html__( 'Accepted', 'publishrank' ) . '</span><span class="pr-analytics-legend__failed">' . esc_html__( 'Failed', 'publishrank' ) . '</span></p></section></div>';
+			echo '<div class="pr-analytics-grid"><section class="rhs-card pr-analytics-chart-card"><h2>' . esc_html__( 'Editorial SEO score trend', 'publishrank' ) . '</h2><p class="description">' . esc_html__( 'Daily average from a capped sample of the 50 most recent published articles. This is a local editorial checklist, not a search ranking, traffic, or Google score.', 'publishrank' ) . '</p>' . wp_kses( $this->line_chart( $data, 'seo_score_average', 100, esc_html__( 'Average editorial score', 'publishrank' ) ), self::chart_allowed_html() ) . '</section>';
+			echo '<section class="rhs-card pr-analytics-chart-card"><h2>' . esc_html__( 'IndexNow response activity', 'publishrank' ) . '</h2><p class="description">' . esc_html__( 'Accepted means the shared endpoint acknowledged the request; it does not confirm crawling or indexing by a specific engine.', 'publishrank' ) . '</p>' . wp_kses( $this->dual_chart( $data ), self::chart_allowed_html() ) . '<p class="pr-analytics-legend"><span class="pr-analytics-legend__accepted">' . esc_html__( 'Accepted', 'publishrank' ) . '</span><span class="pr-analytics-legend__failed">' . esc_html__( 'Failed', 'publishrank' ) . '</span></p></section></div>';
 			echo '<section class="rhs-card pr-analytics-table"><h2>' . esc_html__( 'Daily detail', 'publishrank' ) . '</h2><div class="rhs-table-wrap"><table class="widefat striped"><thead><tr><th>' . esc_html__( 'Date (UTC)', 'publishrank' ) . '</th><th>' . esc_html__( 'Avg. SEO score', 'publishrank' ) . '</th><th>' . esc_html__( 'Sampled', 'publishrank' ) . '</th><th>' . esc_html__( 'Strong', 'publishrank' ) . '</th><th>' . esc_html__( 'Improving', 'publishrank' ) . '</th><th>' . esc_html__( 'Priority', 'publishrank' ) . '</th><th>' . esc_html__( 'IndexNow accepted / failed', 'publishrank' ) . '</th></tr></thead><tbody>';
 			foreach ( array_reverse( $data, true ) as $date => $row ) {
 				echo '<tr><td>' . esc_html( (string) $date ) . '</td><td>' . esc_html( (string) (int) ( $row['seo_score_average'] ?? 0 ) ) . '</td><td>' . esc_html( (string) (int) ( $row['seo_score_sample_size'] ?? 0 ) ) . '</td><td>' . esc_html( (string) (int) ( $row['seo_score_strong'] ?? 0 ) ) . '</td><td>' . esc_html( (string) (int) ( $row['seo_score_improving'] ?? 0 ) ) . '</td><td>' . esc_html( (string) (int) ( $row['seo_score_priority'] ?? 0 ) ) . '</td><td>' . esc_html( (string) (int) ( $row['indexnow_accepted'] ?? 0 ) . ' / ' . (string) (int) ( $row['indexnow_failed'] ?? 0 ) ) . '</td></tr>';
@@ -86,12 +86,28 @@ final class AnalyticsPage {
 		if ( $connected && ! empty( $metrics['days'] ) ) {
 			$clicks = array_sum( array_map( static function ( $row ) { return (int) ( $row['clicks'] ?? 0 ); }, $metrics['days'] ) );
 			$impressions = array_sum( array_map( static function ( $row ) { return (int) ( $row['impressions'] ?? 0 ); }, $metrics['days'] ) );
-			echo '<p>' . esc_html( sprintf( __( '%1$s · %2$s to %3$s · fetched %4$s', 'publishrank' ), (string) ( $metrics['property'] ?? '' ), (string) ( $metrics['start_date'] ?? '' ), (string) ( $metrics['end_date'] ?? '' ), (string) ( $metrics['fetched_at'] ?? '' ) ) ) . '</p><div class="rhs-grid pr-analytics-gsc-kpis"><div><span class="rhs-label">' . esc_html__( 'Search clicks', 'publishrank' ) . '</span><strong>' . esc_html( number_format_i18n( $clicks ) ) . '</strong></div><div><span class="rhs-label">' . esc_html__( 'Impressions', 'publishrank' ) . '</span><strong>' . esc_html( number_format_i18n( $impressions ) ) . '</strong></div></div>' . $this->search_console_chart( $metrics['days'] );
+			echo '<p>' . esc_html( sprintf( __( /* translators: 1: Search Console property, 2: start date, 3: end date, 4: fetch time. */ '%1$s · %2$s to %3$s · fetched %4$s', 'publishrank' ), (string) ( $metrics['property'] ?? '' ), (string) ( $metrics['start_date'] ?? '' ), (string) ( $metrics['end_date'] ?? '' ), (string) ( $metrics['fetched_at'] ?? '' ) ) ) . '</p><div class="rhs-grid pr-analytics-gsc-kpis"><div><span class="rhs-label">' . esc_html__( 'Search clicks', 'publishrank' ) . '</span><strong>' . esc_html( number_format_i18n( $clicks ) ) . '</strong></div><div><span class="rhs-label">' . esc_html__( 'Impressions', 'publishrank' ) . '</span><strong>' . esc_html( number_format_i18n( $impressions ) ) . '</strong></div></div>' . wp_kses( $this->search_console_chart( $metrics['days'] ), self::chart_allowed_html() );
 			echo '<p class="description">' . esc_html__( 'Clicks and impressions are separately scaled to show direction, not relative magnitude. Search Console data is aggregated and delayed; the newest dates may be incomplete. No query or page-level data is collected in this view.', 'publishrank' ) . '</p>';
 		} else {
 			echo '<p>' . esc_html__( 'Connect a Google account with access to a verified Search Console property to display clicks, impressions and daily trends. Search Console OAuth is separate from Supabase sign-in.', 'publishrank' ) . '</p>';
 		}
-		echo '<p><a class="button" href="' . esc_url( Branding::page_url( 'publishrank-search-console' ) ) . '">' . esc_html__( $connected ? 'Manage Search Console connection' : 'Connect Search Console', 'publishrank' ) . '</a></p></section>';
+			$connection_label = $connected ? __( 'Manage Search Console connection', 'publishrank' ) : __( 'Connect Search Console', 'publishrank' );
+			echo '<p><a class="button" href="' . esc_url( Branding::page_url( 'publishrank-search-console' ) ) . '">' . esc_html( $connection_label ) . '</a></p></section>';
+	}
+
+	/** Allow only the markup and attributes used by internally-generated analytics charts. */
+	private static function chart_allowed_html() {
+		return array(
+			'div' => array( 'class' => true ),
+			'svg' => array( 'class' => true, 'viewBox' => true, 'role' => true, 'aria-label' => true ),
+			'title' => array(),
+			'line' => array( 'x1' => true, 'y1' => true, 'x2' => true, 'y2' => true, 'class' => true ),
+			'polyline' => array( 'points' => true, 'class' => true ),
+			'circle' => array( 'cx' => true, 'cy' => true, 'r' => true, 'class' => true ),
+			'text' => array( 'x' => true, 'y' => true, 'class' => true ),
+			'p' => array( 'class' => true ),
+			'span' => array( 'class' => true ),
+		);
 	}
 
 	private function search_console_chart( $data ) {

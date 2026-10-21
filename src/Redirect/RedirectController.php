@@ -21,7 +21,16 @@ final class RedirectController {
 			if ( in_array( $status, array( 410, 451 ), true ) ) { status_header( $status ); nocache_headers(); exit; }
 			$target = $this->safe_target( (string) ( $rule['target'] ?? '' ) );
 			if ( '' === $target || $this->is_loop( $path, $target ) ) { return; }
-			if ( get_option( 'publishrank_redirect_preserve_query', true ) && ! empty( $_SERVER['QUERY_STRING'] ) ) { $target = add_query_arg( wp_parse_args( (string) wp_unslash( $_SERVER['QUERY_STRING'] ) ), $target ); }
+			if ( get_option( 'publishrank_redirect_preserve_query', true ) && isset( $_SERVER['QUERY_STRING'] ) && '' !== (string) $_SERVER['QUERY_STRING'] ) {
+				$query_string = sanitize_text_field( wp_unslash( (string) $_SERVER['QUERY_STRING'] ) );
+				$query_args   = wp_parse_args( $query_string );
+				$clean_args   = array();
+				foreach ( $query_args as $query_key => $query_value ) {
+					$key = sanitize_key( (string) $query_key );
+					if ( '' !== $key ) { $clean_args[ $key ] = map_deep( $query_value, 'sanitize_text_field' ); }
+				}
+				if ( $clean_args ) { $target = add_query_arg( $clean_args, $target ); }
+			}
 			if ( get_option( 'publishrank_redirect_x_header', true ) ) { header( 'X-Redirect-By: PublishRank' ); }
 			wp_safe_redirect( $target, $status ); exit;
 		}

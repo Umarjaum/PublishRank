@@ -10,7 +10,7 @@ final class FrontendBranding {
 	const URL_OPTION     = 'publishrank_public_attribution_url';
 
 	public function register() {
-			// Installer defaults enable this on fresh installs; saved site choices win.
+			// Public footer credit remains disabled on fresh installs unless an administrator opts in.
 		if ( self::enabled() ) {
 			add_action( 'wp_footer', array( $this, 'render' ), 30 );
 			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ), 30 );
@@ -49,7 +49,7 @@ final class FrontendBranding {
 		}
 		$logo = esc_url( plugins_url( 'assets/images/publishrank-mark-transparent.png', dirname( dirname( __DIR__ ) ) . '/publishrank.php' ) );
 		echo '<div class="publishrank-attribution">';
-		echo '<a class="publishrank-attribution__link" href="' . $url . '" rel="nofollow" aria-label="' . esc_attr( $text ) . '">';
+		echo '<a class="publishrank-attribution__link" href="' . esc_url( $url ) . '" rel="nofollow" aria-label="' . esc_attr( $text ) . '">';
 		echo '<img class="publishrank-attribution__mark" src="' . esc_url( $logo ) . '" alt="" width="20" height="20" loading="lazy" decoding="async" />';
 		echo '<span>' . esc_html( $text ) . '</span>';
 		echo '</a></div>';

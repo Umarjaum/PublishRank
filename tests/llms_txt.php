@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /** Static regression checks for llms.txt discovery and source attribution. */
 $root = dirname( __DIR__ );
@@ -17,9 +18,9 @@ $checks = array(
     'rewrite rules flush only once after registration' => strpos( $llms, 'maybe_flush_rewrite_rules' ) !== false && strpos( $llms, "publishrank_llms_rewrite_ready" ) !== false,
     'powered-by HTML comment exists as an opt-in feature' => strpos( $comment, 'Powered by PublishRank SEO - https://publishrank.netlify.app' ) !== false && strpos( $comment, "get_option( 'publishrank_source_attribution', false )" ) !== false,
     'head comment module is registered' => strpos( $plugin, 'FrontendHeadComment::class' ) !== false,
-    'source attribution controls remain available for optional metadata' => strpos( $trace, "get_option( 'publishrank_source_attribution', false )" ) !== false,
-    'source attribution setting is user-controllable' => strpos( $settings, "'publishrank_source_attribution'" ) !== false && strpos( $settings, 'HTML source attribution' ) !== false,
-    'generator branding is opt-in' => strpos( $head_output, '$source_attribution = (bool) get_option' ) !== false && strpos( $head_output, 'name="generator" content="PublishRank' ) !== false,
+    'source attribution output checks the opt-in setting' => strpos( $trace, "const ENABLED_OPTION = 'publishrank_source_attribution'" ) !== false,
+    'source attribution setting is user-controllable' => strpos( $settings, 'name="publishrank_source_attribution"' ) !== false && strpos( $settings, 'Source provenance and head comment' ) !== false,
+    'generator branding is conditional on source attribution opt-in' => strpos( $head_output, "if ( get_option( 'publishrank_source_attribution', false ) )" ) !== false && strpos( $head_output, 'name="generator" content="PublishRank' ) !== false,
     'neutral output marker preserves recovery behavior' => strpos( $head_output, '<!-- SEO metadata output begin -->' ) !== false && strpos( $recovery, '<!-- SEO metadata output begin -->' ) !== false,
     'diagnostics recognizes output without public attribution' => strpos( $scanner, '<!-- SEO metadata output begin -->' ) !== false,
 );

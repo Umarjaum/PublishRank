@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 /** Static regression checks for schema graph and metadata precedence. */
 $root = dirname( __DIR__ );
@@ -15,5 +16,5 @@ $checks = array(
     'Twitter image alt tag supported' => strpos( $head, 'twitter:image:alt' ) !== false,
 );
 $failed = array();
-foreach ( $checks as $label => $passed ) { echo ( $passed ? 'PASS: ' : 'FAIL: ' ) . $label . "\n"; if ( ! $passed ) { $failed[] = $label; } }
+foreach ( $checks as $label => $passed ) { fwrite( STDOUT, ( $passed ? 'PASS: ' : 'FAIL: ' ) . $label . "\n"); if ( ! $passed ) { $failed[] = $label; } }
 if ( $failed ) { exit( 1 ); }

@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /**
  * LiveBlogPosting, FAQ de-duplication and attribution tests (stub based; no WordPress install required).
  * Run: php tests/liveblog_schema.php
@@ -26,7 +27,7 @@ require_once __DIR__ . '/../src/Core/FrontendHeadComment.php';
 use PublishRankSEO\Schema\LiveBlogSchema as L; use PublishRankSEO\Schema\GraphOutput as G; use PublishRankSEO\Core\FrontendHeadComment as C;
 
 $failed = array(); $n = 0;
-$check = function ( $label, $ok ) use ( &$failed, &$n ) { ++$n; echo ( $ok ? 'PASS: ' : 'FAIL: ' ) . $label . "\n"; if ( ! $ok ) { $failed[] = $label; } };
+$check = function ( $label, $ok ) use ( &$failed, &$n ) { ++$n; fwrite( STDOUT, ( $ok ? 'PASS: ' : 'FAIL: ' ) . $label . "\n"); if ( ! $ok ) { $failed[] = $label; } };
 $post = new WP_Post();
 
 // 1. Ordinary articles are never LiveBlogPosting, including titles that merely contain "live".
@@ -84,7 +85,7 @@ $check( '7. different pages (e.g. a listing) keep their own article nodes', 2 ==
 // Source-level regression checks.
 $graph = file_get_contents( __DIR__ . '/../src/Schema/GraphOutput.php' );
 $check( '7b. ordinary article type fallback is still NewsArticle', false !== strpos( $graph, "'NewsArticle'" ) );
-$check( '7c. unsupported legacy schema values cannot be emitted', false !== strpos( $graph, 'SchemaTypes::resolve' ) && false !== strpos( $graph, 'not in this' ) );
+$check( '7c. unsupported schema selections are resolved against the supported type registry', false !== strpos( $graph, 'SchemaTypes::resolve' ) && false !== strpos( $graph, 'array_key_exists( $chosen, SchemaTypes::article_types() )' ) );
 
 // Attribution.
 $ctx = array(); $GLOBALS['ctx'] = array();
@@ -98,5 +99,5 @@ ob_start(); $c = new C(); $c->render(); $c->render(); $once = ob_get_clean();
 $check( '10d. emitted once even if wp_head runs twice', 1 === substr_count( $once, '<!--' ) );
 $check( '10e. attribution can be disabled by the administrator', false !== strpos( file_get_contents( __DIR__ . '/../src/Core/FrontendHeadComment.php' ), "get_option( 'publishrank_source_attribution', false )" ) );
 
-echo "\n$n checks, " . count( $failed ) . " failed\n";
+fwrite( STDOUT, "\n$n checks, " . count( $failed ) . " failed\n");
 exit( $failed ? 1 : 0 );

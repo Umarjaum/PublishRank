@@ -51,8 +51,9 @@ final class Installer {
 			'publishrank_image_license_url'          => '',
 			'publishrank_seo_video_sitemap'          => 1,
 			'publishrank_seo_media_post_types'       => 'all',
-			// Technical source provenance is always enabled in code; only footer branding is configurable.
-			'publishrank_public_attribution'         => 1,
+				// Public attribution is opt-in to comply with WordPress.org's credit-display guideline.
+				'publishrank_public_attribution'         => 0,
+				'publishrank_source_attribution'         => 0,
 			'publishrank_sitemap_post_types'         => 'post',
 			'publishrank_sitemap_pages_enabled'      => 1,
 			'publishrank_sitemap_cpt_enabled'        => 1,
@@ -173,7 +174,19 @@ final class Installer {
 
 	/** Runs once after the plugin files are updated (admin requests only). */
 	public static function maybe_upgrade() {
-		if ( ! is_admin() || PUBLISHRANK_SEO_VERSION === (string) get_option( self::VERSION_OPTION, '' ) ) {
+		if ( ! is_admin() ) {
+			return;
+		}
+		// Earlier releases enabled public attribution by default; migrate it off once so the new opt-in is meaningful.
+		if ( ! get_option( 'publishrank_attribution_optin_migrated', false ) ) {
+			$previous_version = (string) get_option( self::VERSION_OPTION, '0' );
+			if ( version_compare( $previous_version, '2.9.53', '>=' ) && get_option( 'publishrank_public_attribution', false ) ) {
+				update_option( 'publishrank_public_attribution', 0 );
+			}
+			update_option( 'publishrank_source_attribution', 0 );
+			update_option( 'publishrank_attribution_optin_migrated', 1, false );
+		}
+		if ( PUBLISHRANK_SEO_VERSION === (string) get_option( self::VERSION_OPTION, '' ) ) {
 			return;
 		}
 		self::install_defaults();

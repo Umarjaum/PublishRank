@@ -232,13 +232,13 @@ Expected output is one canonical, one description, one title, one robots directi
 
 ## 13. Provenance and official branding
 
-Always-on technical source provenance adds local-only PublishRank markers to public HTML pages:
+When enabled in **PublishRank → Settings**, optional technical source provenance adds local-only PublishRank markers to public HTML pages:
 
 - `publishrank-brand` meta tag.
 - `publishrank-version` meta tag.
 - HTML provenance comment with release fingerprint.
 
-These markers do not track visitors or make network requests. They help publishers and support teams identify the active official SEO layer. The administrator dashboard includes the supplied PublishRank banner.
+These markers are off by default, do not track visitors or make network requests, and can be disabled at any time. They help publishers and support teams identify the active SEO layer. The administrator dashboard includes the supplied PublishRank banner.
 
 Because the plugin is GPLv2-or-later WordPress software, source copying cannot be technically prevented by PHP. For controlled commercial releases, publish checksums, sign release archives in CI, protect the private source repository, and maintain trademark/copyright notices. See `docs/SECURITY-AND-PROVENANCE.md`.
 
@@ -270,13 +270,13 @@ Recommended rollback procedure:
 - [ ] Import/export backup exists.
 - [ ] Staging scan passes before production activation.
 - [ ] Google Search Console and Bing Webmaster Tools have the sitemap index.
-- [ ] Provenance markers should be visible in public HTML view-source; only the visible footer credit is optional.
+- [ ] If you explicitly enabled provenance markers or the footer credit, verify that output in view-source/public pages.
 
 ## 16. Support boundaries
 
 PublishRank does not modify theme files, guarantee search results, or replace WordPress security, backups, editorial review, legal review, or platform-specific webmaster tools. Test all production changes on staging and keep a rollback path.
 
-Public HTML source provenance is always enabled and cannot be disabled in Settings. It identifies the active PublishRank version with local markers and makes no external network requests. The visible “Powered by PublishRank” footer credit remains optional and can be disabled.
+Public HTML source provenance, the optional “SEO Powered by PublishRank” head comment, and the visible “Powered by PublishRank” footer credit are all disabled by default. Each requires an explicit administrator opt-in in **PublishRank → Settings** and can be turned off at any time. These features make no external network requests.
 
 
 ### Publisher editorial genre

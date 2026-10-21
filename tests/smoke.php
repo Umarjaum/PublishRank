@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 function esc_url_raw( $value ) { return filter_var( $value, FILTER_SANITIZE_URL ); }
 function esc_xml( $value ) { return htmlspecialchars( (string) $value, ENT_XML1 | ENT_COMPAT, 'UTF-8' ); }

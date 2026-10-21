@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 // Verifies JSON-LD output flags prevent </script> breakout.
 $src = file_get_contents( __DIR__ . '/../src/Schema/GraphOutput.php' );

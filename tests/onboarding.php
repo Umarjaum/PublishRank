@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 // Static checks on the wizard source. Behaviour is covered by tests/onboarding_wizard.php.
 $source   = file_get_contents( __DIR__ . '/../src/Admin/OnboardingPage.php' );
@@ -15,7 +16,7 @@ $checks = array(
     'completed setup has configuration summary' => strpos( $source, 'Your PublishRank configuration' ) !== false,
     'edit action is available' => strpos( $source, 'Edit setup' ) !== false && strpos( $source, 'edit_mode' ) !== false,
     'defaults restore is nonce guarded' => strpos( $source, "AdminAssets::guard( 'publishrank_onboarding_defaults' )" ) !== false,
-    'save is nonce and capability guarded' => strpos( $source, "AdminAssets::guard( 'publishrank_onboarding_save' )" ) !== false,
+	'save is nonce and capability guarded' => strpos( $source, "check_admin_referer( 'publishrank_onboarding_save' )" ) !== false && strpos( $source, "current_user_can( 'manage_options' )" ) !== false,
     'completed setup suppresses reminder' => strpos( $source, 'publishrank_onboarding_completed_at' ) !== false && strpos( $source, 'is_setup_complete()' ) !== false,
     'persistent first-run notice has a button and icon' => strpos( $source, 'Start onboarding' ) !== false && strpos( $source, 'publishrank-header-icon-v2.png' ) !== false && strpos( $source, 'notice-info prw-setup-notice' ) !== false,
     'completion is only recorded at final step' => strpos( $source, "if ( 8 === \$step )" ) !== false && strpos( $source, "update_option( 'publishrank_onboarding_completed_at', gmdate( 'c' ) );" ) !== false,

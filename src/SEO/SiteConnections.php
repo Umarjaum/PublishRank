@@ -237,25 +237,44 @@ final class SiteConnections {
 	 * themselves (some nginx setups) never reach WordPress, so a real file is the most reliable.
 	 * Never overwrites a file this plugin did not create.
 	 */
+	private static function filesystem( $root ) {
+		if ( ! function_exists( 'WP_Filesystem' ) ) {
+			$file_api = ABSPATH . 'wp-admin/includes/file.php';
+			if ( is_readable( $file_api ) ) { require_once $file_api; }
+		}
+		if ( ! function_exists( 'WP_Filesystem' ) || ! WP_Filesystem( false, $root, true ) ) {
+			return null;
+		}
+		global $wp_filesystem;
+		return is_object( $wp_filesystem ) ? $wp_filesystem : null;
+	}
+
 	private static function write_physical( $name, $content ) {
 		$root = self::web_root();
-		if ( null === $root || ! is_writable( $root ) ) { return false; }
+		if ( null === $root ) { return false; }
+		$filesystem = self::filesystem( $root );
+		if ( ! $filesystem || ! $filesystem->is_writable( $root ) ) { return false; }
 		$path = $root . $name;
-		if ( file_exists( $path ) ) {
-			$existing = @file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+		if ( $filesystem->exists( $path ) ) {
+			$existing = $filesystem->get_contents( $path );
 			$stored   = self::files();
 			$ours     = isset( $stored[ $name ] ) && ! empty( $stored[ $name ]['physical'] ) && is_string( $existing ) && $existing === $stored[ $name ]['content'];
 			if ( ! $ours && $existing !== $content ) { return false; }
 		}
-		return false !== @file_put_contents( $path, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+		$mode = defined( 'FS_CHMOD_FILE' ) ? FS_CHMOD_FILE : 0644;
+		return $filesystem->put_contents( $path, $content, $mode );
 	}
 
 	/** Remove the physical copy only if it is still exactly what this plugin wrote. */
 	private static function remove_physical( $name, $content ) {
 		$root = self::web_root();
 		if ( null === $root ) { return; }
+		$filesystem = self::filesystem( $root );
+		if ( ! $filesystem ) { return; }
 		$path = $root . $name;
-		if ( is_file( $path ) && @file_get_contents( $path ) === $content ) { @unlink( $path ); } // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors
+		if ( $filesystem->is_file( $path ) && $filesystem->get_contents( $path ) === $content ) {
+			$filesystem->delete( $path );
+		}
 	}
 
 	/** @return string Empty when valid, otherwise a translated reason. */

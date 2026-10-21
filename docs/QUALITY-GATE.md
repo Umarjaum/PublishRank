@@ -37,7 +37,7 @@ Then exercise the new screens on a staging site: Redirects, 404 Monitor, Robots.
 - Archive/search title generation does not call `wp_get_document_title()` from inside its own filter path.
 - IndexNow key settings use the WordPress Settings API with a restricted key sanitizer.
 - Cache invalidation records a non-autoloaded timestamp instead of writing from a sanitizer callback.
-- Public source provenance is always enabled; local markers identify the product, release version, and deterministic fingerprint without network requests. Only the visible footer credit is optional.
+- Public source provenance and visible/footer or head-comment attribution are disabled by default and require an explicit administrator opt-in; local markers make no network requests.
 - The supplied 1983x793 banner is packaged and rendered only on the administrator dashboard.
 - Editorial audit helpers operate locally; no hosted-service entitlement policy or feature lock is included in this directory build.
 

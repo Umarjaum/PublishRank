@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) && 'cli' !== PHP_SAPI ) { exit; }
 /** Static checks for the dashboard banner, article schema default and sitemap routing fixes. */
 $root = dirname( __DIR__ );
 $read = static function ( $f ) use ( $root ) { return (string) file_get_contents( $root . '/' . $f ); };
@@ -8,9 +9,9 @@ $checks = array(
 	'pages retain the foundational WebPage node' => false !== strpos( $graph, "current_webpage_type()" ),
 	'sitemap URLs resolve without stored rewrite rules' => false !== strpos( $ctl, "add_action( 'parse_request'" ) && false !== strpos( $ctl, 'function match_request' ),
 	'missing sitemap rewrite rule is healed once' => false !== strpos( $ctl, 'function heal_rewrite_rules' ) && false !== strpos( $ctl, 'publishrank_sitemap_rules_healed' ),
-	'welcome heading is forced white' => false !== strpos( $css, '.wrap .rhs-welcome-banner h2' ) && false !== strpos( $css, 'color:#fff!important' ),
+	'welcome heading is high-contrast white on dark banner' => false !== strpos( $css, '.wrap .rhs-welcome-banner h2' ) && false !== strpos( $css, 'color:#ffffff!important' ) && false !== strpos( $css, 'background:linear-gradient(120deg,#171717' ),
 	'hreflang uses the locale of the page being served' => false !== strpos( $lang, 'function current_locale' ) && false !== strpos( $lang, 'PostMeta::HREFLANG' ),
-	'revoked broad schema panels are absent' => false === strpos( $suite, 'data-types="Review"' ) && false === strpos( $suite, 'data-types="Recipe"' ),
+	'advanced Review and Recipe schema panels remain available' => false !== strpos( $suite, 'data-types="Review"' ) && false !== strpos( $suite, 'data-types="Recipe"' ),
 	'banner artwork is not cropped or overlapped' => false !== strpos( $css, 'object-fit:contain' ),
 );
 $failed = 0;

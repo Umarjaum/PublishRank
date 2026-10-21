@@ -9,7 +9,12 @@ final class Store {
 
 	public static function table( $name ) {
 		global $wpdb;
-		return $wpdb->prefix . 'publishrank_internal_links_' . $name;
+		$allowed = array( 'nodes', 'edges', 'terms', 'recommendations' );
+		if ( ! in_array( $name, $allowed, true ) ) {
+			return '';
+		}
+		$table = $wpdb->prefix . 'publishrank_internal_links_' . $name;
+		return preg_match( '/^[A-Za-z0-9_]+$/', $table ) ? $table : '';
 	}
 
 	public static function enabled() {
@@ -148,13 +153,13 @@ final class Store {
 
 	public static function node_for_object( $object_id ) {
 		global $wpdb;
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table( 'nodes' ) . ' WHERE object_id = %d', absint( $object_id ) ) );
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE object_id = %d', self::table( 'nodes' ), absint( $object_id ) ) );
 		return $row ? $row : null;
 	}
 
 	public static function node( $node_id ) {
 		global $wpdb;
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table( 'nodes' ) . ' WHERE node_id = %d', absint( $node_id ) ) );
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE node_id = %d', self::table( 'nodes' ), absint( $node_id ) ) );
 		return $row ? $row : null;
 	}
 
@@ -232,7 +237,8 @@ final class Store {
 		global $wpdb;
 		$wpdb->query(
 			$wpdb->prepare(
-				'INSERT IGNORE INTO ' . self::table( 'edges' ) . ' (source_node_id,target_node_id,anchor_text,source_url,target_url,scan_id,created_at) VALUES (%d,%d,%s,%s,%s,%d,%s)',
+				'INSERT IGNORE INTO %i (source_node_id,target_node_id,anchor_text,source_url,target_url,scan_id,created_at) VALUES (%d,%d,%s,%s,%s,%d,%s)',
+				self::table( 'edges' ),
 				absint( $source_node_id ),
 				absint( $target_node_id ),
 				mb_substr( (string) $anchor, 0, 255, 'UTF-8' ),
@@ -248,7 +254,8 @@ final class Store {
 		global $wpdb;
 		return (bool) $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT edge_id FROM ' . self::table( 'edges' ) . ' WHERE source_node_id = %d AND target_node_id = %d',
+				'SELECT edge_id FROM %i WHERE source_node_id = %d AND target_node_id = %d',
+				self::table( 'edges' ),
 				absint( $source_node_id ),
 				absint( $target_node_id )
 			)
@@ -266,8 +273,8 @@ final class Store {
 		if ( ! $node ) {
 			return;
 		}
-		$outbound = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table( 'edges' ) . ' WHERE source_node_id = %d', $node->node_id ) );
-		$inbound  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table( 'edges' ) . ' WHERE target_node_id = %d', $node->node_id ) );
+		$outbound = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_node_id = %d', self::table( 'edges' ), $node->node_id ) );
+		$inbound  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE target_node_id = %d', self::table( 'edges' ), $node->node_id ) );
 		$post     = get_post( (int) $node->object_id );
 		$priority = $post ? self::priority_for_post( $post, $inbound ) : '';
 		$wpdb->update(
@@ -292,9 +299,9 @@ final class Store {
 		}
 		$nodes = self::table( 'nodes' );
 		$edges = self::table( 'edges' );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$edges} WHERE source_node_id = %d OR target_node_id = %d", $node->node_id, $node->node_id ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE source_node_id = %d OR target_node_id = %d', $edges, $node->node_id, $node->node_id ) );
 		$wpdb->delete( self::table( 'terms' ), array( 'node_id' => $node->node_id ), array( '%d' ) );
-		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . self::table( 'recommendations' ) . ' WHERE source_node_id = %d OR target_node_id = %d', $node->node_id, $node->node_id ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE source_node_id = %d OR target_node_id = %d', self::table( 'recommendations' ), $node->node_id, $node->node_id ) );
 		$wpdb->delete( $nodes, array( 'node_id' => $node->node_id ), array( '%d' ) );
 		self::invalidate_cache();
 	}
@@ -323,8 +330,9 @@ final class Store {
 		if ( empty( $types ) ) {
 			return 0;
 		}
-		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
-		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders})", $types ) );
+			$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholder count comes only from the validated post-type list; all values are bound by prepare().
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE post_status = 'publish' AND post_type IN ({$placeholders})", array_merge( array( $wpdb->posts ), $types ) ) );
 	}
 
 	public static function post_ids_after( $last_id, $limit ) {
@@ -333,13 +341,14 @@ final class Store {
 		if ( empty( $types ) ) {
 			return array();
 		}
-		$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
-		return array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ({$placeholders}) AND ID > %d ORDER BY ID ASC LIMIT %d", array_merge( $types, array( absint( $last_id ), absint( $limit ) ) ) ) ) );
+			$placeholders = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholder count comes only from the validated post-type list; all values are bound by prepare().
+			return array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM %i WHERE post_status = 'publish' AND post_type IN ({$placeholders}) AND ID > %d ORDER BY ID ASC LIMIT %d", array_merge( array( $wpdb->posts ), $types, array( absint( $last_id ), absint( $limit ) ) ) ) ) );
 	}
 
 	public static function orphan_nodes_after( $last_node_id, $limit, $threshold ) {
 		global $wpdb;
-		return (array) $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table( 'nodes' ) . ' WHERE inbound_count <= %d AND node_id > %d ORDER BY node_id ASC LIMIT %d', absint( $threshold ), absint( $last_node_id ), absint( $limit ) ) );
+		return (array) $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE inbound_count <= %d AND node_id > %d ORDER BY node_id ASC LIMIT %d', self::table( 'nodes' ), absint( $threshold ), absint( $last_node_id ), absint( $limit ) ) );
 	}
 
 	public static function stats() {
@@ -359,7 +368,8 @@ final class Store {
 		$page = max( 1, absint( $page ) );
 		$rows = (array) $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM ' . self::table( 'nodes' ) . ' WHERE inbound_count <= %d ORDER BY inbound_count ASC, object_id ASC LIMIT %d OFFSET %d',
+				'SELECT * FROM %i WHERE inbound_count <= %d ORDER BY inbound_count ASC, object_id ASC LIMIT %d OFFSET %d',
+				self::table( 'nodes' ),
 				absint( $threshold ),
 				absint( $per_page ),
 				absint( ( $page - 1 ) * $per_page )
@@ -384,22 +394,24 @@ final class Store {
 		if ( empty( $statuses ) ) {
 			return array();
 		}
-		$nodes = self::table( 'nodes' );
-		$recs  = self::table( 'recommendations' );
-		$page  = max( 1, absint( $page ) );
-		return (array) $wpdb->get_results(
+			$nodes = self::table( 'nodes' );
+			$recs  = self::table( 'recommendations' );
+			$page  = max( 1, absint( $page ) );
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholder count comes only from the status allow-list; table identifiers and all status values are bound by prepare().
+			return (array) $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT r.*, sn.object_id AS source_object_id, sn.title AS source_title, sn.url AS source_url, tn.object_id AS target_object_id, tn.title AS target_title, tn.url AS target_url
-				FROM {$recs} r
-				JOIN {$nodes} sn ON sn.node_id = r.source_node_id
-				JOIN {$nodes} tn ON tn.node_id = r.target_node_id
+				FROM %i r
+				JOIN %i sn ON sn.node_id = r.source_node_id
+				JOIN %i tn ON tn.node_id = r.target_node_id
 				WHERE r.status IN ({$placeholders})
 				ORDER BY FIELD(r.status,'pending','approved','inserted','dismissed'), r.score DESC, r.id DESC
 				LIMIT %d OFFSET %d",
-				array_merge( $statuses, array( absint( $per_page ), absint( ( $page - 1 ) * $per_page ) ) )
-			)
-		);
-	}
+				array_merge( array( $recs, $nodes, $nodes ), $statuses, array( absint( $per_page ), absint( ( $page - 1 ) * $per_page ) ) )
+				)
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		}
 
 	public static function recommendation( $id ) {
 		global $wpdb;
@@ -408,16 +420,18 @@ final class Store {
 		$row   = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT r.*, sn.object_id AS source_object_id, sn.title AS source_title, sn.url AS source_url, tn.object_id AS target_object_id, tn.title AS target_title, tn.url AS target_url
-				FROM {$recs} r
-				JOIN {$nodes} sn ON sn.node_id = r.source_node_id
-				JOIN {$nodes} tn ON tn.node_id = r.target_node_id
+				FROM %i r
+				JOIN %i sn ON sn.node_id = r.source_node_id
+				JOIN %i tn ON tn.node_id = r.target_node_id
 				WHERE r.id = %d",
+				$recs,
+				$nodes,
+				$nodes,
 				absint( $id )
 			)
 		);
 		return $row ? $row : null;
 	}
-
 	public static function insert_recommendation( $source_node_id, $target_node_id, $anchor, $score, $signals ) {
 		global $wpdb;
 		if ( self::edge_exists( $source_node_id, $target_node_id ) ) {
@@ -425,7 +439,8 @@ final class Store {
 		}
 		$existing = $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT id FROM ' . self::table( 'recommendations' ) . ' WHERE source_node_id = %d AND target_node_id = %d',
+				'SELECT id FROM %i WHERE source_node_id = %d AND target_node_id = %d',
+				self::table( 'recommendations' ),
 				absint( $source_node_id ),
 				absint( $target_node_id )
 			)

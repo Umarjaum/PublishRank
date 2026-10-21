@@ -179,7 +179,7 @@ final class ArticleIntelligence {
 			}
 		}
 		/* translators: %d: number of analyzed articles. */
-		\PublishRankSEO\Admin\AdminAssets::done( 'publishrank-insights', 'success', sprintf( _n( 'Analyzed %d article.', 'Analyzed %d articles.', $done, 'publishrank' ), $done ) );
+		\PublishRankSEO\Admin\AdminAssets::done( 'publishrank-insights', 'success', sprintf( /* translators: %d: number of articles analyzed. */ _n( 'Analyzed %d article.', 'Analyzed %d articles.', $done, 'publishrank' ), $done ) );
 	}
 
 	/* ------------------------------------------------------------------ *
@@ -475,7 +475,7 @@ final class ArticleIntelligence {
 				if ( '' === $img['alt'] ) { $no_alt++; }
 			}
 			/* translators: %d: number of images without alt text. */
-				$add( 'media_alt', 'media', 0 === $no_alt ? 'good' : ( $no_alt < count( $images ) ? 'ok' : 'bad' ), 1, 0 === $no_alt ? __( 'Every image in the article has alt text.', 'publishrank' ) : sprintf( _n( '%d image is missing alt text.', '%d images are missing alt text.', $no_alt, 'publishrank' ), $no_alt ) );
+				$add( 'media_alt', 'media', 0 === $no_alt ? 'good' : ( $no_alt < count( $images ) ? 'ok' : 'bad' ), 1, 0 === $no_alt ? __( 'Every image in the article has alt text.', 'publishrank' ) : sprintf( /* translators: %d: number of images missing alt text. */ _n( '%d image is missing alt text.', '%d images are missing alt text.', $no_alt, 'publishrank' ), $no_alt ) );
 				$quality = self::image_quality( $html );
 				$add( 'media_weight', 'media', 0 === $quality['large'] ? 'good' : ( $quality['large'] < 2 ? 'ok' : 'bad' ), 2, 0 === $quality['large'] ? __( 'Article images are within the recommended file-size budget.', 'publishrank' ) : sprintf( _n( '%d image is larger than 350 KB; compress it before publishing.', '%d images are larger than 350 KB; compress them before publishing.', $quality['large'], 'publishrank' ), $quality['large'] ) );
 				$add( 'media_dimensions', 'media', 0 === $quality['oversize'] ? 'good' : 'ok', 1, 0 === $quality['oversize'] ? __( 'Images are sized for the configured maximum width.', 'publishrank' ) : sprintf( _n( '%d image exceeds the configured maximum width; resize it.', '%d images exceed the configured maximum width; resize them.', $quality['oversize'], 'publishrank' ), $quality['oversize'] ) );
@@ -491,7 +491,7 @@ final class ArticleIntelligence {
 		$need = $word_count >= 600 ? 2 : 1;
 		if ( $word_count >= 150 ) {
 			/* translators: %d: internal links found. */
-			$add( 'links_internal', 'links', $internal >= $need ? 'good' : ( $internal > 0 ? 'ok' : 'bad' ), 2, $internal >= $need ? sprintf( _n( '%d internal link found.', '%d internal links found.', $internal, 'publishrank' ), $internal ) : __( 'Link to related coverage on your own site to help readers and crawlers.', 'publishrank' ) );
+			$add( 'links_internal', 'links', $internal >= $need ? 'good' : ( $internal > 0 ? 'ok' : 'bad' ), 2, $internal >= $need ? sprintf( /* translators: %d: number of internal links found. */ _n( '%d internal link found.', '%d internal links found.', $internal, 'publishrank' ), $internal ) : __( 'Link to related coverage on your own site to help readers and crawlers.', 'publishrank' ) );
 			$cited = $external > 0 || '' !== trim( (string) $d['citations'] );
 			$add( 'links_external', 'links', $cited ? 'good' : 'ok', 1, $cited ? __( 'The article attributes or cites outside sources.', 'publishrank' ) : __( 'Link to or cite primary sources where you report from them.', 'publishrank' ) );
 		}
@@ -587,7 +587,7 @@ final class ArticleIntelligence {
 				$names = array();
 				foreach ( $others as $other ) { $names[] = '“' . wp_strip_all_tags( get_the_title( $other ) ) . '”'; }
 				/* translators: %s: list of article titles. */
-				$checks[] = array( 'id' => 'site_cannibalization', 'group' => 'site', 'status' => 'bad', 'weight' => 2, 'message' => sprintf( __( 'Other articles target the same focus keyphrase and may compete with this one: %s', 'publishrank' ), implode( ', ', $names ) ) );
+				$checks[] = array( 'id' => 'site_cannibalization', 'group' => 'site', 'status' => 'bad', 'weight' => 2, 'message' => sprintf( /* translators: %s: comma-separated titles of articles targeting the same keyphrase. */ __( 'Other articles target the same focus keyphrase and may compete with this one: %s', 'publishrank' ), implode( ', ', $names ) ) );
 			} else {
 				$checks[] = array( 'id' => 'site_cannibalization', 'group' => 'site', 'status' => 'good', 'weight' => 2, 'message' => __( 'No other article uses this focus keyphrase.', 'publishrank' ) );
 			}
@@ -595,10 +595,11 @@ final class ArticleIntelligence {
 		global $wpdb;
 		if ( '' !== $title && isset( $wpdb ) && is_object( $wpdb ) ) {
 			$types = self::supported_post_types();
-			$in    = implode( ',', array_fill( 0, count( $types ), '%s' ) );
-			$args  = array_merge( $types, array( $title, $pid ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$dupe = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type IN ($in) AND post_status IN ('publish','future','pending','draft') AND post_title = %s AND ID <> %d LIMIT 1", $args ) );
+				$in    = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+				$args  = array_merge( $types, array( $title, $pid ) );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in contains only generated %s placeholders from the validated post-type list; all values are bound below.
+				$dupe = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type IN ($in) AND post_status IN ('publish','future','pending','draft') AND post_title = %s AND ID <> %d LIMIT 1", $args ) );
 			$checks[] = array( 'id' => 'site_duplicate_title', 'group' => 'site', 'status' => $dupe ? 'bad' : 'good', 'weight' => 1, 'message' => $dupe ? __( 'Another article already uses this exact headline.', 'publishrank' ) : __( 'The headline is unique on this site.', 'publishrank' ) );
 		}
 		if ( $pid && class_exists( '\\PublishRankSEO\\InternalLinks\\Store' ) && \PublishRankSEO\InternalLinks\Store::enabled() && 'publish' === get_post_status( $pid ) ) {
@@ -800,10 +801,11 @@ final class ArticleIntelligence {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$types = self::supported_post_types();
-		$in    = implode( ',', array_fill( 0, count( $types ), '%s' ) );
-		$args  = array_merge( array( PostMeta::FOCUS_KEYWORD ), $types, array( (int) $limit ) );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT m.meta_value AS keyphrase, COUNT(*) AS total FROM {$wpdb->postmeta} m INNER JOIN {$wpdb->posts} p ON p.ID = m.post_id WHERE m.meta_key = %s AND m.meta_value <> '' AND p.post_type IN ($in) AND p.post_status = 'publish' GROUP BY m.meta_value HAVING COUNT(*) > 1 ORDER BY total DESC LIMIT %d", $args ) );
+			$in    = implode( ',', array_fill( 0, count( $types ), '%s' ) );
+			$args  = array_merge( array( PostMeta::FOCUS_KEYWORD ), $types, array( (int) $limit ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $in contains only generated %s placeholders from the validated post-type list; all values are bound below.
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT m.meta_value AS keyphrase, COUNT(*) AS total FROM {$wpdb->postmeta} m INNER JOIN {$wpdb->posts} p ON p.ID = m.post_id WHERE m.meta_key = %s AND m.meta_value <> '' AND p.post_type IN ($in) AND p.post_status = 'publish' GROUP BY m.meta_value HAVING COUNT(*) > 1 ORDER BY total DESC LIMIT %d", $args ) );
 		$out  = array();
 		foreach ( (array) $rows as $row ) { $out[] = array( 'keyphrase' => (string) $row->keyphrase, 'count' => (int) $row->total ); }
 		return $out;
