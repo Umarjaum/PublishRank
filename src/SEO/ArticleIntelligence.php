@@ -95,19 +95,27 @@ final class ArticleIntelligence {
 			return;
 		}
 		$version = \PublishRankSEO\Core\Branding::version();
-		wp_enqueue_style( 'publishrank-article-intel', \PublishRankSEO\Core\Branding::asset_url( 'css/article-intel.css' ), array(), $version );
-		wp_enqueue_script( 'publishrank-article-intel', \PublishRankSEO\Core\Branding::asset_url( 'js/article-intel.js' ), array( 'jquery' ), $version, true );
+		$css_path = PUBLISHRANK_SEO_PATH . 'assets/css/article-intel.css';
+		$js_path  = PUBLISHRANK_SEO_PATH . 'assets/js/article-intel.js';
+		$css_ver  = $version . '.' . (int) ( is_file( $css_path ) ? filemtime( $css_path ) : 0 );
+		$js_ver   = $version . '.' . (int) ( is_file( $js_path ) ? filemtime( $js_path ) : 0 );
+		wp_enqueue_style( 'publishrank-article-intel', \PublishRankSEO\Core\Branding::asset_url( 'css/article-intel.css' ), array(), $css_ver );
+		wp_enqueue_script( 'publishrank-article-intel', \PublishRankSEO\Core\Branding::asset_url( 'js/article-intel.js' ), array( 'jquery', 'wp-data' ), $js_ver, true );
 		wp_localize_script(
 			'publishrank-article-intel',
 			'publishrankIntel',
-			array(
-				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-				'nonce'     => wp_create_nonce( self::AJAX_ACTION ),
-				'action'    => self::AJAX_ACTION,
-				'postId'    => isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				'analyzing' => __( 'Analyzing…', 'publishrank' ),
-				'failed'    => __( 'Analysis could not be completed. Save the draft and try again.', 'publishrank' ),
-			)
+				array(
+					'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+					'nonce'     => wp_create_nonce( self::AJAX_ACTION ),
+					'action'    => self::AJAX_ACTION,
+					'postId'    => isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					'analyzing' => __( 'Analyzing…', 'publishrank' ),
+					'failed'    => __( 'Analysis could not be completed. Save the draft and try again.', 'publishrank' ),
+					'refresh'   => __( 'Re-analyze', 'publishrank' ),
+					'analyze'   => __( 'Analyze article', 'publishrank' ),
+					'synced'    => __( 'SEO values synced. Save or update the article to keep them.', 'publishrank' ),
+					'scoreLabel'=> __( 'Editorial SEO score', 'publishrank' ),
+				)
 		);
 	}
 
@@ -139,10 +147,11 @@ final class ArticleIntelligence {
 		$data    = $post instanceof \WP_Post ? self::data_from_post( $post ) : self::blank_data();
 		$data    = array_merge(
 			$data,
-			array(
-				'post_id'       => $post_id,
-				'title'         => $text( 'title', 300 ),
-				'content'       => self::substr( $content, 400000 ),
+				array(
+					'post_id'       => $post_id,
+					'title'         => $text( 'title', 300 ),
+					'content'       => self::substr( $content, 400000 ),
+					'excerpt'       => $text( 'excerpt', 3200 ),
 				'slug'          => sanitize_title( $text( 'slug', 200 ) ),
 				'seo_title'     => $text( 'seo_title', 255 ),
 				'description'   => $text( 'description', 320 ),
@@ -151,7 +160,7 @@ final class ArticleIntelligence {
 			)
 		);
 		$report = self::analyze( $data, true );
-		wp_send_json_success( array( 'score' => $report['score'], 'html' => self::render_report( $report ), 'stats' => $report['stats'] ) );
+			wp_send_json_success( array( 'score' => $report['score'], 'groups' => $report['groups'], 'html' => self::render_report( $report ), 'stats' => $report['stats'] ) );
 	}
 
 	/** Analyze the next batch of articles that have no stored score. */
@@ -535,20 +544,27 @@ final class ArticleIntelligence {
 			$groups[ $g ] = $v['max'] > 0 ? (int) round( ( $v['earned'] / $v['max'] ) * 100 ) : 0;
 		}
 
+		$keyphrase_suggestions = $word_count >= 80 ? self::suggest_keyphrases( $title, $words, $headings ) : array();
+		if ( ! $keyphrase_suggestions ) {
+			$title_phrase = self::suggest_title_keyphrase( $title );
+			if ( '' !== $title_phrase ) { $keyphrase_suggestions[] = array( 'phrase' => $title_phrase, 'count' => 0 ); }
+		}
+
 		return array(
 			'score'       => $score,
 			'rating'      => $score >= 80 ? 'good' : ( $score >= 55 ? 'ok' : 'bad' ),
 			'groups'      => $groups,
 			'checks'      => $checks,
-				'stats'       => array(
-					'words'        => $word_count,
-					'images'       => count( $images ),
-					'focus_keyword' => $keyphrase,
-					'focus_keyword_occurrences' => $keyphrase_occurrences,
-					'focus_keyword_density' => round( $keyphrase_density, 2 ),
-					'focus_keyword_coverage' => count( array_filter( $keyphrase_coverage ) ),
-					'focus_keyword_coverage_total' => '' !== $keyphrase ? count( $keyphrase_coverage ) : 0,
-					'sentences'    => $sentence_count,
+			'fields'      => array( 'title' => $title, 'seo_title' => $seo_title, 'description' => $description, 'keyphrase' => $keyphrase ),
+			'stats'       => array(
+				'words'        => $word_count,
+				'images'       => count( $images ),
+				'focus_keyword' => $keyphrase,
+				'focus_keyword_occurrences' => $keyphrase_occurrences,
+				'focus_keyword_density' => round( $keyphrase_density, 2 ),
+				'focus_keyword_coverage' => count( array_filter( $keyphrase_coverage ) ),
+				'focus_keyword_coverage_total' => '' !== $keyphrase ? count( $keyphrase_coverage ) : 0,
+				'sentences'    => $sentence_count,
 				'paragraphs'   => count( $paragraphs ),
 				'reading_min'  => max( 1, (int) ceil( $word_count / 238 ) ),
 				'internal'     => $internal,
@@ -557,7 +573,8 @@ final class ArticleIntelligence {
 				'serp_pixels'  => $pixels,
 			),
 			'suggestions' => array(
-				'keyphrases'  => $word_count >= 80 ? self::suggest_keyphrases( $title, $words, $headings ) : array(),
+				'keyphrases'  => $keyphrase_suggestions,
+				'title'       => '' === $seo_title ? $title : '',
 				'description' => '' === $description ? self::suggest_description( $paragraphs, (string) $d['excerpt'] ) : '',
 			),
 		);
@@ -616,6 +633,15 @@ final class ArticleIntelligence {
 	/* ------------------------------------------------------------------ *
 	 * Suggestions
 	 * ------------------------------------------------------------------ */
+
+	/** Offer a conservative keyphrase seed from the headline when the draft is too short to score phrase frequency. */
+	public static function suggest_title_keyphrase( $title ) {
+		$stop   = self::stopwords();
+		$tokens = array_values( array_filter( self::tokens( wp_strip_all_tags( (string) $title ) ), static function ( $word ) use ( $stop ) {
+			return ! isset( $stop[ $word ] ) && self::len( $word ) > 2 && ! ctype_digit( $word );
+		} ) );
+		return implode( ' ', array_slice( $tokens, 0, 3 ) );
+	}
 
 	/**
 	 * Rank 1–3 word phrases by frequency, weighting headline and subheading occurrences.
@@ -726,9 +752,23 @@ final class ArticleIntelligence {
 		$labels = self::group_labels();
 		$icons  = array( 'good' => '●', 'ok' => '●', 'bad' => '●', 'info' => '○' );
 		$s      = $report['stats'];
+		$f      = isset( $report['fields'] ) && is_array( $report['fields'] ) ? $report['fields'] : array( 'title' => '', 'seo_title' => '', 'description' => '', 'keyphrase' => '' );
+		$sug    = $report['suggestions'];
 		$out    = '<div class="pr-intel__summary pr-intel__summary--' . esc_attr( $report['rating'] ) . '"><span class="pr-intel__score">' . esc_html( (string) $report['score'] ) . '</span><span class="pr-intel__of">/100</span>';
 		/* translators: 1: word count, 2: reading minutes, 3: image count, 4: internal links, 5: external links. */
 		$out   .= '<span class="pr-intel__stats">' . esc_html( sprintf( __( '%1$d words · %2$d min read · %3$d images · %4$d internal / %5$d external links', 'publishrank' ), $s['words'], $s['reading_min'], $s['images'], $s['internal'], $s['external'] ) ) . '</span></div>';
+		$quick_open = '' === (string) $f['keyphrase'] || '' === (string) $f['seo_title'] || '' === (string) $f['description'];
+		$keyphrase_hint = ! empty( $sug['keyphrases'][0]['phrase'] ) ? (string) $sug['keyphrases'][0]['phrase'] : '';
+		$out .= '<details class="pr-intel__quick"' . ( $quick_open ? ' open' : '' ) . '><summary>' . esc_html__( 'SEO essentials — add or edit values', 'publishrank' ) . '</summary><div class="pr-intel__quick-grid">';
+		$out .= '<label>' . esc_html__( 'Focus keyphrase', 'publishrank' ) . '<span class="pr-intel__field-row"><input class="pr-intel__field" type="text" maxlength="100" data-meta-key="_publishrank_seo_focus_keyword" value="' . esc_attr( (string) $f['keyphrase'] ) . '" placeholder="' . esc_attr( $keyphrase_hint ? sprintf( /* translators: %s: a suggested focus keyphrase inferred from the article. */ __( 'Suggested: %s', 'publishrank' ), $keyphrase_hint ) : __( 'Enter the main topic of this article', 'publishrank' ) ) . '" />';
+		if ( '' !== $keyphrase_hint ) { $out .= '<button type="button" class="button button-small pr-intel__apply-suggestion" data-meta-key="_publishrank_seo_focus_keyword" data-value="' . esc_attr( $keyphrase_hint ) . '">' . esc_html__( 'Use suggestion', 'publishrank' ) . '</button>'; }
+		$out .= '</span></label>';
+		$out .= '<label>' . esc_html__( 'SEO title', 'publishrank' ) . '<span class="pr-intel__field-row"><input class="pr-intel__field" type="text" maxlength="255" data-meta-key="_publishrank_seo_title" value="' . esc_attr( (string) $f['seo_title'] ) . '" placeholder="' . esc_attr( '' !== (string) $f['title'] ? sprintf( /* translators: %s: current article headline used as the default search title. */ __( 'Optional override — default: %s', 'publishrank' ), $f['title'] ) : __( 'Add a concise search title', 'publishrank' ) ) . '" />';
+		if ( ! empty( $sug['title'] ) ) { $out .= '<button type="button" class="button button-small pr-intel__apply-suggestion" data-meta-key="_publishrank_seo_title" data-value="' . esc_attr( $sug['title'] ) . '">' . esc_html__( 'Use headline', 'publishrank' ) . '</button>'; }
+		$out .= '</span></label>';
+		$out .= '<label>' . esc_html__( 'Meta description', 'publishrank' ) . '<span class="pr-intel__field-row pr-intel__field-row--textarea"><textarea class="pr-intel__field" maxlength="320" rows="3" data-meta-key="_publishrank_seo_description" placeholder="' . esc_attr( ! empty( $sug['description'] ) ? $sug['description'] : __( 'Summarize the article in one clear, reader-focused sentence.', 'publishrank' ) ) . '">' . esc_textarea( (string) $f['description'] ) . '</textarea>';
+		if ( ! empty( $sug['description'] ) ) { $out .= '<button type="button" class="button button-small pr-intel__apply-suggestion" data-meta-key="_publishrank_seo_description" data-value="' . esc_attr( $sug['description'] ) . '">' . esc_html__( 'Use draft', 'publishrank' ) . '</button>'; }
+		$out .= '</span></label></div><p class="description pr-intel__save-status" role="status">' . esc_html__( 'These values sync with PublishRank SEO settings. Save or update the article to keep them.', 'publishrank' ) . '</p></details>';
 		if ( ! empty( $s['focus_keyword'] ) ) {
 			$out .= '<div class="pr-intel__keyword-metrics"><strong>' . esc_html__( 'Focus keyphrase', 'publishrank' ) . ':</strong> ' . esc_html( $s['focus_keyword'] ) . ' · ' . esc_html( sprintf( __( '%1$d occurrence(s), %2$s%% density, %3$d/%4$d placement signals', 'publishrank' ), $s['focus_keyword_occurrences'], $s['focus_keyword_density'], $s['focus_keyword_coverage'], $s['focus_keyword_coverage_total'] ) ) . '</div>';
 		}
@@ -751,13 +791,13 @@ final class ArticleIntelligence {
 			}
 			$out .= '</ul></details>';
 		}
-		$sug = $report['suggestions'];
 		if ( ! empty( $sug['keyphrases'] ) || ! empty( $sug['description'] ) ) {
 			$out .= '<div class="pr-intel__suggest"><strong>' . esc_html__( 'Suggestions from your article text', 'publishrank' ) . '</strong>';
 			if ( ! empty( $sug['keyphrases'] ) ) {
 				$out .= '<p>' . esc_html__( 'Likely keyphrases:', 'publishrank' ) . ' ';
 				foreach ( $sug['keyphrases'] as $k ) {
-					$out .= '<button type="button" class="button button-small pr-intel__use-keyphrase" data-phrase="' . esc_attr( $k['phrase'] ) . '">' . esc_html( $k['phrase'] ) . ' <span class="pr-intel__count">×' . esc_html( (string) $k['count'] ) . '</span></button> ';
+					$source = ! empty( $k['count'] ) ? ' <span class="pr-intel__count">×' . esc_html( (string) $k['count'] ) . '</span>' : ' <span class="pr-intel__count">' . esc_html__( 'headline', 'publishrank' ) . '</span>';
+					$out .= '<button type="button" class="button button-small pr-intel__use-keyphrase" data-phrase="' . esc_attr( $k['phrase'] ) . '">' . esc_html( $k['phrase'] ) . $source . '</button> ';
 				}
 				$out .= '</p>';
 			}
