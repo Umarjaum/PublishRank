@@ -8,9 +8,8 @@
 .pr-editor-score-card__toggle{flex:0 0 auto;width:22px;height:22px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:transparent;color:#fff;cursor:pointer;line-height:1;padding:0}
 .pr-editor-score-card__toggle:focus-visible{outline:2px solid #19d3ff;outline-offset:2px}
 .pr-editor-score-card__ring .pr-ring__bg{stroke:#dcdcde}
-.pr-editor-score-card__ring .pr-ring__val--good{stroke:#61e294}
-.pr-editor-score-card__ring .pr-ring__val--ok{stroke:#ffd166}
-.pr-editor-score-card__ring .pr-ring__val--bad{stroke:#ff8991}
+.pr-editor-score-card__ring .pr-ring__val--good,.pr-editor-score-card__ring .pr-ring__val--ok,.pr-editor-score-card__ring .pr-ring__val--bad{stroke:url(#publishrank-score-gradient)!important}
+.pr-editor-score-card__ring .pr-ring__val{fill:none;stroke-linecap:round}
 .pr-editor-score-card__ring .pr-ring__text{fill:#16803c!important;color:#16803c!important;font-weight:700}
 .pr-editor-score-card__body{margin-top:8px}
 .pr-editor-score-card.is-collapsed .pr-editor-score-card__body{display:none}
