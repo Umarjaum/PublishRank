@@ -78,8 +78,10 @@ final class ImportExport {
 			'publishrank_seo_redirects',
 			'publishrank_seo_404_monitor',
 			'publishrank_seo_404_log',
-			'publishrank_traffic_guard',
-		);
+				'publishrank_traffic_guard',
+				'publishrank_admin_access_mode',
+				'publishrank_admin_access_slug',
+			);
 
 	/** Register admin actions. */
 	public function register() {
@@ -131,6 +133,14 @@ final class ImportExport {
 
 		/** @param string $key @param mixed $value @return mixed */
 		private function sanitize( $key, $value ) {
+			if ( 'publishrank_admin_access_mode' === $key ) {
+				$value = sanitize_key( is_scalar( $value ) ? (string) $value : '' );
+				return in_array( $value, array( 'custom', 'disabled' ), true ) ? $value : 'custom';
+			}
+			if ( 'publishrank_admin_access_slug' === $key ) {
+				$value = trim( sanitize_key( is_scalar( $value ) ? (string) $value : '' ), '/' );
+				return preg_match( '/^[a-z][a-z0-9_-]{5,63}$/', $value ) && ! in_array( $value, array( 'admin', 'login', 'wp-admin', 'wp-login', 'wp-json', 'wp-cron', 'xmlrpc', 'feed', 'sitemap' ), true ) ? $value : '';
+			}
 			if ( 'publishrank_traffic_guard' === $key ) {
 				if ( ! is_array( $value ) ) {
 					return array();
