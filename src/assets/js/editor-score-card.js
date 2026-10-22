@@ -50,14 +50,44 @@
 		refresh()
 	}
 	);
-	$(function() {
-		var card=$('#publishrank-editor-score');
-		var n=parseInt(card.attr('data-score')||0, 10);
-		card.addClass(n>=80?'is-good':(n>=55?'is-ok':'is-bad'));
+		$(function() {
+			var card=$('#publishrank-editor-score');
+			var n=parseInt(card.attr('data-score')||0, 10);
+			card.addClass(n>=80?'is-good':(n>=55?'is-ok':'is-bad'));
+			if(!card.length)return;
+			var storageKey='publishrank-editor-score-position';
+			var saved=null;
+			try { saved=JSON.parse(window.localStorage.getItem(storageKey)||'null') } catch(e) {}
+			if(saved&&typeof saved.left==='number'&&typeof saved.top==='number') {
+				card.css({left:saved.left+'px',top:saved.top+'px',right:'auto',bottom:'auto'});
+			}
+			var dragging=false,startX=0,startY=0,startLeft=0,startTop=0;
+			function point(e) { var t=e.originalEvent&&e.originalEvent.touches&&e.originalEvent.touches[0]; return t||e.originalEvent||e; }
+			function move(e) {
+				if(!dragging)return;
+				var p=point(e), maxLeft=Math.max(0,window.innerWidth-card.outerWidth()), maxTop=Math.max(0,window.innerHeight-card.outerHeight());
+				var left=Math.max(0,Math.min(maxLeft,startLeft+(p.clientX-startX))), top=Math.max(0,Math.min(maxTop,startTop+(p.clientY-startY)));
+				card.css({left:left+'px',top:top+'px',right:'auto',bottom:'auto'});
+				if(e.preventDefault)e.preventDefault();
+			}
+			function stop() {
+				if(!dragging)return;
+				dragging=false; card.removeClass('is-dragging');
+				var rect=card[0].getBoundingClientRect();
+				try { window.localStorage.setItem(storageKey,JSON.stringify({left:Math.round(rect.left),top:Math.round(rect.top)})) } catch(e) {}
+			}
+			card.on('pointerdown',function(e) {
+				if(e.button!==undefined&&e.button!==0)return;
+				if($(e.target).closest('button,a,input,select,textarea').length)return;
+				var p=point(e), rect=card[0].getBoundingClientRect();
+				dragging=true; startX=p.clientX; startY=p.clientY; startLeft=rect.left; startTop=rect.top; card.addClass('is-dragging');
+				if(card[0].setPointerCapture&&e.pointerId!==undefined)card[0].setPointerCapture(e.pointerId);
+				e.preventDefault();
+			});
+			card.on('pointermove',move).on('pointerup pointercancel',stop);
 
-	}
+		}
 	);
 
 }
 )(jQuery);
-

@@ -19,9 +19,9 @@ final class MetaGenerator {
 			if ( $home_title ) { return function_exists( 'mb_substr' ) ? mb_substr( $home_title, 0, 180 ) : substr( $home_title, 0, 180 ); }
 		}
 		if ( $post_id ) {
-			$override = PostMeta::get( $post_id, PostMeta::TITLE, '' );
-			if ( '' !== (string) $override ) {
-				return wp_strip_all_tags( (string) $override );
+				$override = PostMeta::get( $post_id, PostMeta::TITLE, '' );
+				if ( '' !== (string) $override ) {
+					return $this->resolve_snippet_variables( wp_strip_all_tags( (string) $override ), $post_id );
 			}
 		}
 		$context = is_front_page() || is_home() ? 'home' : ( $this->is_editorial_article() ? 'post' : ( is_singular() ? 'page' : 'archive' ) );
@@ -32,7 +32,7 @@ final class MetaGenerator {
 	public function title_for_post( $post_id ) {
 		$post_id  = (int) $post_id;
 		$override = PostMeta::get( $post_id, PostMeta::TITLE, '' );
-		if ( '' !== (string) $override ) { return wp_strip_all_tags( (string) $override ); }
+		if ( '' !== (string) $override ) { return $this->resolve_snippet_variables( wp_strip_all_tags( (string) $override ), $post_id ); }
 		$type    = get_post_type_object( (string) get_post_type( $post_id ) );
 		$context = $type && $type->public && $type->publicly_queryable && ! in_array( $type->name, array( 'page', 'attachment' ), true ) ? 'post' : 'page';
 		return $this->render_title( $context, $post_id );
@@ -71,7 +71,7 @@ final class MetaGenerator {
 		$override = $post_id ? PostMeta::get( $post_id, PostMeta::DESCRIPTION, '' ) : '';
 		// A manually written SEO description always wins over anything fetched automatically. A manually written SEO description must win over the generated excerpt.
 		if ( '' !== (string) $override ) {
-			return SeoData::truncate( SeoData::clean( (string) $override ), 160 );
+				return SeoData::truncate( SeoData::clean( $this->resolve_snippet_variables( (string) $override, $post_id ) ), 160 );
 		}
 		if ( $post_id ) {
 			$auto = SeoData::auto_description( $post_id );
@@ -80,6 +80,18 @@ final class MetaGenerator {
 		$text = $this->archive_description();
 		if ( '' === $text ) { $text = SeoData::clean( get_bloginfo( 'description' ) ); }
 		return SeoData::truncate( $text, 160 );
+	}
+
+	/** Resolve editor-friendly Rank Math-style variables in post-level snippet overrides. */
+	private function resolve_snippet_variables( $value, $post_id ) {
+		$keyword = (string) PostMeta::get( $post_id, PostMeta::FOCUS_KEYWORD, '' );
+		$values = array(
+			'%%focus_keyword%%' => $keyword,
+			'%%focuskw%%' => $keyword,
+			'%focus_keyword%' => $keyword,
+			'%focuskw%' => $keyword,
+		);
+		return strtr( (string) $value, $values );
 	}
 
 	/** Description for term, author and post-type archives, fetched from WordPress. */

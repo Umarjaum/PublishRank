@@ -6,7 +6,7 @@
 	var cfg = window.publishrankPreview, root = document.getElementById('pr-preview');
 	if (!cfg || !root) { return; }
 	var t = cfg.i18n || {}, postId = root.getAttribute('data-post-id');
-	var state = { seq: 0, timer: null, inflight: false, pending: false, last: null, lastAt: 0, tab: 'search', device: 'desktop', social: 'facebook', sig: '', lastBody: '' };
+	var state = { seq: 0, timer: null, inflight: false, pending: false, last: null, lastAt: 0, tab: 'search', device: 'desktop', social: 'facebook', sig: '', lastBody: '', snippetTitle: null, snippetDescription: null };
 	var $status = root.querySelector('[data-pr-pv-status]'), $pill = root.querySelector('[data-pr-pv-pill]'), $count = root.querySelector('[data-pr-pv-count]');
 	var ctx = null; try { ctx = document.createElement('canvas').getContext('2d'); } catch (e) { ctx = null; }
 
@@ -19,6 +19,11 @@
 		return s.replace(/\s+$/, '') + '…';
 	}
 	function panel(name) { return root.querySelector('[data-pr-pv-panel="' + name + '"]'); }
+	function field(selectors) { for (var i = 0; i < selectors.length; i++) { var n = document.querySelector(selectors[i]); if (n && typeof n.value === 'string') { return n; } } return null; }
+	var titleFields = ['#publishrank_seo_title', '#publishrank_title', '[name="publishrank_seo_title"]', '#_publishrank_seo_title', '[name="_publishrank_seo_title"]'];
+	var descriptionFields = ['#publishrank_meta_description', '#publishrank_description', '[name="publishrank_seo_description"]', '#_publishrank_seo_description', '[name="_publishrank_seo_description"]'];
+	function setEditorField(selectors, value) { var n = field(selectors); if (!n) { return; } n.value = value; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true })); }
+	function insertToken(input, token) { var start = input.selectionStart == null ? input.value.length : input.selectionStart, end = input.selectionEnd == null ? input.value.length : input.selectionEnd; input.value = input.value.slice(0, start) + token + input.value.slice(end); input.focus(); input.selectionStart = input.selectionEnd = start + token.length; input.dispatchEvent(new Event('input', { bubbles: true })); }
 
 	/* ---------- collect unsaved state ---------- */
 	function editorStore() { try { return window.wp && wp.data && wp.data.select && wp.data.select('core/editor'); } catch (e) { return null; } }
@@ -59,6 +64,8 @@
 		var params = new URLSearchParams(), meta = collectMeta(), editor = collectEditor();
 		meta.forEach(function (pair) { params.append(pair.name, pair.value == null ? '' : pair.value); });
 		Object.keys(editor).forEach(function (key) { params.append(key, editor[key] == null ? '' : editor[key]); });
+		if (state.snippetTitle !== null) { params.append('pr_snippet_title', state.snippetTitle); }
+		if (state.snippetDescription !== null) { params.append('pr_snippet_description', state.snippetDescription); }
 		return params.toString();
 	}
 
@@ -105,6 +112,18 @@
 	}
 	function renderSearch(d) {
 		var p = panel('search'), mobile = state.device === 'mobile'; p.replaceChildren();
+		var editor = el('div', 'pr-pv-snippet-editor');
+		editor.appendChild(el('strong', 'pr-pv-snippet-editor__heading', 'Edit search snippet'));
+		var titleLabel = el('label', 'pr-pv-snippet-editor__field', 'Search title');
+		var titleInput = el('input'); titleInput.type = 'text'; titleInput.maxLength = 255; titleInput.value = state.snippetTitle !== null ? state.snippetTitle : ((field(titleFields) || {}).value || d.title || ''); titleLabel.appendChild(titleInput);
+		var titleToken = el('button', 'button button-small pr-pv-token', 'Insert %focus_keyword%'); titleToken.type = 'button'; titleLabel.appendChild(titleToken); editor.appendChild(titleLabel);
+		var descLabel = el('label', 'pr-pv-snippet-editor__field', 'Meta description');
+		var descInput = el('textarea'); descInput.rows = 3; descInput.maxLength = 320; descInput.value = state.snippetDescription !== null ? state.snippetDescription : ((field(descriptionFields) || {}).value || d.description || ''); descLabel.appendChild(descInput);
+		var descToken = el('button', 'button button-small pr-pv-token', 'Insert %focus_keyword%'); descToken.type = 'button'; descLabel.appendChild(descToken); editor.appendChild(descLabel);
+		var hint = el('span', 'pr-pv-snippet-editor__hint', 'Use %focus_keyword% to insert the Focus Keyword automatically.'); editor.appendChild(hint); p.appendChild(editor);
+		function changed(input, kind, selectors) { state[kind] = input.value; setEditorField(selectors, input.value); schedule(250); }
+		titleInput.addEventListener('input', function () { changed(titleInput, 'snippetTitle', titleFields); }); descInput.addEventListener('input', function () { changed(descInput, 'snippetDescription', descriptionFields); });
+		titleToken.addEventListener('click', function () { insertToken(titleInput, '%focus_keyword%'); }); descToken.addEventListener('click', function () { insertToken(descInput, '%focus_keyword%'); });
 		var sw = el('div', 'pr-pv-switch');
 		['desktop', 'mobile'].forEach(function (k) { var b = el('button', 'pr-pv-switch__btn' + (state.device === k ? ' is-active' : ''), t[k]); b.type = 'button'; b.addEventListener('click', function () { state.device = k; renderSearch(state.last); }); sw.appendChild(b); });
 		p.appendChild(sw);

@@ -129,9 +129,11 @@ final class LivePreview {
 		// 1) Capture the real, sanitised meta values without storing them.
 		add_filter( 'update_post_metadata', array( $this, 'capture_write' ), 1, 4 );
 		add_filter( 'get_post_metadata', array( $this, 'serve_overlay' ), 1, 4 );
-		PostMeta::save( $id ); // verifies its own nonce + capability; writes are intercepted above.
-		remove_filter( 'update_post_metadata', array( $this, 'capture_write' ), 1 );
-		if ( null !== $p( 'pr_thumb' ) && '' !== (string) $p( 'pr_thumb' ) ) { $this->overlay['_thumbnail_id'] = (string) absint( $p( 'pr_thumb' ) ); }
+			PostMeta::save( $id ); // verifies its own nonce + capability; writes are intercepted above.
+			remove_filter( 'update_post_metadata', array( $this, 'capture_write' ), 1 );
+			if ( null !== $p( 'pr_snippet_title' ) ) { $this->overlay[ PostMeta::TITLE ] = PostMeta::sanitize_text( $p( 'pr_snippet_title' ), 255 ); }
+			if ( null !== $p( 'pr_snippet_description' ) ) { $this->overlay[ PostMeta::DESCRIPTION ] = PostMeta::sanitize_text( $p( 'pr_snippet_description' ), 320 ); }
+			if ( null !== $p( 'pr_thumb' ) && '' !== (string) $p( 'pr_thumb' ) ) { $this->overlay['_thumbnail_id'] = (string) absint( $p( 'pr_thumb' ) ); }
 
 		// 2) Unsaved core fields on an in-memory copy.
 		$clone = clone $orig;

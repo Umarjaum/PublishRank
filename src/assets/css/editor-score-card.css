@@ -1,5 +1,6 @@
 /* PublishRank floating SEO score widget */
-.pr-editor-score-card{position:fixed;right:20px;bottom:20px;z-index:100000;width:174px;padding:10px 12px;background:#fff;color:#1d2327;border:1px solid #dcdcde;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);font-size:12px}
+.pr-editor-score-card{position:fixed;right:20px;bottom:20px;z-index:100000;width:174px;padding:10px 12px;background:#fff;color:#1d2327;border:1px solid #dcdcde;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);font-size:12px;cursor:grab;touch-action:none;user-select:none}
+.pr-editor-score-card.is-dragging{cursor:grabbing}
 .pr-editor-score-card__top{display:flex;gap:10px;align-items:center}
 .pr-editor-score-card__titles{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;min-width:0}
 .pr-editor-score-card__brand{color:#1d2327;font-size:13px}
