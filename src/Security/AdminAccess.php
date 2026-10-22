@@ -89,19 +89,21 @@ final class AdminAccess {
 
 	/** Stop direct /wp-admin/*.php probes before core's unauthenticated redirect runs. */
 	public function gate_native_admin_request() {
-		if ( ! self::enabled() || ! defined( 'WP_ADMIN' ) || ! WP_ADMIN || $this->administrator_is_authenticated() || $this->has_access_cookie() ) { return; }
+		if ( ! self::enabled() || ! defined( 'WP_ADMIN' ) || ! WP_ADMIN || $this->user_is_authenticated() || $this->has_access_cookie() ) { return; }
 		if ( wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) { return; }
 		$script = isset( $_SERVER['SCRIPT_NAME'] ) ? basename( (string) $_SERVER['SCRIPT_NAME'] ) : '';
 		if ( in_array( $script, array( 'admin-ajax.php', 'admin-post.php', 'async-upload.php', 'load-scripts.php', 'load-styles.php' ), true ) ) { return; }
+		nocache_headers();
 		wp_die( esc_html__( 'The WordPress administration area is not available at this address.', 'publishrank' ), esc_html__( 'Not found', 'publishrank' ), array( 'response' => 404 ) );
 	}
 
 	/** Block dashboard screens unless this browser entered through the custom path. */
 	public function gate_admin() {
 		$is_admin_post = isset( $_SERVER['SCRIPT_NAME'] ) && 'admin-post.php' === basename( (string) $_SERVER['SCRIPT_NAME'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		if ( ! self::enabled() || $this->administrator_is_authenticated() || $this->has_access_cookie() || wp_doing_ajax() || $is_admin_post || ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		if ( ! self::enabled() || $this->user_is_authenticated() || $this->has_access_cookie() || wp_doing_ajax() || $is_admin_post || ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 			return;
 		}
+		nocache_headers();
 		wp_die( esc_html__( 'The WordPress administration area is not available at this address.', 'publishrank' ), esc_html__( 'Not found', 'publishrank' ), array( 'response' => 404 ) );
 	}
 
@@ -109,16 +111,17 @@ final class AdminAccess {
 	public function gate_login() {
 		$raw_action = isset( $_REQUEST['action'] ) && is_scalar( $_REQUEST['action'] ) ? wp_unslash( $_REQUEST['action'] ) : 'login'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- action is only used to preserve password recovery.
 		$action = sanitize_key( (string) $raw_action );
-		$recovery = in_array( $action, array( 'lostpassword', 'retrievepassword', 'rp', 'resetpass' ), true );
-		if ( ! self::enabled() || $recovery || $this->administrator_is_authenticated() || $this->has_access_cookie() ) {
+		$recovery_or_public = in_array( $action, array( 'lostpassword', 'retrievepassword', 'rp', 'resetpass', 'checkemail', 'confirmaction', 'confirm_admin_email', 'entered_recovery_mode', 'postpass', 'register' ), true );
+		if ( ! self::enabled() || $recovery_or_public || $this->user_is_authenticated() || $this->has_access_cookie() ) {
 			return;
 		}
+		nocache_headers();
 		wp_die( esc_html__( 'The WordPress login page is not available at this address.', 'publishrank' ), esc_html__( 'Not found', 'publishrank' ), array( 'response' => 404 ) );
 	}
 
-	/** Keep an active administrator from being locked out when the short gate expires. */
-	private function administrator_is_authenticated() {
-		return is_user_logged_in() && current_user_can( 'manage_options' );
+	/** Keep any already-authenticated WordPress user from being locked out. */
+	private function user_is_authenticated() {
+		return is_user_logged_in();
 	}
 
 	/** Issue a short-lived, HttpOnly browser gate after an exact custom-path visit. */
