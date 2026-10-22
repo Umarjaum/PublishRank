@@ -46,7 +46,9 @@ final class BaiduSubmission {
 		$result = $this->submit_urls( $urls, 0 );
 		if ( is_wp_error( $result ) ) { $this->redirect( 'error', $result->get_error_message() ); }
 		$success = (int) ( $result['success'] ?? 0 ); $remain = isset( $result['remain'] ) ? (int) $result['remain'] : -1;
+		/* translators: %1$d: total count for the preceding category; %2$d: numeric count or measurement described by the message. */
 		$message = sprintf( __( 'Baidu accepted %1$d of %2$d submitted URLs. This is a discovery submission, not an indexing guarantee.', 'publishrank' ), $success, (int) $result['submitted'] );
+		/* translators: %d: numeric count or measurement described by the message. */
 		if ( $remain >= 0 ) { $message .= ' ' . sprintf( __( 'Reported quota remaining: %d.', 'publishrank' ), $remain ); }
 		$this->redirect( 'success', $message );
 	}

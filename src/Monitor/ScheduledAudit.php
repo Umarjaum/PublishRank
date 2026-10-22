@@ -74,7 +74,7 @@ final class ScheduledAudit {
 		update_option( self::OPTION, $report, false );
 		$email = sanitize_email( (string) get_option( 'publishrank_audit_email', '' ) );
 		if ( $email && 'PASS' !== $report['status'] ) {
-			$subject = sprintf( /* translators: %s: site name. */ __( '[%s] PublishRank weekly SEO audit: %s', 'publishrank' ), get_bloginfo( 'name' ), $report['status'] );
+			$subject = sprintf( /* translators: %1$s: site name; %2$s: audit status. */ __( '[%1$s] PublishRank weekly SEO audit: %2$s', 'publishrank' ), get_bloginfo( 'name' ), $report['status'] );
 			$body = __( 'Status', 'publishrank' ) . ": {$report['status']}\n" . __( 'Ran at', 'publishrank' ) . ": {$report['ran_at']}\n\n" . wp_json_encode( $report['sitemap']['errors'] ?? array(), JSON_PRETTY_PRINT );
 			wp_mail( $email, $subject, $body );
 		}

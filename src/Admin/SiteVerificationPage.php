@@ -210,14 +210,14 @@ final class SiteVerificationPage {
 				echo esc_html__( 'Not checked yet.', 'publishrank' );
 			}
 			echo '</p>';
-			echo '<form method="post" action="' . $action . '" class="rhs-vf-inline"><input type="hidden" name="action" value="publishrank_verification_check">'; wp_nonce_field( 'publishrank_verification_check' );
+			echo '<form method="post" action="' . esc_url( $action ) . '" class="rhs-vf-inline"><input type="hidden" name="action" value="publishrank_verification_check">'; wp_nonce_field( 'publishrank_verification_check' );
 			submit_button( __( 'Run live check now', 'publishrank' ), 'secondary', 'submit', false ); echo '</form>';
 			if ( ! empty( $check['home']['error'] ) && $fresh ) { echo '<p class="rhs-vf-error">' . esc_html( $check['home']['error'] ) . '</p>'; }
 		}
 		echo '</div>';
 
 		// Meta tag form.
-		echo '<form method="post" action="' . $action . '"><input type="hidden" name="action" value="publishrank_verification_save">'; wp_nonce_field( 'publishrank_verification_save' );
+		echo '<form method="post" action="' . esc_url( $action ) . '"><input type="hidden" name="action" value="publishrank_verification_save">'; wp_nonce_field( 'publishrank_verification_save' );
 		echo '<div class="rhs-card rhs-vf-card"><h2>' . esc_html__( 'Method 1: HTML meta tag', 'publishrank' ) . '</h2>';
 		echo '<p class="description">' . esc_html__( 'Paste either the token or the complete <meta> tag the search engine shows you. PublishRank extracts the right value and prints the tag in the <head> of your site.', 'publishrank' ) . '</p><div class="rhs-vf-grid">';
 		foreach ( $engines as $key => $engine ) {
@@ -227,8 +227,8 @@ final class SiteVerificationPage {
 			echo '<input type="text" class="large-text code" id="' . esc_attr( $id ) . '" name="token[' . esc_attr( $key ) . ']" value="' . esc_attr( $value ) . '" placeholder="' . esc_attr( $engine['ph'] ) . '" autocomplete="off" spellcheck="false">';
 			echo '<span class="description"><a href="' . esc_url( $engine['url'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Open console', 'publishrank' ) . '</a>';
 			if ( '' !== $value ) {
-				$tag = '<meta name="' . $engine['name'] . '" content="' . $value . '" />';
-				echo ' &middot; ' . $this->pill( isset( $check['tags'][ $key . ':' . $engine['name'] ] ) && $fresh ? $check['tags'][ $key . ':' . $engine['name'] ] : null );
+				$tag = '<meta name="' . esc_attr( $engine['name'] ) . '" content="' . esc_attr( $value ) . '" />';
+				echo ' &middot; ' . wp_kses_post( $this->pill( isset( $check['tags'][ $key . ':' . $engine['name'] ] ) && $fresh ? $check['tags'][ $key . ':' . $engine['name'] ] : null ) );
 				echo '</span><code class="rhs-vf-tag">' . esc_html( $tag ) . '</code>';
 				echo '<button type="button" class="button button-small rhs-copy" data-copy="' . esc_attr( $tag ) . '">' . esc_html__( 'Copy tag', 'publishrank' ) . '</button>';
 			} else {
@@ -248,10 +248,10 @@ final class SiteVerificationPage {
 		// Files.
 		echo '<div class="rhs-card rhs-vf-card"><h2>' . esc_html__( 'Method 2: verification file', 'publishrank' ) . '</h2>';
 		echo '<p class="description">' . esc_html__( 'Upload the file you downloaded from Google (google….html), Bing (BingSiteAuth.xml), Yandex, Baidu or Naver. PublishRank serves it from your site root at the exact address the search engine expects. You do not need FTP and nothing is written to disk.', 'publishrank' ) . '</p>';
-		echo '<form method="post" enctype="multipart/form-data" action="' . $action . '" class="rhs-vf-upload"><input type="hidden" name="action" value="publishrank_verification_upload">'; wp_nonce_field( 'publishrank_verification_upload' );
+		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( $action ) . '" class="rhs-vf-upload"><input type="hidden" name="action" value="publishrank_verification_upload">'; wp_nonce_field( 'publishrank_verification_upload' );
 		echo '<input type="file" name="verification_files[]" accept=".html,.htm,.xml,.txt" multiple required> '; submit_button( __( 'Upload and test', 'publishrank' ), 'primary', 'submit', false ); echo '</form>';
 		echo '<details class="rhs-vf-details"><summary>' . esc_html__( 'No file to upload? Create it by pasting the content', 'publishrank' ) . '</summary>';
-		echo '<form method="post" action="' . $action . '"><input type="hidden" name="action" value="publishrank_verification_create">'; wp_nonce_field( 'publishrank_verification_create' );
+		echo '<form method="post" action="' . esc_url( $action ) . '"><input type="hidden" name="action" value="publishrank_verification_create">'; wp_nonce_field( 'publishrank_verification_create' );
 		echo '<p><label for="pr-vf-fname"><strong>' . esc_html__( 'File name', 'publishrank' ) . '</strong></label><br><input type="text" class="regular-text code" id="pr-vf-fname" name="file_name" placeholder="google1234567890abcdef.html" spellcheck="false" required></p>';
 		echo '<p><label for="pr-vf-fcontent"><strong>' . esc_html__( 'File content', 'publishrank' ) . '</strong></label><br><textarea class="large-text code" rows="4" id="pr-vf-fcontent" name="file_content" placeholder="google-site-verification: google1234567890abcdef.html" spellcheck="false" required></textarea></p>';
 		submit_button( __( 'Create and test', 'publishrank' ), 'secondary', 'submit', false ); echo '</form></details>';
@@ -261,8 +261,8 @@ final class SiteVerificationPage {
 				$url = SiteConnections::file_url( $name );
 				echo '<tr><td><code>' . esc_html( $name ) . '</code><br><small>' . esc_html( size_format( strlen( $file['content'] ) ) ) . '</small></td>';
 				echo '<td><a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $url ) . '</a>' . ( ! empty( $file['physical'] ) ? '<br><small>' . esc_html__( 'Also written to the web root as a real file.', 'publishrank' ) . '</small>' : '' ) . '</td>';
-				echo '<td>' . $this->pill( $fresh && isset( $check['files'][ $name ] ) ? $check['files'][ $name ] : null ) . '</td>';
-				echo '<td><form method="post" action="' . $action . '" onsubmit="return confirm(' . esc_attr( wp_json_encode( __( 'Remove this verification file? The search engine may lose verification.', 'publishrank' ) ) ) . ');"><input type="hidden" name="action" value="publishrank_verification_delete"><input type="hidden" name="file_name" value="' . esc_attr( $name ) . '">'; wp_nonce_field( 'publishrank_verification_delete' );
+				echo '<td>' . wp_kses_post( $this->pill( $fresh && isset( $check['files'][ $name ] ) ? $check['files'][ $name ] : null ) ) . '</td>';
+				echo '<td><form method="post" action="' . esc_url( $action ) . '" onsubmit="return confirm(' . esc_attr( wp_json_encode( __( 'Remove this verification file? The search engine may lose verification.', 'publishrank' ) ) ) . ');"><input type="hidden" name="action" value="publishrank_verification_delete"><input type="hidden" name="file_name" value="' . esc_attr( $name ) . '">'; wp_nonce_field( 'publishrank_verification_delete' );
 				submit_button( __( 'Delete', 'publishrank' ), 'delete small', 'submit', false ); echo '</form></td></tr>';
 			}
 			echo '</tbody></table></div>';

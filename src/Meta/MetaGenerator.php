@@ -222,6 +222,7 @@ return $url;
 
 	private function page_suffix() {
 		$page = max( 1, (int) get_query_var( 'paged' ), (int) get_query_var( 'page' ) );
+		/* translators: %d: numeric count or measurement described by the message. */
 		return $page > 1 ? sprintf( __( 'Page %d', 'publishrank' ), $page ) : '';
 	}
 

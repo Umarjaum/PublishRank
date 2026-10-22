@@ -218,6 +218,7 @@ final class InternalLinksPage {
 
 	private function render_orphans( $orphans, $settings, $stats ) {
 		echo '<div class="rhs-card"><h2>' . esc_html__( 'Orphan report', 'publishrank' ) . '</h2>';
+		/* translators: %1$d: numeric count or measurement described by the message; %2$d: numeric count or measurement described by the message. */
 		echo '<p>' . esc_html( sprintf( __( '%1$d published URLs have %2$d or fewer meaningful inbound internal links.', 'publishrank' ), $stats['orphans'], $settings['threshold'] ) ) . '</p>';
 		echo '<table class="widefat striped rhs-ilink-table"><thead><tr><th>' . esc_html__( 'Priority', 'publishrank' ) . '</th><th>' . esc_html__( 'Content', 'publishrank' ) . '</th><th>' . esc_html__( 'Affected URL', 'publishrank' ) . '</th><th>' . esc_html__( 'Inbound', 'publishrank' ) . '</th><th>' . esc_html__( 'Outbound', 'publishrank' ) . '</th></tr></thead><tbody>';
 		foreach ( $orphans as $node ) {

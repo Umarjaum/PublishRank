@@ -75,6 +75,7 @@ final class FrontendScanner {
 			$response = wp_remote_get( $url, array( 'timeout' => 10, 'redirection' => 0, 'sslverify' => (bool) apply_filters( 'https_local_ssl_verify', true ), 'headers' => array( 'Cache-Control' => 'no-cache' ), 'limit_response_size' => 2097152 ) );
 			if ( is_wp_error( $response ) ) { $results[] = array( 'label' => $label, 'url' => $url, 'status' => 'NOT TESTED', 'error' => $response->get_error_message() ); continue; }
 			$code = (int) wp_remote_retrieve_response_code( $response );
+			/* translators: %d: HTTP response status code. */
 			if ( $code < 200 || $code >= 300 ) { $results[] = array( 'label' => $label, 'url' => $url, 'status' => 'ERROR', 'error' => sprintf( __( 'The page returned HTTP %d.', 'publishrank' ), $code ) ); continue; }
 			$body = (string) wp_remote_retrieve_body( $response );
 			if ( strlen( $body ) >= 2097152 ) { $results[] = array( 'label' => $label, 'url' => $url, 'status' => 'NOT TESTED', 'error' => __( 'The HTML response reached the 2 MiB safety limit; truncated content was not analyzed.', 'publishrank' ) ); continue; }
@@ -103,6 +104,7 @@ final class FrontendScanner {
 				$results[] = array( 'label' => __( 'Sitemap child endpoint', 'publishrank' ), 'url' => $url, 'status' => 'ERROR', 'error' => __( 'The sitemap index contains a non-site or invalid child URL; it was not requested.', 'publishrank' ) );
 				continue;
 			}
+			/* translators: %d: numeric count or measurement described by the message. */
 			$results[] = $this->fetch_xml( $url, sprintf( __( 'Child sitemap %d', 'publishrank' ), count( $results ) ), 'urlset' );
 		}
 		return $results;
@@ -115,15 +117,18 @@ final class FrontendScanner {
 		$response = wp_remote_get( $url, array( 'timeout' => 12, 'redirection' => 0, 'sslverify' => (bool) apply_filters( 'https_local_ssl_verify', true ), 'headers' => array( 'Cache-Control' => 'no-cache', 'Accept' => 'application/xml,text/xml;q=0.9,*/*;q=0.1' ), 'limit_response_size' => 2097152 ) );
 		if ( is_wp_error( $response ) ) { return array( 'label' => $label, 'url' => $url, 'status' => 'NOT TESTED', 'error' => $response->get_error_message() ); }
 		$code = (int) wp_remote_retrieve_response_code( $response );
+		/* translators: %d: HTTP response status code. */
 		if ( $code < 200 || $code >= 300 ) { return array( 'label' => $label, 'url' => $url, 'status' => 'ERROR', 'error' => sprintf( __( 'The sitemap endpoint returned HTTP %d.', 'publishrank' ), $code ) ); }
 		$body = (string) wp_remote_retrieve_body( $response );
 		if ( strlen( $body ) >= 2097152 ) { return array( 'label' => $label, 'url' => $url, 'status' => 'NOT TESTED', 'error' => __( 'The XML response reached the 2 MiB safety limit; truncated content was not validated.', 'publishrank' ) ); }
 		libxml_use_internal_errors( true );
 		$xml = simplexml_load_string( $body, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA );
 		libxml_clear_errors();
+		/* translators: %1$d: HTTP response status code; %2$s: expected XML root element name. */
 		if ( false === $xml || $expected_root !== $xml->getName() ) { return array( 'label' => $label, 'url' => $url, 'status' => 'ERROR', 'error' => sprintf( __( 'HTTP %1$d succeeded, but XML was malformed or the root element was not %2$s.', 'publishrank' ), $code, $expected_root ) ); }
 		$locs = $xml->xpath( '//*[local-name()="loc"]' );
 		$count = is_array( $locs ) ? count( $locs ) : 0;
+		/* translators: %1$d: HTTP response status code; %2$s: XML document type; %3$d: HTTP response status code. */
 		$message = sprintf( __( 'HTTP %1$d; valid %2$s XML; %3$d location(s).', 'publishrank' ), $code, $expected_root, $count );
 		if ( 'urlset' === $expected_root && 0 === $count ) { $message .= ' ' . __( 'This sitemap is valid and empty.', 'publishrank' ); }
 		$news = 'urlset' === $expected_root ? $xml->xpath( '//*[local-name()="news"]' ) : array();
@@ -135,7 +140,9 @@ final class FrontendScanner {
 				if ( false === $date ) { $invalid_dates++; }
 				elseif ( $date > $now + HOUR_IN_SECONDS || $date < $now - ( 48 * HOUR_IN_SECONDS ) ) { $stale++; }
 			}
+			/* translators: %1$d: numeric count or measurement described by the message; %2$d: number of date. */
 			if ( $invalid_dates || $stale ) { return array( 'label' => $label, 'url' => $url, 'status' => 'ERROR', 'error' => sprintf( __( 'News Sitemap has %1$d missing/invalid publication date(s) and %2$d date(s) outside the previous 48 hours.', 'publishrank' ), $invalid_dates, $stale ) ); }
+			/* translators: %d: numeric count or measurement described by the message. */
 			$message .= ' ' . sprintf( __( 'News entries checked: %d; all publication dates are within the 48-hour window.', 'publishrank' ), count( $news ) );
 		}
 		$children = array();
@@ -158,27 +165,36 @@ final class FrontendScanner {
 			$n = isset( $counts[ $key ] ) ? (int) $counts[ $key ] : 0;
 			if ( 1 === $n ) { $out[] = array( 'status' => 'PASS', 'message' => $rule[0] . ': 1' ); }
 			elseif ( 0 === $n ) { $out[] = array( 'status' => 'WARNING', 'message' => $rule[0] . ': ' . __( 'missing', 'publishrank' ) ); }
+			/* translators: %1$s: dynamic value identified by the surrounding label or sentence; %2$d: numeric count or measurement described by the message. */
 			else { $out[] = array( 'status' => 'ERROR', 'message' => sprintf( __( '%1$s: %2$d found. Review duplicate theme or plugin output.', 'publishrank' ), $rule[0], $n ) ); }
 		}
 		$blocks = (int) ( $counts['jsonld'] ?? 0 );
+		/* translators: %d: numeric count or measurement described by the message. */
 		$out[] = array( 'status' => $blocks ? 'PASS' : 'WARNING', 'message' => sprintf( __( 'JSON-LD blocks found: %d.', 'publishrank' ), $blocks ) );
 		$invalid = (int) ( $counts['jsonld_invalid'] ?? 0 );
+		/* translators: %d: numeric count or measurement described by the message. */
 		$out[] = array( 'status' => $invalid ? 'ERROR' : ( $blocks ? 'PASS' : 'NOT TESTED' ), 'message' => $invalid ? sprintf( __( 'Malformed JSON-LD blocks: %d.', 'publishrank' ), $invalid ) : ( $blocks ? __( 'All present JSON-LD blocks parse as JSON.', 'publishrank' ) : __( 'No JSON-LD blocks were available to parse.', 'publishrank' ) ) );
 		$articles = (int) ( $counts['jsonld_article'] ?? 0 );
+		/* translators: %d: numeric count or measurement described by the message. */
 		$out[] = array( 'status' => $articles > 1 ? 'ERROR' : ( 1 === $articles ? 'PASS' : 'WARNING' ), 'message' => $articles > 1 ? sprintf( __( '%d Article-family entities found; review duplicate primary articles.', 'publishrank' ), $articles ) : ( 1 === $articles ? __( 'One Article, NewsArticle, or BlogPosting entity is present.', 'publishrank' ) : __( 'No Article-family entity was found; review the selected schema type if this is editorial content.', 'publishrank' ) ) );
 		if ( $articles ) {
 			foreach ( array( 'headline' => __( 'headline', 'publishrank' ), 'author' => __( 'author', 'publishrank' ), 'published' => __( 'publication date', 'publishrank' ), 'image' => __( 'image', 'publishrank' ), 'publisher' => __( 'publisher', 'publishrank' ) ) as $key => $label ) {
 				$missing = (int) ( $counts[ 'jsonld_article_missing_' . $key ] ?? 0 );
+				/* translators: %1$s: dynamic value identified by the surrounding label or sentence; %2$d: numeric count or measurement described by the message; %s: schema property name. */
 				$out[] = array( 'status' => $missing ? 'WARNING' : 'PASS', 'message' => $missing ? sprintf( __( 'Article-family entity missing %1$s: %2$d.', 'publishrank' ), $label, $missing ) : sprintf( __( 'Article-family entity has %s.', 'publishrank' ), $label ) );
 			}
 			$missing_modified = (int) ( $counts['jsonld_article_missing_modified'] ?? 0 );
+			/* translators: %d: numeric count or measurement described by the message. */
 			$out[] = array( 'status' => $missing_modified ? 'WARNING' : 'PASS', 'message' => $missing_modified ? sprintf( __( 'dateModified is absent on %d Article-family entity/entities; add it only when accurate.', 'publishrank' ), $missing_modified ) : __( 'Article-family modification dates are present.', 'publishrank' ) );
 			$invalid_dates = (int) ( $counts['jsonld_article_invalid_published'] ?? 0 ) + (int) ( $counts['jsonld_article_invalid_modified'] ?? 0 );
+			/* translators: %d: numeric count or measurement described by the message. */
 			$out[] = array( 'status' => $invalid_dates ? 'ERROR' : 'PASS', 'message' => $invalid_dates ? sprintf( __( 'Invalid ISO-style publication or modification dates: %d.', 'publishrank' ), $invalid_dates ) : __( 'Present publication and modification dates use valid ISO-style values.', 'publishrank' ) );
 			$mismatch = (int) ( $counts['jsonld_canonical_mismatch'] ?? 0 );
+			/* translators: %d: numeric count or measurement described by the message. */
 			$out[] = array( 'status' => $mismatch ? 'ERROR' : 'PASS', 'message' => $mismatch ? sprintf( __( 'Canonical URL differs from Article URL on %d entity/entities.', 'publishrank' ), $mismatch ) : __( 'Article URLs match the page canonical URL where both were present.', 'publishrank' ) );
 		}
 		$duplicate_ids = (int) ( $counts['jsonld_duplicate_ids'] ?? 0 );
+		/* translators: %d: numeric count or measurement described by the message. */
 		$out[] = array( 'status' => $duplicate_ids ? 'ERROR' : ( $blocks ? 'PASS' : 'NOT TESTED' ), 'message' => $duplicate_ids ? sprintf( __( 'Duplicate JSON-LD @id values: %d.', 'publishrank' ), $duplicate_ids ) : __( 'No duplicate JSON-LD @id values were found.', 'publishrank' ) );
 		$out[] = array( 'status' => ! empty( $counts['publishrank'] ) ? 'PASS' : 'WARNING', 'message' => ! empty( $counts['publishrank'] ) ? __( 'PublishRank output is present on this page.', 'publishrank' ) : __( 'PublishRank output was not found. A caching layer may be serving an old copy, or the theme omits wp_head().', 'publishrank' ) );
 		return $out;

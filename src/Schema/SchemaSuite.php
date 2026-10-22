@@ -46,8 +46,8 @@ final class SchemaSuite {
 			$selected  = PostMeta::get( $post->ID, PostMeta::SCHEMA_TYPE, '' );
 		$permalink = get_permalink( $post );
 		echo '<div class="publishrank-schema-suite">';
-		$schema_label = ( 'page' === $post->post_type ) ? esc_html__( 'Schema type for this page', 'publishrank' ) : esc_html__( 'Schema type for this post', 'publishrank' );
-		echo '<p><label for="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '"><strong>' . $schema_label . '</strong></label><br />';
+			$schema_label = ( 'page' === $post->post_type ) ? __( 'Schema type for this page', 'publishrank' ) : __( 'Schema type for this post', 'publishrank' );
+			echo '<p><label for="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '"><strong>' . esc_html( $schema_label ) . '</strong></label><br />';
 		echo '<select class="widefat" id="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '" name="' . esc_attr( PostMeta::SCHEMA_TYPE ) . '">';
 		echo '<option value=""' . selected( $selected, '', false ) . '>' . esc_html__( '— Automatic (recommended default) —', 'publishrank' ) . '</option>';
 		if ( 'page' === $post->post_type ) { echo '<optgroup label="' . esc_attr__( 'Page schema', 'publishrank' ) . '">'; foreach ( SchemaTypes::page_types() as $key => $label ) { echo '<option value="' . esc_attr( $key ) . '"' . selected( $selected, $key, false ) . '>' . esc_html( $label ) . '</option>'; } echo '</optgroup>'; }
@@ -121,8 +121,7 @@ final class SchemaSuite {
 
 		/** Render one escaped schema text/number field. */
 		private function schema_text_field( $post_id, $key, $label, $placeholder = '', $type = 'text', $step = '' ) {
-			$step_attr = '' !== $step ? ' step="' . esc_attr( $step ) . '" min="0"' : '';
-			echo '<p><label><strong>' . esc_html( $label ) . '</strong><br /><input class="widefat" type="' . esc_attr( $type ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( PostMeta::get( $post_id, $key ) ) . '" placeholder="' . esc_attr( $placeholder ) . '"' . $step_attr . ' /></label></p>';
+			echo '<p><label><strong>' . esc_html( $label ) . '</strong><br /><input class="widefat" type="' . esc_attr( $type ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( PostMeta::get( $post_id, $key ) ) . '" placeholder="' . esc_attr( $placeholder ) . '"' . ( '' !== $step ? ' step="' . esc_attr( $step ) . '" min="0"' : '' ) . ' /></label></p>';
 		}
 
 		/** Render one escaped schema textarea. */

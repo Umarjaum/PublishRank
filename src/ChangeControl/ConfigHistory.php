@@ -16,6 +16,7 @@ final class ConfigHistory {
 		if ( wp_doing_ajax() && ! current_user_can( 'manage_options' ) ) { return; }
 		if ( serialize( $old ) === serialize( $new ) ) { return; }
 		$last = SnapshotStore::all();
+		/* translators: %s: WordPress option name. */
 		if ( ! empty( $last[0]['data'][ $option ] ) && serialize( $last[0]['data'][ $option ] ) === serialize( $old ) ) { SnapshotStore::snapshot( sprintf( __( 'Changed %s', 'publishrank' ), $option ) ); }
 	}
 }

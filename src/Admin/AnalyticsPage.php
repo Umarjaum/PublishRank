@@ -57,11 +57,14 @@ final class AnalyticsPage {
 		echo '<div class="pr-analytics-toolbar"><div><strong>' . esc_html__( 'Reporting period', 'publishrank' ) . '</strong><div class="pr-analytics-ranges">';
 		foreach ( array( 7, 30, 90 ) as $days ) {
 			$url = add_query_arg( array( 'page' => self::SLUG, 'range' => $days ), admin_url( 'admin.php' ) );
+			/* translators: %d: number of day. */
 			echo '<a class="button ' . ( $range === $days ? 'button-primary' : '' ) . '" href="' . esc_url( $url ) . '"' . ( $range === $days ? ' aria-current="page"' : '' ) . '>' . esc_html( sprintf( _n( '%d day', '%d days', $days, 'publishrank' ), $days ) ) . '</a>';
 		}
 		echo '</div></div><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="publishrank_analytics_export">'; wp_nonce_field( 'publishrank_analytics_export' ); submit_button( __( 'Export local data (CSV)', 'publishrank' ), 'secondary', 'submit', false ); echo '</form></div>';
+		/* translators: %1$d: number of articles. */
 		echo '<div class="rhs-grid pr-analytics-kpis"><section class="rhs-card"><p class="rhs-label">' . esc_html__( 'Latest sampled SEO score', 'publishrank' ) . '</p><p class="rhs-stat">' . esc_html( $sample ? (string) $score : '—' ) . ( $sample ? '<small>/100</small>' : '' ) . '</p><p>' . esc_html( sprintf( __( '%1$d eligible articles sampled; recalculated daily.', 'publishrank' ), $sample ) ) . '</p><a href="' . esc_url( Branding::page_url( 'publishrank-seo-score' ) ) . '">' . esc_html__( 'Run current SEO audit', 'publishrank' ) . '</a></section>';
 		echo '<section class="rhs-card"><p class="rhs-label">' . esc_html__( 'Published articles', 'publishrank' ) . '</p><p class="rhs-stat">' . esc_html( (string) $published ) . '</p><p>' . esc_html__( 'Current published count across supported editorial post types.', 'publishrank' ) . '</p></section>';
+		/* translators: %d: numeric count or measurement described by the message. */
 		echo '<section class="rhs-card"><p class="rhs-label">' . esc_html__( 'IndexNow accepted', 'publishrank' ) . '</p><p class="rhs-stat">' . esc_html( (string) $accepted ) . '</p><p>' . esc_html( sprintf( __( '%d failed response(s) in this period.', 'publishrank' ), $failed ) ) . '</p><a href="' . esc_url( Branding::page_url( 'publishrank-indexnow' ) ) . '">' . esc_html__( 'Review submission log', 'publishrank' ) . '</a></section>';
 		echo '<section class="rhs-card"><p class="rhs-label">' . esc_html__( 'Last local snapshot', 'publishrank' ) . '</p><p class="rhs-stat pr-analytics-stat-date">' . esc_html( $last_date ?: '—' ) . '</p><p>' . esc_html__( 'WordPress scheduled snapshots run daily; WP-Cron depends on site traffic.', 'publishrank' ) . '</p></section></div>';
 		if ( ! $data ) {
@@ -86,12 +89,14 @@ final class AnalyticsPage {
 		if ( $connected && ! empty( $metrics['days'] ) ) {
 			$clicks = array_sum( array_map( static function ( $row ) { return (int) ( $row['clicks'] ?? 0 ); }, $metrics['days'] ) );
 			$impressions = array_sum( array_map( static function ( $row ) { return (int) ( $row['impressions'] ?? 0 ); }, $metrics['days'] ) );
+			/* translators: %1$s: Search Console property or first date, as labelled in the message; %2$s: dynamic value identified by the surrounding label or sentence; %3$s: dynamic value identified by the surrounding label or sentence; %4$s: data retrieval date and time. */
 			echo '<p>' . esc_html( sprintf( __( '%1$s · %2$s to %3$s · fetched %4$s', 'publishrank' ), (string) ( $metrics['property'] ?? '' ), (string) ( $metrics['start_date'] ?? '' ), (string) ( $metrics['end_date'] ?? '' ), (string) ( $metrics['fetched_at'] ?? '' ) ) ) . '</p><div class="rhs-grid pr-analytics-gsc-kpis"><div><span class="rhs-label">' . esc_html__( 'Search clicks', 'publishrank' ) . '</span><strong>' . esc_html( number_format_i18n( $clicks ) ) . '</strong></div><div><span class="rhs-label">' . esc_html__( 'Impressions', 'publishrank' ) . '</span><strong>' . esc_html( number_format_i18n( $impressions ) ) . '</strong></div></div>' . $this->search_console_chart( $metrics['days'] );
 			echo '<p class="description">' . esc_html__( 'Clicks and impressions are separately scaled to show direction, not relative magnitude. Search Console data is aggregated and delayed; the newest dates may be incomplete. No query or page-level data is collected in this view.', 'publishrank' ) . '</p>';
 		} else {
 			echo '<p>' . esc_html__( 'Connect a Google account with access to a verified Search Console property to display clicks, impressions and daily trends. Search Console OAuth is separate from Supabase sign-in.', 'publishrank' ) . '</p>';
 		}
-		echo '<p><a class="button" href="' . esc_url( Branding::page_url( 'publishrank-search-console' ) ) . '">' . esc_html__( $connected ? 'Manage Search Console connection' : 'Connect Search Console', 'publishrank' ) . '</a></p></section>';
+		$connection_label = $connected ? __( 'Manage Search Console connection', 'publishrank' ) : __( 'Connect Search Console', 'publishrank' );
+		echo '<p><a class="button" href="' . esc_url( Branding::page_url( 'publishrank-search-console' ) ) . '">' . esc_html( $connection_label ) . '</a></p></section>';
 	}
 
 	private function search_console_chart( $data ) {

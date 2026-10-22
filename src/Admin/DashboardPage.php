@@ -181,6 +181,7 @@ final class DashboardPage {
 
 			$schema_enabled = (bool) get_option( 'publishrank_schema_enabled', true );
 			$page_type      = sanitize_text_field( (string) get_option( 'publishrank_schema_default_page_type', 'WebPage' ) );
+			/* translators: %s: schema page type. */
 			$schema_message  = $schema_enabled ? sprintf( __( 'Organization, WebSite, WebPage (%s), breadcrumbs and eligible article/media entities are enabled.', 'publishrank' ), $page_type ?: 'WebPage' ) : __( 'Enable the structured-data graph so pages and eligible articles receive JSON-LD.', 'publishrank' );
 			$checks[]       = array( 'label' => __( 'Structured data coverage', 'publishrank' ), 'status' => $schema_enabled ? 'PASS' : 'WARNING', 'message' => $schema_message );
 

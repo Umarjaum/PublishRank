@@ -29,9 +29,11 @@ final class ExpertisePage {
 			$profile_url = get_edit_user_link( $user->ID );
 			$name = esc_html( $user->display_name );
 			if ( $profile_url ) { $name = '<a href="' . esc_url( $profile_url ) . '">' . $name . '</a>'; }
-			echo '<tr><td>' . $name . '</td><td>' . esc_html( (string) $has_posts ) . '</td><td>' . esc_html( $bio ? __( 'Added', 'publishrank' ) : __( 'Missing', 'publishrank' ) ) . '</td><td>' . esc_html( $job ? __( 'Added', 'publishrank' ) : __( 'Missing', 'publishrank' ) ) . '</td><td>' . esc_html( $expertise ? implode( ', ', $expertise ) : __( 'Missing', 'publishrank' ) ) . '</td><td>' . esc_html( $social ? sprintf( _n( '%d profile', '%d profiles', count( $social ), 'publishrank' ), count( $social ) ) : __( 'Missing', 'publishrank' ) ) . '</td><td>' . ( $profile_url ? '<a class="button button-small" href="' . esc_url( $profile_url ) . '">' . esc_html__( 'Edit profile', 'publishrank' ) . '</a>' : '&mdash;' ) . '</td></tr>';
+			/* translators: %d: number of profile. */
+			echo '<tr><td>' . esc_html( $name ) . '</td><td>' . esc_html( (string) $has_posts ) . '</td><td>' . esc_html( $bio ? __( 'Added', 'publishrank' ) : __( 'Missing', 'publishrank' ) ) . '</td><td>' . esc_html( $job ? __( 'Added', 'publishrank' ) : __( 'Missing', 'publishrank' ) ) . '</td><td>' . esc_html( $expertise ? implode( ', ', $expertise ) : __( 'Missing', 'publishrank' ) ) . '</td><td>' . esc_html( $social ? sprintf( _n( '%d profile', '%d profiles', count( $social ), 'publishrank' ), count( $social ) ) : __( 'Missing', 'publishrank' ) ) . '</td><td>' . ( $profile_url ? '<a class="button button-small" href="' . esc_url( $profile_url ) . '">' . esc_html__( 'Edit profile', 'publishrank' ) . '</a>' : '&mdash;' ) . '</td></tr>';
 		}
 		echo '</tbody></table></div>';
+		/* translators: %1$d: total count for the preceding category; %2$d: numeric count or measurement described by the message. */
 		echo '<p class="description">' . esc_html( sprintf( __( '%1$d of %2$d listed author profiles have a biography, role, expertise topics and at least one identity profile. Profile coverage is editorial guidance and does not guarantee search features.', 'publishrank' ), $complete, count( $users ) ) ) . '</p>';
 		echo '<p><a class="button" href="' . esc_url( Branding::page_url( 'publishrank-schema' ) ) . '">' . esc_html__( 'Open schema settings', 'publishrank' ) . '</a></p></div>';
 	}

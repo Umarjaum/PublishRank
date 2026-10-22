@@ -35,11 +35,14 @@ final class SEOScorePage {
 		$index_url = SitemapUrls::index_url();
 		echo '<div class="wrap">';
 		AdminAssets::header( __( 'SEO Score', 'publishrank' ), __( 'Editorial quality signals and technical discovery, scored locally without sending article content to an external service.', 'publishrank' ) );
+		/* translators: %1$d: total count for the preceding category; %2$d: numeric count or measurement described by the message. */
 		echo '<div class="rhs-grid"><div class="rhs-card rhs-score"><p class="rhs-label">' . esc_html__( 'Average editorial score', 'publishrank' ) . '</p><div class="pr-ring" style="--pr-score:' . esc_attr( (string) $average ) . '"><span class="pr-ring__num">' . esc_html( (string) $average ) . '<small>/100</small></span></div><p>' . esc_html( sprintf( __( 'Based on %1$d of %2$d published articles.', 'publishrank' ), count( $rows ), $published ) ) . '</p></div>';
+		/* translators: %d: numeric count or measurement described by the message. */
 		echo '<div class="rhs-card"><h2>' . esc_html__( 'Score distribution', 'publishrank' ) . '</h2><ul><li>' . esc_html( sprintf( __( 'Strong (75–100): %d', 'publishrank' ), $bands['strong'] ) ) . '</li><li>' . esc_html( sprintf( __( 'Improving (50–74): %d', 'publishrank' ), $bands['improving'] ) ) . '</li><li>' . esc_html( sprintf( __( 'Priority (0–49): %d', 'publishrank' ), $bands['priority'] ) ) . '</li></ul><p class="description">' . esc_html__( 'The score weighs headline, description, content depth, subheadings, featured image, author attribution, dates and links. It is an editorial checklist, not a ranking prediction.', 'publishrank' ) . '</p></div>';
 		echo '<div class="rhs-card"><h2>' . esc_html__( 'Technical discovery', 'publishrank' ) . '</h2><p><strong>' . esc_html__( 'XML sitemap index', 'publishrank' ) . '</strong><br /><a href="' . esc_url( $index_url ) . '" target="_blank" rel="noopener noreferrer"><code>' . esc_html( $index_url ) . '</code></a></p><p>' . esc_html__( 'Run the Sitemap Health screen for XML validity, provider coverage and shard diagnostics.', 'publishrank' ) . '</p><p><a class="button" href="' . esc_url( Branding::page_url( 'publishrank-sitemap-health' ) ) . '">' . esc_html__( 'Open Sitemap Health', 'publishrank' ) . '</a> <a class="button" href="' . esc_url( Branding::page_url( 'publishrank-schema' ) ) . '">' . esc_html__( 'Schema settings', 'publishrank' ) . '</a></p></div></div>';
 		if ( $issues ) {
 			echo '<h2>' . esc_html__( 'Most common opportunities', 'publishrank' ) . '</h2><ul>';
+			/* translators: %1$s: dynamic value identified by the surrounding label or sentence; %2$d: numeric count or measurement described by the message. */
 			foreach ( array_slice( $issues, 0, 8, true ) as $issue => $count ) { echo '<li>' . esc_html( sprintf( __( '%1$s — %2$d sampled article(s)', 'publishrank' ), $issue, $count ) ) . '</li>'; }
 			echo '</ul>';
 		}

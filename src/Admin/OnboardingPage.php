@@ -290,10 +290,13 @@ final class OnboardingPage {
 		}
 		$uploads = wp_upload_dir();
 		return array(
+			/* translators: %s: dynamic value identified by the surrounding label or sentence. */
 			'wp'       => array( 'ok' => version_compare( $wp_version, '6.3', '>=' ), 'label' => sprintf( __( 'WordPress %s (6.3+ required)', 'publishrank' ), $wp_version ) ),
+			/* translators: %s: dynamic value identified by the surrounding label or sentence. */
 			'php'      => array( 'ok' => version_compare( PHP_VERSION, '7.4', '>=' ), 'label' => sprintf( __( 'PHP %s (7.4+ required)', 'publishrank' ), PHP_VERSION ) ),
 			'ssl'      => array( 'ok' => is_ssl(), 'label' => __( 'HTTPS active', 'publishrank' ) ),
 			'perm'     => array( 'ok' => get_option( 'permalink_structure' ) !== '', 'label' => __( 'Pretty permalinks enabled', 'publishrank' ) ),
+			/* translators: %s: name of the detected SEO plugin. */
 			'conflict' => array( 'ok' => '' === $conflict, 'label' => $conflict ? sprintf( __( 'Another SEO plugin detected: %s — running both is not recommended.', 'publishrank' ), $conflict ) : __( 'No conflicting SEO plugin detected', 'publishrank' ) ),
 			'uploads'  => array( 'ok' => empty( $uploads['error'] ), 'label' => empty( $uploads['error'] ) ? __( 'Uploads directory writable', 'publishrank' ) : $uploads['error'] ),
 		);

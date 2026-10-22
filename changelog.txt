@@ -1,3 +1,9 @@
+= 2.9.69 =
+* Resolve the follow-up WordPress Plugin Check findings: add translator context for placeholder strings, order printf placeholders, replace dynamic gettext labels with literal strings, and escape/Sanitize the flagged admin output.
+* Add a clean release ZIP builder that omits repository metadata, hidden files, tests, development tools, and local dependencies; the generated archive contains a single `publishrank/` directory.
+* Remove the unused invalid `brain/context ^3.0` development dependency, allow the PHPCS installer explicitly, and add a usable smoke-check Composer script.
+* Add another release validation and gap report in `docs/RELEASE-2.9.69.md`.
+
 = 2.9.68 =
 * Enqueue the editor SEO score-card interaction script on supported post editor screens so the card can be moved with mouse, pen, or touch input.
 * Replace the admin-toolbar raw style block with a local stylesheet enqueued through WordPress.

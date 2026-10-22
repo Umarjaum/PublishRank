@@ -256,6 +256,7 @@ final class LivePreview {
 				$types = array_merge( $types, array_map( 'strval', $t ) );
 				$nodes[] = array( 'type' => implode( ', ', array_map( 'strval', $t ) ), 'id' => (string) ( $node['@id'] ?? '' ), 'name' => (string) ( is_scalar( $node['headline'] ?? null ) ? $node['headline'] : ( is_scalar( $node['name'] ?? null ) ? $node['name'] : '' ) ) );
 				if ( isset( $node['@id'] ) && is_string( $node['@id'] ) ) {
+					/* translators: %s: dynamic value identified by the surrounding label or sentence. */
 					if ( isset( $defined[ $node['@id'] ] ) && count( $node ) > 1 ) { $issues[] = array( 'level' => 'warn', 'area' => 'JSON-LD', 'msg' => sprintf( __( 'Duplicate @id: %s is defined more than once.', 'publishrank' ), $node['@id'] ) ); }
 					if ( count( $node ) > 1 ) { $defined[ $node['@id'] ] = $node; }
 				}
@@ -266,6 +267,7 @@ final class LivePreview {
 		}
 		$home = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		foreach ( array_keys( $refs ) as $ref ) {
+			/* translators: %s: Search Console property or first date, as labelled in the message. */
 			if ( ! isset( $defined[ $ref ] ) && (string) wp_parse_url( $ref, PHP_URL_HOST ) === $home ) { $issues[] = array( 'level' => 'warn', 'area' => 'JSON-LD', 'msg' => sprintf( __( 'A node refers to %s but that entity is not in the graph.', 'publishrank' ), $ref ) ); }
 		}
 		return array( 'blocks' => $blocks, 'nodes' => $nodes, 'issues' => $issues );
@@ -296,6 +298,7 @@ final class LivePreview {
 			if ( ! $has( 'name' ) ) { $add( 'warn', __( 'Organization has no name.', 'publishrank' ) ); }
 			if ( ! $has( 'logo' ) ) { $add( 'warn', __( 'Organization has no logo; Google News prefers a publisher logo.', 'publishrank' ) ); }
 		}
+		/* translators: %s: dynamic value identified by the surrounding label or sentence. */
 		if ( in_array( 'VideoObject', $types, true ) ) { foreach ( array( 'name', 'thumbnailUrl', 'uploadDate' ) as $f ) { if ( ! $has( $f ) ) { $add( 'error', sprintf( __( 'VideoObject is missing %s.', 'publishrank' ), $f ) ); } } }
 		return $out;
 	}
@@ -306,11 +309,16 @@ final class LivePreview {
 		$len = static function ( $s ) { return function_exists( 'mb_strlen' ) ? mb_strlen( $s ) : strlen( $s ); };
 		$desc = isset( $meta['name:description'][0] ) ? $meta['name:description'][0] : '';
 		if ( '' === trim( $title ) ) { $add( 'error', __( 'No title.', 'publishrank' ), 'Title' ); }
+		/* translators: %d: number of characters. */
 		elseif ( $len( $title ) > 60 ) { $add( 'warn', sprintf( __( 'Title is %d characters; Google usually shows about 60.', 'publishrank' ), $len( $title ) ), 'Title' ); }
+		/* translators: %d: numeric count or measurement described by the message. */
 		elseif ( $len( $title ) < 25 ) { $add( 'info', sprintf( __( 'Title is short (%d characters). A fuller headline often earns more clicks.', 'publishrank' ), $len( $title ) ), 'Title' ); }
 		if ( '' === $desc ) { $add( 'warn', __( 'No meta description. Google will pick its own snippet.', 'publishrank' ), 'Description' ); }
+		/* translators: %d: number of characters. */
 		elseif ( $len( $desc ) > 160 ) { $add( 'warn', sprintf( __( 'Description is %d characters; Google usually shows about 155–160.', 'publishrank' ), $len( $desc ) ), 'Description' ); }
+		/* translators: %d: numeric count or measurement described by the message. */
 		elseif ( $len( $desc ) < 70 ) { $add( 'info', sprintf( __( 'Description is short (%d characters).', 'publishrank' ), $len( $desc ) ), 'Description' ); }
+		/* translators: %s: dynamic value identified by the surrounding label or sentence. */
 		foreach ( array( 'name:description' => 'description', 'name:robots' => 'robots' ) as $key => $name ) { if ( isset( $meta[ $key ] ) && count( $meta[ $key ] ) > 1 ) { $add( 'error', sprintf( __( 'More than one %s tag is output.', 'publishrank' ), $name ) ); } }
 		if ( ( $parsed['canonical_count'] ?? 0 ) > 1 ) { $add( 'error', __( 'More than one canonical link is output.', 'publishrank' ), 'Canonical' ); }
 		if ( empty( $parsed['canonical'] ) ) { $add( 'warn', __( 'No canonical link.', 'publishrank' ), 'Canonical' ); }
@@ -321,6 +329,7 @@ final class LivePreview {
 		if ( empty( $meta['property:og:image'][0] ) ) { $add( 'warn', __( 'No social image. Add a featured image or a social image override.', 'publishrank' ), 'Social' ); }
 		else {
 			$w = isset( $meta['property:og:image:width'][0] ) ? (int) $meta['property:og:image:width'][0] : 0;
+			/* translators: %d: number of px. */
 			if ( $w && $w < 1200 ) { $add( 'info', sprintf( __( 'Social image is %d px wide; Discover recommends at least 1200 px.', 'publishrank' ), $w ), 'Social' ); }
 		}
 		if ( empty( $meta['name:twitter:card'][0] ) ) { $add( 'info', __( 'No X/Twitter card tag.', 'publishrank' ), 'Social' ); }
