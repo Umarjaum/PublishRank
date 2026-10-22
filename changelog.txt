@@ -1,3 +1,24 @@
+= 2.9.68 =
+* Enqueue the editor SEO score-card interaction script on supported post editor screens so the card can be moved with mouse, pen, or touch input.
+* Synchronize the plugin header, runtime version, and readme stable tag.
+* Add a detailed development, security, troubleshooting, testing, and release guide.
+
+= 2.9.67 =
+* Restyled the PublishRank dashboard welcome banner in a deliberate plum-to-wine palette, using blush for readable supporting text and hot pink only for the main action and small accents; added a responsive publisher-themed motif.
+
+= 2.9.66 =
+* Added WPS-style custom login routing: standard direct login is hidden when enabled, WordPress-generated login links use the configured key, and unauthenticated `/wp-admin/` requests are sent to the custom entry link.
+* Kept native admin URLs and plugin pages unchanged for signed-in users; preserved the requested admin subpage after login and left recovery, registration, logout, AJAX, REST, cron and admin-post flows available.
+* Used a query-key entry URL to avoid taking over existing page/permalink slugs; clarified the security, caching, compatibility and recovery limitations in Settings.
+
+= 2.9.65 =
+* Safety correction: removed all PublishRank blocking of native `/wp-admin/` and `/wp-login.php` routes so publishers retain the normal WordPress recovery path and other plugins' administration pages keep working.
+* Replaced the path-based entry alias with a query-key login shortcut, preventing collisions with existing WordPress pages and permalinks. Updated Settings to state that this shortcut is not an access-control boundary.
+
+= 2.9.64 =
+* Hardened custom wp-admin entry handling with an init-time fallback for server/permalink configurations that bypass the standard rewrite parser.
+* Replaced the redirect add action with an explicit submit button and made the PublishRank toolbar submenu open consistently on hover and keyboard focus.
+
 = 2.9.55 =
 * Fixed technical source provenance not appearing when a theme omits `wp_head()` or when SEO metadata was already present. The fallback now injects the always-on provenance markers independently of metadata/schema recovery and avoids duplicates. Added regression tests for themes missing wp_head() and for pages where SEO metadata already exists.
 * Added guarded shutdown cleanup for PublishRank-owned frontend fallback output buffers; cleanup only flushes the matching topmost PublishRank buffer and does not close another plugin's buffer.

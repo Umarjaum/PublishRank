@@ -100,7 +100,7 @@ final class RedirectsPage {
 							<option value="451"><?php esc_html_e( '451 — Unavailable for legal reasons (no target)', 'publishrank' ); ?></option>
 						</select></p>
 					<p><label><input type="checkbox" name="regex" value="1" /> <?php esc_html_e( 'Treat the old path as a regular expression', 'publishrank' ); ?></label><br /><span class="description"><?php esc_html_e( 'Regex rules are limited to 255 characters; matching is bounded to protect request performance.', 'publishrank' ); ?></span></p>
-					<?php submit_button( __( 'Save redirect', 'publishrank' ), 'primary', 'submit', false ); ?>
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Save redirect', 'publishrank' ); ?></button>
 				</form>
 			</div>
 			<div class="rhs-card">

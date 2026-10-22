@@ -16,6 +16,9 @@ final class EditorScoreCard {
 	public function enqueue( $hook ) {
 		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) { return; }
 		wp_enqueue_style( 'publishrank-editor-score-card', Branding::asset_url( 'css/editor-score-card.css' ), array(), Branding::version() );
+		$script_path = PUBLISHRANK_SEO_PATH . 'assets/js/editor-score-card.js';
+		$script_version = Branding::version() . '.' . ( file_exists( $script_path ) ? (string) filemtime( $script_path ) : '0' );
+		wp_enqueue_script( 'publishrank-editor-score-card', Branding::asset_url( 'js/editor-score-card.js' ), array( 'jquery' ), $script_version, true );
 	}
 
 	private static function ring( $score, $rating ) {

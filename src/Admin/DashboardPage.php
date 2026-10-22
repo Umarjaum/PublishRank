@@ -64,20 +64,30 @@ final class DashboardPage {
 				$urls[ SitemapUrls::shard_url( 'news', 1 ) ] = __( 'Google News sitemap', 'publishrank' );
 		}
 
-			echo '<div class="wrap">';
-			AdminAssets::header( __( 'PublishRank', 'publishrank' ), __( 'Advanced Sitemap & SEO Plugin — built for news sites.', 'publishrank' ) );
-			AdminAssets::render_flash();
-			?>
-				<div class="rhs-welcome-banner">
-					<div class="rhs-welcome-banner__copy">
-						<p class="rhs-welcome-banner__eyebrow"><?php esc_html_e( 'Welcome To SEO', 'publishrank' ); ?></p>
-						<h2><?php esc_html_e( 'Your newsroom SEO is ready to grow.', 'publishrank' ); ?></h2>
-						<p><?php esc_html_e( 'PublishRank automatically connects article metadata, NewsArticle schema, News Sitemaps, IndexNow notifications, and technical SEO health in one workspace.', 'publishrank' ); ?></p>
-						<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( 'publishrank-onboarding' ) ); ?>"><?php esc_html_e( 'Review your setup', 'publishrank' ); ?></a>
-					</div>
-					<div class="rhs-welcome-banner__image"><img src="<?php echo esc_url( Branding::image( 'publishrank-banner-publisher.png' ) ); ?>" alt="<?php esc_attr_e( 'PublishRank — Enterprise SEO Infrastructure for WordPress Publishers', 'publishrank' ); ?>" loading="lazy" /></div>
-				</div>
-			<div class="rhs-grid">
+				echo '<div class="wrap">';
+				AdminAssets::header( __( 'PublishRank', 'publishrank' ), __( 'Advanced Sitemap & SEO Plugin — built for news sites.', 'publishrank' ) );
+				AdminAssets::render_flash();
+				?>
+					<section class="rhs-welcome-banner" aria-labelledby="rhs-welcome-title">
+						<div class="rhs-welcome-banner__copy">
+							<p class="rhs-welcome-banner__eyebrow"><span aria-hidden="true"></span><?php esc_html_e( 'Publisher-first SEO workspace', 'publishrank' ); ?></p>
+							<h2 id="rhs-welcome-title"><?php esc_html_e( 'Welcome to PublishRank.', 'publishrank' ); ?></h2>
+							<p><?php esc_html_e( 'Your newsroom’s tools for technical SEO, search discovery, structured data, and redirects are together in one place. Start with a setup review, then keep every story discoverable.', 'publishrank' ); ?></p>
+							<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( 'publishrank-onboarding' ) ); ?>"><?php esc_html_e( 'Review your setup', 'publishrank' ); ?><span aria-hidden="true">→</span></a>
+						</div>
+						<div class="rhs-welcome-banner__visual" aria-hidden="true">
+							<span class="rhs-welcome-banner__orbit rhs-welcome-banner__orbit--outer"></span>
+							<span class="rhs-welcome-banner__orbit rhs-welcome-banner__orbit--inner"></span>
+							<span class="rhs-welcome-banner__spark rhs-welcome-banner__spark--one"></span>
+							<span class="rhs-welcome-banner__spark rhs-welcome-banner__spark--two"></span>
+							<div class="rhs-welcome-banner__tile">
+								<span class="rhs-welcome-banner__tile-kicker"><?php esc_html_e( 'PUBLISHER SEO', 'publishrank' ); ?></span>
+								<strong><?php esc_html_e( 'Publish.', 'publishrank' ); ?><br /><?php esc_html_e( 'Discover.', 'publishrank' ); ?><br /><?php esc_html_e( 'Grow.', 'publishrank' ); ?></strong>
+								<span class="rhs-welcome-banner__tile-signals"><i></i><i></i><i></i></span>
+							</div>
+						</div>
+					</section>
+				<div class="rhs-grid">
 			<div class="rhs-card rhs-score rhs-score--<?php echo esc_attr( $score >= 90 ? 'good' : ( $score >= 70 ? 'ok' : 'bad' ) ); ?>" style="--rhs-score:<?php echo (int) $score; ?>">
 				<p class="rhs-label"><?php esc_html_e( 'SEO health', 'publishrank' ); ?></p>
 				<div class="pr-ring" style="--pr-score:<?php echo (int) $score; ?>"><span class="pr-ring__num"><?php echo esc_html( (string) $score ); ?><small>%</small></span></div>

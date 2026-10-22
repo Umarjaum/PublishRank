@@ -1,11 +1,12 @@
 <?php
 /**
- * Custom administrator access alias.
+ * Optional custom login entry point.
  *
- * This provides a private entry URL while retaining WordPress's native
- * /wp-admin/*.php routes for the authorized browser. Unauthenticated native
- * admin/login requests are stopped with 404; core service endpoints remain
- * available so AJAX, REST, cron, recovery and plugins do not break.
+ * WordPress core files and administration URLs are never renamed. The custom
+ * query-key link grants this browser a short-lived pass to the native login
+ * form. Logged-in administrators continue using native wp-admin and plugin
+ * administration routes; unauthenticated admin requests are sent to the
+ * custom entry link instead of being blocked with a dead-end 404.
  */
 namespace PublishRankSEO\Security;
 
@@ -14,121 +15,162 @@ defined( 'ABSPATH' ) || exit;
 final class AdminAccess {
 	const OPTION = 'publishrank_admin_access_slug';
 	const MODE_OPTION = 'publishrank_admin_access_mode';
+	const QUERY_ARG = 'publishrank_access';
 	const COOKIE = 'publishrank_admin_access';
 	const TOKEN_TTL = 43200;
 
 	public function register() {
-		add_action( 'parse_request', array( $this, 'maybe_redirect_alias' ), 0 );
-		add_action( 'init', array( $this, 'gate_native_admin_request' ), 0 );
-		add_action( 'admin_init', array( $this, 'gate_admin' ), 0 );
+		remove_action( 'template_redirect', 'wp_redirect_admin_locations', 1000 );
+		add_action( 'init', array( $this, 'maybe_redirect_alias' ), 0 );
+		add_action( 'init', array( $this, 'gate_native_admin_request' ), 1 );
 		add_action( 'login_init', array( $this, 'gate_login' ), 0 );
 		add_filter( 'login_url', array( $this, 'filter_login_url' ), 10, 3 );
 		add_filter( 'lostpassword_url', array( $this, 'filter_lostpassword_url' ), 10, 2 );
 	}
 
-	/** Return the normalized custom path, or an empty string when disabled. */
+	/** Return the normalized custom key, or an empty string when disabled. */
 	public static function slug() {
 		$value = get_option( self::OPTION, '' );
 		return is_string( $value ) ? trim( $value, " \t\n\r\0\x0B/" ) : '';
 	}
 
-	/** Protection is enabled when the mode is enabled and a valid slug exists. */
+	/** The custom route is enabled only when selected and configured. */
 	public static function enabled() {
 		return 'disabled' !== get_option( self::MODE_OPTION, 'custom' ) && '' !== self::slug();
 	}
 
-	/** Return the configured custom access URL. */
+	/** Return a query-based entry URL that cannot shadow a public page slug. */
 	public static function url() {
-		$slug = self::enabled() ? self::slug() : '';
-		return '' !== $slug ? home_url( '/' . $slug . '/' ) : '';
+		return self::enabled() ? add_query_arg( self::QUERY_ARG, self::slug(), home_url( '/' ) ) : '';
 	}
 
-	/** Make core-generated login links point to the private entry URL. */
+	/** Point WordPress-generated login links to the custom entry route. */
 	public function filter_login_url( $login_url, $redirect = '', $force_reauth = false ) {
-		if ( ! self::enabled() ) { return $login_url; }
+		if ( ! self::enabled() ) {
+			return $login_url;
+		}
 		$url = self::url();
-		if ( '' !== (string) $redirect ) { $url = add_query_arg( 'redirect_to', $redirect, $url ); }
-		if ( $force_reauth ) { $url = add_query_arg( 'reauth', '1', $url ); }
+		if ( '' !== (string) $redirect ) {
+			$url = add_query_arg( 'redirect_to', $redirect, $url );
+		}
+		if ( $force_reauth ) {
+			$url = add_query_arg( 'reauth', '1', $url );
+		}
 		return $url;
 	}
 
-	/** Keep the standard recovery action on the private entry URL. */
+	/** Keep standard password recovery actions available through the custom route. */
 	public function filter_lostpassword_url( $url, $redirect = '' ) {
-		if ( ! self::enabled() ) { return $url; }
+		if ( ! self::enabled() ) {
+			return $url;
+		}
 		$url = add_query_arg( 'action', 'lostpassword', self::url() );
 		return '' !== (string) $redirect ? add_query_arg( 'redirect_to', $redirect, $url ) : $url;
 	}
 
-	/** Redirect only an exact request for the configured alias. */
-	public function maybe_redirect_alias( $wp ) {
-		$slug = self::enabled() ? self::slug() : '';
-		if ( '' === $slug || empty( $_SERVER['REQUEST_URI'] ) || wp_doing_ajax() ) {
+	/** Resolve the custom entry link into the normal WordPress login form. */
+	public function maybe_redirect_alias() {
+		if ( ! self::enabled() || empty( $_SERVER['REQUEST_URI'] ) || wp_doing_ajax() || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+			return;
+		}
+		$key = isset( $_GET[ self::QUERY_ARG ] ) && is_scalar( $_GET[ self::QUERY_ARG ] )
+			? (string) wp_unslash( $_GET[ self::QUERY_ARG ] )
+			: '';
+		if ( '' === $key || ! hash_equals( self::slug(), $key ) ) {
 			return;
 		}
 
+		// The shortcut is only active at the site's home path; it cannot intercept
+		// other public pages, REST routes, or unrelated administration URLs.
 		$request_path = wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$home_path    = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
 		$request_path = '/' . trim( is_string( $request_path ) ? $request_path : '', '/' );
 		$home_path    = '/' . trim( is_string( $home_path ) ? $home_path : '', '/' );
-		$expected     = ( '/' === $home_path ? '' : rtrim( $home_path, '/' ) ) . '/' . $slug;
-		$expected     = '/' . trim( $expected, '/' );
-
-		if ( untrailingslashit( $request_path ) !== $expected ) {
+		if ( $request_path !== $home_path ) {
 			return;
 		}
 
-		$this->issue_access_cookie();
 		nocache_headers();
-		$destination = site_url( 'wp-login.php?redirect_to=' . rawurlencode( admin_url() ), 'login' );
+		$this->issue_access_cookie();
 		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
-			$destination = admin_url();
+			wp_safe_redirect( admin_url(), 302, 'PublishRank Custom Login' );
+			exit;
 		}
-		wp_safe_redirect( $destination, 302, 'PublishRank Custom Admin Access' );
+
+		$destination = site_url( 'wp-login.php', 'login' );
+		$args        = array();
+		$allowed_actions = array( 'login', 'logout', 'lostpassword', 'retrievepassword', 'rp', 'resetpass', 'checkemail', 'confirmaction', 'confirm_admin_email', 'entered_recovery_mode', 'postpass', 'register' );
+		if ( isset( $_GET['action'] ) && is_scalar( $_GET['action'] ) ) {
+			$action = sanitize_key( (string) wp_unslash( $_GET['action'] ) );
+			if ( in_array( $action, $allowed_actions, true ) ) {
+				$args['action'] = $action;
+			}
+		}
+		if ( isset( $_GET['redirect_to'] ) && is_scalar( $_GET['redirect_to'] ) ) {
+			$args['redirect_to'] = wp_validate_redirect( (string) wp_unslash( $_GET['redirect_to'] ), admin_url() );
+		}
+		if ( isset( $_GET['reauth'] ) && '1' === (string) wp_unslash( $_GET['reauth'] ) ) {
+			$args['reauth'] = '1';
+		}
+		if ( ! empty( $args ) ) {
+			$destination = add_query_arg( $args, $destination );
+		}
+		wp_safe_redirect( $destination, 302, 'PublishRank Custom Login' );
 		exit;
 	}
 
-	/** Stop direct /wp-admin/*.php probes before core's unauthenticated redirect runs. */
+	/** Send unauthenticated admin-page requests to the custom login link. */
 	public function gate_native_admin_request() {
-		if ( ! self::enabled() || ! defined( 'WP_ADMIN' ) || ! WP_ADMIN || $this->user_is_authenticated() || $this->has_access_cookie() ) { return; }
-		if ( wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) { return; }
+		if ( ! self::enabled() || ! defined( 'WP_ADMIN' ) || ! WP_ADMIN || is_user_logged_in() || $this->has_access_cookie() ) {
+			return;
+		}
+		if ( wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+			return;
+		}
 		$script = isset( $_SERVER['SCRIPT_NAME'] ) ? basename( (string) $_SERVER['SCRIPT_NAME'] ) : '';
-		if ( in_array( $script, array( 'admin-ajax.php', 'admin-post.php', 'async-upload.php', 'load-scripts.php', 'load-styles.php' ), true ) ) { return; }
-		nocache_headers();
-		wp_die( esc_html__( 'The WordPress administration area is not available at this address.', 'publishrank' ), esc_html__( 'Not found', 'publishrank' ), array( 'response' => 404 ) );
-	}
-
-	/** Block dashboard screens unless this browser entered through the custom path. */
-	public function gate_admin() {
-		$is_admin_post = isset( $_SERVER['SCRIPT_NAME'] ) && 'admin-post.php' === basename( (string) $_SERVER['SCRIPT_NAME'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		if ( ! self::enabled() || $this->user_is_authenticated() || $this->has_access_cookie() || wp_doing_ajax() || $is_admin_post || ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		if ( in_array( $script, array( 'admin-ajax.php', 'admin-post.php', 'async-upload.php', 'load-scripts.php', 'load-styles.php' ), true ) ) {
 			return;
 		}
 		nocache_headers();
-		wp_die( esc_html__( 'The WordPress administration area is not available at this address.', 'publishrank' ), esc_html__( 'Not found', 'publishrank' ), array( 'response' => 404 ) );
+		$requested  = admin_url();
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$request_path = wp_parse_url( $request_uri, PHP_URL_PATH );
+		$admin_path   = wp_parse_url( admin_url(), PHP_URL_PATH );
+		$admin_prefix = is_string( $admin_path ) ? trailingslashit( $admin_path ) : '';
+		if ( is_string( $request_path ) && '' !== $admin_prefix && 0 === strpos( $request_path, $admin_prefix ) ) {
+			$relative = ltrim( substr( $request_path, strlen( $admin_prefix ) ), '/' );
+			$requested = admin_url( $relative );
+			$query = wp_parse_url( $request_uri, PHP_URL_QUERY );
+			if ( is_string( $query ) && '' !== $query ) {
+				$query_args = array();
+				parse_str( $query, $query_args );
+				$requested = add_query_arg( $query_args, $requested );
+			}
+		}
+		$requested = wp_validate_redirect( $requested, admin_url() );
+		wp_safe_redirect( add_query_arg( 'redirect_to', $requested, self::url() ), 302, 'PublishRank Custom Login' );
+		exit;
 	}
 
-	/** Block direct wp-login.php access unless the browser first used the custom path. */
+	/** Hide direct login-form access while preserving recovery/public actions. */
 	public function gate_login() {
-		$raw_action = isset( $_REQUEST['action'] ) && is_scalar( $_REQUEST['action'] ) ? wp_unslash( $_REQUEST['action'] ) : 'login'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- action is only used to preserve password recovery.
+		if ( ! self::enabled() || is_user_logged_in() || $this->has_access_cookie() ) {
+			return;
+		}
+		$raw_action = isset( $_REQUEST['action'] ) && is_scalar( $_REQUEST['action'] ) ? wp_unslash( $_REQUEST['action'] ) : 'login'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- used only to preserve public WordPress login actions.
 		$action = sanitize_key( (string) $raw_action );
-		$recovery_or_public = in_array( $action, array( 'lostpassword', 'retrievepassword', 'rp', 'resetpass', 'checkemail', 'confirmaction', 'confirm_admin_email', 'entered_recovery_mode', 'postpass', 'register' ), true );
-		if ( ! self::enabled() || $recovery_or_public || $this->user_is_authenticated() || $this->has_access_cookie() ) {
+		$public_actions = array( 'lostpassword', 'retrievepassword', 'rp', 'resetpass', 'checkemail', 'confirmaction', 'confirm_admin_email', 'entered_recovery_mode', 'postpass', 'register', 'logout' );
+		if ( in_array( $action, $public_actions, true ) ) {
 			return;
 		}
 		nocache_headers();
-		wp_die( esc_html__( 'The WordPress login page is not available at this address.', 'publishrank' ), esc_html__( 'Not found', 'publishrank' ), array( 'response' => 404 ) );
+		wp_die( esc_html__( 'Use the site administrator’s custom login link to sign in.', 'publishrank' ), esc_html__( 'Not found', 'publishrank' ), array( 'response' => 404 ) );
 	}
 
-	/** Keep any already-authenticated WordPress user from being locked out. */
-	private function user_is_authenticated() {
-		return is_user_logged_in();
-	}
-
-	/** Issue a short-lived, HttpOnly browser gate after an exact custom-path visit. */
+	/** Issue a short-lived HttpOnly browser pass for the native login form. */
 	private function issue_access_cookie() {
 		$token = wp_generate_password( 48, false, false );
 		set_transient( self::transient_key( $token ), '1', self::TOKEN_TTL );
-		$secure = is_ssl();
 		setcookie(
 			self::COOKIE,
 			$token,
@@ -136,14 +178,14 @@ final class AdminAccess {
 				'expires'  => time() + self::TOKEN_TTL,
 				'path'     => defined( 'COOKIEPATH' ) && COOKIEPATH ? COOKIEPATH : '/',
 				'domain'   => defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '',
-				'secure'   => $secure,
+				'secure'   => is_ssl(),
 				'httponly' => true,
 				'samesite' => 'Lax',
 			)
 		);
 	}
 
-	/** Validate and consume no state from the access cookie; expiry is handled by the transient. */
+	/** Validate the short-lived browser pass. */
 	private function has_access_cookie() {
 		$token = isset( $_COOKIE[ self::COOKIE ] ) ? (string) wp_unslash( $_COOKIE[ self::COOKIE ] ) : '';
 		if ( '' === $token || strlen( $token ) > 128 ) {
