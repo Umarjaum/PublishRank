@@ -201,7 +201,17 @@ final class LocalSEO {
 		echo '<p class="description">' . esc_html__( 'Only enable this for a real, public-facing business/location and use accurate details. Structured data does not guarantee rich results or local rankings.', 'publishrank' ) . '</p></div>';
 	}
 
-	private function row( $key, $label, $html ) { echo '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . $html . '</td></tr>'; }
+	private function row( $key, $label, $html ) {
+		$allowed = array(
+			'input'    => array( 'type' => true, 'class' => true, 'name' => true, 'value' => true, 'required' => true, 'checked' => true, 'step' => true ),
+			'label'    => array( 'for' => true, 'class' => true ),
+			'select'   => array( 'name' => true, 'class' => true ),
+			'option'   => array( 'value' => true, 'selected' => true ),
+			'textarea' => array( 'class' => true, 'rows' => true, 'name' => true ),
+			'p'        => array( 'class' => true ),
+		);
+		echo '<tr><th scope="row">' . esc_html( $label ) . '</th><td>' . wp_kses( $html, $allowed ) . '</td></tr>';
+	}
 	private function input_row( $key, $label, $value, $type = 'text', $required = false, $description = '' ) {
 		$attrs = 'url' === $type ? ' type="url"' : ( 'email' === $type ? ' type="email"' : ( 'number' === $type ? ' type="number" step="any"' : ' type="text"' ) );
 		$this->row( $key, $label, '<input class="regular-text"' . $attrs . ' name="local_seo[' . esc_attr( $key ) . ']" value="' . esc_attr( $value ) . '" ' . ( $required ? 'required ' : '' ) . '/>' . ( $description ? '<p class="description">' . esc_html( $description ) . '</p>' : '' ) );

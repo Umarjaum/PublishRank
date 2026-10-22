@@ -1,5 +1,7 @@
 = 2.9.68 =
 * Enqueue the editor SEO score-card interaction script on supported post editor screens so the card can be moved with mouse, pen, or touch input.
+* Replace the admin-toolbar raw style block with a local stylesheet enqueued through WordPress.
+* Restrict Local SEO form helper output to an explicit HTML allowlist.
 * Synchronize the plugin header, runtime version, and readme stable tag.
 * Add a detailed development, security, troubleshooting, testing, and release guide.
 

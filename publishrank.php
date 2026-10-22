@@ -142,21 +142,20 @@ function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
 }
 add_action( 'admin_bar_menu', 'publishrank_seo_admin_toolbar', 100 );
 
-/** Style the toolbar icon and the shortcut in the WordPress logo dropdown. */
+/** Enqueue the local stylesheet needed to align the admin toolbar shortcut. */
 function publishrank_seo_admin_toolbar_styles() {
 	if ( ! is_admin_bar_showing() || ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	$icon_url = esc_url( add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank-toolbar-icon-v2.png', __FILE__ ) ) );
-	echo '<style id="publishrank-admin-toolbar-styles">';
-	echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item{display:inline-flex!important;align-items:center!important;gap:4px;white-space:nowrap;}';
-		echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item .publishrank-toolbar-icon{display:block!important;width:18px!important;height:18px!important;margin:0!important;vertical-align:middle!important;object-fit:contain!important;flex:0 0 18px;filter:brightness(0) invert(1)!important;}';
-	echo '#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item .ab-label{display:inline-block!important;margin:0!important;padding:0!important;line-height:inherit!important;}';
-	echo '#wpadminbar #wp-admin-bar-publishrank-wp-logo > .ab-item{padding-left:28px;background-image:url("' . $icon_url . '");background-position:7px center;background-repeat:no-repeat;background-size:16px 16px;}';
-	echo '</style>';
+	wp_enqueue_style(
+		'publishrank-seo-admin-toolbar',
+		plugins_url( 'assets/css/admin-toolbar.css', __FILE__ ),
+		array(),
+		PUBLISHRANK_SEO_VERSION . '.' . (int) @filemtime( __DIR__ . '/assets/css/admin-toolbar.css' )
+	);
 }
-add_action( 'admin_head', 'publishrank_seo_admin_toolbar_styles', 99 );
-add_action( 'wp_head', 'publishrank_seo_admin_toolbar_styles', 99 );
+add_action( 'admin_enqueue_scripts', 'publishrank_seo_admin_toolbar_styles' );
+add_action( 'wp_enqueue_scripts', 'publishrank_seo_admin_toolbar_styles' );
 
 /** Add useful shortcuts to the Installed Plugins screen (including Multisite). */
 function publishrank_seo_plugin_action_links( $links ) {

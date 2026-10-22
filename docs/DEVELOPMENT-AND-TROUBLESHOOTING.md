@@ -31,7 +31,7 @@ The repository's `composer.json` describes optional development dependencies. In
 
 ## Admin asset and interaction rules
 
-Admin scripts and styles should be registered/enqueued with the WordPress enqueue APIs and scoped to the smallest applicable admin screen. Use `admin_enqueue_scripts` for dashboard/editor assets and `wp_enqueue_scripts` only for front-end presentation. Keep third-party libraries bundled locally unless they are part of WordPress Core or the plugin has a clearly documented service integration.
+Admin scripts and styles should be registered/enqueued with the WordPress enqueue APIs and scoped to the smallest applicable admin screen. Use `admin_enqueue_scripts` for dashboard/editor assets and `wp_enqueue_scripts` only for front-end presentation. The toolbar layout stylesheet is loaded with those hooks for authorized users when the toolbar is visible. Keep third-party libraries bundled locally unless they are part of WordPress Core or the plugin has a clearly documented service integration.
 
 Admin JavaScript should:
 

@@ -1,0 +1,5 @@
+/* PublishRank admin toolbar alignment: loaded through WordPress enqueue APIs. */
+#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item{display:inline-flex!important;align-items:center!important;gap:4px;white-space:nowrap}
+#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item .publishrank-toolbar-icon{display:block!important;width:18px!important;height:18px!important;margin:0!important;vertical-align:middle!important;object-fit:contain!important;flex:0 0 18px;filter:brightness(0) invert(1)!important}
+#wpadminbar #wp-admin-bar-publishrank-seo-toolbar > .ab-item .ab-label{display:inline-block!important;margin:0!important;padding:0!important;line-height:inherit!important}
+#wpadminbar #wp-admin-bar-publishrank-wp-logo > .ab-item{padding-left:28px;background-image:url('../images/publishrank-toolbar-icon-v2.png');background-position:7px center;background-repeat:no-repeat;background-size:16px 16px}
