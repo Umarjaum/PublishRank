@@ -29,7 +29,16 @@ final class NetlifyAuth {
 	public static function central_configured() { return true; }
 	public static function uses_central_config() { return true; }
 	public static function callback_url() { return admin_url( 'admin-post.php?action=publishrank_supabase_callback' ); }
-	public static function enabled_providers( $force = false ) { return array( 'google' => true, 'github' => true ); }
+	public static function enabled_providers( $force = false ) {
+$key = 'publishrank_netlify_providers';
+if ( ! $force ) { $cached = get_transient( $key ); if ( is_array( $cached ) ) { return $cached; } }
+$res = wp_remote_get( untrailingslashit( self::SITE_URL ) . '/.netlify/identity/settings', array( 'timeout' => 8, 'redirection' => 0, 'sslverify' => true, 'headers' => array( 'Accept' => 'application/json' ) ) );
+if ( is_wp_error( $res ) || 200 !== (int) wp_remote_retrieve_response_code( $res ) ) { return null; }
+$body = json_decode( (string) wp_remote_retrieve_body( $res ), true );
+if ( ! is_array( $body ) || empty( $body['external'] ) || ! is_array( $body['external'] ) ) { return null; }
+$out = array(); foreach ( self::PROVIDERS as $provider ) { $out[ $provider ] = ! empty( $body['external'][ $provider ] ); }
+set_transient( $key, $out, 10 * MINUTE_IN_SECONDS ); return $out;
+}
 
 	public function save_config() {
 		$this->guard( 'publishrank_supabase_save' );
