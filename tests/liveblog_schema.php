@@ -81,10 +81,10 @@ $check( '9b. revoked FAQPage output is not deduplication-managed', 1 === count( 
 $g = G::dedupe_graph( array( array( '@type' => 'NewsArticle', '@id' => 'https://x/a/#article', 'url' => 'https://x/a/' ), array( '@type' => 'NewsArticle', '@id' => 'https://x/b/#article', 'url' => 'https://x/b/' ) ) );
 $check( '7. different pages (e.g. a listing) keep their own article nodes', 2 === count( $g ) );
 
-// Source-level regression checks.
+// Source-level and runtime regression checks for the current article allow-list.
 $graph = file_get_contents( __DIR__ . '/../src/Schema/GraphOutput.php' );
 $check( '7b. ordinary article type fallback is still NewsArticle', false !== strpos( $graph, "'NewsArticle'" ) );
-$check( '7c. unsupported legacy schema values cannot be emitted', false !== strpos( $graph, 'SchemaTypes::resolve' ) && false !== strpos( $graph, 'not in this' ) );
+$check( '7c. only article-allow-listed types reach article JSON-LD', false !== strpos( $graph, 'SchemaTypes::resolve' ) && false !== strpos( $graph, 'SchemaTypes::article_types()' ) && 'Report' === PublishRankSEO\Schema\SchemaTypes::resolve_in( 'Report', PublishRankSEO\Schema\SchemaTypes::article_types(), 'NewsArticle' ) && 'NewsArticle' === PublishRankSEO\Schema\SchemaTypes::resolve_in( 'Review', PublishRankSEO\Schema\SchemaTypes::article_types(), 'NewsArticle' ) );
 
 // Attribution.
 $ctx = array(); $GLOBALS['ctx'] = array();
