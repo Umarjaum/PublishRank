@@ -1,3 +1,8 @@
+= 2.9.71 =
+* Added an explicitly opt-in PublishRank News admin screen with a validated, cached live JSON feed, announcement images, summaries, details and approved links.
+* Protected feed controls with the standard capability/nonce guard; disabled remote requests by default and added cache cleanup, stale fallback, strict same-host HTTPS URL validation and privacy disclosures.
+* Added dedicated News feed documentation and synchronized plugin version metadata to 2.9.71.
+
 = 2.9.70 =
 * Applied project-wide PHP coding-standard corrections and added a repository-owned PHP-scoped PHPCS ruleset compatible with PSR-4 class files.
 * Preserved the optional Netlify Identity account-linking changes on main and aligned its account-linking documentation.

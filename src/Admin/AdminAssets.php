@@ -84,6 +84,7 @@ final class AdminAssets {
 			'publishrank-seo-config-history' => 'fa-solid fa-clock-rotate-left',
 			'publishrank-llms-txt'           => 'fa-solid fa-code',
 			'publishrank-verification'       => 'fa-solid fa-circle-check',
+			'publishrank-news'               => 'fa-solid fa-newspaper',
 		);
 		if ( isset( $icons[ $page ] ) ) {
 			$icon = $icons[ $page ];

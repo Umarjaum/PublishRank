@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.70
+Stable tag: 2.9.71
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -32,6 +32,7 @@ Features include:
 * Configurable llms.txt and optional llms-full.txt resources.
 * Editorial SEO analysis, internal-link recommendations, sitemap diagnostics and WP-CLI commands.
 * Publisher Toolkit with permission-aware bulk SEO metadata editing, role-based access for the toolkit, and optional image alt-text assistance that preserves existing descriptions.
+* Optional, explicitly enabled live News screen with cached product announcements, approved images and links, and privacy-policy disclosure.
 * Always-on technical source provenance markers; the visible footer credit remains optional and administrator-controlled.
 
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
@@ -60,6 +61,9 @@ Edit the post, open the Schema box, choose "Live Blog Post" as the schema type, 
 
 = Is PublishRank free? =
 Yes. PublishRank is released under the GPLv2-or-later license. The plugin does not require a paid AI API key for its core functionality. Optional integrations such as IndexNow require an administrator to enable them.
+
+= Does the News screen contact an external service? =
+The live News feed is disabled by default and makes no request until an administrator opts in. When enabled, the WordPress server fetches a read-only JSON feed from `publishrank.netlify.app`; the feed host receives the server IP address and ordinary request metadata. No post content, visitor data, WordPress account details, cookies, or remote JavaScript are sent. Approved images load from the same host in the administrator’s browser. Disable the feed at any time to remove its local cache. See **External Services** for details.
 
 = Is PublishRank an alternative to Yoast SEO or Rank Math? =
 PublishRank is another free WordPress SEO plugin option, with a focus on technical SEO and publisher workflows such as News XML sitemaps, redirects, robots controls, schema, and link auditing. It is not a drop-in clone of Yoast SEO or Rank Math, and feature coverage differs. Review compatibility and avoid letting multiple plugins output duplicate titles, canonicals, robots directives or schema.
@@ -96,6 +100,8 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 
 **Netlify Identity Publisher Account linking (optional).** When an existing WordPress administrator selects a provider on **PublishRank → Publisher Account**, the browser is sent to the shared PublishRank Netlify Identity service at `https://publishrank.netlify.app/account.html` with the site's home URL, callback URL and a one-time state value. The current provider list is limited to Google and GitHub. The WordPress callback sends the one-time code to the service's `/api/plugin-connection` endpoint and stores the returned connection token encrypted with WordPress authentication salts together with the linked subject; no WordPress user is created and no role is assigned or changed. When the optional gate is enabled, the plugin verifies the existing administrator's connection through `/api/plugin-verify` (with a five-minute local verification cache). The provider list is fetched from the service's `/.netlify/identity/settings` endpoint and cached locally for ten minutes. Unlink removes the local connection data, and a separate emergency action disables only the extra PublishRank gate. Netlify and the selected OAuth provider may receive the site URL, callback URL, one-time state, authorization code, account/profile data needed for linking, and ordinary network metadata. Review the [Netlify Privacy Statement](https://www.netlify.com/privacy/), [Netlify Website Terms of Use](https://www.netlify.com/legal/terms-of-use/), [Netlify Identity documentation](https://docs.netlify.com/manage/security/secure-access-to-sites/identity/overview/), [Google Privacy Policy](https://policies.google.com/privacy) and [Terms](https://policies.google.com/terms), or [GitHub Privacy Statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement) and [Terms of Service](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) as applicable before enabling this optional service.
 
+**PublishRank News feed (optional, explicit opt-in).** The **PublishRank → News** screen makes no request until an administrator selects **Enable live News**. After opt-in, the WordPress server requests the read-only JSON feed at `https://publishrank.netlify.app/announcements.json` when an administrator opens the News screen and no cached copy is available. The response is cached according to the feed interval (normally one hour, clamped between five minutes and 24 hours), with a stale fallback that expires within 24 hours; a manual **Refresh feed** action makes an immediate request. The request uses a generic PublishRank User-Agent and sends no post content, visitor data, or WordPress account details. The feed host receives the server IP address and ordinary HTTP metadata. If an announcement has an image, the administrator’s browser requests it from `publishrank.netlify.app`; that host may receive the browser IP address and ordinary browser metadata, including an origin/referrer. No remote JavaScript is loaded, and popup instructions in the feed are ignored. **Disable feed** removes the local feed and stale-fallback caches. Review the [Netlify Privacy Statement](https://www.netlify.com/privacy/) and [Netlify Website Terms of Use](https://www.netlify.com/legal/terms-of-use/).
+
 **IndexNow (optional).** When enabled, eligible public URLs are submitted after supported publish/update/delete events, manual submission, or a retry. The request to `https://api.indexnow.org/indexnow/` includes the site's host, IndexNow key, public key-location URL and submitted URL list. The plugin keeps a bounded local submission history including URLs and response statuses. Acceptance is not proof of crawling or indexing, and Google does not participate in IndexNow. The official [IndexNow Terms of Service](https://www.indexnow.org/terms) identify Yandex, Seznam and Microsoft as sponsors. See their [Yandex Privacy Policy](https://yandex.com/legal/privacy/), [Seznam Privacy Policy](https://o-seznam.cz/ochrana-udaju/) and [Microsoft Privacy Statement](https://privacy.microsoft.com/en-us/privacystatement).
 
 **Baidu Search Resource Platform submission (optional).** An administrator can submit up to 2,000 same-host public URLs manually, or explicitly enable automatic submission for newly published eligible posts. The request is sent over HTTPS to the Baidu endpoint configured by the publisher and includes the submitted URL list; the endpoint URL itself contains the publisher's Baidu site identifier and token. The endpoint is encrypted in the WordPress database; Baidu receives the endpoint credentials and URLs to process the request. A bounded local history stores response counts/status, not the submitted URLs or response body. A submission is not an indexing guarantee. See the [Baidu Search Resource Platform Agreement](https://ziyuan.baidu.com/college/articleinfo?id=1613), [Baidu Privacy Protection Statement](https://www.baidu.com/duty/yinsiquan.html), and [Baidu Disclaimer](https://www.baidu.com/duty/index.html).
@@ -107,6 +113,12 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. The optional public footer credit, if enabled, links to the PublishRank website. No promotional credit is inserted by default.
 
 == Changelog ==
+
+= 2.9.71 =
+* Added the explicitly opt-in PublishRank News admin screen, backed by a validated and cached live JSON announcements feed, with images, summaries, expandable details and approved links.
+* Added capability- and nonce-protected enable, refresh and disable actions, safe feed parsing, strict same-host HTTPS media/link allowlisting, stale-cache fallback and opt-out cache cleanup.
+* Added a detailed News feed operations/privacy guide and disclosed the external service in the privacy policy text and WordPress.org readme.
+* Synchronized the plugin header, runtime constant and stable tag to 2.9.71.
 
 = 2.9.70 =
 * Added optional Netlify Identity linking for existing WordPress administrators; the feature does not create WordPress users or change roles.
