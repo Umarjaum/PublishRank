@@ -6,7 +6,7 @@ The development repository may use automated CI to target WordPress 7.1.3. CI co
 
 The plugin was installed and activated through WordPress's non-silent activation API on WordPress 7.1.3, PHP 8.3.6, and MariaDB 10.11 with dummy publisher content. Activation created all four internal-link tables and registered the `llms.txt` and `llms-full.txt` routes. The standalone regression suite passed 35/35 tests, PHP lint passed for all 146 plugin PHP files, and the live HTTP suite passed 77/77 checks. That suite covered representative advanced schema, sitemap, robots, redirects, IndexNow key-file verification, LLMS responses, and the registered admin screens. The fresh debug log after the final HTTP run contained no notices, warnings, deprecations, or database errors.
 
-These are local tests, not authenticated provider tests. Google OAuth, Supabase sign-in, Baidu submission, and outbound IndexNow submissions were not run against live accounts or search engines. Local testing also does not replace staging checks with the publisher's active theme, cache/CDN, and other plugins.
+These are local tests, not authenticated provider tests. Google Search Console OAuth, Netlify Identity Publisher Account sign-in, Baidu submission, and outbound IndexNow submissions were not run against live accounts or search engines. Local testing also does not replace staging checks with the publisher's active theme, cache/CDN, and other plugins.
 
 ## Important status note
 

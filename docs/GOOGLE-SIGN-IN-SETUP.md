@@ -12,7 +12,6 @@ Google Cloud Console → pick/create a project (call it "PublishRank"):
    Data access → add scopes `openid`, `email`, and `https://www.googleapis.com/auth/webmasters.readonly`.
 3. **Clients → Create client → Web application**. Authorized redirect URIs (exact):
    - `https://pgduryvupdltsqzqoiav.supabase.co/functions/v1/gsc-broker/callback`   (Search Console sign-in)
-   - `https://pgduryvupdltsqzqoiav.supabase.co/auth/v1/callback`                  (plugin account sign-in with Google, Supabase Auth)
 4. Copy the **Client ID** and **Client secret**.
 5. While the consent screen is "Testing", only listed test users can sign in. To let any publisher connect, **Publish app**.
    `webmasters.readonly` is a *sensitive* scope, so Google requires app verification (privacy policy URL, homepage, a short demo video) before the "unverified app" warning goes away and the 100-test-user cap is lifted.
@@ -24,9 +23,9 @@ Google Cloud Console → pick/create a project (call it "PublishRank"):
 | `GOOGLE_CLIENT_SECRET` | the Client secret |
 | `TOKEN_ENC_KEY` (optional) | any long random string; encrypts refresh tokens. Defaults to a key derived from the client secret. |
 
-## 3. Enable Google for plugin account sign-in (optional, same client)
-Supabase → Authentication → Sign In / Providers → **Google** → enable, paste the same Client ID/secret.
-Authentication → URL Configuration → add each site's callback to Redirect URLs, e.g. `https://example.com/wp-admin/admin-post.php?action=publishrank_supabase_callback`.
+## Publisher Account sign-in (separate optional service)
+
+Publisher Account linking uses the shared Netlify Identity service and is separate from this Google Search Console broker. Do not add the WordPress Publisher Account callback to Supabase Auth. For the current flow and privacy details, see [the user guide](USER-GUIDE.md#10b-publisher-account-sign-in).
 
 ## Check it works
 `GET https://pgduryvupdltsqzqoiav.supabase.co/functions/v1/gsc-broker/health` → `{"ok":true,"configured":true,...}`.
