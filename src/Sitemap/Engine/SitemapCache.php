@@ -6,7 +6,8 @@ defined( 'ABSPATH' ) || exit;
 final class SitemapCache {
 	const TTL = 3600;
 
-	public function key( $provider, $shard ) { return 'publishrank_sitemap_' . sanitize_key( $provider ) . '_' . absint( $shard ) . '_' . SitemapCursorStore::version( $provider ); }
+	public function key( $provider, $shard ) {
+		return 'publishrank_sitemap_' . sanitize_key( $provider ) . '_' . absint( $shard ) . '_' . SitemapCursorStore::version( $provider ); }
 
 	public function get( $provider, $shard ) {
 		return get_transient( $this->key( $provider, $shard ) );

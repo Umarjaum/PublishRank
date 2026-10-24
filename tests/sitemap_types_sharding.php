@@ -16,7 +16,7 @@ $robots = $read( 'src/Robots/RobotsTxt.php' );
 $settings = $read( 'src/Admin/SettingsPage.php' );
 $installer = $read( 'src/Core/Installer.php' );
 foreach ( array( $abstract, $author, $attachment, $taxonomy ) as $source ) {
-    if ( false === strpos( $source, 'const SHARD_SIZE = 50000;' ) ) { fwrite( STDERR, "standard sitemap shard limit missing\n" ); exit( 1 ); }
+    if ( 1 !== preg_match( '/const\s+SHARD_SIZE\s*=\s*50000\s*;/', $source ) ) { fwrite( STDERR, "standard sitemap shard limit missing\n" ); exit( 1 ); }
 }
 if ( false === strpos( $page, "protected \$post_types = array( 'page' );" ) ) { exit( 2 ); }
 foreach ( array( $image, $video ) as $source ) {

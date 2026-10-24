@@ -49,7 +49,7 @@ final class Scanner {
 			$settings = Store::settings();
 			$targets  = Store::orphan_nodes_after( $state['last_recommendation_node'], 10, $settings['threshold'] );
 			foreach ( $targets as $target ) {
-				$state['recommendations'] = (int) $state['recommendations'] + Recommender::for_target( $target, $settings['max'] );
+				$state['recommendations']          = (int) $state['recommendations'] + Recommender::for_target( $target, $settings['max'] );
 				$state['last_recommendation_node'] = max( (int) $state['last_recommendation_node'], (int) $target->node_id );
 			}
 			if ( empty( $targets ) ) {
@@ -69,9 +69,9 @@ final class Scanner {
 		if ( ! Store::supports_post( $post ) ) {
 			return false;
 		}
-		$scan_id   = $scan_id ? absint( $scan_id ) : Store::current_scan_id();
-		$features  = FeatureExtractor::from_post( $post );
-		$node_id   = Store::upsert_node( $post, $features, $scan_id );
+		$scan_id  = $scan_id ? absint( $scan_id ) : Store::current_scan_id();
+		$features = FeatureExtractor::from_post( $post );
+		$node_id  = Store::upsert_node( $post, $features, $scan_id );
 		Store::replace_terms( $node_id, $features['terms'], $scan_id );
 		self::replace_edges( $post, $node_id, $scan_id );
 		Store::refresh_counts( $node_id );
@@ -82,7 +82,7 @@ final class Scanner {
 	private static function replace_edges( $post, $source_node_id, $scan_id ) {
 		global $wpdb;
 		Store::delete_edges_for_source( $source_node_id );
-		$targets = self::content_targets( $post );
+		$targets    = self::content_targets( $post );
 		$source_url = (string) get_permalink( $post );
 
 		foreach ( $targets as $target_id => $anchor ) {
@@ -104,8 +104,8 @@ final class Scanner {
 	}
 
 	private static function content_targets( $post ) {
-		$content  = function_exists( 'do_blocks' ) ? do_blocks( (string) $post->post_content ) : (string) $post->post_content;
-		$targets  = array();
+		$content = function_exists( 'do_blocks' ) ? do_blocks( (string) $post->post_content ) : (string) $post->post_content;
+		$targets = array();
 		if ( ! preg_match_all( '/<a\b([^>]*)>(.*?)<\/a>/is', $content, $matches, PREG_SET_ORDER ) ) {
 			return $targets;
 		}
@@ -117,7 +117,7 @@ final class Scanner {
 			if ( ! preg_match( '/\bhref\s*=\s*(["\'])(.*?)\1/is', $attrs, $href ) && ! preg_match( '/\bhref\s*=\s*([^\s>]+)/is', $attrs, $href ) ) {
 				continue;
 			}
-			$url = html_entity_decode( trim( $href[2] ?? $href[1] ?? '' ), ENT_QUOTES, 'UTF-8' );
+			$url       = html_entity_decode( trim( $href[2] ?? $href[1] ?? '' ), ENT_QUOTES, 'UTF-8' );
 			$target_id = self::resolve_post_id( $url );
 			if ( ! $target_id || isset( $targets[ $target_id ] ) || (int) $target_id === (int) $post->ID ) {
 				continue;

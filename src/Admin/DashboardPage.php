@@ -48,7 +48,14 @@ final class DashboardPage {
 			return;
 		}
 		$checks = $this->checks();
-		$passed = count( array_filter( $checks, static function ( $check ) { return 'PASS' === $check['status']; } ) );
+		$passed = count(
+			array_filter(
+				$checks,
+				static function ( $check ) {
+					return 'PASS' === $check['status'];
+				}
+			)
+		);
 		$total  = count( $checks );
 		$score  = $total ? (int) round( ( $passed / $total ) * 100 ) : 0;
 		$log    = NotFoundPage::entries();
@@ -56,10 +63,10 @@ final class DashboardPage {
 		foreach ( $log as $entry ) {
 			$hits += (int) ( isset( $entry['count'] ) ? $entry['count'] : 1 );
 		}
-		$counts    = wp_count_posts( 'post' );
-		$published = $counts && isset( $counts->publish ) ? (int) $counts->publish : 0;
-			$indexnow  = get_option( 'publishrank_indexnow_enabled', false ) ? __( 'On', 'publishrank' ) : __( 'Off', 'publishrank' );
-			$urls      = array( SitemapUrls::index_url() => __( 'Sitemap index', 'publishrank' ) );
+		$counts       = wp_count_posts( 'post' );
+		$published    = $counts && isset( $counts->publish ) ? (int) $counts->publish : 0;
+			$indexnow = get_option( 'publishrank_indexnow_enabled', false ) ? __( 'On', 'publishrank' ) : __( 'Off', 'publishrank' );
+			$urls     = array( SitemapUrls::index_url() => __( 'Sitemap index', 'publishrank' ) );
 		if ( get_option( 'publishrank_seo_news_enabled', true ) ) {
 				$urls[ SitemapUrls::shard_url( 'news', 1 ) ] = __( 'Google News sitemap', 'publishrank' );
 		}
@@ -67,7 +74,7 @@ final class DashboardPage {
 				echo '<div class="wrap">';
 				AdminAssets::header( __( 'PublishRank', 'publishrank' ), __( 'Advanced Sitemap & SEO Plugin — built for news sites.', 'publishrank' ) );
 				AdminAssets::render_flash();
-				?>
+		?>
 					<section class="rhs-welcome-banner" aria-labelledby="rhs-welcome-title">
 						<div class="rhs-welcome-banner__copy">
 							<p class="rhs-welcome-banner__eyebrow"><span aria-hidden="true"></span><?php esc_html_e( 'Publisher-first SEO workspace', 'publishrank' ); ?></p>
@@ -127,16 +134,72 @@ final class DashboardPage {
 				<div class="pr-dashboard-actions">
 					<?php
 					$cards = array(
-						array( 'slug' => 'publishrank-seo-score', 'icon' => 'fa-chart-simple', 'tone' => 'plum', 'kicker' => __( 'Editorial quality', 'publishrank' ), 'title' => __( 'SEO score', 'publishrank' ), 'description' => __( 'Review practical content and technical checks across the site.', 'publishrank' ), 'button' => __( 'Open SEO score', 'publishrank' ) ),
-						array( 'slug' => 'publishrank-schema', 'icon' => 'fa-diagram-project', 'tone' => 'sage', 'kicker' => __( 'Structured data', 'publishrank' ), 'title' => __( 'Schema studio', 'publishrank' ), 'description' => __( 'Configure publisher, article, media, and eligible rich-result schemas.', 'publishrank' ), 'button' => __( 'Manage schema', 'publishrank' ) ),
-						array( 'slug' => 'publishrank-seo-sitemap-health', 'icon' => 'fa-sitemap', 'tone' => 'brass', 'kicker' => __( 'News discovery', 'publishrank' ), 'title' => __( 'Sitemap health', 'publishrank' ), 'description' => __( 'Inspect sitemap endpoints and publisher-focused discovery signals.', 'publishrank' ), 'button' => __( 'Review sitemaps', 'publishrank' ) ),
-						array( 'slug' => 'publishrank-analytics', 'icon' => 'fa-chart-line', 'tone' => 'sage', 'kicker' => __( 'Performance', 'publishrank' ), 'title' => __( 'Publisher analytics', 'publishrank' ), 'description' => __( 'See local publishing trends and connected search performance.', 'publishrank' ), 'button' => __( 'View analytics', 'publishrank' ) ),
-						array( 'slug' => 'publishrank-search-console', 'icon' => 'fa-magnifying-glass-chart', 'tone' => 'plum', 'kicker' => __( 'Search visibility', 'publishrank' ), 'title' => __( 'Search Console', 'publishrank' ), 'description' => __( 'Review read-only search metrics and connected property status.', 'publishrank' ), 'button' => __( 'Open Search Console', 'publishrank' ) ),
-						array( 'slug' => 'publishrank-traffic-guard', 'icon' => 'fa-shield-halved', 'tone' => 'rose', 'kicker' => __( 'Access policy', 'publishrank' ), 'title' => __( 'Traffic Guard', 'publishrank' ), 'description' => __( 'Set optional IP/CIDR and trusted-proxy country rules for public pages.', 'publishrank' ), 'button' => __( 'Configure Traffic Guard', 'publishrank' ) ),
-						array( 'slug' => RedirectsPage::SLUG, 'icon' => 'fa-arrow-right-arrow-left', 'tone' => 'ink', 'kicker' => __( 'Link maintenance', 'publishrank' ), 'title' => __( 'Redirects & 404s', 'publishrank' ), 'description' => __( 'Resolve broken URLs and manage permanent or temporary redirects.', 'publishrank' ), 'button' => __( 'Review redirects', 'publishrank' ) ),
+						array(
+							'slug'        => 'publishrank-seo-score',
+							'icon'        => 'fa-chart-simple',
+							'tone'        => 'plum',
+							'kicker'      => __( 'Editorial quality', 'publishrank' ),
+							'title'       => __( 'SEO score', 'publishrank' ),
+							'description' => __( 'Review practical content and technical checks across the site.', 'publishrank' ),
+							'button'      => __( 'Open SEO score', 'publishrank' ),
+						),
+						array(
+							'slug'        => 'publishrank-schema',
+							'icon'        => 'fa-diagram-project',
+							'tone'        => 'sage',
+							'kicker'      => __( 'Structured data', 'publishrank' ),
+							'title'       => __( 'Schema studio', 'publishrank' ),
+							'description' => __( 'Configure publisher, article, media, and eligible rich-result schemas.', 'publishrank' ),
+							'button'      => __( 'Manage schema', 'publishrank' ),
+						),
+						array(
+							'slug'        => 'publishrank-seo-sitemap-health',
+							'icon'        => 'fa-sitemap',
+							'tone'        => 'brass',
+							'kicker'      => __( 'News discovery', 'publishrank' ),
+							'title'       => __( 'Sitemap health', 'publishrank' ),
+							'description' => __( 'Inspect sitemap endpoints and publisher-focused discovery signals.', 'publishrank' ),
+							'button'      => __( 'Review sitemaps', 'publishrank' ),
+						),
+						array(
+							'slug'        => 'publishrank-analytics',
+							'icon'        => 'fa-chart-line',
+							'tone'        => 'sage',
+							'kicker'      => __( 'Performance', 'publishrank' ),
+							'title'       => __( 'Publisher analytics', 'publishrank' ),
+							'description' => __( 'See local publishing trends and connected search performance.', 'publishrank' ),
+							'button'      => __( 'View analytics', 'publishrank' ),
+						),
+						array(
+							'slug'        => 'publishrank-search-console',
+							'icon'        => 'fa-magnifying-glass-chart',
+							'tone'        => 'plum',
+							'kicker'      => __( 'Search visibility', 'publishrank' ),
+							'title'       => __( 'Search Console', 'publishrank' ),
+							'description' => __( 'Review read-only search metrics and connected property status.', 'publishrank' ),
+							'button'      => __( 'Open Search Console', 'publishrank' ),
+						),
+						array(
+							'slug'        => 'publishrank-traffic-guard',
+							'icon'        => 'fa-shield-halved',
+							'tone'        => 'rose',
+							'kicker'      => __( 'Access policy', 'publishrank' ),
+							'title'       => __( 'Traffic Guard', 'publishrank' ),
+							'description' => __( 'Set optional IP/CIDR and trusted-proxy country rules for public pages.', 'publishrank' ),
+							'button'      => __( 'Configure Traffic Guard', 'publishrank' ),
+						),
+						array(
+							'slug'        => RedirectsPage::SLUG,
+							'icon'        => 'fa-arrow-right-arrow-left',
+							'tone'        => 'ink',
+							'kicker'      => __( 'Link maintenance', 'publishrank' ),
+							'title'       => __( 'Redirects & 404s', 'publishrank' ),
+							'description' => __( 'Resolve broken URLs and manage permanent or temporary redirects.', 'publishrank' ),
+							'button'      => __( 'Review redirects', 'publishrank' ),
+						),
 					);
 					foreach ( $cards as $card ) :
-					?>
+						?>
 						<article class="pr-action-card pr-action-card--<?php echo esc_attr( $card['tone'] ); ?>">
 							<div class="pr-action-card__icon" aria-hidden="true"><i class="fa-solid <?php echo esc_attr( $card['icon'] ); ?>"></i></div>
 							<p class="pr-action-card__kicker"><?php echo esc_html( $card['kicker'] ); ?></p>
@@ -165,38 +228,78 @@ final class DashboardPage {
 	private function checks() {
 		$checks    = array();
 		$conflicts = ( new ConflictDetector() )->diagnostics();
-		$checks[]  = array( 'label' => __( 'SEO plugin conflicts', 'publishrank' ), 'status' => strtoupper( $conflicts['status'] ), 'message' => $conflicts['message'] );
+		$checks[]  = array(
+			'label'   => __( 'SEO plugin conflicts', 'publishrank' ),
+			'status'  => strtoupper( $conflicts['status'] ),
+			'message' => $conflicts['message'],
+		);
 
 		$public   = '0' !== (string) get_option( 'blog_public', '1' );
-		$checks[] = array( 'label' => __( 'Search engine visibility', 'publishrank' ), 'status' => $public ? 'PASS' : 'WARNING', 'message' => $public ? __( 'Search engines are allowed to index this site.', 'publishrank' ) : __( 'WordPress is set to discourage search engines. Change this under Settings → Reading.', 'publishrank' ) );
+		$checks[] = array(
+			'label'   => __( 'Search engine visibility', 'publishrank' ),
+			'status'  => $public ? 'PASS' : 'WARNING',
+			'message' => $public ? __( 'Search engines are allowed to index this site.', 'publishrank' ) : __( 'WordPress is set to discourage search engines. Change this under Settings → Reading.', 'publishrank' ),
+		);
 
 		$pretty   = '' !== (string) get_option( 'permalink_structure', '' );
-		$checks[] = array( 'label' => __( 'Pretty permalinks', 'publishrank' ), 'status' => $pretty ? 'PASS' : 'WARNING', 'message' => $pretty ? __( 'Sitemap and key-file URLs can be served.', 'publishrank' ) : __( 'Switch from Plain permalinks so sitemap URLs work.', 'publishrank' ) );
+		$checks[] = array(
+			'label'   => __( 'Pretty permalinks', 'publishrank' ),
+			'status'  => $pretty ? 'PASS' : 'WARNING',
+			'message' => $pretty ? __( 'Sitemap and key-file URLs can be served.', 'publishrank' ) : __( 'Switch from Plain permalinks so sitemap URLs work.', 'publishrank' ),
+		);
 
 		$https    = 0 === strpos( (string) home_url(), 'https://' );
-		$checks[] = array( 'label' => __( 'HTTPS', 'publishrank' ), 'status' => $https ? 'PASS' : 'WARNING', 'message' => $https ? __( 'The site URL uses HTTPS.', 'publishrank' ) : __( 'Serve the site over HTTPS; Google News and Discover favour secure sites.', 'publishrank' ) );
+		$checks[] = array(
+			'label'   => __( 'HTTPS', 'publishrank' ),
+			'status'  => $https ? 'PASS' : 'WARNING',
+			'message' => $https ? __( 'The site URL uses HTTPS.', 'publishrank' ) : __( 'Serve the site over HTTPS; Google News and Discover favour secure sites.', 'publishrank' ),
+		);
 
 			$news     = (bool) get_option( 'publishrank_seo_news_enabled', true );
-			$checks[] = array( 'label' => __( 'News sitemap', 'publishrank' ), 'status' => $news ? 'PASS' : 'WARNING', 'message' => $news ? __( 'The Google News sitemap is enabled.', 'publishrank' ) : __( 'Enable the News sitemap in settings.', 'publishrank' ) );
+			$checks[] = array(
+				'label'   => __( 'News sitemap', 'publishrank' ),
+				'status'  => $news ? 'PASS' : 'WARNING',
+				'message' => $news ? __( 'The Google News sitemap is enabled.', 'publishrank' ) : __( 'Enable the News sitemap in settings.', 'publishrank' ),
+			);
 
 			$schema_enabled = (bool) get_option( 'publishrank_schema_enabled', true );
 			$page_type      = sanitize_text_field( (string) get_option( 'publishrank_schema_default_page_type', 'WebPage' ) );
 			/* translators: %s: schema page type. */
-			$schema_message  = $schema_enabled ? sprintf( __( 'Organization, WebSite, WebPage (%s), breadcrumbs and eligible article/media entities are enabled.', 'publishrank' ), $page_type ?: 'WebPage' ) : __( 'Enable the structured-data graph so pages and eligible articles receive JSON-LD.', 'publishrank' );
-			$checks[]       = array( 'label' => __( 'Structured data coverage', 'publishrank' ), 'status' => $schema_enabled ? 'PASS' : 'WARNING', 'message' => $schema_message );
+			$schema_message = $schema_enabled ? sprintf( __( 'Organization, WebSite, WebPage (%s), breadcrumbs and eligible article/media entities are enabled.', 'publishrank' ), ! empty( $page_type ) ? $page_type : 'WebPage' ) : __( 'Enable the structured-data graph so pages and eligible articles receive JSON-LD.', 'publishrank' );
+			$checks[]       = array(
+				'label'   => __( 'Structured data coverage', 'publishrank' ),
+				'status'  => $schema_enabled ? 'PASS' : 'WARNING',
+				'message' => $schema_message,
+			);
 
-		$logo     = (string) get_option( 'publishrank_seo_publisher_logo', '' ) || get_theme_mod( 'custom_logo' ) || ( function_exists( 'get_site_icon_url' ) && get_site_icon_url( 512 ) );
-		$checks[] = array( 'label' => __( 'Publisher logo', 'publishrank' ), 'status' => $logo ? 'PASS' : 'WARNING', 'message' => $logo ? __( 'A publisher logo is available for NewsArticle schema.', 'publishrank' ) : __( 'Add a publisher logo in settings.', 'publishrank' ) );
+			$logo     = (string) get_option( 'publishrank_seo_publisher_logo', '' ) || get_theme_mod( 'custom_logo' ) || ( function_exists( 'get_site_icon_url' ) && get_site_icon_url( 512 ) );
+			$checks[] = array(
+				'label'   => __( 'Publisher logo', 'publishrank' ),
+				'status'  => $logo ? 'PASS' : 'WARNING',
+				'message' => $logo ? __( 'A publisher logo is available for NewsArticle schema.', 'publishrank' ) : __( 'Add a publisher logo in settings.', 'publishrank' ),
+			);
 
-		$social   = '' !== (string) get_option( 'publishrank_seo_default_social_image', '' );
-		$checks[] = array( 'label' => __( 'Default social image', 'publishrank' ), 'status' => $social ? 'PASS' : 'WARNING', 'message' => $social ? __( 'Articles without a featured image still get a share image.', 'publishrank' ) : __( 'Set a fallback share image in settings.', 'publishrank' ) );
+			$social   = '' !== (string) get_option( 'publishrank_seo_default_social_image', '' );
+			$checks[] = array(
+				'label'   => __( 'Default social image', 'publishrank' ),
+				'status'  => $social ? 'PASS' : 'WARNING',
+				'message' => $social ? __( 'Articles without a featured image still get a share image.', 'publishrank' ) : __( 'Set a fallback share image in settings.', 'publishrank' ),
+			);
 
-		$physical = file_exists( ABSPATH . 'robots.txt' );
-		$checks[] = array( 'label' => __( 'Robots.txt', 'publishrank' ), 'status' => $physical ? 'WARNING' : 'PASS', 'message' => $physical ? __( 'A physical robots.txt overrides the virtual one PublishRank manages.', 'publishrank' ) : __( 'PublishRank can manage the virtual robots.txt.', 'publishrank' ) );
+			$physical = file_exists( ABSPATH . 'robots.txt' );
+			$checks[] = array(
+				'label'   => __( 'Robots.txt', 'publishrank' ),
+				'status'  => $physical ? 'WARNING' : 'PASS',
+				'message' => $physical ? __( 'A physical robots.txt overrides the virtual one PublishRank manages.', 'publishrank' ) : __( 'PublishRank can manage the virtual robots.txt.', 'publishrank' ),
+			);
 
-		$compatibility = $this->jnews->diagnostics();
-		$checks[]      = array( 'label' => __( 'JNews compatibility', 'publishrank' ), 'status' => strtoupper( $compatibility['status'] ), 'message' => $compatibility['message'] );
-		return $checks;
+			$compatibility = $this->jnews->diagnostics();
+			$checks[]      = array(
+				'label'   => __( 'JNews compatibility', 'publishrank' ),
+				'status'  => strtoupper( $compatibility['status'] ),
+				'message' => $compatibility['message'],
+			);
+			return $checks;
 	}
 
 	/** @return string */

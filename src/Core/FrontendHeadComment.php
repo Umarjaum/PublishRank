@@ -24,20 +24,26 @@ final class FrontendHeadComment {
 	}
 
 	public function render() {
-		if ( self::$emitted || ! self::should_emit() ) { return; }
+		if ( self::$emitted || ! self::should_emit() ) {
+			return; }
 		self::$emitted = true;
 		echo self::COMMENT . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- constant string.
 	}
 
 	/** Front-end HTML documents only. */
 	public static function should_emit() {
-		if ( is_admin() || ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) ) { return false; }
-		if ( is_feed() || is_robots() || is_embed() ) { return false; }
-		if ( ! get_option( 'publishrank_source_attribution', false ) ) { return false; }
-		if ( '' !== (string) get_query_var( 'publishrank_sitemap' ) ) { return false; }
+		if ( is_admin() || ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) ) {
+			return false; }
+		if ( is_feed() || is_robots() || is_embed() ) {
+			return false; }
+		if ( ! get_option( 'publishrank_source_attribution', false ) ) {
+			return false; }
+		if ( '' !== (string) get_query_var( 'publishrank_sitemap' ) ) {
+			return false; }
 		return true;
 	}
 
 	/** Test helper. */
-	public static function reset() { self::$emitted = false; }
+	public static function reset() {
+		self::$emitted = false; }
 }

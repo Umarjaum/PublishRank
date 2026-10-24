@@ -21,9 +21,12 @@ final class LinkManager {
 		$hosts = array();
 		foreach ( array( home_url(), site_url(), get_option( 'publishrank_primary_url', '' ) ) as $url ) {
 			$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
-			if ( '' === $host ) { continue; }
-			$base = preg_replace( '/^www\./', '', $host );
-			$hosts[ $host ] = true; $hosts[ $base ] = true; $hosts[ 'www.' . $base ] = true;
+			if ( '' === $host ) {
+				continue; }
+			$base                    = preg_replace( '/^www\./', '', $host );
+			$hosts[ $host ]          = true;
+			$hosts[ $base ]          = true;
+			$hosts[ 'www.' . $base ] = true;
 		}
 		return $hosts;
 	}
@@ -31,10 +34,12 @@ final class LinkManager {
 	/** True for the site host or any subdomain of it. */
 	private static function is_site_host( $host ) {
 		$host = strtolower( trim( (string) $host ) );
-		if ( '' === $host ) { return true; }
+		if ( '' === $host ) {
+			return true; }
 		foreach ( array_keys( self::site_hosts() ) as $site_host ) {
 			$site_host = preg_replace( '/^www\./', '', strtolower( $site_host ) );
-			if ( $host === $site_host || ( strlen( $host ) > strlen( $site_host ) && substr( $host, -strlen( '.' . $site_host ) ) === '.' . $site_host ) ) { return true; }
+			if ( $host === $site_host || ( strlen( $host ) > strlen( $site_host ) && substr( $host, -strlen( '.' . $site_host ) ) === '.' . $site_host ) ) {
+				return true; }
 		}
 		return false;
 	}
@@ -42,13 +47,14 @@ final class LinkManager {
 	/** @return array<string,bool> Domains explicitly approved for follow links. */
 	private static function follow_domains() {
 		$domains = array();
-		$raw = preg_split( '/[\s,]+/', (string) get_option( 'publishrank_links_follow_domains', '' ), -1, PREG_SPLIT_NO_EMPTY );
+		$raw     = preg_split( '/[\s,]+/', (string) get_option( 'publishrank_links_follow_domains', '' ), -1, PREG_SPLIT_NO_EMPTY );
 		foreach ( (array) $raw as $domain ) {
 			$domain = strtolower( trim( $domain ) );
 			$domain = preg_replace( '#^https?://#', '', $domain );
 			$domain = preg_replace( '#/.*$#', '', (string) $domain );
 			$domain = preg_replace( '/^www\./', '', $domain );
-			if ( '' !== $domain ) { $domains[ $domain ] = true; }
+			if ( '' !== $domain ) {
+				$domains[ $domain ] = true; }
 		}
 		return $domains;
 	}
@@ -56,12 +62,13 @@ final class LinkManager {
 	/** @return array<string,bool> Domains configured for nofollow, normalized. */
 	private static function nofollow_domains() {
 		$domains = array();
-		$raw = preg_split( '/[\s,]+/', (string) get_option( 'publishrank_links_nofollow_domains', '' ), -1, PREG_SPLIT_NO_EMPTY );
+		$raw     = preg_split( '/[\s,]+/', (string) get_option( 'publishrank_links_nofollow_domains', '' ), -1, PREG_SPLIT_NO_EMPTY );
 		foreach ( (array) $raw as $domain ) {
 			$domain = strtolower( trim( $domain ) );
 			$domain = preg_replace( '#^https?://#', '', $domain );
 			$domain = preg_replace( '#/.*$#', '', (string) $domain );
-			if ( '' !== $domain ) { $domains[ $domain ] = true; }
+			if ( '' !== $domain ) {
+				$domains[ $domain ] = true; }
 		}
 		return $domains;
 	}
@@ -71,36 +78,47 @@ final class LinkManager {
 		if ( ! self::enabled() || is_admin() || is_feed() || ! is_singular() || false === strpos( (string) $content, '<a ' ) ) {
 			return $content;
 		}
-		if ( apply_filters( 'publishrank_skip_link_policy', false ) ) { return $content; }
+		if ( apply_filters( 'publishrank_skip_link_policy', false ) ) {
+			return $content; }
 		return (string) preg_replace_callback( '/<a\b[^>]*>/i', array( $this, 'process_anchor' ), (string) $content );
 	}
 
 	/** @param array<int,string> $matches */
 	private function process_anchor( $matches ) {
 		$tag = $matches[0];
-		if ( false !== stripos( $tag, 'data-publishrank-skip' ) ) { return $tag; }
+		if ( false !== stripos( $tag, 'data-publishrank-skip' ) ) {
+			return $tag; }
 		if ( ! preg_match( '/\bhref\s*=\s*(["\'])(.*?)\1/i', $tag, $href ) && ! preg_match( '/\bhref\s*=\s*([^\s>]+)/i', $tag, $href ) ) {
 			return $tag;
 		}
 		$url = html_entity_decode( trim( $href[2] ?? $href[1] ?? '' ), ENT_QUOTES, 'UTF-8' );
-		if ( '' === $url || 0 === strpos( $url, '#' ) || preg_match( '#^(mailto:|tel:|javascript:|data:)#i', $url ) ) { return $tag; }
+		if ( '' === $url || 0 === strpos( $url, '#' ) || preg_match( '#^(mailto:|tel:|javascript:|data:)#i', $url ) ) {
+			return $tag; }
 		$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
-		if ( '' === $host || self::is_site_host( $host ) ) { return $tag; } // Internal, including all site subdomains.
+		if ( '' === $host || self::is_site_host( $host ) ) {
+			return $tag; } // Internal, including all site subdomains.
 
-		$rel_add = array();
+		$rel_add        = array();
 		$follow_domains = self::follow_domains();
-		$bare_host = preg_replace( '/^www\./', '', $host );
-		$approved = isset( $follow_domains[ $host ] ) || isset( $follow_domains[ $bare_host ] );
-		if ( ! $approved ) { $rel_add[] = 'nofollow'; }
-		if ( get_option( 'publishrank_links_sponsored', 0 ) ) { $rel_add[] = 'sponsored'; }
+		$bare_host      = preg_replace( '/^www\./', '', $host );
+		$approved       = isset( $follow_domains[ $host ] ) || isset( $follow_domains[ $bare_host ] );
+		if ( ! $approved ) {
+			$rel_add[] = 'nofollow'; }
+		if ( get_option( 'publishrank_links_sponsored', 0 ) ) {
+			$rel_add[] = 'sponsored'; }
 		$nofollows = self::nofollow_domains();
-		if ( isset( $nofollows[ $host ] ) || isset( $nofollows[ $bare_host ] ) ) { $rel_add[] = 'nofollow'; }
-		if ( preg_match( '/\btarget\s*=\s*(["\']?)_blank\1/i', $tag ) ) { $rel_add[] = 'noopener'; $rel_add[] = 'noreferrer'; }
+		if ( isset( $nofollows[ $host ] ) || isset( $nofollows[ $bare_host ] ) ) {
+			$rel_add[] = 'nofollow'; }
+		if ( preg_match( '/\btarget\s*=\s*(["\']?)_blank\1/i', $tag ) ) {
+			$rel_add[] = 'noopener';
+			$rel_add[] = 'noreferrer'; }
 		if ( get_option( 'publishrank_links_new_tab', 0 ) && ! preg_match( '/\btarget\s*=/i', $tag ) ) {
-			$rel_add[] = 'noopener'; $rel_add[] = 'noreferrer';
-			$tag = rtrim( $tag, '>' ) . ' target="_blank" rel="">';
+			$rel_add[] = 'noopener';
+			$rel_add[] = 'noreferrer';
+			$tag       = rtrim( $tag, '>' ) . ' target="_blank" rel="">';
 		}
-		if ( ! $rel_add ) { return $tag; }
+		if ( ! $rel_add ) {
+			return $tag; }
 		if ( preg_match( '/\brel\s*=\s*(["\'])(.*?)\1/i', $tag, $rel ) ) {
 			$existing = preg_split( '/\s+/', strtolower( trim( $rel[2] ) ), -1, PREG_SPLIT_NO_EMPTY );
 			$merged   = array_unique( array_merge( $existing, $rel_add ) );
@@ -111,28 +129,54 @@ final class LinkManager {
 
 	/** Store internal/external link counts as post meta for Insights and audits. */
 	public function count_links( $post_id ) {
-		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) { return; }
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return; }
 		$content = (string) get_post_field( 'post_content', $post_id );
 		if ( false === strpos( $content, 'href=' ) ) {
-			update_post_meta( $post_id, self::COUNTS_META, array( 'internal' => 0, 'external' => 0 ) );
+			update_post_meta(
+				$post_id,
+				self::COUNTS_META,
+				array(
+					'internal' => 0,
+					'external' => 0,
+				)
+			);
 			return;
 		}
-		$hosts   = self::site_hosts();
-		$internal = 0; $external = 0;
+		$hosts    = self::site_hosts();
+		$internal = 0;
+		$external = 0;
 		if ( preg_match_all( '/\bhref\s*=\s*(["\'])(.*?)\1/i', $content, $m ) ) {
 			foreach ( $m[2] as $url ) {
 				$url = html_entity_decode( trim( $url ), ENT_QUOTES, 'UTF-8' );
-				if ( '' === $url || 0 === strpos( $url, '#' ) || preg_match( '#^(mailto:|tel:|javascript:|data:)#i', $url ) ) { continue; }
+				if ( '' === $url || 0 === strpos( $url, '#' ) || preg_match( '#^(mailto:|tel:|javascript:|data:)#i', $url ) ) {
+					continue; }
 				$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
-				if ( '' === $host || self::is_site_host( $host ) || 0 !== strpos( $url, 'http' ) ) { $internal++; } else { $external++; }
+				if ( '' === $host || self::is_site_host( $host ) || 0 !== strpos( $url, 'http' ) ) {
+					++$internal;
+				} else {
+					++$external; }
 			}
 		}
-		update_post_meta( $post_id, self::COUNTS_META, array( 'internal' => $internal, 'external' => $external ) );
+		update_post_meta(
+			$post_id,
+			self::COUNTS_META,
+			array(
+				'internal' => $internal,
+				'external' => $external,
+			)
+		);
 	}
 
 	/** @return array{internal:int,external:int} */
 	public static function counts( $post_id ) {
 		$counts = get_post_meta( $post_id, self::COUNTS_META, true );
-		return is_array( $counts ) ? array( 'internal' => (int) ( $counts['internal'] ?? 0 ), 'external' => (int) ( $counts['external'] ?? 0 ) ) : array( 'internal' => 0, 'external' => 0 );
+		return is_array( $counts ) ? array(
+			'internal' => (int) ( $counts['internal'] ?? 0 ),
+			'external' => (int) ( $counts['external'] ?? 0 ),
+		) : array(
+			'internal' => 0,
+			'external' => 0,
+		);
 	}
 }

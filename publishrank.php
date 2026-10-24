@@ -3,7 +3,7 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrank.netlify.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.9.69
+ * Version: 2.9.70
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.9.69' );
+define( 'PUBLISHRANK_SEO_VERSION', '2.9.70' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
@@ -60,12 +60,12 @@ register_activation_hook(
 register_deactivation_hook(
 	__FILE__,
 	static function () {
-			if ( class_exists( '\\PublishRankSEO\\Sitemap\\Engine\\SitemapCursorStore' ) ) {
-				\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::unregister();
-			}
-			if ( class_exists( '\\PublishRankSEO\\Monitor\\ScheduledAudit' ) ) {
-				\PublishRankSEO\Monitor\ScheduledAudit::clear_schedule();
-			}
+		if ( class_exists( '\\PublishRankSEO\\Sitemap\\Engine\\SitemapCursorStore' ) ) {
+			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::unregister();
+		}
+		if ( class_exists( '\\PublishRankSEO\\Monitor\\ScheduledAudit' ) ) {
+			\PublishRankSEO\Monitor\ScheduledAudit::clear_schedule();
+		}
 			wp_clear_scheduled_hook( 'publishrank_daily_analytics_snapshot' );
 			flush_rewrite_rules();
 	}
@@ -78,8 +78,8 @@ function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
 		return;
 	}
 
-	$icon_url = add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank-toolbar-icon-v2.png', __FILE__ ) );
-	$icon     = '<img class="publishrank-toolbar-icon" src="' . esc_url( $icon_url ) . '" alt="" width="18" height="18" /><span class="ab-label">' . esc_html__( 'PublishRank', 'publishrank' ) . '</span>';
+	$icon_url  = add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank-toolbar-icon-v2.png', __FILE__ ) );
+	$icon      = '<img class="publishrank-toolbar-icon" src="' . esc_url( $icon_url ) . '" alt="" width="18" height="18" /><span class="ab-label">' . esc_html__( 'PublishRank', 'publishrank' ) . '</span>';
 	$dashboard = admin_url( 'admin.php?page=publishrank-seo-dashboard' );
 	$settings  = admin_url( 'admin.php?page=publishrank' );
 
@@ -100,45 +100,48 @@ function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
 			'id'    => 'publishrank-seo-toolbar',
 			'title' => $icon,
 			'href'  => $dashboard,
-			'meta'  => array( 'class' => 'publishrank-toolbar-root', 'title' => esc_attr__( 'PublishRank shortcuts', 'publishrank' ) ),
+			'meta'  => array(
+				'class' => 'publishrank-toolbar-root',
+				'title' => esc_attr__( 'PublishRank shortcuts', 'publishrank' ),
+			),
 		)
 	);
 		$items = array(
-			'dashboard'  => array( __( 'Dashboard', 'publishrank' ), $dashboard ),
-			'settings'   => array( __( 'Settings', 'publishrank' ), $settings ),
-			'setup'      => array( __( 'Setup Wizard', 'publishrank' ), admin_url( 'admin.php?page=publishrank-onboarding' ) ),
-			'seo-score'  => array( __( 'SEO Score', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-score' ) ),
-			'expertise'  => array( __( 'Author Expertise', 'publishrank' ), admin_url( 'admin.php?page=publishrank-author-expertise' ) ),
-			'sitemaps'   => array( __( 'Sitemap Health', 'publishrank' ), admin_url( 'admin.php?page=publishrank-sitemap-health' ) ),
-			'diagnostics'=> array( __( 'Diagnostics', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-diagnostics' ) ),
-			'schema'     => array( __( 'Schema', 'publishrank' ), admin_url( 'admin.php?page=publishrank-schema' ) ),
-			'redirects'  => array( __( 'Redirects', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-redirects' ) ),
-			'robots'     => array( __( 'Robots.txt', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-robots' ) ),
-			'insights'   => array( __( 'Insights', 'publishrank' ), admin_url( 'admin.php?page=publishrank-insights' ) ),
-			'internal-links' => array( __( 'Internal Links', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-internal-links' ) ),
+			'dashboard'         => array( __( 'Dashboard', 'publishrank' ), $dashboard ),
+			'settings'          => array( __( 'Settings', 'publishrank' ), $settings ),
+			'setup'             => array( __( 'Setup Wizard', 'publishrank' ), admin_url( 'admin.php?page=publishrank-onboarding' ) ),
+			'seo-score'         => array( __( 'SEO Score', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-score' ) ),
+			'expertise'         => array( __( 'Author Expertise', 'publishrank' ), admin_url( 'admin.php?page=publishrank-author-expertise' ) ),
+			'sitemaps'          => array( __( 'Sitemap Health', 'publishrank' ), admin_url( 'admin.php?page=publishrank-sitemap-health' ) ),
+			'diagnostics'       => array( __( 'Diagnostics', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-diagnostics' ) ),
+			'schema'            => array( __( 'Schema', 'publishrank' ), admin_url( 'admin.php?page=publishrank-schema' ) ),
+			'redirects'         => array( __( 'Redirects', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-redirects' ) ),
+			'robots'            => array( __( 'Robots.txt', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-robots' ) ),
+			'insights'          => array( __( 'Insights', 'publishrank' ), admin_url( 'admin.php?page=publishrank-insights' ) ),
+			'internal-links'    => array( __( 'Internal Links', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-internal-links' ) ),
 			'link-intelligence' => array( __( 'Link Intelligence', 'publishrank' ), admin_url( 'admin.php?page=publishrank-link-intelligence' ) ),
-			'llms'       => array( __( 'AI & llms.txt', 'publishrank' ), admin_url( 'admin.php?page=publishrank-llms-txt' ) ),
-			'indexnow'   => array( __( 'IndexNow', 'publishrank' ), admin_url( 'admin.php?page=publishrank-indexnow' ) ),
-			'image-optimizer' => array( __( 'Image Optimizer', 'publishrank' ), admin_url( 'admin.php?page=publishrank-image-optimizer' ) ),
-			'toolkit'    => array( __( 'Publisher Toolkit', 'publishrank' ), admin_url( 'admin.php?page=publishrank-publisher-toolkit' ) ),
-			'404'        => array( __( '404 Monitor', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-404' ) ),
-			'config-history' => array( __( 'Configuration History', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-config-history' ) ),
-			'documentation' => array( __( 'Documentation & Help', 'publishrank' ), admin_url( 'admin.php?page=publishrank-documentation' ) ),
-	);
-	$items = apply_filters( 'publishrank_seo_admin_toolbar_items', $items );
-	foreach ( (array) $items as $key => $item ) {
-		if ( ! is_array( $item ) || ! isset( $item[0], $item[1] ) || ! is_scalar( $item[0] ) || ! is_string( $item[1] ) ) {
-			continue;
-		}
-		$wp_admin_bar->add_node(
-			array(
-				'id'     => 'publishrank-toolbar-' . $key,
-				'parent' => 'publishrank-seo-toolbar',
-				'title'  => esc_html( $item[0] ),
-				'href'   => esc_url( $item[1] ),
-			)
+			'llms'              => array( __( 'AI & llms.txt', 'publishrank' ), admin_url( 'admin.php?page=publishrank-llms-txt' ) ),
+			'indexnow'          => array( __( 'IndexNow', 'publishrank' ), admin_url( 'admin.php?page=publishrank-indexnow' ) ),
+			'image-optimizer'   => array( __( 'Image Optimizer', 'publishrank' ), admin_url( 'admin.php?page=publishrank-image-optimizer' ) ),
+			'toolkit'           => array( __( 'Publisher Toolkit', 'publishrank' ), admin_url( 'admin.php?page=publishrank-publisher-toolkit' ) ),
+			'404'               => array( __( '404 Monitor', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-404' ) ),
+			'config-history'    => array( __( 'Configuration History', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-config-history' ) ),
+			'documentation'     => array( __( 'Documentation & Help', 'publishrank' ), admin_url( 'admin.php?page=publishrank-documentation' ) ),
 		);
-	}
+		$items = apply_filters( 'publishrank_seo_admin_toolbar_items', $items );
+		foreach ( (array) $items as $key => $item ) {
+			if ( ! is_array( $item ) || ! isset( $item[0], $item[1] ) || ! is_scalar( $item[0] ) || ! is_string( $item[1] ) ) {
+				continue;
+			}
+			$wp_admin_bar->add_node(
+				array(
+					'id'     => 'publishrank-toolbar-' . $key,
+					'parent' => 'publishrank-seo-toolbar',
+					'title'  => esc_html( $item[0] ),
+					'href'   => esc_url( $item[1] ),
+				)
+			);
+		}
 }
 add_action( 'admin_bar_menu', 'publishrank_seo_admin_toolbar', 100 );
 
@@ -159,11 +162,11 @@ add_action( 'wp_enqueue_scripts', 'publishrank_seo_admin_toolbar_styles' );
 
 /** Add useful shortcuts to the Installed Plugins screen (including Multisite). */
 function publishrank_seo_plugin_action_links( $links ) {
-	$settings = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank' ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '</a>';
-	$wizard = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-onboarding' ) ) . '">' . esc_html__( 'Setup Wizard', 'publishrank' ) . '</a>';
-	$sitemap = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-sitemap-health' ) ) . '">' . esc_html__( 'Sitemap Health', 'publishrank' ) . '</a>';
+	$settings    = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank' ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '</a>';
+	$wizard      = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-onboarding' ) ) . '">' . esc_html__( 'Setup Wizard', 'publishrank' ) . '</a>';
+	$sitemap     = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-sitemap-health' ) ) . '">' . esc_html__( 'Sitemap Health', 'publishrank' ) . '</a>';
 	$diagnostics = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-seo-diagnostics' ) ) . '">' . esc_html__( 'Diagnostics', 'publishrank' ) . '</a>';
-	$support = '<a href="https://publishrank.netlify.app/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Support', 'publishrank' ) . '</a>';
+	$support     = '<a href="https://publishrank.netlify.app/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Support', 'publishrank' ) . '</a>';
 	return array_merge( array( $settings, $wizard, $sitemap, $diagnostics, $support ), $links );
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'publishrank_seo_plugin_action_links' );

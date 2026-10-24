@@ -53,7 +53,11 @@ final class PostListColumns {
 	public static function audit( $post_id ) {
 		$post = get_post( (int) $post_id );
 		if ( ! $post instanceof \WP_Post ) {
-			return array( 'score' => 0, 'issues' => array( __( 'Article could not be loaded for analysis.', 'publishrank' ) ), 'noindex' => false );
+			return array(
+				'score'   => 0,
+				'issues'  => array( __( 'Article could not be loaded for analysis.', 'publishrank' ) ),
+				'noindex' => false,
+			);
 		}
 		$report = ( new EditorialAudit() )->analyze( $post );
 		$robots = strtolower( (string) get_post_meta( $post_id, '_publishrank_seo_robots', true ) );

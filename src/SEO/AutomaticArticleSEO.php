@@ -23,23 +23,46 @@ final class AutomaticArticleSEO {
 
 	/** Batched, resumable cleanup of snapshots stored by versions before 2.9.38. */
 	public function migrate() {
-		if ( ! current_user_can( 'manage_options' ) ) { return; }
-		$state = get_option( self::MIGRATION_OPTION, array( 'done' => false, 'last_id' => 0 ) );
-		if ( ! is_array( $state ) || ! empty( $state['done'] ) ) { return; }
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return; }
+		$state = get_option(
+			self::MIGRATION_OPTION,
+			array(
+				'done'    => false,
+				'last_id' => 0,
+			)
+		);
+		if ( ! is_array( $state ) || ! empty( $state['done'] ) ) {
+			return; }
 		global $wpdb;
 		$last = isset( $state['last_id'] ) ? absint( $state['last_id'] ) : 0;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key IN (%s,%s,%s,%s) AND post_id > %d ORDER BY post_id ASC LIMIT %d", PostMeta::TITLE, PostMeta::DESCRIPTION, PostMeta::OG_TITLE, PostMeta::OG_DESCRIPTION, $last, self::BATCH ) );
 		if ( empty( $ids ) ) {
-			update_option( self::MIGRATION_OPTION, array( 'done' => true, 'last_id' => $last ), false );
+			update_option(
+				self::MIGRATION_OPTION,
+				array(
+					'done'    => true,
+					'last_id' => $last,
+				),
+				false
+			);
 			return;
 		}
 		foreach ( $ids as $id ) {
 			$post = get_post( (int) $id );
-			if ( $post instanceof \WP_Post ) { $this->clean_post( $post ); }
+			if ( $post instanceof \WP_Post ) {
+				$this->clean_post( $post ); }
 			$last = max( $last, (int) $id );
 		}
-		update_option( self::MIGRATION_OPTION, array( 'done' => false, 'last_id' => $last ), false );
+		update_option(
+			self::MIGRATION_OPTION,
+			array(
+				'done'    => false,
+				'last_id' => $last,
+			),
+			false
+		);
 	}
 
 	private function clean_post( $post ) {
@@ -51,7 +74,8 @@ final class AutomaticArticleSEO {
 		);
 		foreach ( $legacy as $key => $generated ) {
 			$stored = (string) get_post_meta( $post->ID, $key, true );
-			if ( '' !== $stored && $stored === $generated ) { delete_post_meta( $post->ID, $key ); }
+			if ( '' !== $stored && $stored === $generated ) {
+				delete_post_meta( $post->ID, $key ); }
 		}
 	}
 
@@ -59,13 +83,14 @@ final class AutomaticArticleSEO {
 		$raw       = wp_strip_all_tags( (string) $post->post_title );
 		$site      = wp_strip_all_tags( (string) get_bloginfo( 'name' ) );
 		$separator = (string) get_option( 'publishrank_seo_title_separator', '|' );
-		$value     = $raw && $site ? $raw . ' ' . $separator . ' ' . $site : ( $raw ?: $site );
+		$value     = $raw && $site ? $raw . ' ' . $separator . ' ' . $site : ( ! empty( $raw ) ? $raw : $site );
 		return $this->limit( preg_replace( '/\s+/', ' ', trim( $value ) ), 180 );
 	}
 
 	private function legacy_description( $post ) {
 		$text = trim( wp_strip_all_tags( (string) $post->post_excerpt ) );
-		if ( '' === $text ) { $text = wp_trim_words( wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) ), 30, '' ); }
+		if ( '' === $text ) {
+			$text = wp_trim_words( wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) ), 30, '' ); }
 		return $this->limit( preg_replace( '/\s+/', ' ', trim( $text ) ), 160 );
 	}
 

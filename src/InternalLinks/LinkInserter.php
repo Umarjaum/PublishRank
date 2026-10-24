@@ -40,7 +40,7 @@ final class LinkInserter {
 		$tag = '<a href="' . $escaped_url . '">' . esc_html( $anchor ) . '</a>';
 		if ( preg_match( '/<\/p\s*>/i', $content, $match, PREG_OFFSET_CAPTURE ) ) {
 			$position = $match[0][1] + strlen( $match[0][0] );
-			return substr( $content, 0, $position ) . "\n\n<p>" . $tag . "</p>" . substr( $content, $position );
+			return substr( $content, 0, $position ) . "\n\n<p>" . $tag . '</p>' . substr( $content, $position );
 		}
 		return rtrim( $content ) . "\n\n<p>" . $tag . "</p>\n";
 	}

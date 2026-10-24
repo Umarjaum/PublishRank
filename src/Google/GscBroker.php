@@ -24,34 +24,95 @@ final class GscBroker {
 	public static function health( $force = false ) {
 		if ( ! $force ) {
 			$cached = get_transient( self::HEALTH_CACHE );
-			if ( is_array( $cached ) ) { return $cached; }
+			if ( is_array( $cached ) ) {
+				return $cached; }
 		}
-		$out = array( 'ok' => false, 'configured' => false, 'reachable' => false );
-		$res = wp_remote_get( self::base() . '/health', array( 'timeout' => 8, 'redirection' => 0, 'sslverify' => true, 'headers' => array( 'Accept' => 'application/json', 'apikey' => SupabaseAuth::DEFAULT_PUBLISHABLE_KEY ) ) );
+		$out = array(
+			'ok'         => false,
+			'configured' => false,
+			'reachable'  => false,
+		);
+		$res = wp_remote_get(
+			self::base() . '/health',
+			array(
+				'timeout'     => 8,
+				'redirection' => 0,
+				'sslverify'   => true,
+				'headers'     => array(
+					'Accept' => 'application/json',
+					'apikey' => SupabaseAuth::DEFAULT_PUBLISHABLE_KEY,
+				),
+			)
+		);
 		if ( ! is_wp_error( $res ) && 200 === (int) wp_remote_retrieve_response_code( $res ) ) {
 			$body = json_decode( (string) wp_remote_retrieve_body( $res ), true );
-			if ( is_array( $body ) ) { $out = array( 'ok' => ! empty( $body['ok'] ), 'configured' => ! empty( $body['configured'] ), 'reachable' => true ); }
+			if ( is_array( $body ) ) {
+				$out = array(
+					'ok'         => ! empty( $body['ok'] ),
+					'configured' => ! empty( $body['configured'] ),
+					'reachable'  => true,
+				); }
 		}
 		set_transient( self::HEALTH_CACHE, $out, $out['configured'] ? 5 * MINUTE_IN_SECONDS : MINUTE_IN_SECONDS );
 		return $out;
 	}
 
 	public static function start_url( $state, $challenge, $return ) {
-		return self::base() . '/start?' . http_build_query( array( 'state' => $state, 'challenge' => $challenge, 'return' => $return ), '', '&', PHP_QUERY_RFC3986 );
+		return self::base() . '/start?' . http_build_query(
+			array(
+				'state'     => $state,
+				'challenge' => $challenge,
+				'return'    => $return,
+			),
+			'',
+			'&',
+			PHP_QUERY_RFC3986
+		);
 	}
 
-	public static function exchange( $ticket, $verifier ) { return self::post( '/exchange', array( 'ticket' => $ticket, 'verifier' => $verifier ) ); }
-	public static function token( $id, $secret ) { return self::post( '/token', array( 'connection_id' => $id, 'connection_secret' => $secret ) ); }
-	public static function disconnect( $id, $secret ) { return self::post( '/disconnect', array( 'connection_id' => $id, 'connection_secret' => $secret ) ); }
+	public static function exchange( $ticket, $verifier ) {
+		return self::post(
+			'/exchange',
+			array(
+				'ticket'   => $ticket,
+				'verifier' => $verifier,
+			)
+		); }
+	public static function token( $id, $secret ) {
+		return self::post(
+			'/token',
+			array(
+				'connection_id'     => $id,
+				'connection_secret' => $secret,
+			)
+		); }
+	public static function disconnect( $id, $secret ) {
+		return self::post(
+			'/disconnect',
+			array(
+				'connection_id'     => $id,
+				'connection_secret' => $secret,
+			)
+		); }
 
 	/** @return array|\WP_Error Error code is the broker's own (`reauth`, `invalid_connection` …) or `network`. */
 	private static function post( $path, $body ) {
-		$res = wp_remote_post( self::base() . $path, array(
-			'timeout' => 20, 'redirection' => 0, 'sslverify' => true,
-			'headers' => array( 'Content-Type' => 'application/json', 'Accept' => 'application/json', 'apikey' => SupabaseAuth::DEFAULT_PUBLISHABLE_KEY ),
-			'body'    => wp_json_encode( $body ),
-		) );
-		if ( is_wp_error( $res ) ) { return new \WP_Error( 'network', __( 'Could not reach the PublishRank sign-in service.', 'publishrank' ) ); }
+		$res = wp_remote_post(
+			self::base() . $path,
+			array(
+				'timeout'     => 20,
+				'redirection' => 0,
+				'sslverify'   => true,
+				'headers'     => array(
+					'Content-Type' => 'application/json',
+					'Accept'       => 'application/json',
+					'apikey'       => SupabaseAuth::DEFAULT_PUBLISHABLE_KEY,
+				),
+				'body'        => wp_json_encode( $body ),
+			)
+		);
+		if ( is_wp_error( $res ) ) {
+			return new \WP_Error( 'network', __( 'Could not reach the PublishRank sign-in service.', 'publishrank' ) ); }
 		$code = (int) wp_remote_retrieve_response_code( $res );
 		$data = json_decode( (string) wp_remote_retrieve_body( $res ), true );
 		if ( $code < 200 || $code >= 300 || ! is_array( $data ) ) {

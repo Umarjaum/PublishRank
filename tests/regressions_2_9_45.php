@@ -14,7 +14,7 @@ $checks = array(
 	'recovery markup is rendered at shutdown priority 0' => false !== strpos( $recovery, "add_action( 'shutdown', array( \$this, 'prepare_payload' ), 0 )" ),
 	'sitemap stylesheet resolves without stored rewrite rules' => false !== strpos( $xsl, "add_action( 'parse_request'" ) && false !== strpos( $xsl, 'publishrank-sitemap.xsl' ),
 	'sitemap stylesheet discards buffered output and is served as text/xsl' => false !== strpos( $xsl, 'ob_end_clean' ) && false !== strpos( $xsl, 'text/xsl' ),
-	'webpage node type comes from current_webpage_type() in every context' => false !== strpos( $graph, "'@type' => ( new SchemaBuilder() )->current_webpage_type()" ) && false !== strpos( $builder, "'SearchResultsPage'" ) && false !== strpos( $builder, "'ProfilePage'" ),
+	'webpage node type comes from current_webpage_type() in every context' => 1 === preg_match( "/'@type'\s*=>\s*\( new SchemaBuilder\(\) \)->current_webpage_type\(\)/", $graph ) && false !== strpos( $builder, "'SearchResultsPage'" ) && false !== strpos( $builder, "'ProfilePage'" ),
 	'graph scan auto-continue uses the native form submit' => false !== strpos( $read( 'assets/js/admin.js' ), 'HTMLFormElement.prototype.submit.call(form)' ),
 	'graph settings form does not print settings_fields()' => false === strpos( preg_replace( '#//.*#', '', $page ), 'settings_fields(' ),
 	'content graph includes pages (public, not publicly_queryable)' => false === strpos( substr( $store, strpos( $store, 'function allowed_types' ), 400 ), "'publicly_queryable' => true" ),

@@ -23,16 +23,18 @@ final class YoastParityFeatures {
 		if ( is_singular() ) {
 			$directive = PostMeta::get( get_queried_object_id(), PostMeta::ROBOTS, '' );
 			if ( '' !== $directive ) {
-				$parts = array_map( 'trim', explode( ',', $directive ) );
-				$robots['noindex'] = in_array( 'noindex', $parts, true );
+				$parts              = array_map( 'trim', explode( ',', $directive ) );
+				$robots['noindex']  = in_array( 'noindex', $parts, true );
 				$robots['nofollow'] = in_array( 'nofollow', $parts, true );
 			}
 		}
-			if ( is_search() || is_404() ) {
-				$robots['noindex'] = true;
-			}
-			if ( is_author() && get_option( 'publishrank_noindex_author_archives', false ) ) { $robots['noindex'] = true; }
-			if ( is_date() && get_option( 'publishrank_noindex_date_archives', false ) ) { $robots['noindex'] = true; }
+		if ( is_search() || is_404() ) {
+			$robots['noindex'] = true;
+		}
+		if ( is_author() && get_option( 'publishrank_noindex_author_archives', false ) ) {
+			$robots['noindex'] = true; }
+		if ( is_date() && get_option( 'publishrank_noindex_date_archives', false ) ) {
+			$robots['noindex'] = true; }
 		return $robots;
 	}
 
@@ -41,9 +43,14 @@ final class YoastParityFeatures {
 		if ( 'dns-prefetch' !== $relation_type || ! is_array( $urls ) ) {
 			return $urls;
 		}
-		return array_values( array_filter( $urls, static function ( $url ) {
-			return 0 === strpos( (string) $url, home_url() );
-		} ) );
+		return array_values(
+			array_filter(
+				$urls,
+				static function ( $url ) {
+					return 0 === strpos( (string) $url, home_url() );
+				}
+			)
+		);
 	}
 
 	/** Add a stable source link to feeds for attribution and discovery. */
@@ -66,7 +73,7 @@ final class YoastParityFeatures {
 			return;
 		}
 		$attachment_id = get_queried_object_id();
-		$url = $attachment_id ? wp_get_attachment_url( $attachment_id ) : '';
+		$url           = $attachment_id ? wp_get_attachment_url( $attachment_id ) : '';
 		if ( $url ) {
 			wp_safe_redirect( $url, 301 );
 			exit;
@@ -75,7 +82,7 @@ final class YoastParityFeatures {
 
 	/** Respect a per-post canonical override in core canonical output. */
 	public function canonical_url( $canonical, $post ) {
-		$post_id = is_object( $post ) && isset( $post->ID ) ? (int) $post->ID : 0;
+		$post_id  = is_object( $post ) && isset( $post->ID ) ? (int) $post->ID : 0;
 		$override = $post_id ? PostMeta::get( $post_id, PostMeta::CANONICAL, '' ) : '';
 		return '' !== $override ? esc_url_raw( $override ) : $canonical;
 	}
@@ -86,7 +93,7 @@ final class YoastParityFeatures {
 			return $query;
 		}
 		if ( $query->is_search() ) {
-			$query->set( 'posts_per_page', min( 20, (int) $query->get( 'posts_per_page' ) ?: 20 ) );
+			$query->set( 'posts_per_page', min( 20, ! empty( (int) $query->get( 'posts_per_page' ) ) ? (int) $query->get( 'posts_per_page' ) : 20 ) );
 		}
 		return $query;
 	}

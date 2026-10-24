@@ -25,7 +25,7 @@ final class JNewsAdapter {
 	 */
 	public function diagnostics(): array {
 		return array(
-			'status' => 'warning',
+			'status'  => 'warning',
 			'message' => __( 'JNews source was not available for verification; generic WordPress output is active.', 'publishrank' ),
 		);
 	}

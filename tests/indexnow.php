@@ -25,7 +25,7 @@ $checks = array(
     'custom post type bulk actions' => false !== strpos( $page, 'function register_post_type_bulk_actions' ),
     'path exclusion controls' => false !== strpos( $module, 'function is_excluded_url' ) && false !== strpos( $page, 'excluded_paths' ),
     'automatic duplicate throttle' => false !== strpos( $module, 'publishrank_indexnow_dedupe_' ),
-    '100 entry activity history' => false !== strpos( $module, 'const MAX_LOGS = 100' ),
+    '100 entry activity history' => 1 === preg_match( '/const\s+MAX_LOGS\s*=\s*100\s*;/', $module ),
     'CSV history export' => false !== strpos( $page, 'function export_logs' ) && false !== strpos( $page, 'publishrank_indexnow_export' ),
     'admin nonce protection' => false !== strpos( $page, 'check_admin_referer' ),
     'admin permission checks' => false !== strpos( $page, "current_user_can( 'manage_options' )" ),

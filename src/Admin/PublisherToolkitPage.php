@@ -12,7 +12,7 @@ use PublishRankSEO\Meta\PostMeta;
 defined( 'ABSPATH' ) || exit;
 
 final class PublisherToolkitPage {
-	const SLUG = 'publishrank-publisher-toolkit';
+	const SLUG         = 'publishrank-publisher-toolkit';
 	const ROLES_OPTION = 'publishrank_toolkit_roles';
 
 	public function register() {
@@ -68,7 +68,20 @@ final class PublisherToolkitPage {
 			$tabs['access'] = __( 'Role Access', 'publishrank' );
 		}
 		foreach ( $tabs as $key => $label ) {
-			printf( '<a class="nav-tab %1$s" href="%2$s">%3$s</a>', $tab === $key ? 'nav-tab-active' : '', esc_url( add_query_arg( array( 'page' => self::SLUG, 'tab' => $key ), admin_url( 'admin.php' ) ) ), esc_html( $label ) );
+			printf(
+				'<a class="nav-tab %1$s" href="%2$s">%3$s</a>',
+				$tab === $key ? 'nav-tab-active' : '',
+				esc_url(
+					add_query_arg(
+						array(
+							'page' => self::SLUG,
+							'tab'  => $key,
+						),
+						admin_url( 'admin.php' )
+					)
+				),
+				esc_html( $label )
+			);
 		}
 		echo '</nav>';
 		if ( 'images' === $tab ) {
@@ -85,10 +98,10 @@ final class PublisherToolkitPage {
 		if ( empty( $_GET['publishrank_notice'] ) ) {
 			return;
 		}
-		$notice = sanitize_key( wp_unslash( $_GET['publishrank_notice'] ) );
+		$notice   = sanitize_key( wp_unslash( $_GET['publishrank_notice'] ) );
 		$messages = array(
-			'updated' => __( 'SEO metadata updated for the selected content.', 'publishrank' ),
-			'alt_filled' => __( 'Missing image alt text was filled where a useful attachment title was available. Existing alt text was preserved.', 'publishrank' ),
+			'updated'        => __( 'SEO metadata updated for the selected content.', 'publishrank' ),
+			'alt_filled'     => __( 'Missing image alt text was filled where a useful attachment title was available. Existing alt text was preserved.', 'publishrank' ),
 			'settings_saved' => __( 'Publisher Toolkit settings saved.', 'publishrank' ),
 		);
 		if ( isset( $messages[ $notice ] ) ) {
@@ -98,17 +111,19 @@ final class PublisherToolkitPage {
 
 	private function bulk_tab() {
 		$page_num = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
-		$search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
-		$query = new \WP_Query( array(
-			'post_type' => $this->editable_post_types(),
-			'post_status' => array( 'publish', 'draft', 'pending', 'private', 'future' ),
-			'posts_per_page' => 30,
-			'paged' => $page_num,
-			's' => $search,
-			'orderby' => 'modified',
-			'order' => 'DESC',
-			'no_found_rows' => false,
-		) );
+		$search   = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+		$query    = new \WP_Query(
+			array(
+				'post_type'      => $this->editable_post_types(),
+				'post_status'    => array( 'publish', 'draft', 'pending', 'private', 'future' ),
+				'posts_per_page' => 30,
+				'paged'          => $page_num,
+				's'              => $search,
+				'orderby'        => 'modified',
+				'order'          => 'DESC',
+				'no_found_rows'  => false,
+			)
+		);
 		echo '<p>' . esc_html__( 'Select content and set only the fields you want to change. Blank fields are left unchanged unless you explicitly select “Clear this field”. Per-post edit permissions are checked before every update.', 'publishrank' ) . '</p>';
 		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" /><input type="hidden" name="tab" value="bulk" /><label class="screen-reader-text" for="publishrank-bulk-search">' . esc_html__( 'Search content', 'publishrank' ) . '</label><input id="publishrank-bulk-search" type="search" name="s" value="' . esc_attr( $search ) . '" placeholder="' . esc_attr__( 'Search posts and pages', 'publishrank' ) . '" /><button class="button">' . esc_html__( 'Search', 'publishrank' ) . '</button></form>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -120,7 +135,7 @@ final class PublisherToolkitPage {
 				if ( ! current_user_can( 'edit_post', $post->ID ) ) {
 					continue;
 				}
-				echo '<tr><td><input type="checkbox" name="post_ids[]" value="' . (int) $post->ID . '" /></td><td><strong><a href="' . esc_url( get_edit_post_link( $post->ID ) ) . '">' . esc_html( get_the_title( $post ) ?: __( '(no title)', 'publishrank' ) ) . '</a></strong><br><small>' . esc_html( get_post_status_object( $post->post_status )->label ?? $post->post_status ) . ' · ID ' . (int) $post->ID . '</small></td><td>' . esc_html( (string) get_post_meta( $post->ID, PostMeta::TITLE, true ) ) . '</td><td>' . esc_html( (string) get_post_meta( $post->ID, PostMeta::DESCRIPTION, true ) ) . '</td><td>' . esc_html( (string) get_post_meta( $post->ID, PostMeta::ROBOTS, true ) ) . '</td></tr>';
+				echo '<tr><td><input type="checkbox" name="post_ids[]" value="' . (int) $post->ID . '" /></td><td><strong><a href="' . esc_url( get_edit_post_link( $post->ID ) ) . '">' . esc_html( ! empty( get_the_title( $post ) ) ? get_the_title( $post ) : __( '(no title)', 'publishrank' ) ) . '</a></strong><br><small>' . esc_html( get_post_status_object( $post->post_status )->label ?? $post->post_status ) . ' · ID ' . (int) $post->ID . '</small></td><td>' . esc_html( (string) get_post_meta( $post->ID, PostMeta::TITLE, true ) ) . '</td><td>' . esc_html( (string) get_post_meta( $post->ID, PostMeta::DESCRIPTION, true ) ) . '</td><td>' . esc_html( (string) get_post_meta( $post->ID, PostMeta::ROBOTS, true ) ) . '</td></tr>';
 			}
 		} else {
 			echo '<tr><td colspan="5">' . esc_html__( 'No content found.', 'publishrank' ) . '</td></tr>';
@@ -134,7 +149,15 @@ final class PublisherToolkitPage {
 		if ( $query->max_num_pages > 1 ) {
 			echo '<p>';
 			for ( $i = 1; $i <= (int) $query->max_num_pages; $i++ ) {
-				$url = add_query_arg( array( 'page' => self::SLUG, 'tab' => 'bulk', 'paged' => $i, 's' => $search ), admin_url( 'admin.php' ) );
+				$url = add_query_arg(
+					array(
+						'page'  => self::SLUG,
+						'tab'   => 'bulk',
+						'paged' => $i,
+						's'     => $search,
+					),
+					admin_url( 'admin.php' )
+				);
 				echo ' <a class="button ' . ( $i === $page_num ? 'button-primary' : '' ) . '" href="' . esc_url( $url ) . '">' . (int) $i . '</a> ';
 			}
 			echo '</p>';
@@ -147,11 +170,11 @@ final class PublisherToolkitPage {
 			wp_die( esc_html__( 'You do not have permission to bulk-edit SEO metadata.', 'publishrank' ), 403 );
 		}
 		check_admin_referer( 'publishrank_bulk_seo_update' );
-		$ids = isset( $_POST['post_ids'] ) ? array_values( array_unique( array_filter( array_map( 'absint', (array) wp_unslash( $_POST['post_ids'] ) ) ) ) ) : array();
-		$ids = array_slice( $ids, 0, 100 );
-		$title = isset( $_POST['seo_title'] ) ? sanitize_text_field( wp_unslash( $_POST['seo_title'] ) ) : '';
-		$description = isset( $_POST['seo_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['seo_description'] ) ) : '';
-		$robots = isset( $_POST['robots'] ) ? sanitize_key( wp_unslash( $_POST['robots'] ) ) : '';
+		$ids          = isset( $_POST['post_ids'] ) ? array_values( array_unique( array_filter( array_map( 'absint', (array) wp_unslash( $_POST['post_ids'] ) ) ) ) ) : array();
+		$ids          = array_slice( $ids, 0, 100 );
+		$title        = isset( $_POST['seo_title'] ) ? sanitize_text_field( wp_unslash( $_POST['seo_title'] ) ) : '';
+		$description  = isset( $_POST['seo_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['seo_description'] ) ) : '';
+		$robots       = isset( $_POST['robots'] ) ? sanitize_key( wp_unslash( $_POST['robots'] ) ) : '';
 		$valid_robots = array( '', 'index,follow', 'noindex,follow', 'index,nofollow', 'noindex,nofollow' );
 		if ( ! in_array( $robots, $valid_robots, true ) ) {
 			$robots = '';
@@ -174,7 +197,16 @@ final class PublisherToolkitPage {
 				update_post_meta( $id, PostMeta::ROBOTS, explode( ',', $robots ) );
 			}
 		}
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'tab' => 'bulk', 'publishrank_notice' => 'updated' ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'               => self::SLUG,
+					'tab'                => 'bulk',
+					'publishrank_notice' => 'updated',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 
@@ -215,25 +247,39 @@ final class PublisherToolkitPage {
 			wp_die( esc_html__( 'Only administrators can run the media-library batch operation.', 'publishrank' ), 403 );
 		}
 		check_admin_referer( 'publishrank_fill_missing_alt' );
-		$ids = get_posts( array(
-			'post_type' => 'attachment',
-			'post_status' => 'inherit',
-			'post_mime_type' => 'image',
-			'posts_per_page' => 100,
-			'fields' => 'ids',
-			'orderby' => 'ID',
-			'order' => 'ASC',
-			'meta_query' => array(
-				array( 'key' => '_wp_attachment_image_alt', 'compare' => 'NOT EXISTS' ),
-			),
-		) );
+		$ids = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'post_mime_type' => 'image',
+				'posts_per_page' => 100,
+				'fields'         => 'ids',
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+				'meta_query'     => array(
+					array(
+						'key'     => '_wp_attachment_image_alt',
+						'compare' => 'NOT EXISTS',
+					),
+				),
+			)
+		);
 		foreach ( $ids as $id ) {
 			$title = trim( wp_strip_all_tags( get_the_title( $id ) ) );
 			if ( '' !== $title ) {
 				update_post_meta( $id, '_wp_attachment_image_alt', substr( $title, 0, 500 ) );
 			}
 		}
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'tab' => 'images', 'publishrank_notice' => 'alt_filled' ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'               => self::SLUG,
+					'tab'                => 'images',
+					'publishrank_notice' => 'alt_filled',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 
@@ -272,7 +318,7 @@ final class PublisherToolkitPage {
 		if ( 'images' === $tab ) {
 			update_option( 'publishrank_image_alt_fallback_enabled', ! empty( $_POST['alt_fallback_enabled'] ) ? 1 : 0, false );
 		} else {
-			$roles = isset( $_POST['allowed_roles'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['allowed_roles'] ) ) : array();
+			$roles   = isset( $_POST['allowed_roles'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['allowed_roles'] ) ) : array();
 			$roles[] = 'administrator';
 			global $wp_roles;
 			$valid = isset( $wp_roles ) ? array_keys( $wp_roles->roles ) : array( 'administrator' );
@@ -282,7 +328,16 @@ final class PublisherToolkitPage {
 		if ( ! in_array( $tab, array( 'access', 'images' ), true ) ) {
 			$tab = 'access';
 		}
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'tab' => $tab, 'publishrank_notice' => 'settings_saved' ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'               => self::SLUG,
+					'tab'                => $tab,
+					'publishrank_notice' => 'settings_saved',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 

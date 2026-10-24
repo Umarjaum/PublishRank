@@ -13,13 +13,16 @@ final class LanguageAlternates {
 	public static function current_locale() {
 		if ( function_exists( 'pll_current_language' ) ) {
 			$locale = self::locale( (string) pll_current_language( 'locale' ) );
-			if ( $locale ) { return $locale; }
+			if ( $locale ) {
+				return $locale; }
 		}
 		if ( function_exists( 'icl_get_languages' ) && has_filter( 'wpml_current_language' ) ) {
-			$code = (string) apply_filters( 'wpml_current_language', null );
+			$code      = (string) apply_filters( 'wpml_current_language', null );
 			$languages = (array) icl_get_languages( 'skip_missing=0' );
-			if ( $code && ! empty( $languages[ $code ]['default_locale'] ) && self::locale( $languages[ $code ]['default_locale'] ) ) { return self::locale( $languages[ $code ]['default_locale'] ); }
-			if ( $code && self::locale( $code ) ) { return self::locale( $code ); }
+			if ( $code && ! empty( $languages[ $code ]['default_locale'] ) && self::locale( $languages[ $code ]['default_locale'] ) ) {
+				return self::locale( $languages[ $code ]['default_locale'] ); }
+			if ( $code && self::locale( $code ) ) {
+				return self::locale( $code ); }
 		}
 		return self::default_locale();
 	}
@@ -35,10 +38,12 @@ final class LanguageAlternates {
 		$out = array();
 		foreach ( preg_split( '/\r\n|\r|\n/', (string) $text ) as $line ) {
 			$parts = preg_split( '/\s*[=|]\s*/', trim( $line ), 2 );
-			if ( 2 !== count( $parts ) ) { continue; }
+			if ( 2 !== count( $parts ) ) {
+				continue; }
 			$key = 'x-default' === strtolower( trim( $parts[0] ) ) ? 'x-default' : self::locale( $parts[0] );
 			$url = esc_url_raw( trim( $parts[1] ) );
-			if ( $key && $url ) { $out[ $key ] = $url; }
+			if ( $key && $url ) {
+				$out[ $key ] = $url; }
 		}
 		return $out;
 	}
@@ -67,19 +72,29 @@ final class LanguageAlternates {
 			} elseif ( get_option( 'publishrank_seo_hreflang_mirror', false ) && ! empty( $site_map[ $current ] ) && 0 === strpos( trailingslashit( $canonical ), trailingslashit( $site_map[ $current ] ) ) ) {
 				// Opt-in: language folders share one URL structure, so mirror this page's path under each language root.
 				$rest = substr( trailingslashit( $canonical ), strlen( trailingslashit( $site_map[ $current ] ) ) );
-				foreach ( $site_map as $locale => $root ) { if ( 'x-default' !== $locale ) { $alternates[ $locale ] = trailingslashit( $root ) . $rest; } }
+				foreach ( $site_map as $locale => $root ) {
+					if ( 'x-default' !== $locale ) {
+						$alternates[ $locale ] = trailingslashit( $root ) . $rest; }
+				}
 			}
 		}
 		if ( function_exists( 'icl_get_languages' ) ) {
 			foreach ( (array) icl_get_languages( 'skip_missing=1' ) as $language ) {
 				$locale = isset( $language['default_locale'] ) ? $language['default_locale'] : ( $language['code'] ?? '' );
-				if ( ! empty( $language['url'] ) && self::locale( $locale ) ) { $alternates[ self::locale( $locale ) ] = esc_url_raw( $language['url'] ); }
+				if ( ! empty( $language['url'] ) && self::locale( $locale ) ) {
+					$alternates[ self::locale( $locale ) ] = esc_url_raw( $language['url'] ); }
 			}
 		}
 		if ( function_exists( 'pll_the_languages' ) ) {
-			foreach ( (array) pll_the_languages( array( 'raw' => 1, 'hide_if_no_translation' => 1 ) ) as $language ) {
+			foreach ( (array) pll_the_languages(
+				array(
+					'raw'                    => 1,
+					'hide_if_no_translation' => 1,
+				)
+			) as $language ) {
 				$locale = $language['locale'] ?? ( $language['slug'] ?? '' );
-				if ( ! empty( $language['url'] ) && self::locale( $locale ) ) { $alternates[ self::locale( $locale ) ] = esc_url_raw( $language['url'] ); }
+				if ( ! empty( $language['url'] ) && self::locale( $locale ) ) {
+					$alternates[ self::locale( $locale ) ] = esc_url_raw( $language['url'] ); }
 			}
 		}
 		// Every page must reference itself, under ITS OWN language (not blindly the site default).
@@ -94,13 +109,16 @@ final class LanguageAlternates {
 		$post = is_singular() ? get_queried_object() : null;
 		if ( $post instanceof \WP_Post ) {
 			$per_post = self::parse_map( (string) get_post_meta( $post->ID, PostMeta::HREFLANG, true ) );
-			if ( ! empty( $per_post['x-default'] ) ) { return $per_post['x-default']; }
+			if ( ! empty( $per_post['x-default'] ) ) {
+				return $per_post['x-default']; }
 		}
 		if ( ( is_front_page() || is_home() ) ) {
 			$configured = esc_url_raw( (string) get_option( 'publishrank_seo_x_default_url', '' ) );
-			if ( $configured ) { return $configured; }
+			if ( $configured ) {
+				return $configured; }
 			$site_map = self::parse_map( (string) get_option( 'publishrank_seo_hreflang_map', '' ) );
-			if ( ! empty( $site_map['x-default'] ) ) { return $site_map['x-default']; }
+			if ( ! empty( $site_map['x-default'] ) ) {
+				return $site_map['x-default']; }
 		}
 		$default = self::default_locale();
 		return ( $default && ! empty( $alternates[ $default ] ) ) ? $alternates[ $default ] : '';
@@ -127,11 +145,12 @@ final class LanguageAlternates {
 		}
 			$alternates = self::alternates();
 			echo '<!-- Language alternate links begin; count=' . esc_attr( (string) count( $alternates ) ) . " -->\n";
-			foreach ( $alternates as $locale => $url ) {
-				echo '<link rel="alternate" hreflang="' . esc_attr( $locale ) . '" href="' . esc_url( $url ) . '" />' . "\n";
-			}
+		foreach ( $alternates as $locale => $url ) {
+			echo '<link rel="alternate" hreflang="' . esc_attr( $locale ) . '" href="' . esc_url( $url ) . '" />' . "\n";
+		}
 			$x_default = self::x_default( $alternates );
-			if ( $x_default ) { echo '<link rel="alternate" hreflang="x-default" href="' . esc_url( $x_default ) . '" />' . "\n"; }
+		if ( $x_default ) {
+			echo '<link rel="alternate" hreflang="x-default" href="' . esc_url( $x_default ) . '" />' . "\n"; }
 			echo "<!-- Language alternate links end -->\n";
 	}
 }

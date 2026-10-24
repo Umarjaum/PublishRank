@@ -18,7 +18,10 @@ final class SeoData {
 
 	/** Forget cached values (used after saves and in tests). */
 	public static function flush( $post_id = 0 ) {
-		if ( $post_id ) { unset( self::$cache[ (int) $post_id ] ); } else { self::$cache = array(); }
+		if ( $post_id ) {
+			unset( self::$cache[ (int) $post_id ] );
+		} else {
+			self::$cache = array(); }
 	}
 
 	/**
@@ -29,8 +32,10 @@ final class SeoData {
 	 */
 	public static function for_post( $post ) {
 		$post = get_post( $post );
-		if ( ! $post instanceof \WP_Post ) { return array(); }
-		if ( isset( self::$cache[ $post->ID ] ) ) { return self::$cache[ $post->ID ]; }
+		if ( ! $post instanceof \WP_Post ) {
+			return array(); }
+		if ( isset( self::$cache[ $post->ID ] ) ) {
+			return self::$cache[ $post->ID ]; }
 
 		$id   = (int) $post->ID;
 		$meta = new MetaGenerator();
@@ -71,7 +76,7 @@ final class SeoData {
 		 * @param array<string,mixed> $data Resolved data.
 		 * @param \WP_Post            $post Post.
 		 */
-		$data = (array) apply_filters( 'publishrank_seo_post_data', $data, $post );
+		$data               = (array) apply_filters( 'publishrank_seo_post_data', $data, $post );
 		self::$cache[ $id ] = $data;
 		return $data;
 	}
@@ -79,9 +84,11 @@ final class SeoData {
 	/** Automatic meta description: excerpt, else the start of the content. Never leaks protected content. */
 	public static function auto_description( $post, $length = self::DESCRIPTION_LENGTH ) {
 		$post = get_post( $post );
-		if ( ! $post instanceof \WP_Post || post_password_required( $post ) ) { return ''; }
+		if ( ! $post instanceof \WP_Post || post_password_required( $post ) ) {
+			return ''; }
 		$source = '' !== trim( (string) $post->post_excerpt ) ? (string) $post->post_excerpt : (string) $post->post_content;
-		if ( '' === trim( $source ) ) { return ''; }
+		if ( '' === trim( $source ) ) {
+			return ''; }
 		if ( function_exists( 'excerpt_remove_blocks' ) && '' === trim( (string) $post->post_excerpt ) ) {
 			$source = excerpt_remove_blocks( $source );
 		}
@@ -96,12 +103,21 @@ final class SeoData {
 	 */
 	public static function image_for_post( $post ) {
 		$post = get_post( $post );
-		if ( ! $post instanceof \WP_Post ) { return null; }
+		if ( ! $post instanceof \WP_Post ) {
+			return null; }
 
 		$override = (string) PostMeta::get( $post->ID, PostMeta::OG_IMAGE, '' );
 		if ( '' !== $override ) {
-			$id   = function_exists( 'attachment_url_to_postid' ) ? absint( attachment_url_to_postid( $override ) ) : 0;
-			$info = $id ? self::attachment_info( $id, $post ) : array( 'url' => $override, 'id' => 0, 'width' => 0, 'height' => 0, 'type' => '', 'alt' => '', 'alt_source' => 'none' );
+			$id             = function_exists( 'attachment_url_to_postid' ) ? absint( attachment_url_to_postid( $override ) ) : 0;
+			$info           = $id ? self::attachment_info( $id, $post ) : array(
+				'url'        => $override,
+				'id'         => 0,
+				'width'      => 0,
+				'height'     => 0,
+				'type'       => '',
+				'alt'        => '',
+				'alt_source' => 'none',
+			);
 			$info['url']    = $override;
 			$info['source'] = 'override';
 			return self::apply_alt_override( $info, $post );
@@ -110,11 +126,15 @@ final class SeoData {
 		$thumb_id = (int) get_post_thumbnail_id( $post );
 		if ( $thumb_id && wp_attachment_is_image( $thumb_id ) ) {
 			$info = self::attachment_info( $thumb_id, $post );
-			if ( $info ) { $info['source'] = 'featured'; return self::apply_alt_override( $info, $post ); }
+			if ( $info ) {
+				$info['source'] = 'featured';
+				return self::apply_alt_override( $info, $post ); }
 		}
 		if ( 'attachment' === $post->post_type && wp_attachment_is_image( $post ) ) {
 			$info = self::attachment_info( (int) $post->ID, $post );
-			if ( $info ) { $info['source'] = 'attachment'; return self::apply_alt_override( $info, $post ); }
+			if ( $info ) {
+				$info['source'] = 'attachment';
+				return self::apply_alt_override( $info, $post ); }
 		}
 		if ( ! post_password_required( $post ) && '' !== (string) $post->post_content ) {
 			$content = (string) $post->post_content;
@@ -122,7 +142,9 @@ final class SeoData {
 				$id = (int) $m[1];
 				if ( $id && wp_attachment_is_image( $id ) ) {
 					$info = self::attachment_info( $id, $post );
-					if ( $info ) { $info['source'] = 'content'; return self::apply_alt_override( $info, $post ); }
+					if ( $info ) {
+						$info['source'] = 'content';
+						return self::apply_alt_override( $info, $post ); }
 				}
 			}
 			if ( preg_match( '/<img\b[^>]*\bsrc=["\']([^"\']+)["\'][^>]*>/i', $content, $m ) ) {
@@ -131,10 +153,24 @@ final class SeoData {
 					$id = function_exists( 'attachment_url_to_postid' ) ? absint( attachment_url_to_postid( $url ) ) : 0;
 					if ( $id ) {
 						$info = self::attachment_info( $id, $post );
-						if ( $info ) { $info['source'] = 'content'; return self::apply_alt_override( $info, $post ); }
+						if ( $info ) {
+							$info['source'] = 'content';
+							return self::apply_alt_override( $info, $post ); }
 					}
 					$alt = preg_match( '/\balt=["\']([^"\']*)["\']/i', $m[0], $a ) ? self::clean( $a[1], 255 ) : '';
-					return self::apply_alt_override( array( 'url' => $url, 'id' => 0, 'width' => 0, 'height' => 0, 'type' => '', 'alt' => $alt, 'alt_source' => '' !== $alt ? 'auto' : 'none', 'source' => 'content' ), $post );
+					return self::apply_alt_override(
+						array(
+							'url'        => $url,
+							'id'         => 0,
+							'width'      => 0,
+							'height'     => 0,
+							'type'       => '',
+							'alt'        => $alt,
+							'alt_source' => '' !== $alt ? 'auto' : 'none',
+							'source'     => 'content',
+						),
+						$post
+					);
 				}
 			}
 		}
@@ -149,16 +185,19 @@ final class SeoData {
 	 */
 	public static function attachment_info( $attachment_id, $context_post = null ) {
 		$attachment_id = (int) $attachment_id;
-		$src = wp_get_attachment_image_src( $attachment_id, 'full' );
-		if ( ! $src || empty( $src[0] ) ) { return array(); }
+		$src           = wp_get_attachment_image_src( $attachment_id, 'full' );
+		if ( ! $src || empty( $src[0] ) ) {
+			return array(); }
 		$alt    = self::clean( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ), 255 );
 		$source = '' !== $alt ? 'auto' : 'none';
 		if ( '' === $alt ) {
 			$caption = self::clean( (string) wp_get_attachment_caption( $attachment_id ), 255 );
-			if ( '' !== $caption ) { $alt = $caption; $source = 'auto'; }
+			if ( '' !== $caption ) {
+				$alt    = $caption;
+				$source = 'auto'; }
 		}
 		if ( '' === $alt && $context_post instanceof \WP_Post && (int) $context_post->ID !== $attachment_id ) {
-			$alt = self::clean( get_the_title( $context_post ), 255 );
+			$alt    = self::clean( get_the_title( $context_post ), 255 );
 			$source = '' !== $alt ? 'auto' : 'none';
 		}
 		$mime = (string) get_post_mime_type( $attachment_id );
@@ -176,7 +215,9 @@ final class SeoData {
 	/** An explicit "social image alt text" override always wins over the automatic alt text. */
 	private static function apply_alt_override( $info, $post ) {
 		$alt = (string) PostMeta::get( $post->ID, PostMeta::OG_IMAGE_ALT, '' );
-		if ( '' !== $alt ) { $info['alt'] = self::clean( $alt, 255 ); $info['alt_source'] = 'override'; }
+		if ( '' !== $alt ) {
+			$info['alt']        = self::clean( $alt, 255 );
+			$info['alt_source'] = 'override'; }
 		return $info;
 	}
 
@@ -186,17 +227,20 @@ final class SeoData {
 		$text = wp_strip_all_tags( $text );
 		$text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
 		$text = trim( (string) preg_replace( '/\s+/u', ' ', $text ) );
-		if ( $max > 0 ) { $text = self::cut( $text, $max ); }
+		if ( $max > 0 ) {
+			$text = self::cut( $text, $max ); }
 		return $text;
 	}
 
 	/** Truncate on a word boundary and add an ellipsis when text was shortened. */
 	public static function truncate( $text, $length = self::DESCRIPTION_LENGTH ) {
 		$len = function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text );
-		if ( $len <= $length ) { return $text; }
+		if ( $len <= $length ) {
+			return $text; }
 		$cut   = self::cut( $text, $length - 1 );
 		$space = function_exists( 'mb_strrpos' ) ? mb_strrpos( $cut, ' ' ) : strrpos( $cut, ' ' );
-		if ( false !== $space && $space > (int) ( $length * 0.6 ) ) { $cut = function_exists( 'mb_substr' ) ? mb_substr( $cut, 0, $space ) : substr( $cut, 0, $space ); }
+		if ( false !== $space && $space > (int) ( $length * 0.6 ) ) {
+			$cut = function_exists( 'mb_substr' ) ? mb_substr( $cut, 0, $space ) : substr( $cut, 0, $space ); }
 		return rtrim( $cut, " \t\n\r\0\x0B,;:-–—" ) . '…';
 	}
 
@@ -205,8 +249,13 @@ final class SeoData {
 	}
 
 	private static function same_host( $url ) {
-		$home = strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
-		$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
-		return $host && ( ! $home || $host === $home || \PublishRankSEO\Core\PublicationProfile::primary_url() && $host === strtolower( (string) wp_parse_url( \PublishRankSEO\Core\PublicationProfile::primary_url(), PHP_URL_HOST ) ) );
+		$home         = strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+		$host         = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+		$primary_url  = \PublishRankSEO\Core\PublicationProfile::primary_url();
+		$primary_host = strtolower( (string) wp_parse_url( $primary_url, PHP_URL_HOST ) );
+		if ( '' === $host ) {
+			return false;
+		}
+		return '' === $home || 0 === strcasecmp( $host, $home ) || ( '' !== $primary_host && 0 === strcasecmp( $host, $primary_host ) );
 	}
 }

@@ -37,7 +37,7 @@ final class RedirectStore {
 
 	public static function regex_is_valid( $pattern ) {
 		$pattern = (string) $pattern;
-		$length = function_exists( 'mb_strlen' ) ? mb_strlen( $pattern ) : strlen( $pattern );
+		$length  = function_exists( 'mb_strlen' ) ? mb_strlen( $pattern ) : strlen( $pattern );
 		if ( '' === $pattern || $length > 255 ) {
 			return false;
 		}
@@ -102,13 +102,13 @@ final class RedirectStore {
 			}
 		}
 		return array(
-			'source' => $source,
-			'target' => $target,
-			'status' => $status,
-			'regex'  => $regex ? 1 : 0,
-			'enabled' => 1,
+			'source'         => $source,
+			'target'         => $target,
+			'status'         => $status,
+			'regex'          => $regex ? 1 : 0,
+			'enabled'        => 1,
 			'preserve_query' => 1,
-			'note' => '',
+			'note'           => '',
 		);
 	}
 
@@ -173,7 +173,11 @@ final class RedirectStore {
 					$status = (int) $parts[2];
 				}
 			}
-			$rows[] = array( 'source' => $parts[0], 'target' => $target, 'status' => $status );
+			$rows[] = array(
+				'source' => $parts[0],
+				'target' => $target,
+				'status' => $status,
+			);
 		}
 		return $rows;
 	}

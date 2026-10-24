@@ -40,13 +40,25 @@ final class DiagnosticsPage {
 	public function handle_scan() {
 		AdminAssets::guard( 'publishrank_seo_scan' );
 		$user_id = get_current_user_id();
-		$lock = 'publishrank_seo_scan_lock_' . $user_id;
+		$lock    = 'publishrank_seo_scan_lock_' . $user_id;
 		if ( get_transient( $lock ) ) {
-			set_transient( 'publishrank_seo_scan_' . $user_id, array( array( 'label' => __( 'Live diagnostics scan', 'publishrank' ), 'url' => home_url( '/' ), 'status' => 'NOT TESTED', 'error' => __( 'A previous scan is still running. Wait briefly before starting another scan.', 'publishrank' ) ) ), 300 );
+			set_transient(
+				'publishrank_seo_scan_' . $user_id,
+				array(
+					array(
+						'label'  => __( 'Live diagnostics scan', 'publishrank' ),
+						'url'    => home_url( '/' ),
+						'status' => 'NOT TESTED',
+						'error'  => __( 'A previous scan is still running. Wait briefly before starting another scan.', 'publishrank' ),
+					),
+				),
+				300
+			);
 		} else {
 			set_transient( $lock, 1, 180 );
-			try { set_transient( 'publishrank_seo_scan_' . $user_id, ( new FrontendScanner() )->run(), 300 ); }
-			finally { delete_transient( $lock ); }
+			try {
+				set_transient( 'publishrank_seo_scan_' . $user_id, ( new FrontendScanner() )->run(), 300 ); } finally {
+				delete_transient( $lock ); }
 		}
 		wp_safe_redirect( Branding::page_url( 'publishrank-seo-diagnostics' ) );
 		exit;
@@ -71,7 +83,7 @@ final class DiagnosticsPage {
 		$shards    = 0;
 		foreach ( $providers as $provider ) {
 			if ( $provider->is_enabled() ) {
-				$enabled++;
+				++$enabled;
 				$shards += $provider->get_shard_count();
 			}
 		}
@@ -89,14 +101,16 @@ final class DiagnosticsPage {
 		$results = get_transient( $key );
 		if ( is_array( $results ) ) {
 			delete_transient( $key );
-				foreach ( $results as $result ) {
-					echo '<h3>' . esc_html( $result['label'] ) . ' <small><code>' . esc_html( $result['url'] ) . '</code></small></h3>';
-					if ( isset( $result['error'] ) ) {
-						$this->row( $result['label'], isset( $result['status'] ) ? $result['status'] : 'ERROR', $result['error'] );
-						continue;
-					}
-					if ( isset( $result['message'] ) ) { $this->row( $result['label'], $result['status'], $result['message'] ); continue; }
-					foreach ( FrontendScanner::findings( $result['counts'] ) as $finding ) {
+			foreach ( $results as $result ) {
+				echo '<h3>' . esc_html( $result['label'] ) . ' <small><code>' . esc_html( $result['url'] ) . '</code></small></h3>';
+				if ( isset( $result['error'] ) ) {
+					$this->row( $result['label'], isset( $result['status'] ) ? $result['status'] : 'ERROR', $result['error'] );
+					continue;
+				}
+				if ( isset( $result['message'] ) ) {
+					$this->row( $result['label'], $result['status'], $result['message'] );
+					continue; }
+				foreach ( FrontendScanner::findings( $result['counts'] ) as $finding ) {
 					$this->row( $result['label'], $finding['status'], $finding['message'] );
 				}
 			}

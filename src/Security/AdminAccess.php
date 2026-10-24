@@ -13,11 +13,11 @@ namespace PublishRankSEO\Security;
 defined( 'ABSPATH' ) || exit;
 
 final class AdminAccess {
-	const OPTION = 'publishrank_admin_access_slug';
+	const OPTION      = 'publishrank_admin_access_slug';
 	const MODE_OPTION = 'publishrank_admin_access_mode';
-	const QUERY_ARG = 'publishrank_access';
-	const COOKIE = 'publishrank_admin_access';
-	const TOKEN_TTL = 43200;
+	const QUERY_ARG   = 'publishrank_access';
+	const COOKIE      = 'publishrank_admin_access';
+	const TOKEN_TTL   = 43200;
 
 	public function register() {
 		remove_action( 'template_redirect', 'wp_redirect_admin_locations', 1000 );
@@ -97,8 +97,8 @@ final class AdminAccess {
 			exit;
 		}
 
-		$destination = site_url( 'wp-login.php', 'login' );
-		$args        = array();
+		$destination     = site_url( 'wp-login.php', 'login' );
+		$args            = array();
 		$allowed_actions = array( 'login', 'logout', 'lostpassword', 'retrievepassword', 'rp', 'resetpass', 'checkemail', 'confirmaction', 'confirm_admin_email', 'entered_recovery_mode', 'postpass', 'register' );
 		if ( isset( $_GET['action'] ) && is_scalar( $_GET['action'] ) ) {
 			$action = sanitize_key( (string) wp_unslash( $_GET['action'] ) );
@@ -132,15 +132,15 @@ final class AdminAccess {
 			return;
 		}
 		nocache_headers();
-		$requested  = admin_url();
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$requested    = admin_url();
+		$request_uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 		$request_path = wp_parse_url( $request_uri, PHP_URL_PATH );
 		$admin_path   = wp_parse_url( admin_url(), PHP_URL_PATH );
 		$admin_prefix = is_string( $admin_path ) ? trailingslashit( $admin_path ) : '';
 		if ( is_string( $request_path ) && '' !== $admin_prefix && 0 === strpos( $request_path, $admin_prefix ) ) {
-			$relative = ltrim( substr( $request_path, strlen( $admin_prefix ) ), '/' );
+			$relative  = ltrim( substr( $request_path, strlen( $admin_prefix ) ), '/' );
 			$requested = admin_url( $relative );
-			$query = wp_parse_url( $request_uri, PHP_URL_QUERY );
+			$query     = wp_parse_url( $request_uri, PHP_URL_QUERY );
 			if ( is_string( $query ) && '' !== $query ) {
 				$query_args = array();
 				parse_str( $query, $query_args );
@@ -157,8 +157,8 @@ final class AdminAccess {
 		if ( ! self::enabled() || is_user_logged_in() || $this->has_access_cookie() ) {
 			return;
 		}
-		$raw_action = isset( $_REQUEST['action'] ) && is_scalar( $_REQUEST['action'] ) ? wp_unslash( $_REQUEST['action'] ) : 'login'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- used only to preserve public WordPress login actions.
-		$action = sanitize_key( (string) $raw_action );
+		$raw_action     = isset( $_REQUEST['action'] ) && is_scalar( $_REQUEST['action'] ) ? wp_unslash( $_REQUEST['action'] ) : 'login'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- used only to preserve public WordPress login actions.
+		$action         = sanitize_key( (string) $raw_action );
 		$public_actions = array( 'lostpassword', 'retrievepassword', 'rp', 'resetpass', 'checkemail', 'confirmaction', 'confirm_admin_email', 'entered_recovery_mode', 'postpass', 'register', 'logout' );
 		if ( in_array( $action, $public_actions, true ) ) {
 			return;

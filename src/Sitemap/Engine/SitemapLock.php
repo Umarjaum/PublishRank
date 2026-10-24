@@ -4,7 +4,7 @@ namespace PublishRankSEO\Sitemap\Engine;
 defined( 'ABSPATH' ) || exit;
 
 final class SitemapLock {
-	const TTL = 30;
+	const TTL             = 30;
 	const PREPARATION_TTL = 60;
 
 	public function acquire( $provider, $shard ) {
@@ -21,11 +21,14 @@ final class SitemapLock {
 
 	public function acquire_provider( $provider ) {
 		$key = $this->provider_key( $provider );
-		if ( get_transient( $key ) ) { return false; }
+		if ( get_transient( $key ) ) {
+			return false; }
 		return (bool) set_transient( $key, 1, self::PREPARATION_TTL );
 	}
 
-	public function release_provider( $provider ) { delete_transient( $this->provider_key( $provider ) ); }
+	public function release_provider( $provider ) {
+		delete_transient( $this->provider_key( $provider ) ); }
 
-	private function provider_key( $provider ) { return 'publishrank_sitemap_prepare_lock_' . sanitize_key( $provider ); }
+	private function provider_key( $provider ) {
+		return 'publishrank_sitemap_prepare_lock_' . sanitize_key( $provider ); }
 }

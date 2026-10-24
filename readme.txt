@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.69
+Stable tag: 2.9.70
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -107,6 +107,12 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. The optional public footer credit, if enabled, links to the PublishRank website. No promotional credit is inserted by default.
 
 == Changelog ==
+
+= 2.9.70 =
+* Corrected error-level WordPress coding-standard findings across PHP source.
+* Added a PHP-scoped project PHPCS ruleset; warnings stay visible and non-blocking after errors are cleared.
+* Updated source-level regression assertions to tolerate harmless formatting changes.
+
 = 2.9.55 =
 * Fixed fallback injection of technical provenance and SEO head output for themes that omit `wp_head()`, without duplicate markers.
 * Explicitly flush PublishRank-owned frontend fallback buffers at shutdown when safe, without closing buffers owned by other plugins.

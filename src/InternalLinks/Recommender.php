@@ -45,7 +45,7 @@ final class Recommender {
 				continue;
 			}
 			if ( Store::insert_recommendation( $source_node_id, (int) $target_node->node_id, $anchor, $score['score'], $score['signals'] ) ) {
-				$inserted++;
+				++$inserted;
 			}
 		}
 		return $inserted;
@@ -54,11 +54,11 @@ final class Recommender {
 	private static function candidate_ids( $target_node_id ) {
 		global $wpdb;
 		$terms = Store::table( 'terms' );
-		$ids   = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( "SELECT s.node_id AS node_id, COUNT(*) AS shared_count FROM {$terms} s INNER JOIN {$terms} t ON t.term = s.term WHERE t.node_id = %d AND s.node_id != %d GROUP BY s.node_id ORDER BY shared_count DESC, s.node_id DESC LIMIT 100", $target_node_id, $target_node_id ) ) );
+		$ids   = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT s.node_id AS node_id, COUNT(*) AS shared_count FROM %i s INNER JOIN %i t ON t.term = s.term WHERE t.node_id = %d AND s.node_id != %d GROUP BY s.node_id ORDER BY shared_count DESC, s.node_id DESC LIMIT 100', $terms, $terms, $target_node_id, $target_node_id ) ) );
 
 		if ( count( $ids ) < 25 ) {
 			$nodes  = Store::table( 'nodes' );
-			$recent = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( "SELECT node_id FROM {$nodes} WHERE node_id != %d ORDER BY node_id DESC LIMIT 50", $target_node_id ) ) );
+			$recent = array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( 'SELECT node_id FROM %i WHERE node_id != %d ORDER BY node_id DESC LIMIT 50', $nodes, $target_node_id ) ) );
 			foreach ( $recent as $id ) {
 				if ( ! in_array( $id, $ids, true ) ) {
 					$ids[] = $id;
@@ -71,7 +71,9 @@ final class Recommender {
 	public static function score_pair( $source, $target, $reciprocal = false ) {
 		$source_vector = isset( $source['vector'] ) && is_array( $source['vector'] ) ? $source['vector'] : array();
 		$target_vector = isset( $target['vector'] ) && is_array( $target['vector'] ) ? $target['vector'] : array();
-		$dot = 0.0; $source_len = 0.0; $target_len = 0.0;
+		$dot           = 0.0;
+		$source_len    = 0.0;
+		$target_len    = 0.0;
 		foreach ( $source_vector as $token => $weight ) {
 			$source_len += (float) $weight * (float) $weight;
 			if ( isset( $target_vector[ $token ] ) ) {
@@ -83,16 +85,16 @@ final class Recommender {
 		}
 		$cosine = ( $source_len && $target_len ) ? $dot / sqrt( $source_len * $target_len ) : 0.0;
 
-		$source_title = isset( $source['title_tokens'] ) ? (array) $source['title_tokens'] : array();
-		$target_title = isset( $target['title_tokens'] ) ? (array) $target['title_tokens'] : array();
+		$source_title  = isset( $source['title_tokens'] ) ? (array) $source['title_tokens'] : array();
+		$target_title  = isset( $target['title_tokens'] ) ? (array) $target['title_tokens'] : array();
 		$title_overlap = count( array_intersect( $source_title, $target_title ) );
 		$title_score   = $title_overlap ? min( 20, 5 + ( $title_overlap / max( 1, min( count( $source_title ), count( $target_title ) ) ) ) * 15 ) : 0;
 
 		$taxonomy_score = 0;
 		$shared_terms   = 0;
 		foreach ( (array) ( $target['taxonomy_ids'] ?? array() ) as $taxonomy => $target_terms ) {
-			$shared = count( array_intersect( (array) $target_terms, (array) ( $source['taxonomy_ids'][ $taxonomy ] ?? array() ) ) );
-			$shared_terms += $shared;
+			$shared          = count( array_intersect( (array) $target_terms, (array) ( $source['taxonomy_ids'][ $taxonomy ] ?? array() ) ) );
+			$shared_terms   += $shared;
 			$taxonomy_score += 'category' === $taxonomy ? min( 8, $shared * 4 ) : min( 7, $shared * 2 );
 		}
 		$taxonomy_score = min( 15, $taxonomy_score );
@@ -101,16 +103,16 @@ final class Recommender {
 		foreach ( (array) ( $target['focus'] ?? array() ) as $phrase ) {
 			foreach ( array_keys( FeatureExtractor::tokens( $phrase, 20 ) ) as $token ) {
 				if ( isset( $source_vector[ $token ] ) || in_array( $token, $source_title, true ) ) {
-					$focus_hits++;
+					++$focus_hits;
 				}
 			}
 		}
 		$focus_score = min( 15, $focus_hits * 5 );
 
-		$age = isset( $source['modified'] ) ? ( time() - absint( $source['modified'] ) ) / DAY_IN_SECONDS : 9999;
-		$freshness = $age <= 180 ? 4 : ( $age <= 365 ? 2 : 0 );
+		$age              = isset( $source['modified'] ) ? ( time() - absint( $source['modified'] ) ) / DAY_IN_SECONDS : 9999;
+		$freshness        = $age <= 180 ? 4 : ( $age <= 365 ? 2 : 0 );
 		$reciprocal_score = $reciprocal ? 8 : 0;
-		$score = round( min( 100, ( $cosine * 35 ) + $title_score + $taxonomy_score + $focus_score + $freshness + $reciprocal_score ) );
+		$score            = round( min( 100, ( $cosine * 35 ) + $title_score + $taxonomy_score + $focus_score + $freshness + $reciprocal_score ) );
 
 		return array(
 			'score'   => $score,

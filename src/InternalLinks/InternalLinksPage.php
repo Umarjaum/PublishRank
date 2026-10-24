@@ -27,10 +27,42 @@ final class InternalLinksPage {
 	}
 
 	public function settings() {
-		register_setting( 'publishrank_internal_links', 'publishrank_internal_link_enabled', array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => true ) );
-		register_setting( 'publishrank_internal_links', 'publishrank_internal_link_min_inbound', array( 'type' => 'integer', 'sanitize_callback' => array( $this, 'sanitize_threshold' ), 'default' => 1 ) );
-		register_setting( 'publishrank_internal_links', 'publishrank_internal_link_max_recommendations', array( 'type' => 'integer', 'sanitize_callback' => array( $this, 'sanitize_max' ), 'default' => 5 ) );
-		register_setting( 'publishrank_internal_links', 'publishrank_internal_link_post_types', array( 'type' => 'string', 'sanitize_callback' => array( $this, 'sanitize_post_types' ), 'default' => '' ) );
+		register_setting(
+			'publishrank_internal_links',
+			'publishrank_internal_link_enabled',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => true,
+			)
+		);
+		register_setting(
+			'publishrank_internal_links',
+			'publishrank_internal_link_min_inbound',
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => array( $this, 'sanitize_threshold' ),
+				'default'           => 1,
+			)
+		);
+		register_setting(
+			'publishrank_internal_links',
+			'publishrank_internal_link_max_recommendations',
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => array( $this, 'sanitize_max' ),
+				'default'           => 5,
+			)
+		);
+		register_setting(
+			'publishrank_internal_links',
+			'publishrank_internal_link_post_types',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_post_types' ),
+				'default'           => '',
+			)
+		);
 	}
 
 	public function sanitize_threshold( $value ) {
@@ -69,9 +101,13 @@ final class InternalLinksPage {
 
 	public function handle_settings() {
 		AdminAssets::guard( 'publishrank_internal_links_settings' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
 		update_option( 'publishrank_internal_link_enabled', ! empty( $_POST['publishrank_internal_link_enabled'] ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
 		update_option( 'publishrank_internal_link_min_inbound', $this->sanitize_threshold( $_POST['publishrank_internal_link_min_inbound'] ?? 1 ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
 		update_option( 'publishrank_internal_link_max_recommendations', $this->sanitize_max( $_POST['publishrank_internal_link_max_recommendations'] ?? 5 ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
 		update_option( 'publishrank_internal_link_post_types', $this->sanitize_post_types( $_POST['publishrank_internal_link_post_types'] ?? '' ) );
 		Store::invalidate_cache();
 		AdminAssets::done( self::SLUG, 'success', __( 'Internal-link settings saved. Run a graph scan after changing post types.', 'publishrank' ) );
@@ -80,7 +116,15 @@ final class InternalLinksPage {
 	public function handle_scan() {
 		AdminAssets::guard( 'publishrank_internal_links_scan' );
 		Scanner::start_rebuild();
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'scan' => 1 ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page' => self::SLUG,
+					'scan' => 1,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 
@@ -93,11 +137,20 @@ final class InternalLinksPage {
 		if ( $result && ! empty( $result['done'] ) ) {
 			AdminAssets::done( self::SLUG, 'success', __( 'Content graph and internal-link recommendations are up to date.', 'publishrank' ) );
 		}
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'scan' => 1 ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page' => self::SLUG,
+					'scan' => 1,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 
 	private function recommendation_from_request() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
 		$id  = absint( $_POST['recommendation_id'] ?? 0 );
 		$rec = Store::recommendation( $id );
 		if ( ! $rec ) {
@@ -142,7 +195,15 @@ final class InternalLinksPage {
 		if ( is_wp_error( $content ) ) {
 			AdminAssets::done( self::SLUG, 'error', $content->get_error_message() );
 		}
-		$result = wp_update_post( wp_slash( array( 'ID' => $source->ID, 'post_content' => $content ) ), true );
+		$result = wp_update_post(
+			wp_slash(
+				array(
+					'ID'           => $source->ID,
+					'post_content' => $content,
+				)
+			),
+			true
+		);
 		if ( is_wp_error( $result ) ) {
 			AdminAssets::done( self::SLUG, 'error', $result->get_error_message() );
 		}
@@ -156,8 +217,8 @@ final class InternalLinksPage {
 		if ( ! $this->can_manage_or_edit() ) {
 			return;
 		}
-		$settings = Store::settings();
-		$stats    = Store::stats();
+		$settings    = Store::settings();
+		$stats       = Store::stats();
 		$orphan_page = max( 1, absint( $_GET['orphan_page'] ?? 1 ) );
 		$rec_page    = max( 1, absint( $_GET['rec_page'] ?? 1 ) );
 		$orphans     = Store::orphans( $settings['threshold'], $orphan_page, self::PER_PAGE );
@@ -259,13 +320,33 @@ final class InternalLinksPage {
 			echo '<td><strong>' . esc_html( number_format_i18n( (float) $rec->score, 0 ) ) . '</strong>/100</td>';
 			echo '<td>' . esc_html( implode( ', ', $labels ) ) . '</td>';
 			echo '<td><span class="rhs-pill rhs-pill--' . esc_attr( $rec->status ) . '">' . esc_html( ucfirst( $rec->status ) ) . '</span></td>';
-			echo '<td class="rhs-ilink-actions">' . wp_kses( $this->row_actions( $rec ), array(
-				'form' => array( 'method' => true, 'action' => true, 'class' => true, 'data-confirm' => true ),
-				'input' => array( 'type' => true, 'name' => true, 'value' => true, 'id' => true ),
-				'div' => array( 'class' => true ), 'p' => array( 'class' => true ),
-				'button' => array( 'type' => true, 'class' => true, 'name' => true, 'value' => true, 'id' => true ),
-				'span' => array( 'class' => true ),
-			) ) . '</td>';
+			echo '<td class="rhs-ilink-actions">' . wp_kses(
+				$this->row_actions( $rec ),
+				array(
+					'form'   => array(
+						'method'       => true,
+						'action'       => true,
+						'class'        => true,
+						'data-confirm' => true,
+					),
+					'input'  => array(
+						'type'  => true,
+						'name'  => true,
+						'value' => true,
+						'id'    => true,
+					),
+					'div'    => array( 'class' => true ),
+					'p'      => array( 'class' => true ),
+					'button' => array(
+						'type'  => true,
+						'class' => true,
+						'name'  => true,
+						'value' => true,
+						'id'    => true,
+					),
+					'span'   => array( 'class' => true ),
+				)
+			) . '</td>';
 			echo '</tr>';
 		}
 		if ( empty( $recs ) ) {

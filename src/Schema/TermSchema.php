@@ -23,7 +23,7 @@ final class TermSchema {
 	}
 
 	private function select_html( $current ) {
-		$html = '<select name="' . esc_attr( self::META_KEY ) . '" id="' . esc_attr( self::META_KEY ) . '">';
+		$html  = '<select name="' . esc_attr( self::META_KEY ) . '" id="' . esc_attr( self::META_KEY ) . '">';
 		$html .= '<option value="">' . esc_html__( '— Follow the archive default —', 'publishrank' ) . '</option>';
 		foreach ( SchemaTypes::archive_types() as $key => $label ) {
 			$html .= '<option value="' . esc_attr( $key ) . '"' . selected( $current, $key, false ) . '>' . esc_html( $label ) . '</option>';
@@ -49,12 +49,17 @@ final class TermSchema {
 
 	public function save( $term_id ) {
 		$term_id = (int) $term_id;
-		if ( $term_id < 1 || ! isset( $_POST[ self::NONCE . '_nonce' ] ) ) { return; }
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::NONCE . '_nonce' ] ) ), self::NONCE ) ) { return; }
-		if ( ! current_user_can( 'edit_term', $term_id ) ) { return; }
+		if ( $term_id < 1 || ! isset( $_POST[ self::NONCE . '_nonce' ] ) ) {
+			return; }
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::NONCE . '_nonce' ] ) ), self::NONCE ) ) {
+			return; }
+		if ( ! current_user_can( 'edit_term', $term_id ) ) {
+			return; }
 		$raw   = isset( $_POST[ self::META_KEY ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::META_KEY ] ) ) : '';
 		$value = SchemaTypes::resolve_in( $raw, SchemaTypes::archive_types(), '' );
-		if ( '' === $value ) { delete_term_meta( $term_id, self::META_KEY ); return; }
+		if ( '' === $value ) {
+			delete_term_meta( $term_id, self::META_KEY );
+			return; }
 		update_term_meta( $term_id, self::META_KEY, $value );
 	}
 }

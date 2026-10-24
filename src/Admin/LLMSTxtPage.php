@@ -22,27 +22,47 @@ final class LLMSTxtPage {
 	public function save() {
 		AdminAssets::guard( 'publishrank_llms_save' );
 		$fields = array(
-			LLMSTxt::OPTION_ENABLED      => ! empty( $_POST[ LLMSTxt::OPTION_ENABLED ] ),
-			LLMSTxt::OPTION_TITLE        => sanitize_text_field( wp_unslash( $_POST[ LLMSTxt::OPTION_TITLE ] ?? '' ) ),
-			LLMSTxt::OPTION_SUMMARY      => sanitize_textarea_field( wp_unslash( $_POST[ LLMSTxt::OPTION_SUMMARY ] ?? '' ) ),
-			LLMSTxt::OPTION_INTRO        => sanitize_textarea_field( wp_unslash( $_POST[ LLMSTxt::OPTION_INTRO ] ?? '' ) ),
-			LLMSTxt::OPTION_HOME         => ! empty( $_POST[ LLMSTxt::OPTION_HOME ] ),
-			LLMSTxt::OPTION_POSTS        => ! empty( $_POST[ LLMSTxt::OPTION_POSTS ] ),
-			LLMSTxt::OPTION_PAGES        => ! empty( $_POST[ LLMSTxt::OPTION_PAGES ] ),
-			LLMSTxt::OPTION_CATEGORIES   => ! empty( $_POST[ LLMSTxt::OPTION_CATEGORIES ] ),
-			LLMSTxt::OPTION_POST_COUNT   => max( 1, min( 100, absint( $_POST[ LLMSTxt::OPTION_POST_COUNT ] ?? 20 ) ) ),
-			LLMSTxt::OPTION_CUSTOM       => $this->sanitize_custom( wp_unslash( $_POST[ LLMSTxt::OPTION_CUSTOM ] ?? '' ) ),
-			LLMSTxt::OPTION_FULL_ENABLED => ! empty( $_POST[ LLMSTxt::OPTION_FULL_ENABLED ] ),
-			LLMSTxt::OPTION_FULL_WORDS   => max( 1000, min( 10000, absint( $_POST[ LLMSTxt::OPTION_FULL_WORDS ] ?? 8000 ) ) ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_ENABLED       => ! empty( $_POST[ LLMSTxt::OPTION_ENABLED ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_TITLE         => sanitize_text_field( wp_unslash( $_POST[ LLMSTxt::OPTION_TITLE ] ?? '' ) ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_SUMMARY       => sanitize_textarea_field( wp_unslash( $_POST[ LLMSTxt::OPTION_SUMMARY ] ?? '' ) ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_INTRO         => sanitize_textarea_field( wp_unslash( $_POST[ LLMSTxt::OPTION_INTRO ] ?? '' ) ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_HOME          => ! empty( $_POST[ LLMSTxt::OPTION_HOME ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_POSTS         => ! empty( $_POST[ LLMSTxt::OPTION_POSTS ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_PAGES         => ! empty( $_POST[ LLMSTxt::OPTION_PAGES ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_CATEGORIES    => ! empty( $_POST[ LLMSTxt::OPTION_CATEGORIES ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_POST_COUNT    => max( 1, min( 100, absint( $_POST[ LLMSTxt::OPTION_POST_COUNT ] ?? 20 ) ) ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_CUSTOM        => $this->sanitize_custom( wp_unslash( $_POST[ LLMSTxt::OPTION_CUSTOM ] ?? '' ) ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_FULL_ENABLED  => ! empty( $_POST[ LLMSTxt::OPTION_FULL_ENABLED ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_FULL_WORDS    => max( 1000, min( 10000, absint( $_POST[ LLMSTxt::OPTION_FULL_WORDS ] ?? 8000 ) ) ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 			LLMSTxt::OPTION_FULL_PER_POST => max( 150, min( 3000, absint( $_POST[ LLMSTxt::OPTION_FULL_PER_POST ] ?? 1200 ) ) ),
-			LLMSTxt::OPTION_POLICY       => ! empty( $_POST[ LLMSTxt::OPTION_POLICY ] ),
-			LLMSTxt::OPTION_AUTHORS      => ! empty( $_POST[ LLMSTxt::OPTION_AUTHORS ] ),
-			LLMSTxt::OPTION_TAGS         => ! empty( $_POST[ LLMSTxt::OPTION_TAGS ] ),
-			LLMSTxt::OPTION_CPT          => ! empty( $_POST[ LLMSTxt::OPTION_CPT ] ),
-			LLMSTxt::OPTION_RESOURCES    => ! empty( $_POST[ LLMSTxt::OPTION_RESOURCES ] ),
-			LLMSTxt::OPTION_OPTIONAL     => ! empty( $_POST[ LLMSTxt::OPTION_OPTIONAL ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_POLICY        => ! empty( $_POST[ LLMSTxt::OPTION_POLICY ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_AUTHORS       => ! empty( $_POST[ LLMSTxt::OPTION_AUTHORS ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_TAGS          => ! empty( $_POST[ LLMSTxt::OPTION_TAGS ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_CPT           => ! empty( $_POST[ LLMSTxt::OPTION_CPT ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_RESOURCES     => ! empty( $_POST[ LLMSTxt::OPTION_RESOURCES ] ),
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+			LLMSTxt::OPTION_OPTIONAL      => ! empty( $_POST[ LLMSTxt::OPTION_OPTIONAL ] ),
 		);
-		foreach ( $fields as $key => $value ) { update_option( $key, $value ); }
+		foreach ( $fields as $key => $value ) {
+			update_option( $key, $value ); }
 		flush_rewrite_rules( false );
 		AdminAssets::done( self::SLUG, 'success', __( 'AI and llms.txt settings saved.', 'publishrank' ) );
 	}
@@ -127,12 +147,21 @@ final class LLMSTxtPage {
 
 	/** What agents will receive right now, with a review of common mistakes. */
 	private function render_preview() {
-		$llms = new LLMSTxt(); $stats = $llms->stats(); $issues = $llms->analyze(); $text = $llms->build();
-		$icons = array( 'error' => '✕', 'warn' => '!', 'info' => 'i', 'ok' => '✓' );
+		$llms   = new LLMSTxt();
+		$stats  = $llms->stats();
+		$issues = $llms->analyze();
+		$text   = $llms->build();
+		$icons  = array(
+			'error' => '✕',
+			'warn'  => '!',
+			'info'  => 'i',
+			'ok'    => '✓',
+		);
 		echo '<div class="rhs-card"><h2><span class="dashicons dashicons-visibility" aria-hidden="true"></span> ' . esc_html__( 'Preview of the saved file', 'publishrank' ) . '</h2>';
 		/* translators: 1: links, 2: sections, 3: tokens */
 		echo '<p class="description">' . esc_html( sprintf( __( '%1$s links in %2$s sections, about %3$s tokens. Save to refresh this preview.', 'publishrank' ), number_format_i18n( $stats['links'] ), number_format_i18n( $stats['sections'] ), number_format_i18n( $stats['tokens'] ) ) ) . '</p>';
-		foreach ( $issues as $issue ) { echo '<p class="pr-llms-check is-' . esc_attr( $issue['level'] ) . '"><strong aria-hidden="true">' . esc_html( $icons[ $issue['level'] ] ?? 'i' ) . '</strong> ' . esc_html( $issue['msg'] ) . '</p>'; }
+		foreach ( $issues as $issue ) {
+			echo '<p class="pr-llms-check is-' . esc_attr( $issue['level'] ) . '"><strong aria-hidden="true">' . esc_html( $icons[ $issue['level'] ] ?? 'i' ) . '</strong> ' . esc_html( $issue['msg'] ) . '</p>'; }
 		echo '<textarea readonly rows="16" class="large-text code" aria-label="' . esc_attr__( 'Generated llms.txt', 'publishrank' ) . '">' . esc_textarea( $text ) . '</textarea></div>';
 	}
 

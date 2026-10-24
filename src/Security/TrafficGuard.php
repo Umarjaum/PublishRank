@@ -5,7 +5,7 @@ namespace PublishRankSEO\Security;
 defined( 'ABSPATH' ) || exit;
 
 final class TrafficGuard {
-	const OPTION = 'publishrank_traffic_guard';
+	const OPTION    = 'publishrank_traffic_guard';
 	const MAX_RULES = 500;
 
 	public function register() {
@@ -14,11 +14,11 @@ final class TrafficGuard {
 
 	/** Return normalized settings; malformed stored values are ignored safely. */
 	public static function settings() {
-		$saved = get_option( self::OPTION, array() );
-		$saved = is_array( $saved ) ? $saved : array();
-		$blocked = self::inspect_networks( isset( $saved['blocked_ips'] ) ? $saved['blocked_ips'] : '' );
-		$allowed = self::inspect_networks( isset( $saved['allow_ips'] ) ? $saved['allow_ips'] : '' );
-		$proxies = self::inspect_networks( isset( $saved['trusted_proxies'] ) ? $saved['trusted_proxies'] : '' );
+		$saved     = get_option( self::OPTION, array() );
+		$saved     = is_array( $saved ) ? $saved : array();
+		$blocked   = self::inspect_networks( isset( $saved['blocked_ips'] ) ? $saved['blocked_ips'] : '' );
+		$allowed   = self::inspect_networks( isset( $saved['allow_ips'] ) ? $saved['allow_ips'] : '' );
+		$proxies   = self::inspect_networks( isset( $saved['trusted_proxies'] ) ? $saved['trusted_proxies'] : '' );
 		$countries = self::inspect_country_codes( isset( $saved['blocked_countries'] ) ? $saved['blocked_countries'] : '' );
 
 		return array(
@@ -56,8 +56,8 @@ final class TrafficGuard {
 
 	/** Validate and normalize one-IP-or-CIDR-per-line form data. */
 	public static function inspect_networks( $raw ) {
-		$values = self::split_values( $raw );
-		$valid = array();
+		$values  = self::split_values( $raw );
+		$valid   = array();
 		$invalid = array();
 		foreach ( $values as $value ) {
 			if ( count( $valid ) >= self::MAX_RULES ) {
@@ -71,13 +71,16 @@ final class TrafficGuard {
 				$valid[] = $network;
 			}
 		}
-		return array( 'valid' => $valid, 'invalid' => $invalid );
+		return array(
+			'valid'   => $valid,
+			'invalid' => $invalid,
+		);
 	}
 
 	/** Validate and normalize ISO alpha-2 country values plus Cloudflare XX/T1. */
 	public static function inspect_country_codes( $raw ) {
-		$values = self::split_values( $raw );
-		$valid = array();
+		$values  = self::split_values( $raw );
+		$valid   = array();
 		$invalid = array();
 		foreach ( $values as $value ) {
 			$code = strtoupper( trim( $value ) );
@@ -89,28 +92,31 @@ final class TrafficGuard {
 				$valid[] = $code;
 			}
 		}
-		return array( 'valid' => $valid, 'invalid' => $invalid );
+		return array(
+			'valid'   => $valid,
+			'invalid' => $invalid,
+		);
 	}
 
 	/** Test whether an address belongs to a valid IP or CIDR network. */
 	public static function matches_network( $ip, $network ) {
 		$target = self::valid_ip( $ip );
-		$parts = explode( '/', trim( (string) $network ), 2 );
-		$base = self::valid_ip( $parts[0] );
+		$parts  = explode( '/', trim( (string) $network ), 2 );
+		$base   = self::valid_ip( $parts[0] );
 		if ( '' === $target || '' === $base ) {
 			return false;
 		}
 		$target_bin = @inet_pton( $target );
-		$base_bin = @inet_pton( $base );
+		$base_bin   = @inet_pton( $base );
 		if ( false === $target_bin || false === $base_bin || strlen( $target_bin ) !== strlen( $base_bin ) ) {
 			return false;
 		}
-		$bits = strlen( $base_bin ) * 8;
+		$bits   = strlen( $base_bin ) * 8;
 		$prefix = isset( $parts[1] ) ? $parts[1] : (string) $bits;
 		if ( ! preg_match( '/^\d+$/', $prefix ) || (int) $prefix < 0 || (int) $prefix > $bits ) {
 			return false;
 		}
-		$prefix = (int) $prefix;
+		$prefix     = (int) $prefix;
 		$full_bytes = intdiv( $prefix, 8 );
 		if ( $full_bytes && substr( $target_bin, 0, $full_bytes ) !== substr( $base_bin, 0, $full_bytes ) ) {
 			return false;
@@ -148,14 +154,14 @@ final class TrafficGuard {
 			return '';
 		}
 		$parts = explode( '/', $value, 2 );
-		$ip = self::valid_ip( $parts[0] );
+		$ip    = self::valid_ip( $parts[0] );
 		if ( '' === $ip ) {
 			return '';
 		}
 		if ( ! isset( $parts[1] ) ) {
 			return $ip;
 		}
-		$packed = @inet_pton( $ip );
+		$packed   = @inet_pton( $ip );
 		$max_bits = is_string( $packed ) ? strlen( $packed ) * 8 : 0;
 		if ( ! preg_match( '/^\d+$/', $parts[1] ) || (int) $parts[1] < 0 || (int) $parts[1] > $max_bits ) {
 			return '';
@@ -170,7 +176,7 @@ final class TrafficGuard {
 		if ( ! is_string( $raw ) || strlen( $raw ) > 65536 ) {
 			return array();
 		}
-		$parts = preg_split( '/[\r\n,]+/', $raw );
+		$parts  = preg_split( '/[\r\n,]+/', $raw );
 		$values = array();
 		foreach ( is_array( $parts ) ? $parts : array() as $part ) {
 			$part = trim( $part );
@@ -251,7 +257,7 @@ final class TrafficGuard {
 		if ( isset( $_GET['rest_route'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return false;
 		}
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '/';
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '/';
 		$path = parse_url( $uri, PHP_URL_PATH );
 		$path = is_string( $path ) ? $path : '/';
 		if ( preg_match( '~(?:^|/)wp-admin(?:/|$)|(?:^|/)wp-login\.php$|(?:^|/)wp-cron\.php$|(?:^|/)wp-json(?:/|$)~i', $path ) || preg_match( '/\.(?:xml|txt)$/i', $path ) ) {

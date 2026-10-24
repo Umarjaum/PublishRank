@@ -68,68 +68,68 @@ final class ImportExport {
 			'publishrank_seo_news_keywords',
 			'publishrank_seo_news_genre',
 			'publishrank_editorial_genre',
-		'publishrank_seo_default_social_image',
-		'publishrank_seo_twitter_site',
-		'publishrank_sitemap_stylesheet',
-		'publishrank_robots_enabled',
-		'publishrank_robots_sitemaps',
-		'publishrank_robots_block_ai',
-		'publishrank_robots_custom',
+			'publishrank_seo_default_social_image',
+			'publishrank_seo_twitter_site',
+			'publishrank_sitemap_stylesheet',
+			'publishrank_robots_enabled',
+			'publishrank_robots_sitemaps',
+			'publishrank_robots_block_ai',
+			'publishrank_robots_custom',
 			'publishrank_seo_redirects',
 			'publishrank_seo_404_monitor',
 			'publishrank_seo_404_log',
-				'publishrank_traffic_guard',
-				'publishrank_admin_access_mode',
-				'publishrank_admin_access_slug',
-			);
+			'publishrank_traffic_guard',
+			'publishrank_admin_access_mode',
+			'publishrank_admin_access_slug',
+		);
 
-	/** Register admin actions. */
-	public function register() {
-		add_action( 'admin_post_publishrank_seo_export', array( $this, 'export' ) );
-		add_action( 'admin_post_publishrank_seo_import', array( $this, 'import' ) );
-	}
-
-	/** Export only PublishRank-owned options. */
-	public function export() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You are not allowed to export PublishRank settings.', 'publishrank' ), 403 );
+		/** Register admin actions. */
+		public function register() {
+			add_action( 'admin_post_publishrank_seo_export', array( $this, 'export' ) );
+			add_action( 'admin_post_publishrank_seo_import', array( $this, 'import' ) );
 		}
-		check_admin_referer( 'publishrank_seo_export' );
-		$data = array();
-		foreach ( $this->allowed as $key ) {
-			$value = get_option( $key, null );
-			if ( null !== $value ) {
-				$data[ $key ] = $value;
+
+		/** Export only PublishRank-owned options. */
+		public function export() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_die( esc_html__( 'You are not allowed to export PublishRank settings.', 'publishrank' ), 403 );
 			}
-		}
+			check_admin_referer( 'publishrank_seo_export' );
+			$data = array();
+			foreach ( $this->allowed as $key ) {
+				$value = get_option( $key, null );
+				if ( null !== $value ) {
+					$data[ $key ] = $value;
+				}
+			}
 			$data['_schema'] = 'publishrank/v2';
-		header( 'Content-Type: application/json; charset=' . get_bloginfo( 'charset' ) );
-		header( 'Content-Disposition: attachment; filename=publishrank-seo-settings.json' );
-		echo wp_json_encode( $data, JSON_PRETTY_PRINT );
-		exit;
-	}
+			header( 'Content-Type: application/json; charset=' . get_bloginfo( 'charset' ) );
+			header( 'Content-Disposition: attachment; filename=publishrank-seo-settings.json' );
+			echo wp_json_encode( $data, JSON_PRETTY_PRINT );
+			exit;
+		}
 
-	/** Import a schema-validated JSON payload. */
-	public function import() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You are not allowed to import PublishRank settings.', 'publishrank' ), 403 );
-		}
-		check_admin_referer( 'publishrank_seo_import' );
-		$raw = isset( $_POST['publishrank_seo_json'] ) ? wp_unslash( $_POST['publishrank_seo_json'] ) : '';
-		$data = json_decode( $raw, true );
-			if ( ! is_array( $data ) || ! in_array( ( $data['_schema'] ?? '' ), array( 'publishrank/v1', 'publishrank/v2' ), true ) ) {
-			wp_die( esc_html__( 'The import file is invalid.', 'publishrank' ), 400 );
-		}
-		foreach ( $data as $key => $value ) {
-			if ( '_schema' === $key || ! in_array( $key, $this->allowed, true ) ) {
-				continue;
+		/** Import a schema-validated JSON payload. */
+		public function import() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_die( esc_html__( 'You are not allowed to import PublishRank settings.', 'publishrank' ), 403 );
 			}
-			update_option( $key, $this->sanitize( $key, $value ), false );
+			check_admin_referer( 'publishrank_seo_import' );
+			$raw  = isset( $_POST['publishrank_seo_json'] ) ? wp_unslash( $_POST['publishrank_seo_json'] ) : '';
+			$data = json_decode( $raw, true );
+			if ( ! is_array( $data ) || ! in_array( ( $data['_schema'] ?? '' ), array( 'publishrank/v1', 'publishrank/v2' ), true ) ) {
+				wp_die( esc_html__( 'The import file is invalid.', 'publishrank' ), 400 );
+			}
+			foreach ( $data as $key => $value ) {
+				if ( '_schema' === $key || ! in_array( $key, $this->allowed, true ) ) {
+					continue;
+				}
+				update_option( $key, $this->sanitize( $key, $value ), false );
+			}
+			update_option( 'publishrank_seo_cache_epoch', time(), false );
+			wp_safe_redirect( add_query_arg( 'publishrank_seo_imported', '1', admin_url( 'admin.php?page=publishrank-seo' ) ) );
+			exit;
 		}
-		update_option( 'publishrank_seo_cache_epoch', time(), false );
-		wp_safe_redirect( add_query_arg( 'publishrank_seo_imported', '1', admin_url( 'admin.php?page=publishrank-seo' ) ) );
-		exit;
-	}
 
 		/** @param string $key @param mixed $value @return mixed */
 		private function sanitize( $key, $value ) {
@@ -145,11 +145,17 @@ final class ImportExport {
 				if ( ! is_array( $value ) ) {
 					return array();
 				}
-				$blocked = \PublishRankSEO\Security\TrafficGuard::inspect_networks( isset( $value['blocked_ips'] ) ? $value['blocked_ips'] : '' );
-				$allowed = \PublishRankSEO\Security\TrafficGuard::inspect_networks( isset( $value['allow_ips'] ) ? $value['allow_ips'] : '' );
-				$proxies = \PublishRankSEO\Security\TrafficGuard::inspect_networks( isset( $value['trusted_proxies'] ) ? $value['trusted_proxies'] : '' );
+				$blocked   = \PublishRankSEO\Security\TrafficGuard::inspect_networks( isset( $value['blocked_ips'] ) ? $value['blocked_ips'] : '' );
+				$allowed   = \PublishRankSEO\Security\TrafficGuard::inspect_networks( isset( $value['allow_ips'] ) ? $value['allow_ips'] : '' );
+				$proxies   = \PublishRankSEO\Security\TrafficGuard::inspect_networks( isset( $value['trusted_proxies'] ) ? $value['trusted_proxies'] : '' );
 				$countries = \PublishRankSEO\Security\TrafficGuard::inspect_country_codes( isset( $value['blocked_countries'] ) ? $value['blocked_countries'] : '' );
-				return array( 'enabled' => ! empty( $value['enabled'] ), 'blocked_ips' => $blocked['valid'], 'allow_ips' => $allowed['valid'], 'trusted_proxies' => $proxies['valid'], 'blocked_countries' => $countries['valid'] );
+				return array(
+					'enabled'           => ! empty( $value['enabled'] ),
+					'blocked_ips'       => $blocked['valid'],
+					'allow_ips'         => $allowed['valid'],
+					'trusted_proxies'   => $proxies['valid'],
+					'blocked_countries' => $countries['valid'],
+				);
 			}
 			if ( 'publishrank_indexnow_enabled' === $key ) {
 					return (bool) $value;
@@ -168,49 +174,55 @@ final class ImportExport {
 			}
 			if ( 'publishrank_seo_news_window' === $key ) {
 				return max( 1, min( 168, absint( $value ) ) );
-		}
-		if ( in_array( $key, array( 'publishrank_seo_404_monitor', 'publishrank_sitemap_stylesheet', 'publishrank_robots_enabled', 'publishrank_robots_sitemaps', 'publishrank_robots_block_ai' ), true ) ) {
-			return (bool) $value;
-		}
-		if ( 'publishrank_seo_default_social_image' === $key ) {
-			return \PublishRankSEO\Core\PublicationProfile::normalize_url( (string) $value );
-		}
-		if ( 'publishrank_seo_twitter_site' === $key ) {
-			return substr( preg_replace( '/[^A-Za-z0-9_]/', '', ltrim( trim( (string) $value ), '@' ) ), 0, 15 );
-		}
-		if ( 'publishrank_robots_custom' === $key ) {
-			return \PublishRankSEO\Robots\RobotsTxt::clean_rules( (string) $value );
-		}
-		if ( 'publishrank_seo_redirects' === $key ) {
-			if ( ! is_array( $value ) ) {
-				return array();
 			}
-			$redirects = array();
-			foreach ( $value as $redirect ) {
-				if ( ! is_array( $redirect ) ) {
-					continue;
-				}
-				$rule = \PublishRankSEO\Redirect\RedirectStore::build_rule(
-					isset( $redirect['source'] ) ? (string) $redirect['source'] : '',
-					isset( $redirect['target'] ) ? (string) $redirect['target'] : '',
-					isset( $redirect['status'] ) ? absint( $redirect['status'] ) : 301,
-					! empty( $redirect['regex'] )
-				);
-				if ( ! is_wp_error( $rule ) ) {
-					$redirects[] = $rule;
-				}
+			if ( in_array( $key, array( 'publishrank_seo_404_monitor', 'publishrank_sitemap_stylesheet', 'publishrank_robots_enabled', 'publishrank_robots_sitemaps', 'publishrank_robots_block_ai' ), true ) ) {
+				return (bool) $value;
 			}
-			return array_slice( $redirects, 0, \PublishRankSEO\Redirect\RedirectStore::MAX_RULES );
-		}
-		if ( 'publishrank_seo_404_log' === $key ) {
-			return is_array( $value ) ? array_slice( array_map( static function ( $entry ) {
-				return is_array( $entry ) ? array(
-					'path' => sanitize_text_field( (string) ( $entry['path'] ?? '/' ) ),
-					'time' => sanitize_text_field( (string) ( $entry['time'] ?? '' ) ),
+			if ( 'publishrank_seo_default_social_image' === $key ) {
+				return \PublishRankSEO\Core\PublicationProfile::normalize_url( (string) $value );
+			}
+			if ( 'publishrank_seo_twitter_site' === $key ) {
+				return substr( preg_replace( '/[^A-Za-z0-9_]/', '', ltrim( trim( (string) $value ), '@' ) ), 0, 15 );
+			}
+			if ( 'publishrank_robots_custom' === $key ) {
+				return \PublishRankSEO\Robots\RobotsTxt::clean_rules( (string) $value );
+			}
+			if ( 'publishrank_seo_redirects' === $key ) {
+				if ( ! is_array( $value ) ) {
+					return array();
+				}
+				$redirects = array();
+				foreach ( $value as $redirect ) {
+					if ( ! is_array( $redirect ) ) {
+						continue;
+					}
+					$rule = \PublishRankSEO\Redirect\RedirectStore::build_rule(
+						isset( $redirect['source'] ) ? (string) $redirect['source'] : '',
+						isset( $redirect['target'] ) ? (string) $redirect['target'] : '',
+						isset( $redirect['status'] ) ? absint( $redirect['status'] ) : 301,
+						! empty( $redirect['regex'] )
+					);
+					if ( ! is_wp_error( $rule ) ) {
+						$redirects[] = $rule;
+					}
+				}
+				return array_slice( $redirects, 0, \PublishRankSEO\Redirect\RedirectStore::MAX_RULES );
+			}
+			if ( 'publishrank_seo_404_log' === $key ) {
+				return is_array( $value ) ? array_slice(
+					array_map(
+						static function ( $entry ) {
+							return is_array( $entry ) ? array(
+								'path' => sanitize_text_field( (string) ( $entry['path'] ?? '/' ) ),
+								'time' => sanitize_text_field( (string) ( $entry['time'] ?? '' ) ),
+							) : array();
+						},
+						$value
+					),
+					-500
 				) : array();
-			}, $value ), -500 ) : array();
+			}
+			return sanitize_text_field( (string) $value );
 		}
-		return sanitize_text_field( (string) $value );
-	}
 }
 /* EOF */

@@ -24,9 +24,11 @@ final class RedirectsPage {
 
 	public function handle_add() {
 		AdminAssets::guard( 'publishrank_seo_redirect_add' );
-		$source = isset( $_POST['source'] ) ? (string) wp_unslash( $_POST['source'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		$target = isset( $_POST['target'] ) ? (string) wp_unslash( $_POST['target'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$source = isset( $_POST['source'] ) ? (string) wp_unslash( $_POST['source'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
+		$target = isset( $_POST['target'] ) ? (string) wp_unslash( $_POST['target'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$status = isset( $_POST['status'] ) ? absint( $_POST['status'] ) : 301;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$result = RedirectStore::add( $source, $target, $status, ! empty( $_POST['regex'] ) );
 		if ( is_wp_error( $result ) ) {
 			AdminAssets::done( self::SLUG, 'error', $result->get_error_message() );
@@ -36,15 +38,15 @@ final class RedirectsPage {
 
 	public function handle_bulk() {
 		AdminAssets::guard( 'publishrank_seo_redirect_bulk' );
-		$text  = isset( $_POST['bulk'] ) ? (string) wp_unslash( $_POST['bulk'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$text  = isset( $_POST['bulk'] ) ? (string) wp_unslash( $_POST['bulk'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
 		$rows  = array_slice( RedirectStore::parse_bulk( $text ), 0, 500 );
 		$added = 0;
 		$skip  = 0;
 		foreach ( $rows as $row ) {
 			if ( true === RedirectStore::add( $row['source'], $row['target'], $row['status'], false ) ) {
-				$added++;
+				++$added;
 			} else {
-				$skip++;
+				++$skip;
 			}
 		}
 		/* translators: 1: saved rules, 2: skipped lines. */
@@ -53,10 +55,15 @@ final class RedirectsPage {
 
 	public function handle_settings() {
 		AdminAssets::guard( 'publishrank_seo_redirect_settings' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		update_option( 'publishrank_redirect_enabled', ! empty( $_POST['enabled'] ) ? 1 : 0, false );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		update_option( 'publishrank_redirect_only_404', ! empty( $_POST['only_404'] ) ? 1 : 0, false );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		update_option( 'publishrank_redirect_preserve_query', ! empty( $_POST['preserve_query'] ) ? 1 : 0, false );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		update_option( 'publishrank_redirect_x_header', ! empty( $_POST['x_header'] ) ? 1 : 0, false );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		update_option( 'publishrank_redirect_max_hops', min( 50, max( 1, absint( isset( $_POST['max_hops'] ) ? $_POST['max_hops'] : 10 ) ) ), false );
 		AdminAssets::done( self::SLUG, 'success', __( 'Redirect behavior saved.', 'publishrank' ) );
 	}
@@ -136,7 +143,16 @@ final class RedirectsPage {
 			<?php endif; ?>
 			<?php
 			foreach ( $slice as $rule ) :
-				$delete = wp_nonce_url( add_query_arg( array( 'action' => 'publishrank_seo_redirect_delete', 'id' => RedirectStore::id( $rule ) ), admin_url( 'admin-post.php' ) ), 'publishrank_seo_redirect_delete' );
+				$delete = wp_nonce_url(
+					add_query_arg(
+						array(
+							'action' => 'publishrank_seo_redirect_delete',
+							'id'     => RedirectStore::id( $rule ),
+						),
+						admin_url( 'admin-post.php' )
+					),
+					'publishrank_seo_redirect_delete'
+				);
 				?>
 				<tr>
 					<td><code><?php echo esc_html( isset( $rule['source'] ) ? $rule['source'] : '' ); ?></code></td>
@@ -150,7 +166,16 @@ final class RedirectsPage {
 		</table></div>
 		<?php
 		if ( $pages > 1 ) {
-			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post( paginate_links( array( 'base' => add_query_arg( 'paged', '%#%' ), 'format' => '', 'total' => $pages, 'current' => $paged ) ) ) . '</div></div>';
+			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post(
+				paginate_links(
+					array(
+						'base'    => add_query_arg( 'paged', '%#%' ),
+						'format'  => '',
+						'total'   => $pages,
+						'current' => $paged,
+					)
+				)
+			) . '</div></div>';
 		}
 		echo '</div>';
 	}

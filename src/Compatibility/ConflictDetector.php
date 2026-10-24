@@ -30,9 +30,16 @@ final class ConflictDetector {
 	public function diagnostics() {
 		$active = $this->active();
 		if ( empty( $active ) ) {
-			return array( 'status' => 'PASS', 'message' => __( 'No other SEO plugin was detected.', 'publishrank' ) );
+			return array(
+				'status'  => 'PASS',
+				'message' => __( 'No other SEO plugin was detected.', 'publishrank' ),
+			);
 		}
 		/* translators: %s: plugin names. */
-		return array( 'status' => 'WARNING', 'message' => sprintf( __( '%s is active and may print duplicate titles, canonicals or schema. Keep only one SEO plugin active.', 'publishrank' ), implode( ', ', $active ) ) );
+		return array(
+			'status'  => 'WARNING',
+			/* translators: %s: comma-separated names of active SEO plugins. */
+			'message' => sprintf( __( '%s is active and may print duplicate titles, canonicals or schema. Keep only one SEO plugin active.', 'publishrank' ), implode( ', ', $active ) ),
+		);
 	}
 }

@@ -5,8 +5,8 @@ namespace PublishRankSEO\Core;
 defined( 'ABSPATH' ) || exit;
 
 final class Branding {
-	const MENU_SLUG = 'publishrank-seo-dashboard';
-	const WEBSITE_URL = 'https://publishrank.netlify.app';
+	const MENU_SLUG     = 'publishrank-seo-dashboard';
+	const WEBSITE_URL   = 'https://publishrank.netlify.app';
 	const DEVELOPER_URL = 'https://umarjaum.netlify.app';
 	const CONTACT_EMAIL = 'umarjaum@gmail.com';
 

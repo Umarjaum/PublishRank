@@ -39,20 +39,22 @@ final class SiteVerificationPage {
 
 	public function save() {
 		AdminAssets::guard( 'publishrank_verification_save' );
-		$engines  = SiteConnections::engines();
-		$posted   = isset( $_POST['token'] ) && is_array( $_POST['token'] ) ? wp_unslash( $_POST['token'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- normalised below.
+		$engines = SiteConnections::engines();
+		$posted   = isset( $_POST['token'] ) && is_array( $_POST['token'] ) ? wp_unslash( $_POST['token'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- normalised below. The matching action nonce is validated by the route guard before state-changing logic.
 		$tokens   = array();
 		$moved    = array();
 		$warnings = array();
 		foreach ( $engines as $key => $engine ) {
-			if ( ! array_key_exists( $key, $posted ) ) { $tokens[ $key ] = SiteConnections::normalize_token( get_option( 'publishrank_verification_' . $key, '' ) ); continue; }
+			if ( ! array_key_exists( $key, $posted ) ) {
+				$tokens[ $key ] = SiteConnections::normalize_token( get_option( 'publishrank_verification_' . $key, '' ) );
+				continue; }
 			$raw = trim( (string) $posted[ $key ] );
 			if ( false !== stripos( $raw, '<meta' ) ) {
 				$parsed = SiteConnections::parse_meta_tags( $raw, true );
 				$owner  = $parsed ? SiteConnections::engine_for_meta_name( $parsed[0]['name'] ) : '';
 				if ( $parsed && '' !== $owner && $owner !== $key ) {
 					/* translators: 1: engine the tag belongs to, 2: field it was pasted into. */
-					$warnings[] = sprintf( __( 'The tag you pasted in the %2$s field belongs to %1$s, so it was moved there.', 'publishrank' ), $engines[ $owner ]['label'], $engine['label'] );
+					$warnings[]      = sprintf( __( 'The tag you pasted in the %2$s field belongs to %1$s, so it was moved there.', 'publishrank' ), $engines[ $owner ]['label'], $engine['label'] );
 					$moved[ $owner ] = SiteConnections::normalize_token( $raw );
 					$tokens[ $key ]  = '';
 					continue;
@@ -60,9 +62,10 @@ final class SiteVerificationPage {
 			}
 			$tokens[ $key ] = SiteConnections::normalize_token( $raw );
 		}
-		foreach ( $moved as $owner => $token ) { $tokens[ $owner ] = $token; }
+		foreach ( $moved as $owner => $token ) {
+			$tokens[ $owner ] = $token; }
 		// Smart box: recognised engine tags are routed to their field, anything else is kept as a custom tag.
-		$smart_raw = isset( $_POST['custom'] ) ? (string) wp_unslash( $_POST['custom'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- parsed and rebuilt below.
+		$smart_raw = isset( $_POST['custom'] ) ? (string) wp_unslash( $_POST['custom'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- parsed and rebuilt below. The matching action nonce is validated by the route guard before state-changing logic.
 		$custom    = array();
 		$all       = SiteConnections::parse_meta_tags( $smart_raw, true );
 		$safe      = SiteConnections::parse_meta_tags( $smart_raw, false );
@@ -82,7 +85,8 @@ final class SiteVerificationPage {
 		if ( '' !== trim( $smart_raw ) && ! $all ) {
 			$warnings[] = __( 'No <meta> tag was found in the text you pasted. Paste the complete tag, for example <meta name="google-site-verification" content="…" />.', 'publishrank' );
 		}
-		foreach ( $tokens as $key => $value ) { update_option( 'publishrank_verification_' . $key, $value, true ); }
+		foreach ( $tokens as $key => $value ) {
+			update_option( 'publishrank_verification_' . $key, $value, true ); }
 		update_option( SiteConnections::OPT_CUSTOM, implode( "\n", array_slice( $custom, 0, 20 ) ), true );
 		$scope = isset( $_POST['scope'] ) && 'home' === sanitize_key( wp_unslash( $_POST['scope'] ) ) ? 'home' : 'all'; // phpcs:ignore WordPress.Security.NonceVerification -- nonce verified in guard().
 		update_option( SiteConnections::OPT_SCOPE, $scope, true );
@@ -94,9 +98,9 @@ final class SiteVerificationPage {
 
 	public function upload() {
 		AdminAssets::guard( 'publishrank_verification_upload' );
-		$ok = array();
+		$ok  = array();
 		$bad = array();
-		$files = isset( $_FILES['verification_files'] ) && is_array( $_FILES['verification_files'] ) ? $_FILES['verification_files'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- each entry is validated below.
+		$files = isset( $_FILES['verification_files'] ) && is_array( $_FILES['verification_files'] ) ? $_FILES['verification_files'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- each entry is validated below. The matching action nonce is validated by the route guard before state-changing logic.
 		if ( empty( $files['name'] ) ) {
 			AdminAssets::done( self::SLUG, 'error', __( 'Choose a verification file first.', 'publishrank' ) );
 		}
@@ -104,7 +108,8 @@ final class SiteVerificationPage {
 		foreach ( $names as $i => $original ) {
 			$name = trim( (string) wp_unslash( $original ) );
 			$err  = isset( $files['error'][ $i ] ) ? (int) $files['error'][ $i ] : UPLOAD_ERR_NO_FILE;
-			if ( UPLOAD_ERR_NO_FILE === $err ) { continue; }
+			if ( UPLOAD_ERR_NO_FILE === $err ) {
+				continue; }
 			$tmp = isset( $files['tmp_name'][ $i ] ) ? (string) $files['tmp_name'][ $i ] : '';
 			if ( UPLOAD_ERR_OK !== $err || '' === $tmp || ! is_uploaded_file( $tmp ) ) {
 				/* translators: %s: file name. */
@@ -118,25 +123,31 @@ final class SiteVerificationPage {
 			}
 			$content = (string) file_get_contents( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 			$error   = SiteConnections::save_file( basename( $name ), $content );
-			if ( '' === $error ) { $ok[] = basename( $name ); } else { $bad[] = basename( $name ) . ': ' . $error; }
+			if ( '' === $error ) {
+				$ok[] = basename( $name );
+			} else {
+				$bad[] = basename( $name ) . ': ' . $error; }
 		}
-		if ( $ok ) { SiteConnections::purge_caches(); }
+		if ( $ok ) {
+			SiteConnections::purge_caches(); }
 		$message = '';
 		if ( $ok ) {
 			/* translators: %s: comma-separated file names. */
 			$message .= sprintf( __( 'Verification file saved and live: %s.', 'publishrank' ), implode( ', ', $ok ) ) . ' ';
 			$message .= $this->summary_message( SiteConnections::run_check() );
 		}
-		if ( $bad ) { $message .= ' ' . implode( ' ', $bad ); }
+		if ( $bad ) {
+			$message .= ' ' . implode( ' ', $bad ); }
 		AdminAssets::done( self::SLUG, $ok && ! $bad ? 'success' : 'error', trim( $message ) );
 	}
 
 	public function create() {
 		AdminAssets::guard( 'publishrank_verification_create' );
-		$name    = isset( $_POST['file_name'] ) ? trim( (string) wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- validated by save_file().
-		$content = isset( $_POST['file_content'] ) ? (string) wp_unslash( $_POST['file_content'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- validated by save_file().
+		$name = isset( $_POST['file_name'] ) ? trim( (string) wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- validated by save_file(). The matching action nonce is validated by the route guard before state-changing logic.
+		$content = isset( $_POST['file_content'] ) ? (string) wp_unslash( $_POST['file_content'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- validated by save_file(). The matching action nonce is validated by the route guard before state-changing logic.
 		$error   = SiteConnections::save_file( $name, $content );
-		if ( '' !== $error ) { AdminAssets::done( self::SLUG, 'error', $error ); }
+		if ( '' !== $error ) {
+			AdminAssets::done( self::SLUG, 'error', $error ); }
 		SiteConnections::purge_caches();
 		/* translators: %s: file name. */
 		AdminAssets::done( self::SLUG, 'success', sprintf( __( 'Verification file saved and live: %s.', 'publishrank' ), $name ) . ' ' . $this->summary_message( SiteConnections::run_check() ) );
@@ -144,7 +155,7 @@ final class SiteVerificationPage {
 
 	public function delete() {
 		AdminAssets::guard( 'publishrank_verification_delete' );
-		$name = isset( $_POST['file_name'] ) ? trim( (string) wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- matched against stored keys.
+		$name = isset( $_POST['file_name'] ) ? trim( (string) wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- matched against stored keys. The matching action nonce is validated by the route guard before state-changing logic.
 		if ( SiteConnections::delete_file( $name ) ) {
 			SiteConnections::purge_caches();
 			/* translators: %s: file name. */
@@ -161,19 +172,29 @@ final class SiteVerificationPage {
 
 	/** One-sentence outcome of a live check. */
 	private function summary_message( $result ) {
-		if ( ! is_array( $result ) ) { return ''; }
+		if ( ! is_array( $result ) ) {
+			return ''; }
 		$items = array();
 		foreach ( array( 'tags', 'files' ) as $group ) {
-			foreach ( isset( $result[ $group ] ) && is_array( $result[ $group ] ) ? $result[ $group ] : array() as $row ) { $items[] = $row; }
+			foreach ( isset( $result[ $group ] ) && is_array( $result[ $group ] ) ? $result[ $group ] : array() as $row ) {
+				$items[] = $row; }
 		}
 		if ( ! empty( $result['home']['error'] ) ) {
 			/* translators: %s: error message. */
 			return sprintf( __( 'Live check could not reach your site: %s', 'publishrank' ), $result['home']['error'] );
 		}
-		if ( ! $items ) { return __( 'Nothing is configured yet.', 'publishrank' ); }
-		$bad = 0; $warn = 0;
-		foreach ( $items as $row ) { if ( 'bad' === $row['status'] ) { $bad++; } elseif ( 'warn' === $row['status'] ) { $warn++; } }
-		if ( ! $bad && ! $warn ) { return __( 'Live check passed: everything a search engine looks for is visible. You can now click Verify in the search engine.', 'publishrank' ); }
+		if ( ! $items ) {
+			return __( 'Nothing is configured yet.', 'publishrank' ); }
+		$bad  = 0;
+		$warn = 0;
+		foreach ( $items as $row ) {
+			if ( 'bad' === $row['status'] ) {
+				++$bad;
+			} elseif ( 'warn' === $row['status'] ) {
+				++$warn; }
+		}
+		if ( ! $bad && ! $warn ) {
+			return __( 'Live check passed: everything a search engine looks for is visible. You can now click Verify in the search engine.', 'publishrank' ); }
 		/* translators: 1: number of problems, 2: number of warnings. */
 		return sprintf( __( 'Live check found %1$d problem(s) and %2$d warning(s). See the status column below.', 'publishrank' ), $bad, $warn );
 	}
@@ -181,7 +202,8 @@ final class SiteVerificationPage {
 	/* ------------------------------ page ------------------------------ */
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) { return; }
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return; }
 		$engines = SiteConnections::engines();
 		$files   = SiteConnections::files();
 		$check   = get_option( SiteConnections::OPT_CHECK, array() );
@@ -196,7 +218,10 @@ final class SiteVerificationPage {
 
 		// Status overview.
 		$configured = 0;
-		foreach ( $engines as $key => $engine ) { if ( '' !== SiteConnections::normalize_token( get_option( 'publishrank_verification_' . $key, '' ) ) ) { $configured++; } }
+		foreach ( $engines as $key => $engine ) {
+			if ( '' !== SiteConnections::normalize_token( get_option( 'publishrank_verification_' . $key, '' ) ) ) {
+				++$configured; }
+		}
 		$configured += count( SiteConnections::parse_meta_tags( $custom ) ) + count( $files );
 		echo '<div class="rhs-card rhs-vf-card"><h2>' . esc_html__( 'Status', 'publishrank' ) . '</h2>';
 		if ( ! $configured ) {
@@ -205,19 +230,24 @@ final class SiteVerificationPage {
 			echo '<p>' . esc_html( sprintf( /* translators: %d: number of verification items. */ _n( '%d verification item is active.', '%d verification items are active.', $configured, 'publishrank' ), $configured ) ) . ' ';
 			if ( is_array( $check ) && ! empty( $check['time'] ) ) {
 				echo esc_html( sprintf( /* translators: %s: UTC time. */ __( 'Last live check: %s UTC.', 'publishrank' ), gmdate( 'Y-m-d H:i', (int) strtotime( (string) $check['time'] ) ) ) );
-				if ( ! $fresh ) { echo ' <strong>' . esc_html__( 'Settings changed since then, run the check again.', 'publishrank' ) . '</strong>'; }
+				if ( ! $fresh ) {
+					echo ' <strong>' . esc_html__( 'Settings changed since then, run the check again.', 'publishrank' ) . '</strong>'; }
 			} else {
 				echo esc_html__( 'Not checked yet.', 'publishrank' );
 			}
 			echo '</p>';
-			echo '<form method="post" action="' . esc_url( $action ) . '" class="rhs-vf-inline"><input type="hidden" name="action" value="publishrank_verification_check">'; wp_nonce_field( 'publishrank_verification_check' );
-			submit_button( __( 'Run live check now', 'publishrank' ), 'secondary', 'submit', false ); echo '</form>';
-			if ( ! empty( $check['home']['error'] ) && $fresh ) { echo '<p class="rhs-vf-error">' . esc_html( $check['home']['error'] ) . '</p>'; }
+			echo '<form method="post" action="' . esc_url( $action ) . '" class="rhs-vf-inline"><input type="hidden" name="action" value="publishrank_verification_check">';
+			wp_nonce_field( 'publishrank_verification_check' );
+			submit_button( __( 'Run live check now', 'publishrank' ), 'secondary', 'submit', false );
+			echo '</form>';
+			if ( ! empty( $check['home']['error'] ) && $fresh ) {
+				echo '<p class="rhs-vf-error">' . esc_html( $check['home']['error'] ) . '</p>'; }
 		}
 		echo '</div>';
 
 		// Meta tag form.
-		echo '<form method="post" action="' . esc_url( $action ) . '"><input type="hidden" name="action" value="publishrank_verification_save">'; wp_nonce_field( 'publishrank_verification_save' );
+		echo '<form method="post" action="' . esc_url( $action ) . '"><input type="hidden" name="action" value="publishrank_verification_save">';
+		wp_nonce_field( 'publishrank_verification_save' );
 		echo '<div class="rhs-card rhs-vf-card"><h2>' . esc_html__( 'Method 1: HTML meta tag', 'publishrank' ) . '</h2>';
 		echo '<p class="description">' . esc_html__( 'Paste either the token or the complete <meta> tag the search engine shows you. PublishRank extracts the right value and prints the tag in the <head> of your site.', 'publishrank' ) . '</p><div class="rhs-vf-grid">';
 		foreach ( $engines as $key => $engine ) {
@@ -248,13 +278,18 @@ final class SiteVerificationPage {
 		// Files.
 		echo '<div class="rhs-card rhs-vf-card"><h2>' . esc_html__( 'Method 2: verification file', 'publishrank' ) . '</h2>';
 		echo '<p class="description">' . esc_html__( 'Upload the file you downloaded from Google (google….html), Bing (BingSiteAuth.xml), Yandex, Baidu or Naver. PublishRank serves it from your site root at the exact address the search engine expects. You do not need FTP and nothing is written to disk.', 'publishrank' ) . '</p>';
-		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( $action ) . '" class="rhs-vf-upload"><input type="hidden" name="action" value="publishrank_verification_upload">'; wp_nonce_field( 'publishrank_verification_upload' );
-		echo '<input type="file" name="verification_files[]" accept=".html,.htm,.xml,.txt" multiple required> '; submit_button( __( 'Upload and test', 'publishrank' ), 'primary', 'submit', false ); echo '</form>';
+		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( $action ) . '" class="rhs-vf-upload"><input type="hidden" name="action" value="publishrank_verification_upload">';
+		wp_nonce_field( 'publishrank_verification_upload' );
+		echo '<input type="file" name="verification_files[]" accept=".html,.htm,.xml,.txt" multiple required> ';
+		submit_button( __( 'Upload and test', 'publishrank' ), 'primary', 'submit', false );
+		echo '</form>';
 		echo '<details class="rhs-vf-details"><summary>' . esc_html__( 'No file to upload? Create it by pasting the content', 'publishrank' ) . '</summary>';
-		echo '<form method="post" action="' . esc_url( $action ) . '"><input type="hidden" name="action" value="publishrank_verification_create">'; wp_nonce_field( 'publishrank_verification_create' );
+		echo '<form method="post" action="' . esc_url( $action ) . '"><input type="hidden" name="action" value="publishrank_verification_create">';
+		wp_nonce_field( 'publishrank_verification_create' );
 		echo '<p><label for="pr-vf-fname"><strong>' . esc_html__( 'File name', 'publishrank' ) . '</strong></label><br><input type="text" class="regular-text code" id="pr-vf-fname" name="file_name" placeholder="google1234567890abcdef.html" spellcheck="false" required></p>';
 		echo '<p><label for="pr-vf-fcontent"><strong>' . esc_html__( 'File content', 'publishrank' ) . '</strong></label><br><textarea class="large-text code" rows="4" id="pr-vf-fcontent" name="file_content" placeholder="google-site-verification: google1234567890abcdef.html" spellcheck="false" required></textarea></p>';
-		submit_button( __( 'Create and test', 'publishrank' ), 'secondary', 'submit', false ); echo '</form></details>';
+		submit_button( __( 'Create and test', 'publishrank' ), 'secondary', 'submit', false );
+		echo '</form></details>';
 		if ( $files ) {
 			echo '<div class="rhs-table-wrap"><table class="widefat striped rhs-vf-table"><thead><tr><th>' . esc_html__( 'File', 'publishrank' ) . '</th><th>' . esc_html__( 'Public address', 'publishrank' ) . '</th><th>' . esc_html__( 'Status', 'publishrank' ) . '</th><th></th></tr></thead><tbody>';
 			foreach ( $files as $name => $file ) {
@@ -262,8 +297,10 @@ final class SiteVerificationPage {
 				echo '<tr><td><code>' . esc_html( $name ) . '</code><br><small>' . esc_html( size_format( strlen( $file['content'] ) ) ) . '</small></td>';
 				echo '<td><a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $url ) . '</a>' . ( ! empty( $file['physical'] ) ? '<br><small>' . esc_html__( 'Also written to the web root as a real file.', 'publishrank' ) . '</small>' : '' ) . '</td>';
 				echo '<td>' . wp_kses_post( $this->pill( $fresh && isset( $check['files'][ $name ] ) ? $check['files'][ $name ] : null ) ) . '</td>';
-				echo '<td><form method="post" action="' . esc_url( $action ) . '" onsubmit="return confirm(' . esc_attr( wp_json_encode( __( 'Remove this verification file? The search engine may lose verification.', 'publishrank' ) ) ) . ');"><input type="hidden" name="action" value="publishrank_verification_delete"><input type="hidden" name="file_name" value="' . esc_attr( $name ) . '">'; wp_nonce_field( 'publishrank_verification_delete' );
-				submit_button( __( 'Delete', 'publishrank' ), 'delete small', 'submit', false ); echo '</form></td></tr>';
+				echo '<td><form method="post" action="' . esc_url( $action ) . '" onsubmit="return confirm(' . esc_attr( wp_json_encode( __( 'Remove this verification file? The search engine may lose verification.', 'publishrank' ) ) ) . ');"><input type="hidden" name="action" value="publishrank_verification_delete"><input type="hidden" name="file_name" value="' . esc_attr( $name ) . '">';
+				wp_nonce_field( 'publishrank_verification_delete' );
+				submit_button( __( 'Delete', 'publishrank' ), 'delete small', 'submit', false );
+				echo '</form></td></tr>';
 			}
 			echo '</tbody></table></div>';
 		}
@@ -277,14 +314,20 @@ final class SiteVerificationPage {
 			__( 'If another SEO plugin prints the same tag with a different value, the live check shows a warning. Remove the duplicate there.', 'publishrank' ),
 			__( 'If a file address returns 403 or 404 in the check, a security plugin, firewall or server rule is blocking it. Allow that exact file name, or use the meta tag method instead (it works on every host).', 'publishrank' ),
 			__( 'Keep the tag or file in place after verifying. Removing it can cause the search engine to drop verification later.', 'publishrank' ),
-		) as $tip ) { echo '<li>' . esc_html( $tip ) . '</li>'; }
+		) as $tip ) {
+			echo '<li>' . esc_html( $tip ) . '</li>'; }
 		echo '</ul></div></div>';
 	}
 
 	/** Status pill for a check row, or a neutral pill when not checked. */
 	private function pill( $row ) {
-		if ( ! is_array( $row ) || empty( $row['status'] ) ) { return '<span class="rhs-pill rhs-pill--low">' . esc_html__( 'Not checked', 'publishrank' ) . '</span>'; }
-		$map = array( 'ok' => array( 'pass', __( 'Live', 'publishrank' ) ), 'warn' => array( 'warning', __( 'Warning', 'publishrank' ) ), 'bad' => array( 'error', __( 'Problem', 'publishrank' ) ) );
+		if ( ! is_array( $row ) || empty( $row['status'] ) ) {
+			return '<span class="rhs-pill rhs-pill--low">' . esc_html__( 'Not checked', 'publishrank' ) . '</span>'; }
+		$map = array(
+			'ok'   => array( 'pass', __( 'Live', 'publishrank' ) ),
+			'warn' => array( 'warning', __( 'Warning', 'publishrank' ) ),
+			'bad'  => array( 'error', __( 'Problem', 'publishrank' ) ),
+		);
 		$cfg = isset( $map[ $row['status'] ] ) ? $map[ $row['status'] ] : $map['bad'];
 		return '<span class="rhs-pill rhs-pill--' . esc_attr( $cfg[0] ) . '" title="' . esc_attr( isset( $row['message'] ) ? $row['message'] : '' ) . '">' . esc_html( $cfg[1] ) . '</span>' . ( ! empty( $row['message'] ) && 'ok' !== $row['status'] ? ' <small class="rhs-vf-msg">' . esc_html( $row['message'] ) . '</small>' : '' );
 	}

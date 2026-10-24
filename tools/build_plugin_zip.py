@@ -13,6 +13,7 @@ OMIT_TOP_LEVEL = {
     ".github",
     ".gitignore",
     "tests",
+    "docs",
     "tools",
     "vendor",
     "vendor-bin",

@@ -45,8 +45,9 @@ final class NotFoundPage {
 
 	public function handle_redirect() {
 		AdminAssets::guard( 'publishrank_seo_404_redirect' );
-		$id     = isset( $_POST['entry'] ) ? sanitize_key( wp_unslash( $_POST['entry'] ) ) : '';
-		$target = isset( $_POST['target'] ) ? (string) wp_unslash( $_POST['target'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
+		$id = isset( $_POST['entry'] ) ? sanitize_key( wp_unslash( $_POST['entry'] ) ) : '';
+		$target = isset( $_POST['target'] ) ? (string) wp_unslash( $_POST['target'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
 		$path   = '';
 		foreach ( self::entries() as $entry ) {
 			if ( self::entry_id( $entry ) === $id ) {
@@ -82,7 +83,12 @@ final class NotFoundPage {
 			return;
 		}
 		$entries = self::entries();
-		usort( $entries, static function ( $a, $b ) { return (int) ( isset( $b['count'] ) ? $b['count'] : 0 ) - (int) ( isset( $a['count'] ) ? $a['count'] : 0 ); } );
+		usort(
+			$entries,
+			static function ( $a, $b ) {
+				return (int) ( isset( $b['count'] ) ? $b['count'] : 0 ) - (int) ( isset( $a['count'] ) ? $a['count'] : 0 );
+			}
+		);
 		$total = count( $entries );
 		$pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
 		$paged = isset( $_GET['paged'] ) ? min( $pages, max( 1, absint( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -108,13 +114,22 @@ final class NotFoundPage {
 			<?php endif; ?>
 			<?php
 			foreach ( $slice as $entry ) :
-				$id        = self::entry_id( $entry );
+				$id         = self::entry_id( $entry );
 				$first      = isset( $entry['first_seen'] ) ? (string) $entry['first_seen'] : ( isset( $entry['time'] ) ? (string) $entry['time'] : '' );
 				$first_text = $first && false !== strtotime( $first ) ? get_date_from_gmt( $first, 'Y-m-d H:i' ) : '—';
 				$last       = isset( $entry['last_seen'] ) ? (string) $entry['last_seen'] : '';
 				$last_text  = $last && false !== strtotime( $last ) ? get_date_from_gmt( $last, 'Y-m-d H:i' ) : '—';
-				$referrer  = isset( $entry['referrer'] ) ? (string) $entry['referrer'] : '';
-				$dismiss   = wp_nonce_url( add_query_arg( array( 'action' => 'publishrank_seo_404_dismiss', 'id' => $id ), admin_url( 'admin-post.php' ) ), 'publishrank_seo_404_dismiss' );
+				$referrer   = isset( $entry['referrer'] ) ? (string) $entry['referrer'] : '';
+				$dismiss    = wp_nonce_url(
+					add_query_arg(
+						array(
+							'action' => 'publishrank_seo_404_dismiss',
+							'id'     => $id,
+						),
+						admin_url( 'admin-post.php' )
+					),
+					'publishrank_seo_404_dismiss'
+				);
 				?>
 				<tr>
 					<td>
@@ -122,9 +137,15 @@ final class NotFoundPage {
 						<?php
 						$path_value = isset( $entry['path'] ) ? (string) $entry['path'] : '/';
 						$public_url = home_url( '/' . ltrim( $path_value, '/' ) );
-						$slug_bits = array_filter( explode( '/', trim( (string) wp_parse_url( $path_value, PHP_URL_PATH ), '/' ) ) );
+						$slug_bits  = array_filter( explode( '/', trim( (string) wp_parse_url( $path_value, PHP_URL_PATH ), '/' ) ) );
 						$page_title = $slug_bits ? ucwords( str_replace( array( '-', '_' ), ' ', (string) end( $slug_bits ) ) ) : '';
-						$create_url = add_query_arg( array( 'post_type' => 'page', 'post_title' => $page_title ), admin_url( 'post-new.php' ) );
+						$create_url = add_query_arg(
+							array(
+								'post_type'  => 'page',
+								'post_title' => $page_title,
+							),
+							admin_url( 'post-new.php' )
+						);
 						?>
 						<a href="<?php echo esc_url( $public_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open URL', 'publishrank' ); ?></a>
 						| <a href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'Create page', 'publishrank' ); ?></a>
@@ -150,7 +171,16 @@ final class NotFoundPage {
 		</table></div>
 		<?php
 		if ( $pages > 1 ) {
-			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post( paginate_links( array( 'base' => add_query_arg( 'paged', '%#%' ), 'format' => '', 'total' => $pages, 'current' => $paged ) ) ) . '</div></div>';
+			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post(
+				paginate_links(
+					array(
+						'base'    => add_query_arg( 'paged', '%#%' ),
+						'format'  => '',
+						'total'   => $pages,
+						'current' => $paged,
+					)
+				)
+			) . '</div></div>';
 		}
 		echo '</div>';
 	}

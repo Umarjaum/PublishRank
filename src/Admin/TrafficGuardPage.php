@@ -8,7 +8,7 @@ use PublishRankSEO\Security\TrafficGuard;
 defined( 'ABSPATH' ) || exit;
 
 final class TrafficGuardPage {
-	const SLUG = 'publishrank-traffic-guard';
+	const SLUG   = 'publishrank-traffic-guard';
 	const ACTION = 'publishrank_traffic_guard_save';
 
 	public function register() {
@@ -22,13 +22,13 @@ final class TrafficGuardPage {
 
 	public function save() {
 		AdminAssets::guard( self::ACTION );
-		$blocked = TrafficGuard::inspect_networks( $this->post_value( 'blocked_ips' ) );
-		$allowed = TrafficGuard::inspect_networks( $this->post_value( 'allow_ips' ) );
-		$proxies = TrafficGuard::inspect_networks( $this->post_value( 'trusted_proxies' ) );
+		$blocked   = TrafficGuard::inspect_networks( $this->post_value( 'blocked_ips' ) );
+		$allowed   = TrafficGuard::inspect_networks( $this->post_value( 'allow_ips' ) );
+		$proxies   = TrafficGuard::inspect_networks( $this->post_value( 'trusted_proxies' ) );
 		$countries = TrafficGuard::inspect_country_codes( $this->post_value( 'blocked_countries' ) );
-		$invalid = array_merge( $blocked['invalid'], $allowed['invalid'], $proxies['invalid'], $countries['invalid'] );
+		$invalid   = array_merge( $blocked['invalid'], $allowed['invalid'], $proxies['invalid'], $countries['invalid'] );
 		if ( $invalid ) {
-			$sample = implode( ', ', array_slice( array_unique( $invalid ), 0, 5 ) );
+			$sample  = implode( ', ', array_slice( array_unique( $invalid ), 0, 5 ) );
 			$message = sprintf( /* translators: %s: invalid IP, CIDR or country entries. */ __( 'No changes were saved. Check these invalid or excess entries: %s', 'publishrank' ), $sample );
 			AdminAssets::done( self::SLUG, 'error', $message );
 		}
@@ -48,7 +48,7 @@ final class TrafficGuardPage {
 		if ( ! isset( $_POST[ $key ] ) || ! is_string( $_POST[ $key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			return '';
 		}
-		return (string) wp_unslash( $_POST[ $key ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		return (string) wp_unslash( $_POST[ $key ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
 	}
 
 	public function render() {
@@ -56,7 +56,7 @@ final class TrafficGuardPage {
 			return;
 		}
 		$settings = TrafficGuard::settings();
-		$action = admin_url( 'admin-post.php' );
+		$action   = admin_url( 'admin-post.php' );
 		?>
 		<div class="wrap prtg-wrap">
 			<?php AdminAssets::header( __( 'Traffic Guard', 'publishrank' ), __( 'Local IP and country rules for public-facing page requests.', 'publishrank' ) ); ?>

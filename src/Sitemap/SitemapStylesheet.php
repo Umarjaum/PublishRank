@@ -26,11 +26,14 @@ final class SitemapStylesheet {
 
 	/** Resolve /publishrank-sitemap.xsl straight from the URL when no stored rewrite rule matched it. */
 	public function match_request( $wp ) {
-		if ( ! is_object( $wp ) || ! empty( $wp->query_vars['publishrank_xsl'] ) || empty( $_SERVER['REQUEST_URI'] ) ) { return; }
+		if ( ! is_object( $wp ) || ! empty( $wp->query_vars['publishrank_xsl'] ) || empty( $_SERVER['REQUEST_URI'] ) ) {
+			return; }
 		$path = (string) wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH );
 		$home = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
-		if ( '' !== $home && '/' !== $home && 0 === strpos( $path, $home ) ) { $path = '/' . substr( $path, strlen( $home ) ); }
-		if ( 'publishrank-sitemap.xsl' === ltrim( rawurldecode( $path ), '/' ) ) { $wp->query_vars['publishrank_xsl'] = '1'; }
+		if ( '' !== $home && '/' !== $home && 0 === strpos( $path, $home ) ) {
+			$path = '/' . substr( $path, strlen( $home ) ); }
+		if ( 'publishrank-sitemap.xsl' === ltrim( rawurldecode( $path ), '/' ) ) {
+			$wp->query_vars['publishrank_xsl'] = '1'; }
 	}
 
 	public function rewrite() {
@@ -57,15 +60,51 @@ final class SitemapStylesheet {
 	 */
 	public static function types() {
 		$types = array(
-			'post'       => array( 'label' => __( 'Articles', 'publishrank' ), 'desc' => __( 'Published posts and articles', 'publishrank' ), 'abbr' => 'AR' ),
-			'page'       => array( 'label' => __( 'Pages', 'publishrank' ), 'desc' => __( 'Static pages such as About and Contact', 'publishrank' ), 'abbr' => 'PG' ),
-			'cpt'        => array( 'label' => __( 'Custom content', 'publishrank' ), 'desc' => __( 'Custom post types', 'publishrank' ), 'abbr' => 'CT' ),
-			'taxonomy'   => array( 'label' => __( 'Topics', 'publishrank' ), 'desc' => __( 'Categories, tags and other topic hubs', 'publishrank' ), 'abbr' => 'TP' ),
-			'author'     => array( 'label' => __( 'Authors', 'publishrank' ), 'desc' => __( 'Author profile and archive pages', 'publishrank' ), 'abbr' => 'AU' ),
-			'attachment' => array( 'label' => __( 'Media files', 'publishrank' ), 'desc' => __( 'Uploaded image files', 'publishrank' ), 'abbr' => 'MF' ),
-			'news'       => array( 'label' => __( 'Google News', 'publishrank' ), 'desc' => __( 'Fresh articles for Google News and Top Stories', 'publishrank' ), 'abbr' => 'GN' ),
-			'image'      => array( 'label' => __( 'Images', 'publishrank' ), 'desc' => __( 'Images that appear in your content', 'publishrank' ), 'abbr' => 'IM' ),
-			'video'      => array( 'label' => __( 'Videos', 'publishrank' ), 'desc' => __( 'Embedded and hosted video', 'publishrank' ), 'abbr' => 'VD' ),
+			'post'       => array(
+				'label' => __( 'Articles', 'publishrank' ),
+				'desc'  => __( 'Published posts and articles', 'publishrank' ),
+				'abbr'  => 'AR',
+			),
+			'page'       => array(
+				'label' => __( 'Pages', 'publishrank' ),
+				'desc'  => __( 'Static pages such as About and Contact', 'publishrank' ),
+				'abbr'  => 'PG',
+			),
+			'cpt'        => array(
+				'label' => __( 'Custom content', 'publishrank' ),
+				'desc'  => __( 'Custom post types', 'publishrank' ),
+				'abbr'  => 'CT',
+			),
+			'taxonomy'   => array(
+				'label' => __( 'Topics', 'publishrank' ),
+				'desc'  => __( 'Categories, tags and other topic hubs', 'publishrank' ),
+				'abbr'  => 'TP',
+			),
+			'author'     => array(
+				'label' => __( 'Authors', 'publishrank' ),
+				'desc'  => __( 'Author profile and archive pages', 'publishrank' ),
+				'abbr'  => 'AU',
+			),
+			'attachment' => array(
+				'label' => __( 'Media files', 'publishrank' ),
+				'desc'  => __( 'Uploaded image files', 'publishrank' ),
+				'abbr'  => 'MF',
+			),
+			'news'       => array(
+				'label' => __( 'Google News', 'publishrank' ),
+				'desc'  => __( 'Fresh articles for Google News and Top Stories', 'publishrank' ),
+				'abbr'  => 'GN',
+			),
+			'image'      => array(
+				'label' => __( 'Images', 'publishrank' ),
+				'desc'  => __( 'Images that appear in your content', 'publishrank' ),
+				'abbr'  => 'IM',
+			),
+			'video'      => array(
+				'label' => __( 'Videos', 'publishrank' ),
+				'desc'  => __( 'Embedded and hosted video', 'publishrank' ),
+				'abbr'  => 'VD',
+			),
 		);
 		return (array) apply_filters( 'publishrank_sitemap_type_labels', $types );
 	}
@@ -73,9 +112,14 @@ final class SitemapStylesheet {
 	/** @return array{label:string,desc:string,abbr:string} */
 	public static function type( $slug ) {
 		$types = self::types();
-		if ( isset( $types[ $slug ] ) ) { return $types[ $slug ]; }
+		if ( isset( $types[ $slug ] ) ) {
+			return $types[ $slug ]; }
 		$label = ucwords( str_replace( array( '-', '_' ), ' ', (string) $slug ) );
-		return array( 'label' => '' !== $label ? $label : __( 'Sitemap', 'publishrank' ), 'desc' => '', 'abbr' => strtoupper( substr( preg_replace( '/[^a-z]/i', '', (string) $slug ) . 'SM', 0, 2 ) ) );
+		return array(
+			'label' => '' !== $label ? $label : __( 'Sitemap', 'publishrank' ),
+			'desc'  => '',
+			'abbr'  => strtoupper( substr( preg_replace( '/[^a-z]/i', '', (string) $slug ) . 'SM', 0, 2 ) ),
+		);
 	}
 
 	public function render() {
@@ -84,7 +128,8 @@ final class SitemapStylesheet {
 		}
 		// WordPress' canonical redirect must never rewrite the stylesheet URL, and no theme/plugin output may precede the XML declaration.
 		remove_action( 'template_redirect', 'redirect_canonical' );
-		while ( ob_get_level() > 0 ) { @ob_end_clean(); }
+		while ( ob_get_level() > 0 ) {
+			@ob_end_clean(); }
 		status_header( 200 );
 		header( 'Content-Type: text/xsl; charset=UTF-8' );
 		header( 'X-Robots-Tag: noindex' );
@@ -101,32 +146,41 @@ final class SitemapStylesheet {
 	public static function build( $type = 'index', $part = 1 ) {
 		$css_file = PUBLISHRANK_SEO_PATH . 'assets/css/sitemap.css';
 		$css      = is_readable( $css_file ) ? (string) file_get_contents( $css_file ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Bundled asset.
-		$meta     = 'index' === $type ? array( 'label' => __( 'Sitemap index', 'publishrank' ), 'desc' => __( 'The master list of every sitemap on this site', 'publishrank' ), 'abbr' => 'XML' ) : self::type( $type );
+		$meta     = 'index' === $type ? array(
+			'label' => __( 'Sitemap index', 'publishrank' ),
+			'desc'  => __( 'The master list of every sitemap on this site', 'publishrank' ),
+			'abbr'  => 'XML',
+		) : self::type( $type );
 		$home     = home_url( '/' );
 		$window   = class_exists( '\PublishRankSEO\Sitemap\News\NewsSitemapProvider' ) ? ( new \PublishRankSEO\Sitemap\News\NewsSitemapProvider() )->window_hours() : 48;
 		$prefix   = trailingslashit( $home ) . SitemapUrls::shard_prefix() . '-';
-		$maps     = array( 'LABELS' => 'label', 'DESCS' => 'desc', 'ABBRS' => 'abbr' );
+		$maps     = array(
+			'LABELS' => 'label',
+			'DESCS'  => 'desc',
+			'ABBRS'  => 'abbr',
+		);
 		$tokens   = array(
-			'%%CSS%%'    => esc_html( $css ),
-			'%%LOGO%%'   => esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ),
-			'%%SITE%%'   => esc_html( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ) ),
-			'%%HOME%%'   => esc_url( wp_make_link_relative( $home ) ?: '/' ),
-			'%%INDEX%%'  => esc_url( wp_make_link_relative( SitemapUrls::index_url() ) ),
+			'%%CSS%%'      => esc_html( $css ),
+			'%%LOGO%%'     => esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ),
+			'%%SITE%%'     => esc_html( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ) ),
+			'%%HOME%%'     => esc_url( ! empty( wp_make_link_relative( $home ) ) ? wp_make_link_relative( $home ) : '/' ),
+			'%%INDEX%%'    => esc_url( wp_make_link_relative( SitemapUrls::index_url() ) ),
 			'%%INDEXURL%%' => esc_html( SitemapUrls::index_url() ),
-			'%%ROBOTS%%' => esc_url( wp_make_link_relative( home_url( '/robots.txt' ) ) ),
-			'%%PREFIX%%' => self::xpath( $prefix ),
-			'%%HOMEURL%%' => self::xpath( $home ),
-			'%%TYPE%%'   => esc_attr( $type ),
-			'%%PART%%'   => (int) $part,
-			'%%TLABEL%%' => esc_html( $meta['label'] ),
-			'%%TDESC%%'  => esc_html( $meta['desc'] ),
-			'%%TABBR%%'  => esc_html( $meta['abbr'] ),
-			'%%WINDOW%%' => (int) $window,
-			'%%LIMIT%%'  => (int) self::COUNT_LIMIT,
+			'%%ROBOTS%%'   => esc_url( wp_make_link_relative( home_url( '/robots.txt' ) ) ),
+			'%%PREFIX%%'   => self::xpath( $prefix ),
+			'%%HOMEURL%%'  => self::xpath( $home ),
+			'%%TYPE%%'     => esc_attr( $type ),
+			'%%PART%%'     => (int) $part,
+			'%%TLABEL%%'   => esc_html( $meta['label'] ),
+			'%%TDESC%%'    => esc_html( $meta['desc'] ),
+			'%%TABBR%%'    => esc_html( $meta['abbr'] ),
+			'%%WINDOW%%'   => (int) $window,
+			'%%LIMIT%%'    => (int) self::COUNT_LIMIT,
 		);
 		foreach ( $maps as $token => $field ) {
 			$when = '';
-			foreach ( self::types() as $slug => $row ) { $when .= '<xsl:when test="$t=\'' . esc_attr( $slug ) . '\'">' . esc_html( $row[ $field ] ) . '</xsl:when>'; }
+			foreach ( self::types() as $slug => $row ) {
+				$when .= '<xsl:when test="$t=\'' . esc_attr( $slug ) . '\'">' . esc_html( $row[ $field ] ) . '</xsl:when>'; }
 			$tokens[ '%%' . $token . '%%' ] = $when;
 		}
 		return strtr( self::xsl(), $tokens );

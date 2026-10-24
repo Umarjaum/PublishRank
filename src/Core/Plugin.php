@@ -71,7 +71,8 @@ defined( 'ABSPATH' ) || exit;
 final class Plugin {
 	private $registry;
 	private $loader;
-	public function registry() { return $this->registry; }
+	public function registry() {
+		return $this->registry; }
 	public function boot() {
 		if ( did_action( 'publishrank_seo_loaded' ) ) {
 			return;
@@ -159,49 +160,90 @@ final class Plugin {
 	}
 
 	/** Invalidate derived sitemap payloads when content or settings change. */
-		private function register_cache_invalidation() {
-$invalidate = static function () { SitemapCursorStore::bump_many( array( 'post', 'page', 'cpt', 'taxonomy', 'author', 'attachment', 'news', 'image', 'video' ) ); update_option( 'publishrank_seo_last_invalidation', gmdate( 'c' ), false ); };
-			$invalidate_news = static function () { SitemapCursorStore::bump( 'news' ); };
-			$invalidate_image = static function () { SitemapCursorStore::bump( 'image' ); };
-			$invalidate_video = static function () { SitemapCursorStore::bump( 'video' ); };
-$invalidate_post = static function ( $post_id = 0 ) {
-$type = $post_id ? get_post_type( $post_id ) : '';
-$providers = array( 'author', 'news', 'image', 'video' );
-if ( 'attachment' === $type ) { $providers[] = 'attachment'; } elseif ( 'page' === $type ) { $providers[] = 'page'; } elseif ( $type && 'post' !== $type ) { $providers[] = 'cpt'; } else { $providers[] = 'post'; }
-SitemapCursorStore::bump_many( $providers );
-};
-$invalidate_term = static function () { SitemapCursorStore::bump( 'taxonomy' ); };
-add_action( 'save_post', $invalidate_post, 20, 1 );
-add_action( 'deleted_post', $invalidate_post, 20, 1 );
-// Publish, unpublish, trash, restore and scheduled-publish transitions do not all fire save_post.
-add_action( 'transition_post_status', static function ( $new, $old, $post ) use ( $invalidate_post ) { if ( $new !== $old && $post instanceof \WP_Post ) { $invalidate_post( (int) $post->ID ); } }, 20, 3 );
-// Editor-controlled eligibility/robots/title metadata changes must refresh the News sitemap immediately.
-$news_meta_keys = array( '_publishrank_seo_news_eligible', '_publishrank_seo_robots', '_publishrank_seo_title', '_publishrank_seo_canonical', '_yoast_wpseo_meta-robots-noindex', 'rank_math_robots' );
-foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $meta_hook ) {
-	add_action( $meta_hook, static function ( $meta_id, $object_id, $meta_key ) use ( $news_meta_keys ) { if ( in_array( $meta_key, $news_meta_keys, true ) ) { SitemapCursorStore::bump( 'news' ); } }, 20, 3 );
-}
-add_action( 'clean_post_cache', $invalidate_post, 20, 1 );
-add_action( 'add_attachment', $invalidate_post, 20, 1 );
-add_action( 'edit_attachment', $invalidate_post, 20, 1 );
-add_action( 'delete_attachment', $invalidate_post, 20, 1 );
-add_action( 'created_term', $invalidate_term, 20 );
-add_action( 'edited_term', $invalidate_term, 20 );
-add_action( 'delete_term', $invalidate_term, 20 );
-add_action( 'set_object_terms', $invalidate_term, 20 );
-		$touch_term = static function ( $term_id ) { if ( function_exists( 'update_term_meta' ) && $term_id ) { update_term_meta( (int) $term_id, '_publishrank_last_modified', gmdate( 'c' ) ); } };
-		add_action( 'created_term', $touch_term, 20, 1 );
-		add_action( 'edited_term', $touch_term, 20, 1 );
-		$refresh_sitemap_routes = static function () { flush_rewrite_rules( false ); };
-		add_action( 'update_option_publishrank_sitemap_endpoint', $refresh_sitemap_routes, 20 );
-		add_action( 'update_option_publishrank_sitemap_aliases', $refresh_sitemap_routes, 20 );
-		foreach ( array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_window', 'publishrank_seo_news_post_types', 'publishrank_seo_news_max_urls', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_exclude_categories', 'publishrank_seo_news_keywords', 'publishrank_seo_news_genre' ) as $setting ) { add_action( 'update_option_' . $setting, $invalidate_news, 20 ); }
+	private function register_cache_invalidation() {
+		$invalidate          = static function () {
+			SitemapCursorStore::bump_many( array( 'post', 'page', 'cpt', 'taxonomy', 'author', 'attachment', 'news', 'image', 'video' ) );
+			update_option( 'publishrank_seo_last_invalidation', gmdate( 'c' ), false );
+		};
+		$invalidate_news     = static function () {
+			SitemapCursorStore::bump( 'news' );
+		};
+		$invalidate_image    = static function () {
+			SitemapCursorStore::bump( 'image' );
+		};
+		$invalidate_video    = static function () {
+			SitemapCursorStore::bump( 'video' );
+		};
+		$invalidate_post     = static function ( $post_id = 0 ) {
+			$type      = $post_id ? get_post_type( $post_id ) : '';
+			$providers = array( 'author', 'news', 'image', 'video' );
+			if ( 'attachment' === $type ) {
+				$providers[] = 'attachment';
+			} elseif ( 'page' === $type ) {
+				$providers[] = 'page';
+			} elseif ( $type && 'post' !== $type ) {
+				$providers[] = 'cpt';
+			} else {
+				$providers[] = 'post'; }
+			SitemapCursorStore::bump_many( $providers );
+		};
+			$invalidate_term = static function () {
+				SitemapCursorStore::bump( 'taxonomy' );
+			};
+			add_action( 'save_post', $invalidate_post, 20, 1 );
+			add_action( 'deleted_post', $invalidate_post, 20, 1 );
+			// Publish, unpublish, trash, restore and scheduled-publish transitions do not all fire save_post.
+			add_action(
+				'transition_post_status',
+				static function ( $new, $old, $post ) use ( $invalidate_post ) {
+					if ( $new !== $old && $post instanceof \WP_Post ) {
+						$invalidate_post( (int) $post->ID );
+					} },
+				20,
+				3
+			);
+			// Editor-controlled eligibility/robots/title metadata changes must refresh the News sitemap immediately.
+			$news_meta_keys = array( '_publishrank_seo_news_eligible', '_publishrank_seo_robots', '_publishrank_seo_title', '_publishrank_seo_canonical', '_yoast_wpseo_meta-robots-noindex', 'rank_math_robots' );
+		foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $meta_hook ) {
+			add_action(
+				$meta_hook,
+				static function ( $meta_id, $object_id, $meta_key ) use ( $news_meta_keys ) {
+					if ( in_array( $meta_key, $news_meta_keys, true ) ) {
+						SitemapCursorStore::bump( 'news' );
+					} },
+				20,
+				3
+			);
+		}
+			add_action( 'clean_post_cache', $invalidate_post, 20, 1 );
+			add_action( 'add_attachment', $invalidate_post, 20, 1 );
+			add_action( 'edit_attachment', $invalidate_post, 20, 1 );
+			add_action( 'delete_attachment', $invalidate_post, 20, 1 );
+			add_action( 'created_term', $invalidate_term, 20 );
+			add_action( 'edited_term', $invalidate_term, 20 );
+			add_action( 'delete_term', $invalidate_term, 20 );
+			add_action( 'set_object_terms', $invalidate_term, 20 );
+			$touch_term = static function ( $term_id ) {
+				if ( function_exists( 'update_term_meta' ) && $term_id ) {
+					update_term_meta( (int) $term_id, '_publishrank_last_modified', gmdate( 'c' ) );
+				} };
+			add_action( 'created_term', $touch_term, 20, 1 );
+			add_action( 'edited_term', $touch_term, 20, 1 );
+			$refresh_sitemap_routes = static function () {
+				flush_rewrite_rules( false );
+			};
+			add_action( 'update_option_publishrank_sitemap_endpoint', $refresh_sitemap_routes, 20 );
+			add_action( 'update_option_publishrank_sitemap_aliases', $refresh_sitemap_routes, 20 );
+		foreach ( array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_window', 'publishrank_seo_news_post_types', 'publishrank_seo_news_max_urls', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_exclude_categories', 'publishrank_seo_news_keywords', 'publishrank_seo_news_genre' ) as $setting ) {
+			add_action( 'update_option_' . $setting, $invalidate_news, 20 ); }
 			add_action( 'update_option_publishrank_seo_image_sitemap', $invalidate_image, 20 );
 			add_action( 'update_option_publishrank_seo_media_post_types', $invalidate, 20 );
 			add_action( 'update_option_publishrank_image_license_url', $invalidate_image, 20 );
-		add_action( 'update_option_publishrank_seo_video_sitemap', $invalidate_video, 20 );
-		add_action( 'update_option_publishrank_seo_publisher_name', $invalidate, 20 );
-		add_action( 'update_option_publishrank_seo_publisher_logo', $invalidate, 20 );
-		add_action( 'update_option_publishrank_seo_publisher_type', $invalidate, 20 );
-			foreach ( array( 'publishrank_primary_url', 'publishrank_media_host', 'publishrank_cdn_enabled', 'publishrank_cdn_host', 'publishrank_video_host', 'publishrank_api_host', 'publishrank_publication_short_name', 'publishrank_default_language', 'publishrank_indexnow_enabled', 'publishrank_indexnow_key', 'publishrank_indexnow_key_location', 'publishrank_indexnow_post_types', 'publishrank_seo_multilingual_enabled', 'publishrank_seo_hreflang_map', 'publishrank_seo_x_default_url', 'publishrank_default_locale', 'publishrank_timezone', 'publishrank_country', 'publishrank_copyright', 'publishrank_contact', 'publishrank_social_profiles', 'publishrank_author_mode', 'publishrank_seo_title_separator', 'publishrank_seo_default_robots', 'publishrank_seo_default_social_image', 'publishrank_seo_twitter_site', 'publishrank_sitemap_stylesheet', 'publishrank_robots_enabled', 'publishrank_robots_sitemaps', 'publishrank_robots_block_ai', 'publishrank_robots_custom', 'publishrank_seo_title_template_home', 'publishrank_seo_title_template_post', 'publishrank_seo_title_template_page', 'publishrank_seo_title_template_archive' ) as $setting ) { add_action( 'update_option_' . $setting, $invalidate, 20 ); }
+			add_action( 'update_option_publishrank_seo_video_sitemap', $invalidate_video, 20 );
+			add_action( 'update_option_publishrank_seo_publisher_name', $invalidate, 20 );
+			add_action( 'update_option_publishrank_seo_publisher_logo', $invalidate, 20 );
+			add_action( 'update_option_publishrank_seo_publisher_type', $invalidate, 20 );
+		foreach ( array( 'publishrank_primary_url', 'publishrank_media_host', 'publishrank_cdn_enabled', 'publishrank_cdn_host', 'publishrank_video_host', 'publishrank_api_host', 'publishrank_publication_short_name', 'publishrank_default_language', 'publishrank_indexnow_enabled', 'publishrank_indexnow_key', 'publishrank_indexnow_key_location', 'publishrank_indexnow_post_types', 'publishrank_seo_multilingual_enabled', 'publishrank_seo_hreflang_map', 'publishrank_seo_x_default_url', 'publishrank_default_locale', 'publishrank_timezone', 'publishrank_country', 'publishrank_copyright', 'publishrank_contact', 'publishrank_social_profiles', 'publishrank_author_mode', 'publishrank_seo_title_separator', 'publishrank_seo_default_robots', 'publishrank_seo_default_social_image', 'publishrank_seo_twitter_site', 'publishrank_sitemap_stylesheet', 'publishrank_robots_enabled', 'publishrank_robots_sitemaps', 'publishrank_robots_block_ai', 'publishrank_robots_custom', 'publishrank_seo_title_template_home', 'publishrank_seo_title_template_post', 'publishrank_seo_title_template_page', 'publishrank_seo_title_template_archive' ) as $setting ) {
+			add_action( 'update_option_' . $setting, $invalidate, 20 ); }
 	}
 }

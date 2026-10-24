@@ -23,42 +23,103 @@ final class RobotsPage {
 	public function settings() {
 		$defaults = RobotsTxt::defaults();
 		foreach ( array( RobotsTxt::OPT_ENABLED, RobotsTxt::OPT_SITEMAPS, RobotsTxt::OPT_LEGACY_AI, RobotsTxt::OPT_LOW_VALUE, RobotsTxt::OPT_TRACKING, RobotsTxt::OPT_ENV_BLOCK, RobotsTxt::OPT_HOUSEKEEP ) as $option ) {
-			register_setting( 'publishrank_seo_robots', $option, array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => isset( $defaults[ $option ] ) ? (bool) $defaults[ $option ] : false ) );
+			register_setting(
+				'publishrank_seo_robots',
+				$option,
+				array(
+					'type'              => 'boolean',
+					'sanitize_callback' => 'rest_sanitize_boolean',
+					'default'           => isset( $defaults[ $option ] ) ? (bool) $defaults[ $option ] : false,
+				)
+			);
 		}
-		register_setting( 'publishrank_seo_robots', RobotsTxt::OPT_AI_POLICY, array( 'type' => 'array', 'sanitize_callback' => array( RobotsTxt::class, 'sanitize_policy' ), 'default' => array() ) );
-		register_setting( 'publishrank_seo_robots', RobotsTxt::OPT_SIGNALS, array( 'type' => 'array', 'sanitize_callback' => array( RobotsTxt::class, 'sanitize_signals' ), 'default' => $defaults[ RobotsTxt::OPT_SIGNALS ] ) );
-		register_setting( 'publishrank_seo_robots', RobotsTxt::OPT_AI_PATHS, array( 'type' => 'string', 'sanitize_callback' => static function ( $v ) { return implode( "\n", RobotsTxt::sanitize_paths( $v ) ); }, 'default' => '' ) );
-		register_setting( 'publishrank_seo_robots', RobotsTxt::OPT_CUSTOM, array( 'type' => 'string', 'sanitize_callback' => array( RobotsTxt::class, 'clean_rules' ), 'default' => '' ) );
+		register_setting(
+			'publishrank_seo_robots',
+			RobotsTxt::OPT_AI_POLICY,
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( RobotsTxt::class, 'sanitize_policy' ),
+				'default'           => array(),
+			)
+		);
+		register_setting(
+			'publishrank_seo_robots',
+			RobotsTxt::OPT_SIGNALS,
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( RobotsTxt::class, 'sanitize_signals' ),
+				'default'           => $defaults[ RobotsTxt::OPT_SIGNALS ],
+			)
+		);
+		register_setting(
+			'publishrank_seo_robots',
+			RobotsTxt::OPT_AI_PATHS,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => static function ( $v ) {
+					return implode( "\n", RobotsTxt::sanitize_paths( $v ) );
+				},
+				'default'           => '',
+			)
+		);
+		register_setting(
+			'publishrank_seo_robots',
+			RobotsTxt::OPT_CUSTOM,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( RobotsTxt::class, 'clean_rules' ),
+				'default'           => '',
+			)
+		);
 	}
 
 	public function enqueue() {
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || false === strpos( (string) $screen->id, self::SLUG ) ) { return; }
+		if ( ! $screen || false === strpos( (string) $screen->id, self::SLUG ) ) {
+			return; }
 		$ver = Branding::version();
 		wp_enqueue_style( 'publishrank-robots', Branding::asset_url( 'css/robots-admin.css' ), array( 'publishrank-seo-palette' ), $ver . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/robots-admin.css' ) );
 		wp_enqueue_script( 'publishrank-robots', Branding::asset_url( 'js/robots-admin.js' ), array(), $ver . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/js/robots-admin.js' ), true );
 		$kinds = array();
-		foreach ( RobotsTxt::catalog() as $token => $bot ) { $kinds[ $token ] = $bot['kind']; }
-		wp_localize_script( 'publishrank-robots', 'publishrankRobots', array(
-			'url'   => esc_url_raw( rest_url( 'publishrank/v1/robots/preview' ) ),
-			'nonce' => wp_create_nonce( 'wp_rest' ),
-			'kinds' => $kinds,
-			'i18n'  => array(
-				'live' => __( 'Live', 'publishrank' ), 'updating' => __( 'Updating…', 'publishrank' ), 'updated' => __( 'Preview updated', 'publishrank' ),
-				'failed' => __( 'Could not refresh the preview', 'publishrank' ), 'copied' => __( 'Copied', 'publishrank' ), 'copy' => __( 'Copy', 'publishrank' ),
-				'allowed' => __( 'Allowed', 'publishrank' ), 'blocked' => __( 'Blocked', 'publishrank' ), 'rule' => __( 'Matching rule', 'publishrank' ),
-				'noRule' => __( 'No rule matches, so crawling is allowed.', 'publishrank' ), 'group' => __( 'Group', 'publishrank' ),
-				'foreign' => __( 'This URL is on a different host, so this file does not apply to it.', 'publishrank' ),
-				'bytes' => __( 'bytes', 'publishrank' ), 'yours' => __( 'Added by PublishRank', 'publishrank' ), 'base' => __( 'WordPress defaults and other plugins', 'publishrank' ),
-			),
-		) );
+		foreach ( RobotsTxt::catalog() as $token => $bot ) {
+			$kinds[ $token ] = $bot['kind']; }
+		wp_localize_script(
+			'publishrank-robots',
+			'publishrankRobots',
+			array(
+				'url'   => esc_url_raw( rest_url( 'publishrank/v1/robots/preview' ) ),
+				'nonce' => wp_create_nonce( 'wp_rest' ),
+				'kinds' => $kinds,
+				'i18n'  => array(
+					'live'     => __( 'Live', 'publishrank' ),
+					'updating' => __( 'Updating…', 'publishrank' ),
+					'updated'  => __( 'Preview updated', 'publishrank' ),
+					'failed'   => __( 'Could not refresh the preview', 'publishrank' ),
+					'copied'   => __( 'Copied', 'publishrank' ),
+					'copy'     => __( 'Copy', 'publishrank' ),
+					'allowed'  => __( 'Allowed', 'publishrank' ),
+					'blocked'  => __( 'Blocked', 'publishrank' ),
+					'rule'     => __( 'Matching rule', 'publishrank' ),
+					'noRule'   => __( 'No rule matches, so crawling is allowed.', 'publishrank' ),
+					'group'    => __( 'Group', 'publishrank' ),
+					'foreign'  => __( 'This URL is on a different host, so this file does not apply to it.', 'publishrank' ),
+					'bytes'    => __( 'bytes', 'publishrank' ),
+					'yours'    => __( 'Added by PublishRank', 'publishrank' ),
+					'base'     => __( 'WordPress defaults and other plugins', 'publishrank' ),
+				),
+			)
+		);
 	}
 
 	/** @param string $name Field name. */
 	private function policy_select( $token, $current ) {
 		$name = RobotsTxt::OPT_AI_POLICY . '[' . $token . ']';
 		echo '<select name="' . esc_attr( $name ) . '" data-bot="' . esc_attr( $token ) . '" aria-label="' . esc_attr( $token ) . '">';
-		foreach ( array( '' => __( 'Default', 'publishrank' ), 'allow' => __( 'Allow', 'publishrank' ), 'block' => __( 'Block', 'publishrank' ) ) as $value => $label ) {
+		foreach ( array(
+			''      => __( 'Default', 'publishrank' ),
+			'allow' => __( 'Allow', 'publishrank' ),
+			'block' => __( 'Block', 'publishrank' ),
+		) as $value => $label ) {
 			echo '<option value="' . esc_attr( $value ) . '"' . selected( $current, $value, false ) . '>' . esc_html( $label ) . '</option>';
 		}
 		echo '</select>';
@@ -120,7 +181,11 @@ final class RobotsPage {
 					<?php foreach ( RobotsTxt::kinds() as $kind => $label ) : ?>
 						<h3 class="pr-rb__kind"><?php echo esc_html( $label ); ?></h3>
 						<table class="widefat striped pr-rb__bots"><tbody>
-						<?php foreach ( RobotsTxt::catalog() as $token => $bot ) : if ( $bot['kind'] !== $kind ) { continue; } ?>
+						<?php
+						foreach ( RobotsTxt::catalog() as $token => $bot ) :
+							if ( $bot['kind'] !== $kind ) {
+								continue; }
+							?>
 							<tr>
 								<td class="pr-rb__bot"><code><?php echo esc_html( $token ); ?></code><span><?php echo esc_html( $bot['vendor'] ); ?></span></td>
 								<td class="pr-rb__desc"><?php echo esc_html( $bot['desc'] ); ?></td>
@@ -140,10 +205,18 @@ final class RobotsPage {
 					<p class="description"><?php esc_html_e( 'An emerging way to state how your content may be used, written as a Content-Signal line. Support is growing but not universal; leave on "Not set" if unsure.', 'publishrank' ); ?></p>
 					<div class="pr-rb__signals">
 					<?php
-					$fields = array( 'search' => __( 'Search indexing', 'publishrank' ), 'ai_input' => __( 'AI answers and citations', 'publishrank' ), 'ai_train' => __( 'AI model training', 'publishrank' ) );
+					$fields = array(
+						'search'   => __( 'Search indexing', 'publishrank' ),
+						'ai_input' => __( 'AI answers and citations', 'publishrank' ),
+						'ai_train' => __( 'AI model training', 'publishrank' ),
+					);
 					foreach ( $fields as $key => $label ) {
 						echo '<label>' . esc_html( $label ) . '<select name="' . esc_attr( RobotsTxt::OPT_SIGNALS . '[' . $key . ']' ) . '">';
-						foreach ( array( '' => __( 'Not set', 'publishrank' ), 'yes' => __( 'Allowed', 'publishrank' ), 'no' => __( 'Not allowed', 'publishrank' ) ) as $value => $text_label ) {
+						foreach ( array(
+							''    => __( 'Not set', 'publishrank' ),
+							'yes' => __( 'Allowed', 'publishrank' ),
+							'no'  => __( 'Not allowed', 'publishrank' ),
+						) as $value => $text_label ) {
 							echo '<option value="' . esc_attr( $value ) . '"' . selected( $signals[ $key ], $value, false ) . '>' . esc_html( $text_label ) . '</option>';
 						}
 						echo '</select></label>';
@@ -165,9 +238,12 @@ final class RobotsPage {
 					<div class="pr-rb__bar"><h2><i class="fa-solid fa-file-lines" aria-hidden="true"></i> <?php esc_html_e( 'What crawlers receive', 'publishrank' ); ?></h2>
 						<span class="pr-live-pill" data-rb-pill><i class="pr-live-dot"></i><span><?php esc_html_e( 'Live', 'publishrank' ); ?></span></span></div>
 					<p class="pr-rb__status" data-rb-status><?php esc_html_e( 'Reflects your current choices, saved or not.', 'publishrank' ); ?></p>
-					<pre class="pr-rb__pre" data-rb-text><?php
-						foreach ( preg_split( '/\n/', rtrim( $text ) ) as $i => $line ) { echo '<span class="' . ( $ours >= 0 && $i >= $ours ? 'is-ours' : '' ) . '">' . esc_html( $line ) . "</span>\n"; }
-					?></pre>
+					<pre class="pr-rb__pre" data-rb-text>
+					<?php
+					foreach ( preg_split( '/\n/', rtrim( $text ) ) as $i => $line ) {
+						echo '<span class="' . ( $ours >= 0 && $i >= $ours ? 'is-ours' : '' ) . '">' . esc_html( $line ) . "</span>\n"; }
+					?>
+					</pre>
 					<div class="pr-rb__foot"><span data-rb-bytes><?php echo esc_html( number_format_i18n( strlen( $text ) ) . ' ' . __( 'bytes', 'publishrank' ) ); ?></span>
 						<span><button type="button" class="button button-small" data-rb-copy><?php esc_html_e( 'Copy', 'publishrank' ); ?></button> <a class="button button-small" href="<?php echo esc_url( home_url( '/robots.txt' ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open live file', 'publishrank' ); ?></a></span></div>
 				</section>
@@ -191,7 +267,10 @@ final class RobotsPage {
 					<div class="pr-rb__test">
 						<input type="text" id="pr-test-url" placeholder="<?php echo esc_attr( home_url( '/example-article/' ) ); ?>" aria-label="<?php esc_attr_e( 'URL or path to test', 'publishrank' ); ?>" />
 						<select id="pr-test-agent" aria-label="<?php esc_attr_e( 'Crawler', 'publishrank' ); ?>">
-							<?php foreach ( array( 'Googlebot', 'Googlebot-News', 'Googlebot-Image', 'bingbot', 'GPTBot', 'OAI-SearchBot', 'ClaudeBot', 'PerplexityBot' ) as $agent ) { echo '<option>' . esc_html( $agent ) . '</option>'; } ?>
+							<?php
+							foreach ( array( 'Googlebot', 'Googlebot-News', 'Googlebot-Image', 'bingbot', 'GPTBot', 'OAI-SearchBot', 'ClaudeBot', 'PerplexityBot' ) as $agent ) {
+								echo '<option>' . esc_html( $agent ) . '</option>'; }
+							?>
 						</select>
 					</div>
 					<p class="pr-rb__result" data-rb-test hidden></p>

@@ -1,3 +1,10 @@
+= 2.9.70 =
+* Applied project-wide PHP coding-standard corrections and added a repository-owned PHP-scoped PHPCS ruleset compatible with PSR-4 class files.
+* PHPCS now reports zero errors; 168 warnings remain visible as a tracked non-blocking backlog.
+* Updated four source-level regression checks to accept formatting variations without relaxing the tested IndexNow, schema, or sitemap limits.
+* Verified all 31 standalone PHP tests, PHP lint, JavaScript syntax checks, and release packaging.
+* Recorded the unresolved live WordPress editor/screen interaction testing gap in `docs/RELEASE-2.9.70.md`.
+
 = 2.9.69 =
 * Resolve the follow-up WordPress Plugin Check findings: add translator context for placeholder strings, order printf placeholders, replace dynamic gettext labels with literal strings, and escape/Sanitize the flagged admin output.
 * Add a clean release ZIP builder that omits repository metadata, hidden files, tests, development tools, and local dependencies; the generated archive contains a single `publishrank/` directory.

@@ -74,7 +74,7 @@ final class FeatureExtractor {
 				continue;
 			}
 			foreach ( (array) $terms as $term ) {
-				$taxonomy_ids[ $taxonomy_name ][]  = (int) $term->term_id;
+				$taxonomy_ids[ $taxonomy_name ][]   = (int) $term->term_id;
 				$taxonomy_names[ $taxonomy_name ][] = $term->name;
 			}
 		}
