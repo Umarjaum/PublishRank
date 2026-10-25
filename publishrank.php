@@ -3,7 +3,7 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrank.netlify.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.9.71
+ * Version: 2.9.72
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.9.71' );
+define( 'PUBLISHRANK_SEO_VERSION', '2.9.72' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
@@ -51,6 +51,9 @@ register_activation_hook(
 		}
 		if ( class_exists( '\\PublishRankSEO\\Indexing\\IndexNow' ) ) {
 			\PublishRankSEO\Indexing\IndexNow::activate();
+		}
+		if ( class_exists( '\\PublishRankSEO\\Admin\\NewsPage' ) ) {
+			\PublishRankSEO\Admin\NewsPage::on_activation();
 		}
 		// Redirect an activating administrator to the first-run setup wizard.
 		set_transient( 'publishrank_seo_activation_redirect', 1, 120 );

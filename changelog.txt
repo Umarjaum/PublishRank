@@ -1,3 +1,10 @@
+= 2.9.72 =
+* Changed the opt-in News feed source to the official public GitHub announcements.json file and accepted GitHub Raw’s text/plain JSON delivery.
+* Added a branded, dismissible activation consent prompt with explicit enable, decline, and not-now choices; the feed remains off until enabled.
+* Disclosed GitHub Raw and Netlify image/link requests in the consent UI, privacy-policy suggestion, and WordPress.org readme.
+* Applied a solid-white alpha-mask treatment to the PublishRank sidebar icon so it matches the header logo.
+* Added activation-state, endpoint, and text/plain MIME regression coverage; synchronized version metadata to 2.9.72.
+
 = 2.9.71 =
 * Added an explicitly opt-in PublishRank News admin screen with a validated, cached live JSON feed, announcement images, summaries, details and approved links.
 * Protected feed controls with the standard capability/nonce guard; disabled remote requests by default and added cache cleanup, stale fallback, strict same-host HTTPS URL validation and privacy disclosures.

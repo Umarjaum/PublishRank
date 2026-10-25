@@ -18,3 +18,34 @@
 /* Narrow screens and crowded toolbars: icon-only so the right side never wraps below the black admin bar. */
 @media(max-width:1200px){#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item{padding:0 8px!important;gap:0}#wpadminbar #wp-admin-bar-publishrank-welcome>.ab-item .ab-label{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}}
 #wpadminbar #wp-admin-bar-publishrank-seo-toolbar:hover>.ab-sub-wrapper,#wpadminbar #wp-admin-bar-publishrank-seo-toolbar:focus-within>.ab-sub-wrapper{display:block!important;visibility:visible!important;opacity:1!important}
+
+
+/* WordPress renders menu_icon URLs as backgrounds, so an img-only filter is not enough. */
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image {
+  position: relative !important;
+  background-image: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img { display: none !important; }
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image::before {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin: auto !important;
+  background-color: #fff !important;
+  background-image: none !important;
+  color: transparent !important;
+  content: "" !important;
+  font-size: 0 !important;
+  -webkit-mask-image: url("../images/publishrank-menu-icon-20.png");
+  mask-image: url("../images/publishrank-menu-icon-20.png");
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}

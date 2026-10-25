@@ -37,6 +37,11 @@ function get_option( $name, $default = false ) {
 	return array_key_exists( $name, $GLOBALS['pr_news_options'] ) ? $GLOBALS['pr_news_options'][ $name ] : $default;
 }
 
+function update_option( $name, $value, $autoload = null ) {
+	$GLOBALS['pr_news_options'][ $name ] = $value;
+	return true;
+}
+
 function get_transient( $name ) {
 	return isset( $GLOBALS['pr_news_transients'][ $name ]['value'] ) ? $GLOBALS['pr_news_transients'][ $name ]['value'] : false;
 }
@@ -118,6 +123,13 @@ $method->setAccessible( true );
 $disabled = $method->invoke( $page );
 $assert( is_wp_error( $disabled ), 'Disabled feed returns a consent-required error.' );
 $assert( 0 === $GLOBALS['pr_news_http_calls'], 'No remote request occurs before opt-in.' );
+NewsPage::on_activation();
+$assert( true === get_option( NewsPage::PROMPT_PENDING_OPTION ), 'A fresh disabled installation queues the activation consent prompt.' );
+$assert( 0 === $GLOBALS['pr_news_http_calls'], 'Queuing the activation prompt does not request the feed.' );
+update_option( NewsPage::PROMPT_PENDING_OPTION, false );
+update_option( NewsPage::PROMPT_DECISION_OPTION, 'declined' );
+NewsPage::on_activation();
+$assert( false === get_option( NewsPage::PROMPT_PENDING_OPTION ), 'A saved decline does not cause the consent prompt to repeat on reactivation.' );
 
 $now = strtotime( '2026-10-24T00:00:00Z' );
 $item = static function ( $id, $title, $published, $extra = array() ) {
@@ -152,20 +164,25 @@ $fixture = array(
 $GLOBALS['pr_news_options'][ NewsPage::ENABLED_OPTION ] = true;
 $GLOBALS['pr_news_response'] = array(
 	'response' => array( 'code' => 200 ),
-	'headers'  => array( 'content-type' => 'application/json; charset=utf-8' ),
+	'headers'  => array( 'content-type' => 'text/plain; charset=utf-8' ),
 	'body'     => wp_json_encode( $fixture ),
 );
 $loaded = $method->invoke( $page );
-$assert( is_array( $loaded ) && empty( $loaded['stale'] ), 'Valid JSON feed loads successfully.' );
+$assert( is_array( $loaded ) && empty( $loaded['stale'] ), 'Valid GitHub Raw JSON served as text/plain loads successfully.' );
 $assert( 1 === $GLOBALS['pr_news_http_calls'], 'Opt-in makes exactly one request when the cache is empty.' );
+$assert( 'https://raw.githubusercontent.com/Umarjaum/publishrank_website/main/announcements.json' === NewsPage::FEED_URL, 'Feed constant uses the official GitHub Raw JSON endpoint.' );
 $assert( NewsPage::FEED_URL === $GLOBALS['pr_news_request_args']['url'], 'Request uses the fixed documented feed URL.' );
+$assert( 'https://github.com/Umarjaum/publishrank_website/blob/main/announcements.json' === NewsPage::FEED_SOURCE_URL, 'Disclosure links to the official GitHub announcements source.' );
 $assert( 'PublishRank News Feed; WordPress' === $GLOBALS['pr_news_request_args']['args']['user-agent'], 'Request uses the generic User-Agent.' );
 $assert( 3600 === $GLOBALS['pr_news_transients'][ NewsPage::CACHE_KEY ]['expiration'], 'Feed cache honors its one-hour interval.' );
 $assert( 86400 === $GLOBALS['pr_news_transients'][ NewsPage::STALE_KEY ]['expiration'], 'Stale fallback expires within one day.' );
 
 $again = $method->invoke( $page );
 $assert( 1 === $GLOBALS['pr_news_http_calls'], 'Fresh cached feed avoids another remote request.' );
-$visible = NewsPage::filter_announcements( $loaded['payload']['announcements'], $now, '2.9.71' );
+$GLOBALS['pr_news_response']['headers']['content-type'] = 'application/json; charset=utf-8';
+$standard_json = $method->invoke( $page, true );
+$assert( is_array( $standard_json ) && empty( $standard_json['stale'] ) && 2 === $GLOBALS['pr_news_http_calls'], 'The conventional application/json response remains supported.' );
+$visible = NewsPage::filter_announcements( $loaded['payload']['announcements'], $now, '2.9.72' );
 $visible_ids = array_map(
 	static function ( $entry ) {
 		return $entry['id'];
@@ -183,7 +200,7 @@ $stale = $method->invoke( $page, true );
 $assert( is_array( $stale ) && ! empty( $stale['stale'] ), 'A cached feed is available as a marked stale fallback after a refresh failure.' );
 $GLOBALS['pr_news_options'][ NewsPage::ENABLED_OPTION ] = false;
 $disabled_again = $method->invoke( $page, true );
-$assert( is_wp_error( $disabled_again ) && 2 === $GLOBALS['pr_news_http_calls'], 'Disabling the feed prevents further remote requests.' );
+$assert( is_wp_error( $disabled_again ) && 3 === $GLOBALS['pr_news_http_calls'], 'Disabling the feed prevents further remote requests.' );
 
 if ( ! empty( $failures ) ) {
 	foreach ( $failures as $failure ) {

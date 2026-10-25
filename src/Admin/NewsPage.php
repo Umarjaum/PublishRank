@@ -8,18 +8,37 @@ use PublishRankSEO\Core\Branding;
 defined( 'ABSPATH' ) || exit;
 
 final class NewsPage {
-	const SLUG           = 'publishrank-news';
-	const FEED_URL       = 'https://publishrank.netlify.app/announcements.json';
-	const ENABLED_OPTION = 'publishrank_news_feed_enabled';
-	const CACHE_KEY      = 'publishrank_news_feed_cache_v1';
-	const STALE_KEY      = 'publishrank_news_feed_stale_v1';
-	const NONCE_ACTION   = 'publishrank_news_feed_action';
+	const SLUG                   = 'publishrank-news';
+	const FEED_URL               = 'https://raw.githubusercontent.com/Umarjaum/publishrank_website/main/announcements.json';
+	const FEED_SOURCE_URL        = 'https://github.com/Umarjaum/publishrank_website/blob/main/announcements.json';
+	const ENABLED_OPTION         = 'publishrank_news_feed_enabled';
+	const PROMPT_PENDING_OPTION  = 'publishrank_news_activation_prompt_pending';
+	const PROMPT_DECISION_OPTION = 'publishrank_news_activation_prompt_decision';
+	const CACHE_KEY              = 'publishrank_news_feed_cache_v2';
+	const STALE_KEY              = 'publishrank_news_feed_stale_v2';
+	const LEGACY_CACHE_KEY       = 'publishrank_news_feed_cache_v1';
+	const LEGACY_STALE_KEY       = 'publishrank_news_feed_stale_v1';
+	const NONCE_ACTION           = 'publishrank_news_feed_action';
+	const PROMPT_NONCE_ACTION    = 'publishrank_news_activation_prompt';
 
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 20 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 		add_action( 'admin_post_publishrank_news_feed', array( $this, 'manage_feed' ) );
+		add_action( 'admin_post_publishrank_news_activation_prompt', array( $this, 'manage_activation_prompt' ) );
+		add_action( 'admin_footer', array( $this, 'render_activation_prompt' ) );
 		add_action( 'admin_init', array( $this, 'add_privacy_policy_content' ) );
+	}
+
+	/** Queue a one-time consent prompt for a fresh, not-yet-enabled installation. */
+	public static function on_activation() {
+		if ( get_option( self::ENABLED_OPTION, false ) ) {
+			update_option( self::PROMPT_PENDING_OPTION, false, false );
+			return;
+		}
+		if ( '' === (string) get_option( self::PROMPT_DECISION_OPTION, '' ) ) {
+			update_option( self::PROMPT_PENDING_OPTION, true, false );
+		}
 	}
 
 	public function menu() {
@@ -34,11 +53,66 @@ final class NewsPage {
 	}
 
 	public function enqueue() {
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || false === strpos( (string) $screen->id, self::SLUG ) ) {
+		$screen         = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$on_news_screen = $screen && false !== strpos( (string) $screen->id, self::SLUG );
+		$show_prompt    = get_option( self::PROMPT_PENDING_OPTION, false ) && current_user_can( 'manage_options' );
+		if ( ! $on_news_screen && ! $show_prompt ) {
 			return;
 		}
 		wp_enqueue_style( 'publishrank-news', Branding::asset_url( 'css/admin-news.css' ), array(), Branding::version() );
+		if ( $show_prompt ) {
+			wp_enqueue_script( 'publishrank-news-prompt', Branding::asset_url( 'js/admin-news-prompt.js' ), array(), Branding::version(), true );
+		}
+	}
+
+	/** Render a blocking, dismissible consent prompt after first activation. */
+	public function render_activation_prompt() {
+		if ( ! get_option( self::PROMPT_PENDING_OPTION, false ) || ! current_user_can( 'manage_options' ) || ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) ) {
+			return;
+		}
+
+		echo '<div class="pr-news-prompt" id="pr-news-activation-prompt" role="presentation"><div class="pr-news-prompt__backdrop" aria-hidden="true"></div><section class="pr-news-prompt__dialog" role="dialog" aria-modal="true" aria-labelledby="pr-news-prompt-title" aria-describedby="pr-news-prompt-description">';
+		echo '<form class="pr-news-prompt__form" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		wp_nonce_field( self::PROMPT_NONCE_ACTION );
+		echo '<input type="hidden" name="action" value="publishrank_news_activation_prompt" />';
+		echo '<button type="submit" class="pr-news-prompt__close" name="choice" value="dismiss" aria-label="' . esc_attr__( 'Not now; close this prompt', 'publishrank' ) . '">&times;</button>';
+		echo '<div class="pr-news-prompt__brand"><img src="' . esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ) . '" width="40" height="40" alt="" /><span>' . esc_html__( 'PUBLISHRANK NEWS', 'publishrank' ) . '</span></div>';
+		echo '<p class="pr-news-prompt__eyebrow">' . esc_html__( 'A choice before you begin', 'publishrank' ) . '</p><h2 id="pr-news-prompt-title">' . esc_html__( 'Would you like PublishRank News?', 'publishrank' ) . '</h2>';
+		echo '<p id="pr-news-prompt-description">' . esc_html__( 'News is optional. Nothing is requested until you choose Enable. If enabled, your WordPress server fetches a read-only JSON feed from GitHub when an administrator opens the News screen and its cache is due. GitHub receives the server IP and ordinary request metadata; no post content, visitor data, account details, or WordPress cookies are sent. News images, when present, are loaded by your browser from PublishRank’s website.', 'publishrank' ) . '</p>';
+		echo '<p class="pr-news-prompt__source">' . esc_html__( 'Official feed source:', 'publishrank' ) . ' <a href="' . esc_url( self::FEED_SOURCE_URL ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'GitHub announcements.json', 'publishrank' ) . '</a></p>';
+		echo '<p class="pr-news-prompt__policies"><a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">' . esc_html__( 'GitHub Privacy Statement', 'publishrank' ) . '</a><span aria-hidden="true"> · </span><a href="https://www.netlify.com/privacy/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Netlify Privacy Statement', 'publishrank' ) . '</a><span aria-hidden="true"> · </span><a href="https://www.netlify.com/legal/terms-of-use/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Netlify Terms', 'publishrank' ) . '</a></p>';
+		echo '<div class="pr-news-prompt__actions"><button type="submit" class="button button-primary pr-news-prompt__enable" name="choice" value="enable" data-pr-news-focus="true">' . esc_html__( 'Enable live News', 'publishrank' ) . '</button><button type="submit" class="button pr-news-prompt__decline" name="choice" value="decline">' . esc_html__( 'No thanks — keep News off', 'publishrank' ) . '</button></div>';
+		echo '<p class="pr-news-prompt__later">' . esc_html__( 'You can enable News later from PublishRank → News. “Not now” closes this prompt without connecting.', 'publishrank' ) . '</p></form></section></div>';
+	}
+
+	/** Save the administrator’s explicit activation-prompt choice. */
+	public function manage_activation_prompt() {
+		AdminAssets::guard( self::PROMPT_NONCE_ACTION );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- AdminAssets::guard() validates the matching action nonce above.
+		$choice = isset( $_POST['choice'] ) ? sanitize_key( wp_unslash( $_POST['choice'] ) ) : '';
+		if ( ! in_array( $choice, array( 'enable', 'decline', 'dismiss' ), true ) ) {
+			AdminAssets::done( Branding::MENU_SLUG, 'error', __( 'Choose a valid News preference.', 'publishrank' ) );
+		}
+
+		update_option( self::PROMPT_PENDING_OPTION, false, false );
+		if ( 'enable' === $choice ) {
+			update_option( self::ENABLED_OPTION, true );
+			update_option( self::PROMPT_DECISION_OPTION, 'enabled', false );
+			AdminAssets::done( self::SLUG, 'success', __( 'Live PublishRank News is enabled. The feed will load on the News screen.', 'publishrank' ) );
+		}
+
+		if ( 'decline' === $choice ) {
+			update_option( self::ENABLED_OPTION, false );
+			update_option( self::PROMPT_DECISION_OPTION, 'declined', false );
+			delete_transient( self::CACHE_KEY );
+			delete_transient( self::STALE_KEY );
+			delete_transient( self::LEGACY_CACHE_KEY );
+			delete_transient( self::LEGACY_STALE_KEY );
+			AdminAssets::done( Branding::MENU_SLUG, 'success', __( 'News remains off. No feed request will be made; you can change this later under PublishRank → News.', 'publishrank' ) );
+		}
+
+		update_option( self::PROMPT_DECISION_OPTION, 'dismissed', false );
+		AdminAssets::done( Branding::MENU_SLUG, 'success', __( 'The News prompt was dismissed. News stays off until you enable it under PublishRank → News.', 'publishrank' ) );
 	}
 
 	/** Process only the explicit enable, refresh, and disable actions. */
@@ -49,6 +123,8 @@ final class NewsPage {
 
 		if ( 'enable' === $action ) {
 			update_option( self::ENABLED_OPTION, true );
+			update_option( self::PROMPT_PENDING_OPTION, false, false );
+			update_option( self::PROMPT_DECISION_OPTION, 'enabled', false );
 			AdminAssets::done( self::SLUG, 'success', __( 'Live PublishRank News is enabled. The feed will load on this screen.', 'publishrank' ) );
 		}
 
@@ -56,6 +132,8 @@ final class NewsPage {
 			update_option( self::ENABLED_OPTION, false );
 			delete_transient( self::CACHE_KEY );
 			delete_transient( self::STALE_KEY );
+			delete_transient( self::LEGACY_CACHE_KEY );
+			delete_transient( self::LEGACY_STALE_KEY );
 			AdminAssets::done( self::SLUG, 'success', __( 'Live PublishRank News is disabled and its cached feed has been cleared.', 'publishrank' ) );
 		}
 
@@ -125,9 +203,11 @@ final class NewsPage {
 		}
 
 		$content = sprintf(
-			/* translators: 1: live PublishRank announcements feed URL, 2: Netlify privacy policy URL. */
-			__( '<p class="privacy-policy-tutorial">PublishRank News is optional and makes no request until an administrator enables it under PublishRank → News.</p><p>When enabled, the site server requests the read-only JSON feed at <a href="%1$s">%1$s</a> when an administrator opens the News screen and no cached copy is available. Automatic visits reuse the local cache, normally for one hour and never more than 24 hours; an administrator pressing Refresh makes an immediate new request. PublishRank sets a generic User-Agent and sends no post content, visitor data, or WordPress account details with the feed request. The feed provider can receive the server IP address and ordinary HTTP request metadata. If a feed item includes an image, the administrator’s browser loads that image from the same provider, which can receive the browser IP address and ordinary browser metadata such as the origin/referrer. No external JavaScript is loaded. The stale fallback copy expires within 24 hours. Disabling the feed clears its local cache. See the provider’s <a href="%2$s">privacy statement</a>.</p>', 'publishrank' ),
+			/* translators: 1: raw GitHub feed URL, 2: canonical GitHub source URL, 3: GitHub privacy policy URL, 4: Netlify privacy policy URL. */
+			__( '<p class="privacy-policy-tutorial">PublishRank News is optional. The activation prompt offers Enable, No thanks, and Not now; no feed request is made unless an administrator enables News.</p><p>When enabled, the site server requests the read-only JSON feed from <a href="%1$s">%1$s</a> when an administrator opens the News screen and no cached copy is available. The source file is <a href="%2$s">the public PublishRank announcements.json file on GitHub</a>. Automatic visits reuse the local cache, normally for one hour and never more than 24 hours; an administrator pressing Refresh makes an immediate new request. PublishRank sets a generic User-Agent and sends no post content, visitor data, WordPress account details, or WordPress cookies with the feed request. GitHub may receive the server IP address and ordinary HTTP request metadata. If an announcement includes an approved image, the administrator’s browser loads it from publishrank.netlify.app, which may receive the browser IP address and ordinary browser metadata such as the origin/referrer. No external JavaScript is loaded. The stale fallback copy expires within 24 hours. Disabling News clears the local feed cache. See the <a href="%3$s">GitHub Privacy Statement</a> and <a href="%4$s">Netlify Privacy Statement</a>.</p>', 'publishrank' ),
 			self::FEED_URL,
+			self::FEED_SOURCE_URL,
+			'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement',
 			'https://www.netlify.com/privacy/'
 		);
 		wp_add_privacy_policy_content( 'PublishRank SEO', wp_kses_post( wpautop( $content, false ) ) );
@@ -195,9 +275,9 @@ final class NewsPage {
 
 	private function render_consent() {
 		echo '<section class="pr-news__hero"><p class="pr-news__kicker">' . esc_html__( 'Publisher updates', 'publishrank' ) . '</p><h2 class="pr-news__title" id="pr-news-title">' . esc_html__( 'News for publishers', 'publishrank' ) . '</h2><p class="pr-news__lead">' . esc_html__( 'Enable the optional live feed to see PublishRank product updates and practical publishing guidance here.', 'publishrank' ) . '</p></section>';
-		echo '<section class="pr-news__consent" aria-labelledby="pr-news-consent-title"><h2 id="pr-news-consent-title">' . esc_html__( 'You choose whether to connect', 'publishrank' ) . '</h2><p>' . esc_html__( 'No connection is made until you enable the feed. After you opt in, this site’s server requests a small read-only JSON document from publishrank.netlify.app when an administrator opens this screen and the cache has expired. The request uses a generic PublishRank User-Agent; the provider receives the server IP address and ordinary request metadata. No WordPress content, visitor data, or user account details are sent. An administrator can also trigger an immediate request with Refresh.', 'publishrank' ) . '</p><p>' . esc_html__( 'Some announcements include images. If shown, your browser loads them from publishrank.netlify.app, which may receive the browser IP address and normal browser metadata, including the origin/referrer. The feed is displayed only on this page: the plugin ignores popup instructions in the feed and does not load remote scripts.', 'publishrank' ) . '</p>';
+		echo '<section class="pr-news__consent" aria-labelledby="pr-news-consent-title"><h2 id="pr-news-consent-title">' . esc_html__( 'You choose whether to connect', 'publishrank' ) . '</h2><p>' . esc_html__( 'No connection is made until you enable the feed. After you opt in, this site’s server requests a small read-only JSON document from GitHub Raw when an administrator opens this screen and the cache has expired. The source is the official public announcements.json file in the PublishRank website repository. GitHub may receive the server IP address and ordinary request metadata. The request uses a generic PublishRank User-Agent and sends no WordPress content, visitor data, account details, or WordPress cookies. An administrator can also trigger an immediate request with Refresh.', 'publishrank' ) . '</p><p>' . esc_html__( 'Some announcements include approved images hosted on publishrank.netlify.app. If shown, your browser loads them from that host, which may receive the browser IP address and normal browser metadata, including the origin/referrer. Feed links may also open the PublishRank website. The feed is displayed only on this page: the plugin ignores popup instructions in the feed and does not load remote scripts.', 'publishrank' ) . '</p>';
 		$this->render_action_form( 'enable', __( 'Enable live News', 'publishrank' ), 'button button-primary pr-news__button' );
-		echo '<details class="pr-news__details"><summary>' . esc_html__( 'Privacy and service details', 'publishrank' ) . '</summary><p>' . esc_html__( 'The feed is read-only, cached locally for no more than 24 hours, and may be disabled at any time. Disabling it clears the local feed cache. Read the ', 'publishrank' ) . '<a href="https://www.netlify.com/privacy/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Netlify Privacy Statement', 'publishrank' ) . '</a> ' . esc_html__( 'and', 'publishrank' ) . ' <a href="https://www.netlify.com/legal/terms-of-use/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Netlify Terms of Use', 'publishrank' ) . '</a>.</p></details></section>';
+		echo '<details class="pr-news__details"><summary>' . esc_html__( 'Privacy and service details', 'publishrank' ) . '</summary><p>' . esc_html__( 'Source file: ', 'publishrank' ) . '<a href="' . esc_url( self::FEED_SOURCE_URL ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'announcements.json on GitHub', 'publishrank' ) . '</a>. ' . esc_html__( 'The feed is read-only, cached locally for no more than 24 hours, and may be disabled at any time. Disabling it clears the local feed cache. Read the ', 'publishrank' ) . '<a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">' . esc_html__( 'GitHub Privacy Statement', 'publishrank' ) . '</a>, <a href="https://www.netlify.com/privacy/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Netlify Privacy Statement', 'publishrank' ) . '</a> ' . esc_html__( 'and', 'publishrank' ) . ' <a href="https://www.netlify.com/legal/terms-of-use/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Netlify Terms of Use', 'publishrank' ) . '</a>.</p></details></section>';
 	}
 
 	private function render_error() {
@@ -298,7 +378,7 @@ final class NewsPage {
 	}
 
 	private function render_privacy_note() {
-		echo '<p class="pr-news__status">' . esc_html__( 'Live feed is enabled. The feed request is made by your WordPress server; images shown above are requested by your browser from publishrank.netlify.app. No WordPress post content or visitor data is sent.', 'publishrank' ) . '</p>';
+		echo '<p class="pr-news__status">' . esc_html__( 'Live feed is enabled. Your WordPress server requests the JSON feed from GitHub Raw; images shown above may be requested by your browser from publishrank.netlify.app. No WordPress post content, visitor data, or account details are sent.', 'publishrank' ) . '</p>';
 	}
 
 	private function render_action_form( $action, $label, $button_class ) {
@@ -338,8 +418,12 @@ final class NewsPage {
 			return $this->stale_or_error();
 		}
 		$content_type = wp_remote_retrieve_header( $response, 'content-type' );
-		if ( is_string( $content_type ) && '' !== $content_type && false === stripos( $content_type, 'application/json' ) ) {
-			return $this->stale_or_error();
+		if ( is_string( $content_type ) && '' !== $content_type ) {
+			$mime_type = strtolower( trim( explode( ';', $content_type, 2 )[0] ) );
+			$is_json   = in_array( $mime_type, array( 'application/json', 'text/json', 'text/plain' ), true ) || 1 === preg_match( '/^application\/[a-z0-9.+-]+\+json$/', $mime_type );
+			if ( ! $is_json ) {
+				return $this->stale_or_error();
+			}
 		}
 		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $decoded ) || '1.0' !== ( isset( $decoded['schema_version'] ) ? (string) $decoded['schema_version'] : '' ) || empty( $decoded['feed'] ) || ! is_array( $decoded['feed'] ) || 'active' !== ( isset( $decoded['feed']['status'] ) ? sanitize_key( $decoded['feed']['status'] ) : '' ) || ! isset( $decoded['announcements'] ) || ! is_array( $decoded['announcements'] ) ) {
