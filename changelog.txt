@@ -1,3 +1,9 @@
+= 2.9.73 =
+* Losslessly optimized the large publisher banner, social-sharing image, and two animated WordPress directory icons while preserving exact decoded pixels, format, dimensions, 24-frame timing, and looping.
+* Reduced the combined size of the 20 shipped PNG/GIF assets from 4,083,704 to 3,948,728 bytes (134,976 bytes, 3.31%); no remote assets or image services were introduced.
+* Kept tiny Composer development-vendor SVG report icons unchanged; they are not runtime plugin assets and are excluded from the WordPress ZIP. The bundled Font Awesome vendor directory contains only CSS/fonts, not image files.
+* Synchronized plugin header, runtime version constant, and WordPress.org stable tag to 2.9.73.
+
 = 2.9.72 =
 * Changed the opt-in News feed source to the official public GitHub announcements.json file and accepted GitHub Raw’s text/plain JSON delivery.
 * Added a branded, dismissible activation consent prompt with explicit enable, decline, and not-now choices; the feed remains off until enabled.

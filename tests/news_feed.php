@@ -182,7 +182,7 @@ $assert( 1 === $GLOBALS['pr_news_http_calls'], 'Fresh cached feed avoids another
 $GLOBALS['pr_news_response']['headers']['content-type'] = 'application/json; charset=utf-8';
 $standard_json = $method->invoke( $page, true );
 $assert( is_array( $standard_json ) && empty( $standard_json['stale'] ) && 2 === $GLOBALS['pr_news_http_calls'], 'The conventional application/json response remains supported.' );
-$visible = NewsPage::filter_announcements( $loaded['payload']['announcements'], $now, '2.9.72' );
+$visible = NewsPage::filter_announcements( $loaded['payload']['announcements'], $now, '2.9.73' );
 $visible_ids = array_map(
 	static function ( $entry ) {
 		return $entry['id'];

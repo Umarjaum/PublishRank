@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.72
+Stable tag: 2.9.73
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -116,6 +116,11 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. The optional public footer credit, if enabled, links to the PublishRank website. No promotional credit is inserted by default.
 
 == Changelog ==
+
+= 2.9.73 =
+* Losslessly recompressed four shipped PNG/GIF assets while preserving original formats, dimensions, exact decoded pixels, and GIF frame timing.
+* Reduced the combined size of the 20 shipped PNG/GIF assets by 134,976 bytes (3.31%); no external image or font services were added.
+* Synchronized the plugin header, runtime version constant, and stable tag to 2.9.73.
 
 = 2.9.72 =
 * Changed the optional live News JSON source to the official public `announcements.json` in the PublishRank website repository and accepted GitHub Raw’s `text/plain` response while continuing to validate JSON schema.
