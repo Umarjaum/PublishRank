@@ -15,6 +15,7 @@ OMIT_TOP_LEVEL = {
     "tests",
     "docs",
     "tools",
+    "node_modules",
     "vendor",
     "vendor-bin",
     "dist",
@@ -22,8 +23,19 @@ OMIT_TOP_LEVEL = {
     "composer.lock",
     "README.md",
     "CONTRIBUTING.md",
+    "phpcs.xml.dist",
     "phpunit.xml.dist",
     "phpstan.neon",
+}
+OMIT_PATH_PARTS = {"node_modules"}
+OMIT_FILE_NAMES = {
+    "package.json",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lock",
+    "bun.lockb",
 }
 
 
@@ -53,9 +65,11 @@ def main() -> None:
         if not path.is_file():
             continue
         relative = path.relative_to(ROOT)
-        if relative.parts[0] in OMIT_TOP_LEVEL:
+        if relative.parts[0] in OMIT_TOP_LEVEL or any(part in OMIT_PATH_PARTS for part in relative.parts):
             continue
-        if any(part.startswith(".") or part == "__pycache__" for part in relative.parts) or path.suffix == ".pyc":
+        if relative.name in OMIT_FILE_NAMES:
+            continue
+        if any(part.startswith(".") or part == "__pycache__" for part in relative.parts) or path.suffix in {".pyc", ".map"}:
             continue
         if path == output:
             continue
