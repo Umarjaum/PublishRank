@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.75
+Stable tag: 2.9.76
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -32,7 +32,7 @@ Features include:
 * Configurable llms.txt and optional llms-full.txt resources.
 * Editorial SEO analysis, internal-link recommendations, sitemap diagnostics and WP-CLI commands.
 * Publisher Toolkit with permission-aware bulk SEO metadata editing, role-based access for the toolkit, and optional image alt-text assistance that preserves existing descriptions.
-* Always-on technical source provenance markers; the visible footer credit is off by default and shown only after an administrator opts in.
+* Always-on technical source provenance markers in page source; they do not add a promotional link or visible footer credit.
 
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
 
@@ -105,9 +105,13 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 
 **Traffic Guard (optional, local-only).** When enabled, validated request IPs and configured IP/CIDR and country rules are compared locally. The plugin reads `CF-Connecting-IP`, `X-Forwarded-For`, or `CF-IPCountry` only when the direct network peer is inside an administrator-configured trusted-proxy CIDR. It makes no GeoIP API requests, stores no per-visitor IP address, and sends no Traffic Guard data to PublishRank or another service. Country rules require a trusted proxy that supplies a valid country header; missing or invalid country data is allowed through. Country geolocation is approximate, and this feature is not a WAF or DDoS defense. Administrator requests and key WordPress recovery, API, feed, robots, and sitemap routes are exempt. When a request would be blocked and its User-Agent claims to be a major search-engine crawler, the server performs a reverse DNS lookup of the visiting IP and a forward lookup of the returned host name to confirm it (the verdict is cached under a salted hash, not the IP). These are DNS lookups made by your server, not HTTP requests, and no data is sent to PublishRank.
 
-Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. The optional public footer credit, if enabled, links to the PublishRank website. No promotional credit is inserted by default.
+Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. PublishRank's source-provenance markers are technical metadata only; the plugin does not insert a visible footer credit or promotional link.
 
 == Changelog ==
+
+= 2.9.76 =
+* Corrected the attribution disclosure to describe the always-on technical source markers accurately and remove references to a visible footer-credit toggle.
+* Updated release and security regression tests to match the 2.9.75 package, including the removed remote News feed and admin nonce requirements.
 
 = 2.9.75 =
 * Removed the optional live News feed (remote announcements.json request) and its admin screen, prompt, styles and script; the plugin no longer requests remote announcement data or remote images.

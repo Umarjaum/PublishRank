@@ -1,3 +1,8 @@
+= 2.9.76 =
+* Corrected the settings/readme attribution disclosure: technical provenance markers are always on, but the plugin does not insert a visible footer credit or promotional link.
+* Updated and expanded release regression checks for package metadata, local sitemap assets, removed remote News feed code, and nonce-protected admin handlers.
+* Prepared a clean WordPress.org submission ZIP with the 2.9.76 version and current stable tag.
+
 = 2.9.75 =
 * Removed the optional live News feed (remote announcements.json request) and its admin screen, prompt, styles and script; the plugin no longer requests remote announcement data or remote images.
 * Removed WordPress.org directory asset files (icons, banners, social images) from the plugin package; they are uploaded separately through SVN.

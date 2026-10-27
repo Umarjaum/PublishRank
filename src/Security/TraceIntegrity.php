@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class TraceIntegrity {
 	public function register() {
-		// Technical source provenance is always enabled. The visible footer credit is controlled separately.
+		// Technical source provenance is always enabled and does not add a visible footer credit.
 		add_action( 'wp_head', array( $this, 'frontend_trace' ), 0 );
 	}
 

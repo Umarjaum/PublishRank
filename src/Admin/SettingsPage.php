@@ -854,7 +854,7 @@ ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_h
 			</tbody></table>
 		<h2 class="pr-settings-section" id="pr-settings-attribution"><?php esc_html_e( 'Attribution', 'publishrank' ); ?></h2>
 			<table class="form-table" role="presentation"><tbody>
-				<tr><th scope="row"><?php esc_html_e( 'Version provenance metadata', 'publishrank' ); ?></th><td><strong><?php esc_html_e( 'Always enabled', 'publishrank' ); ?></strong><p class="description"><?php esc_html_e( 'PublishRank adds technical brand, version, and fingerprint markers to public HTML source. This source attribution cannot be disabled here and does not add a promotional link. Only the visible footer credit below can be turned off.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Version provenance metadata', 'publishrank' ); ?></th><td><strong><?php esc_html_e( 'Always enabled', 'publishrank' ); ?></strong><p class="description"><?php esc_html_e( 'PublishRank adds technical brand, version, and fingerprint markers to public HTML source. These source markers cannot be disabled here and do not add a promotional link or visible footer credit.', 'publishrank' ); ?></p></td></tr>
 			</tbody></table>
 	
 			<h2 class="pr-settings-section" id="pr-settings-breadcrumbs"><?php esc_html_e( 'Breadcrumbs', 'publishrank' ); ?></h2>

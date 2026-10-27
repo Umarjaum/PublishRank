@@ -14,7 +14,7 @@ $checks    = array(
 	'local analytics admin page is registered' => false !== strpos( $plugin, 'AnalyticsPage::class' ) && is_file( $root . '/src/Admin/AnalyticsPage.php' ),
 	'local snapshots retain up to 90 days' => 1 === preg_match( '/const\s+MAX_DAYS\s*=\s*90\s*;/', $collector ),
 	'IndexNow accepted and failed data are recorded' => false !== strpos( $collector, 'indexnow_accepted' ) && false !== strpos( $collector, 'indexnow_failed' ),
-	'analytics page links to the separate Search Console screen' => false !== strpos( $analytics, 'publishrank-search-console' ) && false !== strpos( $analytics, 'Search Console OAuth is separate from Supabase sign-in.' ),
+	'analytics page renders Search Console metrics and links to its connection screen' => false !== strpos( $analytics, 'render_search_console()' ) && false !== strpos( $analytics, 'publishrank-search-console' ) && false !== strpos( $analytics, 'Connect Search Console' ),
 	'Search Console connection screen is registered' => false !== strpos( $plugin, 'SearchConsolePage::class' ) && false !== strpos( $console, 'webmasters.readonly' ),
 	'feature documentation screen is registered' => false !== strpos( $plugin, 'HelpDocumentationPage::class' ),
 	'documentation includes accessible contextual help' => false !== strpos( $help, 'pr-help-icon' ) && false !== strpos( $help, 'aria-label' ),

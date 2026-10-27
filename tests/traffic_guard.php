@@ -18,6 +18,10 @@ if ( ! function_exists( 'is_preview' ) ) { function is_preview() { return false;
 if ( ! function_exists( 'is_trackback' ) ) { function is_trackback() { return false; } }
 if ( ! function_exists( 'is_embed' ) ) { function is_embed() { return false; } }
 if ( ! function_exists( 'get_query_var' ) ) { function get_query_var() { return false; } }
+if ( ! function_exists( 'sanitize_text_field' ) ) { function sanitize_text_field( $value ) { return trim( strip_tags( (string) $value ) ); } }
+if ( ! function_exists( 'wp_unslash' ) ) { function wp_unslash( $value ) { return stripslashes_deep( $value ); } }
+if ( ! function_exists( 'stripslashes_deep' ) ) { function stripslashes_deep( $value ) { if ( is_array( $value ) ) { return array_map( 'stripslashes_deep', $value ); } return is_string( $value ) ? stripslashes( $value ) : $value; } }
+if ( ! function_exists( 'wp_parse_url' ) ) { function wp_parse_url( $url, $component = -1 ) { return parse_url( $url, $component ); } }
 require __DIR__ . '/../src/Security/TrafficGuard.php';
 
 use PublishRankSEO\Security\TrafficGuard as Guard;
