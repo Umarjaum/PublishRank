@@ -125,6 +125,12 @@ final class PostMeta {
 		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $length ) : substr( $value, 0, $length );
 	}
 
+	/** Trim an already-sanitized string to a maximum number of characters. */
+	public static function truncate( $value, $length = 255 ) {
+		$value = (string) $value;
+		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $length ) : substr( $value, 0, $length );
+	}
+
 	public static function sanitize_url( $value ) {
 		$value = esc_url_raw( wp_unslash( (string) $value ) );
 		return wp_validate_redirect( $value, '' ) ? $value : '';
@@ -190,7 +196,7 @@ final class PostMeta {
 		);
 		foreach ( $text_fields as $key => $length ) {
 			if ( isset( $_POST[ $key ] ) ) {
-				update_post_meta( $post_id, $key, self::sanitize_text( $_POST[ $key ], $length ) ); }
+				update_post_meta( $post_id, $key, self::truncate( sanitize_text_field( wp_unslash( $_POST[ $key ] ) ), $length ) ); }
 		}
 		foreach ( array(
 			self::SECONDARY_KEYPHRASES => array( 10, 100 ),
@@ -198,16 +204,16 @@ final class PostMeta {
 		) as $key => $limits ) {
 			if ( ! isset( $_POST[ $key ] ) ) {
 				continue; }
-			$raw = wp_unslash( $_POST[ $key ] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
+			$raw = map_deep( wp_unslash( $_POST[ $key ] ), 'sanitize_text_field' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
 			update_post_meta( $post_id, $key, self::sanitize_list( $raw, $limits[0], $limits[1] ) );
 		}
 		foreach ( array( self::CANONICAL ) as $key ) {
 			if ( isset( $_POST[ $key ] ) ) {
-				update_post_meta( $post_id, $key, self::sanitize_url( $_POST[ $key ] ) ); }
+				update_post_meta( $post_id, $key, self::sanitize_url( esc_url_raw( wp_unslash( $_POST[ $key ] ) ) ) ); }
 		}
 		foreach ( array( self::OG_IMAGE, self::VIDEO_THUMBNAIL, self::AUTHOR_IMAGE, self::WEB_STORY_POSTER, self::WEB_STORY_PUBLISHER_LOGO ) as $key ) {
 			if ( isset( $_POST[ $key ] ) ) {
-				update_post_meta( $post_id, $key, self::sanitize_public_url( $_POST[ $key ] ) ); }
+				update_post_meta( $post_id, $key, self::sanitize_public_url( esc_url_raw( wp_unslash( $_POST[ $key ] ) ) ) ); }
 		}
 		if ( isset( $_POST[ self::ROBOTS ] ) ) {
 			$robots = sanitize_text_field( wp_unslash( $_POST[ self::ROBOTS ] ) );
@@ -229,7 +235,7 @@ final class PostMeta {
 		}
 		foreach ( array( self::VIDEO_URL, self::VIDEO_EMBED_URL, self::AUDIO_URL, self::VIDEO_THUMBNAIL ) as $key ) {
 			if ( isset( $_POST[ $key ] ) ) {
-				update_post_meta( $post_id, $key, self::sanitize_public_url( $_POST[ $key ] ) ); }
+				update_post_meta( $post_id, $key, self::sanitize_public_url( esc_url_raw( wp_unslash( $_POST[ $key ] ) ) ) ); }
 		}
 		foreach ( array(
 			self::AUDIO_DURATION    => 32,
@@ -250,7 +256,7 @@ final class PostMeta {
 			self::PRODUCT_CURRENCY  => 3,
 		) as $key => $length ) {
 			if ( isset( $_POST[ $key ] ) ) {
-				update_post_meta( $post_id, $key, self::sanitize_text( $_POST[ $key ], $length ) ); }
+				update_post_meta( $post_id, $key, self::truncate( sanitize_text_field( wp_unslash( $_POST[ $key ] ) ), $length ) ); }
 		}
 		if ( isset( $_POST[ self::PRODUCT_AVAILABILITY ] ) ) {
 			$availability = sanitize_text_field( wp_unslash( $_POST[ self::PRODUCT_AVAILABILITY ] ) );
@@ -259,11 +265,12 @@ final class PostMeta {
 		}
 		if ( isset( $_POST['publishrank_faq_items'] ) && is_array( $_POST['publishrank_faq_items'] ) ) {
 			$faq = array();
-			foreach ( array_slice( $_POST['publishrank_faq_items'], 0, 20 ) as $item ) {
+			$faq_posted = array_slice( map_deep( wp_unslash( $_POST['publishrank_faq_items'] ), 'sanitize_textarea_field' ), 0, 20 );
+			foreach ( $faq_posted as $item ) {
 				if ( ! is_array( $item ) ) {
 					continue; }
-				$q = isset( $item['q'] ) ? self::sanitize_text( $item['q'], 300 ) : '';
-				$a = isset( $item['a'] ) ? sanitize_textarea_field( wp_unslash( $item['a'] ) ) : '';
+				$q = isset( $item['q'] ) ? self::truncate( sanitize_text_field( $item['q'] ), 300 ) : '';
+				$a = isset( $item['a'] ) ? sanitize_textarea_field( $item['a'] ) : '';
 				if ( '' !== $q && '' !== $a ) {
 					$faq[] = array(
 						'q' => $q,
@@ -275,7 +282,7 @@ final class PostMeta {
 		if ( ! empty( $_POST['publishrank_seo_article_fields'] ) ) {
 			update_post_meta( $post_id, self::ACCESSIBLE_FOR_FREE, isset( $_POST[ self::ACCESSIBLE_FOR_FREE ] ) ? '1' : '0' ); }
 		if ( isset( $_POST[ self::NEWS_ELIGIBLE ] ) ) {
-			update_post_meta( $post_id, self::NEWS_ELIGIBLE, in_array( (string) wp_unslash( $_POST[ self::NEWS_ELIGIBLE ] ), array( '1' ), true ) ? '1' : '-1' );
+			update_post_meta( $post_id, self::NEWS_ELIGIBLE, in_array( sanitize_text_field( wp_unslash( $_POST[ self::NEWS_ELIGIBLE ] ) ), array( '1' ), true ) ? '1' : '-1' );
 		}
 		update_post_meta( $post_id, self::CORNERSTONE, isset( $_POST[ self::CORNERSTONE ] ) ? '1' : '0' );
 		if ( isset( $_POST[ self::PRIMARY_CATEGORY ] ) ) {

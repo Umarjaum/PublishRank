@@ -826,6 +826,7 @@ final class OnboardingPage {
 
 	public function save() {
 		AdminAssets::guard( 'publishrank_onboarding_save' );
+		check_admin_referer( 'publishrank_onboarding_save' ); // Explicit nonce verification for the request data read below.
 		$step     = isset( $_POST['step'] ) ? absint( $_POST['step'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$step     = max( 1, min( self::TOTAL_STEPS, $step ) );
 		$edit     = ! empty( $_POST['edit_mode'] ) ? '&edit=1' : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -834,7 +835,7 @@ final class OnboardingPage {
 		$errors   = array();
 
 		if ( 2 === $step && isset( $_POST['publishrank_identity_type'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$identity = $settings->sanitize_identity_type( wp_unslash( $_POST['publishrank_identity_type'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$identity = $settings->sanitize_identity_type( sanitize_text_field( wp_unslash( $_POST['publishrank_identity_type'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		}
 		$is_person = 'person' === $identity;
 
@@ -842,7 +843,7 @@ final class OnboardingPage {
 			if ( ( 'org' === $field['for'] && $is_person ) || ( 'person' === $field['for'] && ! $is_person ) ) {
 				continue;
 			}
-			$raw   = isset( $_POST[ $field['key'] ] ) ? wp_unslash( $_POST[ $field['key'] ] ) : ( 'toggle' === $field['type'] ? 0 : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput
+			$raw   = isset( $_POST[ $field['key'] ] ) ? map_deep( wp_unslash( $_POST[ $field['key'] ] ), 'sanitize_textarea_field' ) : ( 'toggle' === $field['type'] ? 0 : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$clean = $this->clean( $field, $raw, $settings );
 			if ( 'publishrank_identity_person_url' === $field['key'] && '' === $clean ) {
 				$clean = esc_url_raw( home_url( '/' ) ); }
@@ -856,7 +857,7 @@ final class OnboardingPage {
 		}
 
 		if ( 7 === $step ) {
-			$local_input = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? wp_unslash( $_POST['local_seo'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput
+			$local_input = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? map_deep( wp_unslash( $_POST['local_seo'] ), 'sanitize_textarea_field' ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			update_option( 'publishrank_local_seo_profile', \PublishRankSEO\SEO\LocalSEO::sanitize_profile( $local_input ) );
 		}
 
@@ -1186,7 +1187,6 @@ final class OnboardingPage {
 		}
 			echo '<div class="rhs-onboarding-card"><div class="rhs-setup-complete"><div class="rhs-setup-complete__icon" aria-hidden="true">✓</div><div class="rhs-setup-complete__copy"><span class="rhs-eyebrow">' . esc_html__( 'Setup complete', 'publishrank' ) . '</span><h2>' . esc_html__( 'Your PublishRank configuration', 'publishrank' ) . '</h2><small>' . esc_html__( 'One-time settings live in this wizard. Ongoing controls are in Settings.', 'publishrank' ) . '</small></div></div>';
 			$this->recap();
-			echo '<div class="rhs-feature-callout"><div class="rhs-feature-icon" aria-hidden="true">ID</div><div><strong>' . esc_html__( 'Next: publisher account and data connections', 'publishrank' ) . '</strong><p>' . esc_html__( 'Configure the shared PublishRank sign-in, connect Search Console with read-only access, and review webmaster submission tools.', 'publishrank' ) . '</p></div><a class="button button-secondary" href="' . esc_url( Branding::page_url( 'publishrank-auth' ) ) . '">' . esc_html__( 'Set up connections', 'publishrank' ) . '</a></div>';
 			echo '<div class="rhs-onboarding-actions"><a class="button button-primary" href="' . esc_url( $self . '&edit=1&step=2' ) . '">' . esc_html__( 'Edit setup', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( Branding::MENU_SLUG ) ) . '">' . esc_html__( 'Go to dashboard', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( 'publishrank' ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '</a><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" onsubmit="return confirm(&quot;' . esc_attr__( 'Restore recommended defaults? Your current wizard-managed values will be replaced.', 'publishrank' ) . '&quot;);"><input type="hidden" name="action" value="publishrank_onboarding_defaults" />';
 		wp_nonce_field( 'publishrank_onboarding_defaults' );
 		echo '<button class="button" type="submit">' . esc_html__( 'Restore recommended defaults', 'publishrank' ) . '</button></form></div></div></div>';

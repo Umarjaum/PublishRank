@@ -194,7 +194,7 @@ final class SchemaSuite {
 			return; }
 		if ( ! isset( $_POST['publishrank_author_schema_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['publishrank_author_schema_nonce'] ) ), 'publishrank_author_schema' ) ) {
 			return; }
-		update_user_meta( $user_id, '_publishrank_author_job_title', PostMeta::sanitize_text( isset( $_POST['pr_author_job_title'] ) ? $_POST['pr_author_job_title'] : '', 120 ) );
+		update_user_meta( $user_id, '_publishrank_author_job_title', PostMeta::truncate( isset( $_POST['pr_author_job_title'] ) ? sanitize_text_field( wp_unslash( $_POST['pr_author_job_title'] ) ) : '', 120 ) );
 		$social = isset( $_POST['pr_author_social'] ) ? sanitize_textarea_field( wp_unslash( $_POST['pr_author_social'] ) ) : '';
 		$social = implode( "\n", SchemaBuilder::author_social_urls_from_text( $social ) );
 			update_user_meta( $user_id, '_publishrank_author_social', $social );

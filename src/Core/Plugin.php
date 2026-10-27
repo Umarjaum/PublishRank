@@ -60,10 +60,8 @@ use PublishRankSEO\Admin\SEOScorePage;
 use PublishRankSEO\Admin\ExpertisePage;
 use PublishRankSEO\Admin\AnalyticsPage;
 use PublishRankSEO\Admin\SearchConsolePage;
-use PublishRankSEO\Admin\AuthPage;
 use PublishRankSEO\Admin\BaiduSubmissionPage;
 use PublishRankSEO\Admin\SiteVerificationPage;
-use PublishRankSEO\Admin\NewsPage;
 use PublishRankSEO\AnalyticsCollector;
 use PublishRankSEO\Google\LiveSync;
 
@@ -141,7 +139,6 @@ final class Plugin {
 				$this->loader->register( InsightsPage::class, false );
 				$this->loader->register( AnalyticsPage::class, false );
 				$this->loader->register( SearchConsolePage::class, false );
-				$this->loader->register( AuthPage::class, false );
 				$this->loader->register( BaiduSubmissionPage::class, false );
 			$this->loader->register( ConfigHistoryPage::class, false );
 				$this->loader->register( LLMSTxtPage::class, false );
@@ -150,7 +147,6 @@ final class Plugin {
 			$this->loader->register( IndexNowPage::class, false );
 			$this->loader->register( PublisherToolkitPage::class, false );
 			$this->loader->register( HelpDocumentationPage::class, false );
-			$this->loader->register( NewsPage::class, false );
 				$this->loader->register( SchemaPage::class, false );
 				$this->loader->register( SEOScorePage::class, false );
 				$this->loader->register( ExpertisePage::class, false );

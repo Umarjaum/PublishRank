@@ -35,6 +35,7 @@ final class IndexNowPage {
 
 	public function save() {
 		$this->guard( 'publishrank_indexnow_save' );
+		check_admin_referer( 'publishrank_indexnow_save' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		update_option( 'publishrank_indexnow_enabled', empty( $_POST['enabled'] ) ? 0 : 1, false );
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
@@ -185,6 +186,7 @@ final class IndexNowPage {
 
 	public function manual_submit() {
 		$this->guard( 'publishrank_indexnow_manual' );
+		check_admin_referer( 'publishrank_indexnow_manual' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$raw  = isset( $_POST['urls'] ) ? sanitize_textarea_field( wp_unslash( $_POST['urls'] ) ) : '';
 		$urls = array_slice( array_unique( array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n|,/', $raw ) ) ) ), 0, 100 );
@@ -209,6 +211,7 @@ final class IndexNowPage {
 
 	public function retry() {
 		$this->guard( 'publishrank_indexnow_retry' );
+		check_admin_referer( 'publishrank_indexnow_retry' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$url = isset( $_POST['url'] ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : '';
 		if ( ! $url || ! $this->same_host( $url ) ) {
@@ -309,18 +312,18 @@ final class IndexNowPage {
 	}
 
 	private function notice() {
-		if ( empty( $_GET['pr_indexnow_notice'] ) ) {
+		if ( empty( $_GET['pr_indexnow_notice'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 			return; }
-		$state    = sanitize_key( wp_unslash( $_GET['pr_indexnow_notice'] ) );
+		$state    = sanitize_key( wp_unslash( $_GET['pr_indexnow_notice'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 		$messages = array(
 			'saved'        => __( 'IndexNow settings saved.', 'publishrank' ),
 			'verified'     => __( 'The public key URL returned the expected key.', 'publishrank' ),
 			'rotated'      => __( 'A new key was generated. Re-test the public key URL before relying on submissions.', 'publishrank' ),
-			'submitted'    => sprintf( /* translators: %s: URL count. */ __( 'Submission requests sent for %s URL(s). Review the activity log for responses.', 'publishrank' ), isset( $_GET['pr_indexnow_detail'] ) ? sanitize_text_field( wp_unslash( $_GET['pr_indexnow_detail'] ) ) : '0' ),
+			'submitted'    => sprintf( /* translators: %s: URL count. */ __( 'Submission requests sent for %s URL(s). Review the activity log for responses.', 'publishrank' ), isset( $_GET['pr_indexnow_detail'] ) ? sanitize_text_field( wp_unslash( $_GET['pr_indexnow_detail'] ) ) : '0' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 			'retry_queued' => __( 'A retry has been queued.', 'publishrank' ),
 			'logs_cleared' => __( 'IndexNow submission history cleared.', 'publishrank' ),
-			'manual_error' => isset( $_GET['pr_indexnow_detail'] ) ? sanitize_text_field( wp_unslash( $_GET['pr_indexnow_detail'] ) ) : __( 'Unable to submit URLs.', 'publishrank' ),
-			'verify_error' => isset( $_GET['pr_indexnow_detail'] ) ? sanitize_text_field( wp_unslash( $_GET['pr_indexnow_detail'] ) ) : __( 'The key URL could not be verified.', 'publishrank' ),
+			'manual_error' => isset( $_GET['pr_indexnow_detail'] ) ? sanitize_text_field( wp_unslash( $_GET['pr_indexnow_detail'] ) ) : __( 'Unable to submit URLs.', 'publishrank' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
+			'verify_error' => isset( $_GET['pr_indexnow_detail'] ) ? sanitize_text_field( wp_unslash( $_GET['pr_indexnow_detail'] ) ) : __( 'The key URL could not be verified.', 'publishrank' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 		);
 		if ( isset( $messages[ $state ] ) ) {
 			echo '<div class="notice ' . ( in_array( $state, array( 'verify_error', 'manual_error' ), true ) ? 'notice-error' : 'notice-success' ) . ' is-dismissible"><p>' . esc_html( $messages[ $state ] ) . '</p></div>'; }

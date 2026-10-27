@@ -16,7 +16,7 @@ $checks     = array(
 	'optional full file discovery is conditional' => false !== strpos( $llms, 'OPTION_FULL_ENABLED' ) && false !== strpos( $llms, 'publishrank:llms-full-txt' ),
 	'rewrite rules flush only once after registration' => false !== strpos( $llms, 'maybe_flush_rewrite_rules' ) && false !== strpos( $llms, 'publishrank_llms_rewrite_ready' ),
 	'head provenance is registered through the primary metadata output module' => false !== strpos( $plugin, 'HeadOutput::class' ) && false !== strpos( $head, '<!-- SEO metadata output begin -->' ),
-	'visible footer credit is a separate administrator-controlled option' => false !== strpos( $settings, 'publishrank_public_attribution' ) && false !== strpos( $settings, 'administrator-controlled' ),
+	'technical provenance is clearly always enabled without an unsupported footer-credit toggle' => false !== strpos( $settings, 'Always enabled' ) && false !== strpos( $settings, 'source markers cannot be disabled' ) && false === strpos( $settings, 'publishrank_public_attribution' ),
 	'generator metadata includes an escaped plugin version' => false !== strpos( $head, 'name="generator" content="PublishRank' ) && false !== strpos( $head, 'esc_attr( PUBLISHRANK_SEO_VERSION )' ),
 	'neutral output marker preserves recovery behavior' => false !== strpos( $head, '<!-- SEO metadata output begin -->' ) && false !== strpos( $recovery, '<!-- SEO metadata output begin -->' ),
 	'diagnostics recognizes SEO output without public attribution' => false !== strpos( $scanner, '<!-- SEO metadata output begin -->' ),

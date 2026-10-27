@@ -31,8 +31,8 @@ final class RedirectController {
 			$target = $this->safe_target( (string) ( $rule['target'] ?? '' ) );
 			if ( '' === $target || $this->is_loop( $path, $target ) ) {
 				return; }
-			if ( get_option( 'publishrank_redirect_preserve_query', true ) && ! empty( $_SERVER['QUERY_STRING'] ) ) {
-				$target = add_query_arg( wp_parse_args( (string) wp_unslash( $_SERVER['QUERY_STRING'] ) ), $target ); }
+			if ( get_option( 'publishrank_redirect_preserve_query', true ) && ! empty( $_GET ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pass-through of public query args.
+				$target = add_query_arg( map_deep( wp_unslash( $_GET ), 'sanitize_text_field' ), $target ); } // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( get_option( 'publishrank_redirect_x_header', true ) ) {
 				header( 'X-Redirect-By: PublishRank' ); }
 			wp_safe_redirect( $target, $status );

@@ -105,7 +105,16 @@ final class SiteConnections {
 		if ( '' === $markup || ! self::in_scope() ) {
 			return; }
 		$this->printed = true;
-		echo $markup; // phpcs:ignore WordPress.Security.EscapeOutput -- every value is escaped in markup().
+		echo wp_kses(
+			$markup,
+			array(
+				'meta' => array(
+					'name'     => true,
+					'property' => true,
+					'content'  => true,
+				),
+			)
+		);
 	}
 
 	/** Build the escaped meta tags for all configured engines plus custom tags. */
@@ -204,10 +213,10 @@ final class SiteConnections {
 	public function maybe_serve_file() {
 		if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 			return; }
-		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : 'GET'; // phpcs:ignore
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
 		if ( 'GET' !== $method && 'HEAD' !== $method ) {
 			return; }
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$path = (string) wp_parse_url( $uri, PHP_URL_PATH );
 		if ( '' === $path || ! preg_match( '/\.(html?|xml|txt)$/i', $path ) ) {
 			return; }
@@ -226,7 +235,11 @@ final class SiteConnections {
 		header( 'X-Robots-Tag: noindex' );
 		header( 'Cache-Control: public, max-age=300' );
 		if ( 'HEAD' !== $method ) {
-			echo $file['content']; // phpcs:ignore WordPress.Security.EscapeOutput -- validated plain text, served with nosniff and a fixed content type.
+			$parts = self::split_declaration( $ext, $file['content'] );
+			if ( $parts['declaration'] ) {
+				echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+			}
+			echo wp_kses( $parts['body'], self::allowed_html( $ext ) );
 		}
 		exit;
 	}
@@ -279,6 +292,10 @@ final class SiteConnections {
 			return $error; }
 		$content = self::normalize_content( $content );
 		$error   = self::content_error( $content );
+		if ( '' === $error ) {
+			$content = self::sanitize_content( $name, $content );
+			$error   = '' === trim( $content ) ? __( 'The verification file is empty.', 'publishrank' ) : '';
+		}
 		if ( '' !== $error ) {
 			return $error; }
 		$files = self::files();
@@ -368,6 +385,67 @@ final class SiteConnections {
 		return str_replace( array( "\r\n", "\r" ), "\n", $content );
 	}
 
+	/**
+	 * Tags a verification file may contain. Verification files are plain tokens or minimal
+	 * meta/XML wrappers, so no attributes beyond these (and no event handlers) are kept.
+	 *
+	 * @param string $ext File extension without the dot.
+	 * @return array<string,array<string,bool>>
+	 */
+	public static function allowed_html( $ext ) {
+		if ( 'xml' === $ext ) {
+			return array(
+				'users' => array(),
+				'user'  => array(),
+			);
+		}
+		if ( 'txt' === $ext ) {
+			return array();
+		}
+		return array(
+			'html'  => array( 'lang' => true ),
+			'head'  => array(),
+			'title' => array(),
+			'meta'  => array(
+				'name'       => true,
+				'content'    => true,
+				'property'   => true,
+				'charset'    => true,
+				'http-equiv' => true,
+			),
+			'body'  => array(),
+		);
+	}
+
+	/**
+	 * Separate a leading XML declaration from the body so the body can be filtered.
+	 *
+	 * @param string $ext     File extension without the dot.
+	 * @param string $content Stored content.
+	 * @return array{declaration:bool,body:string}
+	 */
+	public static function split_declaration( $ext, $content ) {
+		$content = (string) $content;
+		if ( 'xml' === $ext && preg_match( '/^\s*<\?xml\s[^>]*\?>/i', $content, $m ) ) {
+			return array(
+				'declaration' => true,
+				'body'        => substr( $content, strlen( $m[0] ) ),
+			);
+		}
+		return array(
+			'declaration' => false,
+			'body'        => $content,
+		);
+	}
+
+	/** Reduce stored content to the allowed tags so what is saved is exactly what is served. */
+	public static function sanitize_content( $name, $content ) {
+		$ext   = strtolower( (string) pathinfo( (string) $name, PATHINFO_EXTENSION ) );
+		$parts = self::split_declaration( $ext, $content );
+		$body  = wp_kses( $parts['body'], self::allowed_html( $ext ) );
+		return ( 'xml' === $ext && '' !== trim( $body ) ? '<?xml version="1.0" encoding="UTF-8"?>' . "\n" : '' ) . ltrim( $body, "\n" );
+	}
+
 	/** @return string Empty when valid. */
 	public static function content_error( $content ) {
 		if ( '' === trim( $content ) ) {
@@ -377,7 +455,7 @@ final class SiteConnections {
 		if ( false !== strpos( $content, "\0" ) || ( function_exists( 'mb_check_encoding' ) && ! mb_check_encoding( $content, 'UTF-8' ) ) ) {
 			return __( 'The file is not plain UTF-8 text. Upload the original verification file from the search engine.', 'publishrank' );
 		}
-		if ( preg_match( '/<\?(php|=)|<script|<iframe|<object|<embed|javascript:/i', $content ) ) {
+		if ( preg_match( '/<\?(php|=)|<script|<iframe|<object|<embed|<svg|<style|<link|<img|<form|<base|<math|javascript:|vbscript:|data:text|\bon[a-z]+\s*=/i', $content ) ) {
 			return __( 'The file contains active code (PHP or script). Verification files are plain text, so it was refused for safety.', 'publishrank' );
 		}
 		return '';

@@ -134,7 +134,8 @@ final class ArticleIntelligence {
 	 * Request data collection (shared by analyze/suggest endpoints)
 	 * ------------------------------------------------------------------ */
 
-	private static function collect_request_data() {
+	private static function collect_request_data( $action ) {
+		check_ajax_referer( $action, 'nonce' );
 		$post_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$allowed = $post_id ? current_user_can( 'edit_post', $post_id ) : current_user_can( 'edit_posts' );
 		if ( ! $allowed ) {
@@ -169,7 +170,7 @@ final class ArticleIntelligence {
 	/** Live analysis of unsaved editor content. */
 	public function ajax() {
 		check_ajax_referer( self::AJAX_ACTION, 'nonce' );
-		$req      = self::collect_request_data();
+		$req      = self::collect_request_data( self::AJAX_ACTION );
 		$report   = self::analyze( $req['data'], true );
 		$previous = $req['post_id'] ? self::stored( $req['post_id'] ) : null;
 		wp_send_json_success(
@@ -185,7 +186,7 @@ final class ArticleIntelligence {
 	/** Generate (or regenerate) one kind of suggestion from the current editor payload. */
 	public function suggest() {
 		check_ajax_referer( self::SUGGEST_ACTION, 'nonce' );
-		$req     = self::collect_request_data();
+		$req     = self::collect_request_data( self::SUGGEST_ACTION );
 		$d       = $req['data'];
 		$kind    = isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$variant = isset( $_POST['variant'] ) ? absint( wp_unslash( $_POST['variant'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -237,7 +238,7 @@ final class ArticleIntelligence {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to update this article.', 'publishrank' ) ), 403 );
 		}
 		$field = isset( $_POST['field'] ) ? sanitize_key( wp_unslash( $_POST['field'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$value = isset( $_POST['value'] ) ? (string) wp_unslash( $_POST['value'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$value = isset( $_POST['value'] ) ? sanitize_textarea_field( wp_unslash( $_POST['value'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$ok    = false;
 		switch ( $field ) {
 			case 'keyphrase':

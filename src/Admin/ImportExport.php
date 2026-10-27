@@ -115,8 +115,9 @@ final class ImportExport {
 				wp_die( esc_html__( 'You are not allowed to import PublishRank settings.', 'publishrank' ), 403 );
 			}
 			check_admin_referer( 'publishrank_seo_import' );
-			$raw  = isset( $_POST['publishrank_seo_json'] ) ? wp_unslash( $_POST['publishrank_seo_json'] ) : '';
-			$data = json_decode( $raw, true );
+			// Title templates contain %%tokens%%; protect "%" so the text sanitizer does not strip hex-looking pairs such as %%date%%.
+			$raw  = isset( $_POST['publishrank_seo_json'] ) ? wp_strip_all_tags( wp_unslash( $_POST['publishrank_seo_json'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_admin_referer() above.
+			$data = json_decode( $raw, true ); // Every decoded value is sanitized per option key in sanitize() below.
 			if ( ! is_array( $data ) || ! in_array( ( $data['_schema'] ?? '' ), array( 'publishrank/v1', 'publishrank/v2' ), true ) ) {
 				wp_die( esc_html__( 'The import file is invalid.', 'publishrank' ), 400 );
 			}

@@ -28,10 +28,11 @@ final class BaiduSubmission {
 
 	public function save_settings() {
 		$this->guard( 'publishrank_baidu_save' );
+		check_admin_referer( 'publishrank_baidu_save' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-		$endpoint = isset( $_POST['endpoint'] ) ? trim( (string) wp_unslash( $_POST['endpoint'] ) ) : '';
+		$endpoint = isset( $_POST['endpoint'] ) ? trim( esc_url_raw( wp_unslash( $_POST['endpoint'] ) ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-		$automatic = isset( $_POST['automatic'] ) && '1' === (string) wp_unslash( $_POST['automatic'] );
+		$automatic = isset( $_POST['automatic'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['automatic'] ) );
 		if ( '' !== $endpoint && ! $this->valid_endpoint( $endpoint ) ) {
 			$this->redirect( 'error', __( 'Endpoint rejected. Use the HTTPS Baidu ordinary-inclusion URL shown for this verified site, with matching site and token parameters.', 'publishrank' ) ); }
 		if ( $automatic && '' === $endpoint && ! self::configured() ) {
@@ -48,8 +49,9 @@ final class BaiduSubmission {
 
 	public function submit_manual() {
 		$this->guard( 'publishrank_baidu_submit' );
+		check_admin_referer( 'publishrank_baidu_submit' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-		$text = isset( $_POST['urls'] ) ? (string) wp_unslash( $_POST['urls'] ) : '';
+		$text = isset( $_POST['urls'] ) ? wp_strip_all_tags( wp_unslash( $_POST['urls'] ) ) : '';
 		if ( strlen( $text ) > 524288 ) {
 			$this->redirect( 'error', __( 'The URL list is too large. Split it into batches of at most 2,000 URLs.', 'publishrank' ) ); }
 		$urls = preg_split( '/\r\n|\r|\n/', $text );

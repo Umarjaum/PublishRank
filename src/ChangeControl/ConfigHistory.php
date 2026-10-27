@@ -17,11 +17,11 @@ final class ConfigHistory {
 	public function changed( $old, $new, $option ) {
 		if ( wp_doing_ajax() && ! current_user_can( 'manage_options' ) ) {
 			return; }
-		if ( serialize( $old ) === serialize( $new ) ) {
+		if ( wp_json_encode( $old ) === wp_json_encode( $new ) ) {
 			return; }
 		$last = SnapshotStore::all();
 		/* translators: %s: WordPress option name. */
-		if ( ! empty( $last[0]['data'][ $option ] ) && serialize( $last[0]['data'][ $option ] ) === serialize( $old ) ) {
+		if ( ! empty( $last[0]['data'][ $option ] ) && wp_json_encode( $last[0]['data'][ $option ] ) === wp_json_encode( $old ) ) {
 			/* translators: %s: SEO setting option name that changed. */
 			SnapshotStore::snapshot( sprintf( __( 'Changed %s', 'publishrank' ), $option ) ); }
 	}

@@ -101,14 +101,15 @@ final class InternalLinksPage {
 
 	public function handle_settings() {
 		AdminAssets::guard( 'publishrank_internal_links_settings' );
+		check_admin_referer( 'publishrank_internal_links_settings' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
 		update_option( 'publishrank_internal_link_enabled', ! empty( $_POST['publishrank_internal_link_enabled'] ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
-		update_option( 'publishrank_internal_link_min_inbound', $this->sanitize_threshold( $_POST['publishrank_internal_link_min_inbound'] ?? 1 ) );
+		update_option( 'publishrank_internal_link_min_inbound', $this->sanitize_threshold( isset( $_POST['publishrank_internal_link_min_inbound'] ) ? absint( wp_unslash( $_POST['publishrank_internal_link_min_inbound'] ) ) : 1 ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
-		update_option( 'publishrank_internal_link_max_recommendations', $this->sanitize_max( $_POST['publishrank_internal_link_max_recommendations'] ?? 5 ) );
+		update_option( 'publishrank_internal_link_max_recommendations', $this->sanitize_max( isset( $_POST['publishrank_internal_link_max_recommendations'] ) ? absint( wp_unslash( $_POST['publishrank_internal_link_max_recommendations'] ) ) : 5 ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
-		update_option( 'publishrank_internal_link_post_types', $this->sanitize_post_types( $_POST['publishrank_internal_link_post_types'] ?? '' ) );
+		update_option( 'publishrank_internal_link_post_types', $this->sanitize_post_types( isset( $_POST['publishrank_internal_link_post_types'] ) ? sanitize_text_field( wp_unslash( $_POST['publishrank_internal_link_post_types'] ) ) : '' ) );
 		Store::invalidate_cache();
 		AdminAssets::done( self::SLUG, 'success', __( 'Internal-link settings saved. Run a graph scan after changing post types.', 'publishrank' ) );
 	}
@@ -149,9 +150,9 @@ final class InternalLinksPage {
 		exit;
 	}
 
-	private function recommendation_from_request() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
-		$id  = absint( $_POST['recommendation_id'] ?? 0 );
+	private function recommendation_from_request( $action ) {
+		check_admin_referer( $action );
+		$id  = isset( $_POST['recommendation_id'] ) ? absint( wp_unslash( $_POST['recommendation_id'] ) ) : 0;
 		$rec = Store::recommendation( $id );
 		if ( ! $rec ) {
 			AdminAssets::done( self::SLUG, 'error', __( 'Recommendation not found.', 'publishrank' ) );
@@ -160,7 +161,7 @@ final class InternalLinksPage {
 	}
 
 	public function handle_approve() {
-		$rec = $this->recommendation_from_request();
+		$rec = $this->recommendation_from_request( 'publishrank_internal_links_approve' );
 		$this->guard( 'publishrank_internal_links_approve', $rec->source_object_id, $rec->target_object_id );
 		if ( ! in_array( $rec->status, array( 'pending', 'dismissed' ), true ) ) {
 			AdminAssets::done( self::SLUG, 'error', __( 'This recommendation has already been handled.', 'publishrank' ) );
@@ -170,14 +171,14 @@ final class InternalLinksPage {
 	}
 
 	public function handle_dismiss() {
-		$rec = $this->recommendation_from_request();
+		$rec = $this->recommendation_from_request( 'publishrank_internal_links_dismiss' );
 		$this->guard( 'publishrank_internal_links_dismiss', $rec->source_object_id, $rec->target_object_id );
 		Store::mark_recommendation( $rec->id, 'dismissed' );
 		AdminAssets::done( self::SLUG, 'success', __( 'Recommendation dismissed.', 'publishrank' ) );
 	}
 
 	public function handle_insert() {
-		$rec = $this->recommendation_from_request();
+		$rec = $this->recommendation_from_request( 'publishrank_internal_links_insert' );
 		$this->guard( 'publishrank_internal_links_insert', $rec->source_object_id, $rec->target_object_id );
 		if ( 'approved' !== $rec->status ) {
 			AdminAssets::done( self::SLUG, 'error', __( 'Approve the recommendation before inserting it.', 'publishrank' ) );
@@ -219,8 +220,8 @@ final class InternalLinksPage {
 		}
 		$settings    = Store::settings();
 		$stats       = Store::stats();
-		$orphan_page = max( 1, absint( $_GET['orphan_page'] ?? 1 ) );
-		$rec_page    = max( 1, absint( $_GET['rec_page'] ?? 1 ) );
+		$orphan_page = max( 1, ( isset( $_GET['orphan_page'] ) ? absint( wp_unslash( $_GET['orphan_page'] ) ) : 1 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
+		$rec_page    = max( 1, ( isset( $_GET['rec_page'] ) ? absint( wp_unslash( $_GET['rec_page'] ) ) : 1 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 		$orphans     = Store::orphans( $settings['threshold'], $orphan_page, self::PER_PAGE );
 		$recs        = Store::recommendations( array( 'pending', 'approved', 'inserted' ), $rec_page, self::PER_PAGE );
 
@@ -300,7 +301,7 @@ final class InternalLinksPage {
 			echo '<tr><td colspan="5">' . esc_html__( 'No orphaned published content was found.', 'publishrank' ) . '</td></tr>';
 		}
 		echo '</tbody></table>';
-		$this->pagination( $stats['orphans'], max( 1, absint( $_GET['orphan_page'] ?? 1 ) ), 'orphan_page' );
+		$this->pagination( $stats['orphans'], max( 1, ( isset( $_GET['orphan_page'] ) ? absint( wp_unslash( $_GET['orphan_page'] ) ) : 1 ) ), 'orphan_page' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 		echo '</div>';
 	}
 
@@ -353,7 +354,7 @@ final class InternalLinksPage {
 			echo '<tr><td colspan="7">' . esc_html__( 'Run a graph scan to generate recommendations.', 'publishrank' ) . '</td></tr>';
 		}
 		echo '</tbody></table>';
-		$this->pagination( $total, max( 1, absint( $_GET['rec_page'] ?? 1 ) ), 'rec_page' );
+		$this->pagination( $total, max( 1, ( isset( $_GET['rec_page'] ) ? absint( wp_unslash( $_GET['rec_page'] ) ) : 1 ) ), 'rec_page' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 		echo '</div>';
 	}
 

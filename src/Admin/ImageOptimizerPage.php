@@ -65,6 +65,7 @@ final class ImageOptimizerPage {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The sanitized attachment ID selects the action nonce, which AdminAssets::guard validates before any change.
 		$id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
 		AdminAssets::guard( 'publishrank_optimize_image_' . $id );
+		check_admin_referer( 'publishrank_optimize_image_' . $id ); // Explicit nonce verification for the request data read below.
 		if ( ! $id || ! current_user_can( 'edit_post', $id ) ) {
 			wp_die( esc_html__( 'You cannot optimize this image.', 'publishrank' ) ); }
 		$file   = get_attached_file( $id );

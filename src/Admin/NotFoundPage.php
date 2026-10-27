@@ -45,9 +45,10 @@ final class NotFoundPage {
 
 	public function handle_redirect() {
 		AdminAssets::guard( 'publishrank_seo_404_redirect' );
+		check_admin_referer( 'publishrank_seo_404_redirect' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$id = isset( $_POST['entry'] ) ? sanitize_key( wp_unslash( $_POST['entry'] ) ) : '';
-		$target = isset( $_POST['target'] ) ? (string) wp_unslash( $_POST['target'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
+		$target = isset( $_POST['target'] ) ? esc_url_raw( wp_unslash( $_POST['target'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
 		$path   = '';
 		foreach ( self::entries() as $entry ) {
 			if ( self::entry_id( $entry ) === $id ) {
@@ -68,6 +69,7 @@ final class NotFoundPage {
 
 	public function handle_dismiss() {
 		AdminAssets::guard( 'publishrank_seo_404_dismiss' );
+		check_admin_referer( 'publishrank_seo_404_dismiss' );
 		$this->remove_entry( isset( $_GET['id'] ) ? sanitize_key( wp_unslash( $_GET['id'] ) ) : '' );
 		AdminAssets::done( self::SLUG, 'success', __( 'Entry dismissed.', 'publishrank' ) );
 	}

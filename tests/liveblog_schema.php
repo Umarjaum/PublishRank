@@ -22,8 +22,7 @@ require_once __DIR__ . '/../src/Schema/SchemaTypes.php';
 require_once __DIR__ . '/../src/Schema/LiveBlogSchema.php';
 require_once __DIR__ . '/../src/Schema/GraphOutput.php';
 require_once __DIR__ . '/../src/SEO/NewsroomSignals.php';
-require_once __DIR__ . '/../src/Core/FrontendHeadComment.php';
-use PublishRankSEO\Schema\LiveBlogSchema as L; use PublishRankSEO\Schema\GraphOutput as G; use PublishRankSEO\Core\FrontendHeadComment as C;
+use PublishRankSEO\Schema\LiveBlogSchema as L; use PublishRankSEO\Schema\GraphOutput as G;
 
 $failed = array(); $n = 0;
 $check = function ( $label, $ok ) use ( &$failed, &$n ) { ++$n; echo ( $ok ? 'PASS: ' : 'FAIL: ' ) . $label . "\n"; if ( ! $ok ) { $failed[] = $label; } };
@@ -86,17 +85,9 @@ $graph = file_get_contents( __DIR__ . '/../src/Schema/GraphOutput.php' );
 $check( '7b. ordinary article type fallback is still NewsArticle', false !== strpos( $graph, "'NewsArticle'" ) );
 $check( '7c. only article-allow-listed types reach article JSON-LD', false !== strpos( $graph, 'SchemaTypes::resolve' ) && false !== strpos( $graph, 'SchemaTypes::article_types()' ) && 'Report' === PublishRankSEO\Schema\SchemaTypes::resolve_in( 'Report', PublishRankSEO\Schema\SchemaTypes::article_types(), 'NewsArticle' ) && 'NewsArticle' === PublishRankSEO\Schema\SchemaTypes::resolve_in( 'Review', PublishRankSEO\Schema\SchemaTypes::article_types(), 'NewsArticle' ) );
 
-// Attribution.
-$ctx = array(); $GLOBALS['ctx'] = array();
-$check( '10a. attribution is disabled by default', false === C::should_emit() );
-$T['opts']['publishrank_source_attribution'] = true;
-$check( '10. attribution comment text names PublishRank SEO and the official URL', false !== strpos( C::COMMENT, 'PublishRank SEO' ) && false !== strpos( C::COMMENT, 'https://publishrank.netlify.app' ) && 0 === strpos( C::COMMENT, '<!--' ) );
-$check( '10b. emitted on normal front-end pages', true === C::should_emit() );
-foreach ( array( 'admin' => 'admin pages', 'ajax' => 'AJAX', 'feed' => 'feeds', 'sitemap' => 'sitemap responses' ) as $key => $label ) { $GLOBALS['ctx'] = array( $key => $key === 'sitemap' ? 'news' : true ); $check( "10c. not emitted for $label", false === C::should_emit() ); }
-$GLOBALS['ctx'] = array(); C::reset();
-ob_start(); $c = new C(); $c->render(); $c->render(); $once = ob_get_clean();
-$check( '10d. emitted once even if wp_head runs twice', 1 === substr_count( $once, '<!--' ) );
-$check( '10e. attribution can be disabled by the administrator', false !== strpos( file_get_contents( __DIR__ . '/../src/Core/FrontendHeadComment.php' ), "get_option( 'publishrank_source_attribution', false )" ) );
+// Technical provenance behavior is covered by tests/source_attribution.php.
+$plugin = file_get_contents( __DIR__ . '/../src/Core/Plugin.php' );
+$check( '10. always-on source provenance is registered by the current plugin bootstrap', false !== strpos( $plugin, 'TraceIntegrity::class' ) && is_file( __DIR__ . '/../src/Security/TraceIntegrity.php' ) );
 
 echo "\n$n checks, " . count( $failed ) . " failed\n";
 exit( $failed ? 1 : 0 );

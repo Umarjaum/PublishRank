@@ -35,12 +35,38 @@ final class SiteVerificationPage {
 		);
 	}
 
+	/** Keep only <meta name|property|content> markup from pasted verification text; strips everything else. */
+	public function clean_pasted( $value ) {
+		if ( ! is_scalar( $value ) ) {
+			return ''; }
+		return trim( wp_kses( (string) $value, self::meta_only() ) );
+	}
+
+	/** @return array<string, array<string, bool>> wp_kses allow-list: <meta name|property|content> only. */
+	private static function meta_only() {
+		return array(
+			'meta' => array(
+				'name'     => true,
+				'property' => true,
+				'content'  => true,
+			),
+		);
+	}
+
 	/* ---------------------------- handlers ---------------------------- */
 
 	public function save() {
 		AdminAssets::guard( 'publishrank_verification_save' );
+		check_admin_referer( 'publishrank_verification_save' ); // Explicit nonce verification for the request data read below.
 		$engines = SiteConnections::engines();
-		$posted   = isset( $_POST['token'] ) && is_array( $_POST['token'] ) ? wp_unslash( $_POST['token'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- normalised below. The matching action nonce is validated by the route guard before state-changing logic.
+		$posted   = array();
+		if ( isset( $_POST['token'] ) && is_array( $_POST['token'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by AdminAccess guard above.
+			foreach ( array_keys( $engines ) as $engine_key ) {
+				if ( isset( $_POST['token'][ $engine_key ] ) && is_string( $_POST['token'][ $engine_key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+					$posted[ $engine_key ] = trim( wp_kses( wp_unslash( $_POST['token'][ $engine_key ] ), self::meta_only() ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				}
+			}
+		}
 		$tokens   = array();
 		$moved    = array();
 		$warnings = array();
@@ -65,7 +91,7 @@ final class SiteVerificationPage {
 		foreach ( $moved as $owner => $token ) {
 			$tokens[ $owner ] = $token; }
 		// Smart box: recognised engine tags are routed to their field, anything else is kept as a custom tag.
-		$smart_raw = isset( $_POST['custom'] ) ? (string) wp_unslash( $_POST['custom'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- parsed and rebuilt below. The matching action nonce is validated by the route guard before state-changing logic.
+		$smart_raw = isset( $_POST['custom'] ) && is_string( $_POST['custom'] ) ? trim( wp_kses( wp_unslash( $_POST['custom'] ), self::meta_only() ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
 		$custom    = array();
 		$all       = SiteConnections::parse_meta_tags( $smart_raw, true );
 		$safe      = SiteConnections::parse_meta_tags( $smart_raw, false );
@@ -98,15 +124,20 @@ final class SiteVerificationPage {
 
 	public function upload() {
 		AdminAssets::guard( 'publishrank_verification_upload' );
+		check_admin_referer( 'publishrank_verification_upload' ); // Explicit nonce verification for the request data read below.
 		$ok  = array();
 		$bad = array();
-		$files = isset( $_FILES['verification_files'] ) && is_array( $_FILES['verification_files'] ) ? $_FILES['verification_files'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- each entry is validated below. The matching action nonce is validated by the route guard before state-changing logic.
+		$files = array(
+			'name'     => isset( $_FILES['verification_files']['name'] ) ? array_map( 'sanitize_file_name', (array) $_FILES['verification_files']['name'] ) : array(), // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
+			'error'    => isset( $_FILES['verification_files']['error'] ) ? array_map( 'absint', (array) $_FILES['verification_files']['error'] ) : array(), // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			'tmp_name' => isset( $_FILES['verification_files']['tmp_name'] ) ? array_map( 'sanitize_text_field', (array) $_FILES['verification_files']['tmp_name'] ) : array(), // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		);
 		if ( empty( $files['name'] ) ) {
 			AdminAssets::done( self::SLUG, 'error', __( 'Choose a verification file first.', 'publishrank' ) );
 		}
 		$names = (array) $files['name'];
 		foreach ( $names as $i => $original ) {
-			$name = trim( (string) wp_unslash( $original ) );
+			$name = trim( (string) $original );
 			$err  = isset( $files['error'][ $i ] ) ? (int) $files['error'][ $i ] : UPLOAD_ERR_NO_FILE;
 			if ( UPLOAD_ERR_NO_FILE === $err ) {
 				continue; }
@@ -143,8 +174,10 @@ final class SiteVerificationPage {
 
 	public function create() {
 		AdminAssets::guard( 'publishrank_verification_create' );
-		$name = isset( $_POST['file_name'] ) ? trim( (string) wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- validated by save_file(). The matching action nonce is validated by the route guard before state-changing logic.
-		$content = isset( $_POST['file_content'] ) ? (string) wp_unslash( $_POST['file_content'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- validated by save_file(). The matching action nonce is validated by the route guard before state-changing logic.
+		check_admin_referer( 'publishrank_verification_create' ); // Explicit nonce verification for the request data read below.
+		$name    = isset( $_POST['file_name'] ) ? sanitize_file_name( wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
+		$ext     = strtolower( (string) pathinfo( $name, PATHINFO_EXTENSION ) );
+		$content = isset( $_POST['file_content'] ) ? wp_kses( wp_unslash( $_POST['file_content'] ), SiteConnections::allowed_html( $ext ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$error   = SiteConnections::save_file( $name, $content );
 		if ( '' !== $error ) {
 			AdminAssets::done( self::SLUG, 'error', $error ); }
@@ -155,7 +188,8 @@ final class SiteVerificationPage {
 
 	public function delete() {
 		AdminAssets::guard( 'publishrank_verification_delete' );
-		$name = isset( $_POST['file_name'] ) ? trim( (string) wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- matched against stored keys. The matching action nonce is validated by the route guard before state-changing logic.
+		check_admin_referer( 'publishrank_verification_delete' ); // Explicit nonce verification for the request data read below.
+		$name = isset( $_POST['file_name'] ) ? sanitize_file_name( wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
 		if ( SiteConnections::delete_file( $name ) ) {
 			SiteConnections::purge_caches();
 			/* translators: %s: file name. */

@@ -24,8 +24,9 @@ final class RedirectsPage {
 
 	public function handle_add() {
 		AdminAssets::guard( 'publishrank_seo_redirect_add' );
-		$source = isset( $_POST['source'] ) ? (string) wp_unslash( $_POST['source'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
-		$target = isset( $_POST['target'] ) ? (string) wp_unslash( $_POST['target'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
+		check_admin_referer( 'publishrank_seo_redirect_add' ); // Explicit nonce verification for the request data read below.
+		$source = isset( $_POST['source'] ) ? sanitize_text_field( wp_unslash( $_POST['source'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
+		$target = isset( $_POST['target'] ) ? esc_url_raw( wp_unslash( $_POST['target'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$status = isset( $_POST['status'] ) ? absint( $_POST['status'] ) : 301;
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
@@ -38,7 +39,8 @@ final class RedirectsPage {
 
 	public function handle_bulk() {
 		AdminAssets::guard( 'publishrank_seo_redirect_bulk' );
-		$text  = isset( $_POST['bulk'] ) ? (string) wp_unslash( $_POST['bulk'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
+		check_admin_referer( 'publishrank_seo_redirect_bulk' ); // Explicit nonce verification for the request data read below.
+		$text  = isset( $_POST['bulk'] ) ? wp_strip_all_tags( wp_unslash( $_POST['bulk'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
 		$rows  = array_slice( RedirectStore::parse_bulk( $text ), 0, 500 );
 		$added = 0;
 		$skip  = 0;
@@ -55,6 +57,7 @@ final class RedirectsPage {
 
 	public function handle_settings() {
 		AdminAssets::guard( 'publishrank_seo_redirect_settings' );
+		check_admin_referer( 'publishrank_seo_redirect_settings' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		update_option( 'publishrank_redirect_enabled', ! empty( $_POST['enabled'] ) ? 1 : 0, false );
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
@@ -64,12 +67,13 @@ final class RedirectsPage {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		update_option( 'publishrank_redirect_x_header', ! empty( $_POST['x_header'] ) ? 1 : 0, false );
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-		update_option( 'publishrank_redirect_max_hops', min( 50, max( 1, absint( isset( $_POST['max_hops'] ) ? $_POST['max_hops'] : 10 ) ) ), false );
+		update_option( 'publishrank_redirect_max_hops', min( 50, max( 1, isset( $_POST['max_hops'] ) ? absint( wp_unslash( $_POST['max_hops'] ) ) : 10 ) ), false );
 		AdminAssets::done( self::SLUG, 'success', __( 'Redirect behavior saved.', 'publishrank' ) );
 	}
 
 	public function handle_delete() {
 		AdminAssets::guard( 'publishrank_seo_redirect_delete' );
+		check_admin_referer( 'publishrank_seo_redirect_delete' );
 		$id = isset( $_GET['id'] ) ? sanitize_key( wp_unslash( $_GET['id'] ) ) : '';
 		RedirectStore::delete( $id );
 		AdminAssets::done( self::SLUG, 'success', __( 'Redirect removed.', 'publishrank' ) );

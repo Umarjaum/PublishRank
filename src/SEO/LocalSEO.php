@@ -189,7 +189,7 @@ final class LocalSEO {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to manage Local SEO.', 'publishrank' ) ); }
 		check_admin_referer( 'publishrank_local_seo_save' );
-		$input   = isset( $_POST['local_seo'] ) ? wp_unslash( $_POST['local_seo'] ) : array();
+		$input   = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? map_deep( wp_unslash( $_POST['local_seo'] ), 'sanitize_textarea_field' ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_admin_referer() above.
 		$profile = self::sanitize_profile( $input );
 		update_option( self::OPTION, $profile, false );
 		wp_safe_redirect(
@@ -237,7 +237,7 @@ final class LocalSEO {
 		$same_as = is_array( $p['same_as'] ) ? implode( "\n", $p['same_as'] ) : '';
 		echo '<div class="wrap">';
 		\PublishRankSEO\Admin\AdminAssets::header( __( 'Local SEO', 'publishrank' ), __( 'Configure a real-world business location and emit connected LocalBusiness structured data. Keep this disabled if your site has no public-facing business location.', 'publishrank' ) );
-		if ( isset( $_GET['updated'] ) ) {
+		if ( isset( $_GET['updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Local SEO settings saved.', 'publishrank' ) . '</p></div>'; }
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="publishrank_local_seo_save" />';
 		wp_nonce_field( 'publishrank_local_seo_save' );

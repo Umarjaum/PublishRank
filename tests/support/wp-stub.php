@@ -16,6 +16,8 @@ function __( $t ) { return $t; } function _n( $a, $b, $n ) { return 1 === $n ? $
 function esc_html( $t ) { return htmlspecialchars( (string) $t ); } function esc_attr( $t ) { return htmlspecialchars( (string) $t ); } function esc_url( $t ) { return htmlspecialchars( (string) $t ); } function esc_textarea( $t ) { return htmlspecialchars( (string) $t ); } function esc_url_raw( $u ) { return filter_var( trim( (string) $u ), FILTER_VALIDATE_URL ) ? trim( $u ) : ''; }
 function esc_attr_e( $t ) { echo htmlspecialchars( $t ); }
 function sanitize_text_field( $t ) { return trim( strip_tags( (string) $t ) ); } function sanitize_textarea_field( $t ) { return trim( strip_tags( (string) $t ) ); }
+function map_deep( $value, $callback ) { if ( is_array( $value ) ) { foreach ( $value as $key => $item ) { $value[ $key ] = map_deep( $item, $callback ); } return $value; } return call_user_func( $callback, $value ); }
+function wp_kses( $html, $allowed_html = array() ) { return (string) $html; }
 function sanitize_key( $k ) { return strtolower( preg_replace( '/[^A-Za-z0-9_\-]/', '', (string) $k ) ); } function sanitize_email( $e ) { return filter_var( $e, FILTER_VALIDATE_EMAIL ) ? $e : ''; }
 function wp_unslash( $v ) { return $v; } function absint( $v ) { return abs( (int) $v ); } function wp_parse_args( $a, $d ) { return array_merge( $d, $a ); }
 function checked( $a, $b = true, $e = true ) { $r = ( (string) $a === (string) $b ) ? ' checked="checked"' : ''; if ( $e ) echo $r; return $r; }

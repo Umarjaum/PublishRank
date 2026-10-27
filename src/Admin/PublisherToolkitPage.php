@@ -54,7 +54,7 @@ final class PublisherToolkitPage {
 		if ( ! current_user_can( 'manage_publishrank_seo' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access Publisher Toolkit.', 'publishrank' ) );
 		}
-		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'bulk';
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'bulk'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 		if ( ! in_array( $tab, array( 'bulk', 'images', 'access' ), true ) || ( 'bulk' !== $tab && ! current_user_can( 'manage_options' ) ) ) {
 			$tab = 'bulk';
 		}
@@ -95,10 +95,10 @@ final class PublisherToolkitPage {
 	}
 
 	private function notice() {
-		if ( empty( $_GET['publishrank_notice'] ) ) {
+		if ( empty( $_GET['publishrank_notice'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 			return;
 		}
-		$notice   = sanitize_key( wp_unslash( $_GET['publishrank_notice'] ) );
+		$notice   = sanitize_key( wp_unslash( $_GET['publishrank_notice'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 		$messages = array(
 			'updated'        => __( 'SEO metadata updated for the selected content.', 'publishrank' ),
 			'alt_filled'     => __( 'Missing image alt text was filled where a useful attachment title was available. Existing alt text was preserved.', 'publishrank' ),
@@ -110,8 +110,8 @@ final class PublisherToolkitPage {
 	}
 
 	private function bulk_tab() {
-		$page_num = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
-		$search   = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+		$page_num = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
+		$search   = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 		$query    = new \WP_Query(
 			array(
 				'post_type'      => $this->editable_post_types(),

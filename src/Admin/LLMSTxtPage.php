@@ -21,6 +21,7 @@ final class LLMSTxtPage {
 
 	public function save() {
 		AdminAssets::guard( 'publishrank_llms_save' );
+		check_admin_referer( 'publishrank_llms_save' ); // Explicit nonce verification for the request data read below.
 		$fields = array(
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 			LLMSTxt::OPTION_ENABLED       => ! empty( $_POST[ LLMSTxt::OPTION_ENABLED ] ),
@@ -41,7 +42,7 @@ final class LLMSTxtPage {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 			LLMSTxt::OPTION_POST_COUNT    => max( 1, min( 100, absint( $_POST[ LLMSTxt::OPTION_POST_COUNT ] ?? 20 ) ) ),
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-			LLMSTxt::OPTION_CUSTOM        => $this->sanitize_custom( wp_unslash( $_POST[ LLMSTxt::OPTION_CUSTOM ] ?? '' ) ),
+			LLMSTxt::OPTION_CUSTOM        => $this->sanitize_custom( isset( $_POST[ LLMSTxt::OPTION_CUSTOM ] ) ? wp_strip_all_tags( wp_unslash( $_POST[ LLMSTxt::OPTION_CUSTOM ] ) ) : '' ),
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 			LLMSTxt::OPTION_FULL_ENABLED  => ! empty( $_POST[ LLMSTxt::OPTION_FULL_ENABLED ] ),
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.

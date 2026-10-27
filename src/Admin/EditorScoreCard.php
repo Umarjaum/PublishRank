@@ -22,21 +22,19 @@ final class EditorScoreCard {
 		wp_enqueue_script( 'publishrank-editor-score-card', Branding::asset_url( 'js/editor-score-card.js' ), array( 'jquery' ), $script_version, true );
 	}
 
+	/** Print the score ring. Every dynamic value is escaped where it is printed. */
 	private static function ring( $score, $rating ) {
 		$score = max( 0, min( 100, (int) $score ) );
 		$r     = 19;
 		$c     = 2 * M_PI * $r;
 		$off   = $c * ( 1 - $score / 100 );
-		return sprintf(
-			'<svg class="pr-editor-score-card__ring pr-ring--%1$s" width="48" height="48" viewBox="0 0 48 48" role="img" aria-label="%2$s"><defs><linearGradient id="publishrank-score-gradient" x1="0" y1="48" x2="48" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e53935"/><stop offset=".5" stop-color="#2196f3"/><stop offset="1" stop-color="#2eaf5d"/></linearGradient></defs><circle class="pr-ring__bg" cx="24" cy="24" r="%3$s" stroke-width="5"/><circle class="pr-ring__val pr-ring__val--%1$s" cx="24" cy="24" r="%3$s" stroke-width="5" stroke="url(#publishrank-score-gradient)" stroke-dasharray="%4$s" stroke-dashoffset="%5$s" transform="rotate(-90 24 24)"/><text x="24" y="24" class="pr-ring__text" style="font-size:13px">%6$d</text></svg>',
-			esc_attr( $rating ),
-			/* translators: %d: editorial SEO score. */
-			esc_attr( sprintf( __( 'SEO score %d out of 100', 'publishrank' ), $score ) ),
-			$r,
-			round( $c, 2 ),
-			round( $off, 2 ),
-			$score
-		);
+		/* translators: %d: editorial SEO score. */
+		$label = sprintf( __( 'SEO score %d out of 100', 'publishrank' ), $score );
+		echo '<svg class="pr-editor-score-card__ring pr-ring--' . esc_attr( $rating ) . '" width="48" height="48" viewBox="0 0 48 48" role="img" aria-label="' . esc_attr( $label ) . '">';
+		echo '<defs><linearGradient id="publishrank-score-gradient" x1="0" y1="48" x2="48" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e53935"/><stop offset=".5" stop-color="#2196f3"/><stop offset="1" stop-color="#2eaf5d"/></linearGradient></defs>';
+		echo '<circle class="pr-ring__bg" cx="24" cy="24" r="' . esc_attr( (string) $r ) . '" stroke-width="5"/>';
+		echo '<circle class="pr-ring__val pr-ring__val--' . esc_attr( $rating ) . '" cx="24" cy="24" r="' . esc_attr( (string) $r ) . '" stroke-width="5" stroke="url(#publishrank-score-gradient)" stroke-dasharray="' . esc_attr( (string) round( $c, 2 ) ) . '" stroke-dashoffset="' . esc_attr( (string) round( $off, 2 ) ) . '" transform="rotate(-90 24 24)"/>';
+		echo '<text x="24" y="24" class="pr-ring__text" style="font-size:13px">' . esc_html( (string) $score ) . '</text></svg>';
 	}
 
 	public function render() {
@@ -52,7 +50,7 @@ final class EditorScoreCard {
 			: __( 'not analyzed yet', 'publishrank' );
 		echo '<aside id="publishrank-editor-score" class="pr-editor-score-card" data-score="' . esc_attr( (string) $score ) . '" data-post-id="' . esc_attr( (string) $id ) . '" aria-label="' . esc_attr__( 'PublishRank SEO score', 'publishrank' ) . '">';
 		echo '<div class="pr-editor-score-card__top">';
-		echo self::ring( $score, $rating ); // phpcs:ignore WordPress.Security.EscapeOutput -- all interpolated values are ints or fixed labels, escaped above.
+		self::ring( $score, $rating );
 		echo '<div class="pr-editor-score-card__titles"><strong class="pr-editor-score-card__brand">PublishRank</strong><span class="pr-editor-score-card__status-text"></span></div>';
 		echo '</div>';
 		echo '</aside>';

@@ -185,8 +185,7 @@ final class LiveBlogSchema {
 		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) {
 			return; }
 		$clean = array();
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every field is sanitized in clean_update().
-		$posted = isset( $_POST['publishrank_live_updates'] ) && is_array( $_POST['publishrank_live_updates'] ) ? wp_unslash( $_POST['publishrank_live_updates'] ) : array();
+		$posted = isset( $_POST['publishrank_live_updates'] ) && is_array( $_POST['publishrank_live_updates'] ) ? map_deep( wp_unslash( $_POST['publishrank_live_updates'] ), 'sanitize_textarea_field' ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; each field is also cleaned in clean_update().
 		foreach ( array_slice( $posted, 0, self::MAX_UPDATES ) as $item ) {
 			$entry = self::clean_update( $item );
 			if ( $entry ) {

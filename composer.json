@@ -25,6 +25,7 @@
   "scripts": {
     "phpcs": "phpcs --standard=phpcs.xml.dist src publishrank.php uninstall.php",
     "phpstan": "phpstan analyse src --level=5",
-    "smoke": "php tests/smoke.php"
+    "smoke": "php tests/smoke.php",
+    "test": "bash tools/test_standalone.sh"
   }
 }
