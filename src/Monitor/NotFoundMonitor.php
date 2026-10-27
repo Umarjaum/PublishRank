@@ -11,7 +11,7 @@ final class NotFoundMonitor {
 	public function capture() {
 		if ( ! get_option( 'publishrank_seo_404_monitor', false ) || ! is_404() || wp_doing_ajax() || is_admin() ) {
 			return; }
-		$path     = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+		$path     = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
 		$path     = sanitize_text_field( ! empty( wp_parse_url( $path, PHP_URL_PATH ) ) ? wp_parse_url( $path, PHP_URL_PATH ) : '/' );
 		$referrer = isset( $_SERVER['HTTP_REFERER'] ) ? esc_url_raw( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) : '';
 		// Retain only the referring URL path; strip query strings/fragments that may contain identifiers.
@@ -27,7 +27,7 @@ final class NotFoundMonitor {
 		if ( $hits >= 60 ) {
 			return; }
 		set_transient( $bucket, $hits + 1, 90 );
-		$agent    = strtolower( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
+		$agent    = isset( $_SERVER['HTTP_USER_AGENT'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) ) : '';
 		$category = false !== strpos( $agent, 'bot' ) || false !== strpos( $agent, 'spider' ) || false !== strpos( $agent, 'crawler' ) ? 'crawler' : ( false !== strpos( $agent, 'mobile' ) ? 'mobile' : 'browser' );
 		$log      = get_option( 'publishrank_seo_404_log', array() );
 		$log      = is_array( $log ) ? $log : array();

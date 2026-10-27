@@ -171,11 +171,15 @@ final class LivePreview {
 	}
 
 	private function build_inner( \WP_Post $orig ) {
+		$rest_nonce = isset( $_SERVER['HTTP_X_WP_NONCE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_WP_NONCE'] ) ) : '';
+		if ( ! wp_verify_nonce( $rest_nonce, 'wp_rest' ) || ! current_user_can( 'edit_post', (int) $orig->ID ) ) {
+			return new \WP_Error( 'publishrank_preview_forbidden', 'Invalid request.', array( 'status' => 403 ) );
+		}
 		$id                 = (int) $orig->ID;
 		$this->overlay_post = $id;
 		$p                  = static function ( $key ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The REST endpoint verifies the wp_rest cookie nonce and edit_post capability in its permission callback.
-			return isset( $_POST[ $key ] ) ? wp_unslash( $_POST[ $key ] ) : null;
+			return isset( $_POST[ $key ] ) && is_scalar( $_POST[ $key ] ) ? wp_kses_post( wp_unslash( $_POST[ $key ] ) ) : null;
 		}; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- REST cookie auth + capability checked in permission_callback.
 
 		// 1) Capture the real, sanitised meta values without storing them.

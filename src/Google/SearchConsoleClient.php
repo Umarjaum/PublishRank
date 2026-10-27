@@ -37,14 +37,10 @@ final class SearchConsoleClient {
 		return (string) get_option( self::CLIENT_ID, '' ); }
 	public static function configured() {
 		return '' !== self::client_id() && '' !== self::decrypt( get_option( self::CLIENT_SECRET, '' ) ); }
-	public static function connection_id() {
-		return (string) get_option( self::CONN_ID, '' ); }
 	public static function email() {
 		return (string) get_option( self::EMAIL, '' ); }
-	public static function uses_broker() {
-		return '' !== self::connection_id(); }
 	public static function connected() {
-		return self::uses_broker() || '' !== self::decrypt( get_option( self::REFRESH_TOKEN, '' ) ); }
+		return '' !== self::decrypt( get_option( self::REFRESH_TOKEN, '' ) ); }
 	public static function property() {
 		return (string) get_option( self::PROPERTY, '' ); }
 	public static function metrics() {
@@ -59,10 +55,11 @@ final class SearchConsoleClient {
 
 	public function save_credentials() {
 		$this->guard( 'publishrank_gsc_save_credentials' );
+		check_admin_referer( 'publishrank_gsc_save_credentials' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$id = isset( $_POST['client_id'] ) ? sanitize_text_field( wp_unslash( $_POST['client_id'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-		$secret = isset( $_POST['client_secret'] ) ? trim( (string) wp_unslash( $_POST['client_secret'] ) ) : '';
+		$secret = isset( $_POST['client_secret'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['client_secret'] ) ) ) : '';
 		if ( '' !== $id && ! preg_match( '/^[A-Za-z0-9._-]{12,255}\.apps\.googleusercontent\.com$/', $id ) ) {
 			$this->redirect( 'error', __( 'Enter a valid Google OAuth client ID.', 'publishrank' ) ); }
 		if ( '' === $id && '' === self::client_id() ) {
@@ -84,12 +81,8 @@ final class SearchConsoleClient {
 
 	public function begin_authorization() {
 		$this->guard( 'publishrank_gsc_connect' );
-		$broker = ! self::configured(); // own OAuth client saved => advanced/legacy flow, otherwise one-click broker sign-in
-		if ( $broker ) {
-			$health = GscBroker::health( true );
-			if ( empty( $health['configured'] ) ) {
-				$this->redirect( 'error', empty( $health['reachable'] ) ? __( 'The PublishRank Google sign-in service could not be reached. Check this server’s outbound HTTPS access and try again.', 'publishrank' ) : __( 'Google sign-in is not switched on for the PublishRank service yet. Please try again later.', 'publishrank' ) ); }
-		}
+		if ( ! self::configured() ) {
+			$this->redirect( 'error', __( 'Save your Google OAuth client ID and client secret first, then connect.', 'publishrank' ) ); }
 		try {
 			$state    = bin2hex( random_bytes( 24 ) );
 			$verifier = self::base64url( random_bytes( 48 ) );
@@ -102,14 +95,9 @@ final class SearchConsoleClient {
 				'user_id'  => get_current_user_id(),
 				'verifier' => $verifier,
 				'created'  => time(),
-				'broker'   => $broker,
 			),
 			10 * MINUTE_IN_SECONDS
 		);
-		if ( $broker ) {
-			wp_redirect( GscBroker::start_url( $state, self::base64url( hash( 'sha256', $verifier, true ) ), self::callback_url() ) ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- external, fixed broker host.
-			exit;
-		}
 		$query = array(
 			'client_id'              => self::client_id(),
 			'redirect_uri'           => self::callback_url(),
@@ -135,9 +123,7 @@ final class SearchConsoleClient {
 		delete_transient( $transient );
 		if ( ! is_array( $state_data ) || (int) ( $state_data['user_id'] ?? 0 ) !== get_current_user_id() || time() - (int) ( $state_data['created'] ?? 0 ) > 600 ) {
 			$this->redirect( 'error', __( 'The Google authorization state expired or did not match this administrator. Start the connection again.', 'publishrank' ) ); }
-		if ( ! empty( $state_data['broker'] ) ) {
-			$this->finish_broker_connection( $state_data ); }
-		if ( isset( $_GET['error'] ) ) {
+		if ( isset( $_GET['error'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 			$this->redirect( 'error', __( 'Google authorization was denied or cancelled.', 'publishrank' ) ); }
 		$code = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( '' === $code ) {
@@ -178,59 +164,12 @@ final class SearchConsoleClient {
 				); }
 		}
 		update_option( self::SITES_CACHE, $allowed, false );
-		$this->redirect( 'success', __( 'Google Search Console connected with read-only access. Choose a verified property to begin.', 'publishrank' ) );
-	}
-
-	private function finish_broker_connection( $state_data ) {
-		$err = isset( $_GET['pr_error'] ) ? sanitize_key( wp_unslash( $_GET['pr_error'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( '' !== $err ) {
-			$this->redirect( 'error', self::broker_error_message( $err ) ); }
-		$ticket = isset( $_GET['ticket'] ) ? sanitize_text_field( wp_unslash( $_GET['ticket'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( '' === $ticket ) {
-			$this->redirect( 'error', __( 'Google sign-in did not complete. Please try again.', 'publishrank' ) ); }
-		$res = GscBroker::exchange( $ticket, (string) ( $state_data['verifier'] ?? '' ) );
-		if ( is_wp_error( $res ) || empty( $res['connection_id'] ) || empty( $res['connection_secret'] ) ) {
-			$this->redirect( 'error', __( 'Could not finish connecting to Google. Please sign in again.', 'publishrank' ) ); }
-		if ( ! $this->store_secret( self::CONN_SECRET, (string) $res['connection_secret'] ) ) {
-			$this->redirect( 'error', __( 'Secure token storage is unavailable. Enable OpenSSL and valid WordPress security salts, then try again.', 'publishrank' ) ); }
-		// Replace any previous broker connection (best effort) and legacy local tokens.
-		update_option( self::CONN_ID, sanitize_text_field( (string) $res['connection_id'] ), false );
-		update_option( self::EMAIL, sanitize_email( (string) ( $res['email'] ?? '' ) ), false );
 		delete_option( self::REAUTH );
-		delete_option( self::REFRESH_TOKEN );
-		delete_option( self::ACCESS_CACHE );
-		if ( ! empty( $res['access_token'] ) ) {
-			$this->cache_access_token(
-				array(
-					'access_token' => (string) $res['access_token'],
-					'expires_in'   => (int) ( $res['expires_in'] ?? 3600 ),
-				)
-			); }
-		$allowed = array();
-		foreach ( (array) ( $res['sites'] ?? array() ) as $entry ) {
-			if ( is_array( $entry ) && ! empty( $entry['siteUrl'] ) && in_array( (string) ( $entry['permissionLevel'] ?? '' ), array( 'siteOwner', 'siteFullUser', 'siteRestrictedUser' ), true ) ) {
-				$allowed[] = array(
-					'siteUrl'         => (string) $entry['siteUrl'],
-					'permissionLevel' => (string) $entry['permissionLevel'],
-				); }
-		}
-		update_option( self::SITES_CACHE, $allowed, false );
 		$auto = self::best_property( $allowed );
 		if ( '' !== $auto ) {
 			update_option( self::PROPERTY, $auto, false );
 			LiveSync::sync(); }
-		$this->redirect( 'success', '' !== $auto ? __( 'Google Search Console connected. Your property was selected automatically and live data is loading.', 'publishrank' ) : __( 'Google Search Console connected. Choose the property for this site to start live data.', 'publishrank' ) );
-	}
-
-	private static function broker_error_message( $code ) {
-		$map = array(
-			'denied'           => __( 'Google sign-in was cancelled.', 'publishrank' ),
-			'scope_missing'    => __( 'Search Console permission was not granted. Sign in again and keep the “View Search Console data” box ticked.', 'publishrank' ),
-			'no_property'      => __( 'This Google account has no Search Console property for this site. Add and verify the site in Search Console, or sign in with the account that owns it.', 'publishrank' ),
-			'no_refresh_token' => __( 'Google did not grant lasting access. Remove PublishRank at myaccount.google.com/permissions and sign in again.', 'publishrank' ),
-			'expired'          => __( 'The sign-in took too long. Please try again.', 'publishrank' ),
-		);
-		return isset( $map[ $code ] ) ? $map[ $code ] : __( 'Google sign-in failed. Please try again in a moment.', 'publishrank' );
+		$this->redirect( 'success', '' !== $auto ? __( 'Google Search Console connected with read-only access. Your property was selected automatically.', 'publishrank' ) : __( 'Google Search Console connected with read-only access. Choose a verified property to begin.', 'publishrank' ) );
 	}
 
 	/** Pick the Search Console property that best matches this site (domain property first). */
@@ -264,6 +203,7 @@ final class SearchConsoleClient {
 
 	public function save_property() {
 		$this->guard( 'publishrank_gsc_save_property' );
+		check_admin_referer( 'publishrank_gsc_save_property' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$requested = isset( $_POST['property'] ) ? sanitize_text_field( wp_unslash( $_POST['property'] ) ) : '';
 		$found     = false;
@@ -280,11 +220,12 @@ final class SearchConsoleClient {
 
 	public function refresh_metrics() {
 		$this->guard( 'publishrank_gsc_refresh' );
+		check_admin_referer( 'publishrank_gsc_refresh' ); // Explicit nonce verification for the request data read below.
 		$property = self::property();
 		if ( ! $this->property_allowed( $property ) ) {
 			$this->redirect( 'error', __( 'Reconnect or choose a property that is available to the connected Google account.', 'publishrank' ) ); }
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-		$days = isset( $_POST['days'] ) ? absint( $_POST['days'] ) : 28;
+		$days = isset( $_POST['days'] ) ? absint( wp_unslash( $_POST['days'] ) ) : 28;
 		if ( ! in_array( $days, array( 7, 28, 90 ), true ) ) {
 			$days = 28; }
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
@@ -396,6 +337,7 @@ final class SearchConsoleClient {
 
 	public function inspect_url() {
 		$this->guard( 'publishrank_gsc_inspect' );
+		check_admin_referer( 'publishrank_gsc_inspect' ); // Explicit nonce verification for the request data read below.
 		$property = self::property();
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$url = isset( $_POST['inspect_url'] ) ? esc_url_raw( wp_unslash( $_POST['inspect_url'] ) ) : '';
@@ -433,8 +375,19 @@ final class SearchConsoleClient {
 
 	public function disconnect() {
 		$this->guard( 'publishrank_gsc_disconnect' );
-		if ( self::uses_broker() ) {
-			GscBroker::disconnect( self::connection_id(), self::decrypt( get_option( self::CONN_SECRET, '' ) ) ); }
+		// Best-effort revocation of the grant at Google before the local tokens are deleted.
+		$refresh_token = self::decrypt( get_option( self::REFRESH_TOKEN, '' ) );
+		if ( '' !== $refresh_token ) {
+			wp_remote_post(
+				'https://oauth2.googleapis.com/revoke',
+				array(
+					'timeout'     => 10,
+					'redirection' => 0,
+					'sslverify'   => true,
+					'body'        => array( 'token' => $refresh_token ),
+				)
+			);
+		}
 		foreach ( array( self::CLIENT_ID, self::CLIENT_SECRET, self::REFRESH_TOKEN, self::ACCESS_CACHE, self::PROPERTY, self::SITES_CACHE, self::METRICS, self::SITEMAPS, self::CONN_ID, self::CONN_SECRET, self::EMAIL, self::REAUTH ) as $option ) {
 			delete_option( $option ); }
 		LiveSync::unschedule();
@@ -487,18 +440,6 @@ final class SearchConsoleClient {
 			if ( is_array( $bundle ) && ! empty( $bundle['access_token'] ) && (int) ( $bundle['expires_at'] ?? 0 ) > time() + 90 ) {
 				return (string) $bundle['access_token']; }
 		}
-		if ( self::uses_broker() ) {
-			$res = GscBroker::token( self::connection_id(), self::decrypt( get_option( self::CONN_SECRET, '' ) ) );
-			if ( is_wp_error( $res ) || empty( $res['access_token'] ) ) {
-				if ( is_wp_error( $res ) && in_array( $res->get_error_code(), array( 'reauth', 'invalid_connection' ), true ) ) {
-					update_option( self::REAUTH, 1, false );
-					return new \WP_Error( 'publishrank_gsc_reauth', __( 'Google authorization expired or was revoked. Sign in with Google again.', 'publishrank' ) ); }
-				return new \WP_Error( 'publishrank_gsc_network', __( 'Could not reach the PublishRank sign-in service.', 'publishrank' ) );
-			}
-			delete_option( self::REAUTH );
-			$this->cache_access_token( $res );
-			return (string) $res['access_token'];
-		}
 		$refresh = self::decrypt( get_option( self::REFRESH_TOKEN, '' ) );
 		$secret  = self::decrypt( get_option( self::CLIENT_SECRET, '' ) );
 		if ( '' === $refresh || '' === $secret || '' === self::client_id() ) {
@@ -520,7 +461,9 @@ final class SearchConsoleClient {
 		);
 		$tokens   = $this->decode_response( $response );
 		if ( is_wp_error( $tokens ) || empty( $tokens['access_token'] ) ) {
+			update_option( self::REAUTH, 1, false );
 			return new \WP_Error( 'publishrank_gsc_reauth', __( 'Google authorization expired or was revoked. Reconnect the account.', 'publishrank' ) ); }
+		delete_option( self::REAUTH );
 		$this->cache_access_token( $tokens );
 		return (string) $tokens['access_token'];
 	}

@@ -22,6 +22,7 @@ final class TrafficGuardPage {
 
 	public function save() {
 		AdminAssets::guard( self::ACTION );
+		check_admin_referer( self::ACTION ); // Explicit nonce verification for the request data read below.
 		$blocked   = TrafficGuard::inspect_networks( $this->post_value( 'blocked_ips' ) );
 		$allowed   = TrafficGuard::inspect_networks( $this->post_value( 'allow_ips' ) );
 		$proxies   = TrafficGuard::inspect_networks( $this->post_value( 'trusted_proxies' ) );
@@ -34,29 +35,42 @@ final class TrafficGuardPage {
 		}
 
 		$settings = array(
-			'enabled'           => isset( $_POST['enabled'] ) && '1' === (string) wp_unslash( $_POST['enabled'] ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			'enabled'           => isset( $_POST['enabled'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['enabled'] ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			'allow_crawlers'    => isset( $_POST['allow_crawlers'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['allow_crawlers'] ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			'blocked_ips'       => $blocked['valid'],
 			'allow_ips'         => $allowed['valid'],
 			'trusted_proxies'   => $proxies['valid'],
 			'blocked_countries' => $countries['valid'],
 		);
 		update_option( TrafficGuard::OPTION, $settings, false );
-		AdminAssets::done( self::SLUG, 'success', __( 'Traffic Guard settings saved.', 'publishrank' ) );
+
+		// Lock-out check: administrators always bypass the rules, but tell the person if their own address or country would be blocked.
+		$message = __( 'Traffic Guard settings saved.', 'publishrank' );
+		$my_ip   = TrafficGuard::current_client_ip( $settings['trusted_proxies'] );
+		$my_cc   = TrafficGuard::current_country( $settings['trusted_proxies'] );
+		$mine    = '' !== $my_ip && ! TrafficGuard::ip_matches_list( $my_ip, $settings['allow_ips'] ) && ( TrafficGuard::ip_matches_list( $my_ip, $settings['blocked_ips'] ) || ( '' !== $my_cc && in_array( $my_cc, $settings['blocked_countries'], true ) ) );
+		if ( $settings['enabled'] && $mine ) {
+			$message .= ' ' . __( 'Notice: your own address or country matches a block rule. Administrators are exempt, but other visitors from your network would be blocked; add your IP to the allow list if that is unintended.', 'publishrank' );
+		}
+		AdminAssets::done( self::SLUG, $mine && $settings['enabled'] ? 'error' : 'success', $message );
 	}
 
 	private function post_value( $key ) {
+		check_admin_referer( self::ACTION );
 		if ( ! isset( $_POST[ $key ] ) || ! is_string( $_POST[ $key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			return '';
 		}
-		return (string) wp_unslash( $_POST[ $key ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
+		return sanitize_textarea_field( wp_unslash( $_POST[ $key ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the route guard before state-changing logic.
 	}
 
 	public function render() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$settings = TrafficGuard::settings();
-		$action   = admin_url( 'admin-post.php' );
+		$settings    = TrafficGuard::settings();
+		$action      = admin_url( 'admin-post.php' );
+		$detected_ip = TrafficGuard::current_client_ip( $settings['trusted_proxies'] );
+		$detected_cc = TrafficGuard::current_country( $settings['trusted_proxies'] );
 		?>
 		<div class="wrap prtg-wrap">
 			<?php AdminAssets::header( __( 'Traffic Guard', 'publishrank' ), __( 'Local IP and country rules for public-facing page requests.', 'publishrank' ) ); ?>
@@ -71,6 +85,9 @@ final class TrafficGuardPage {
 				<section class="prtg-card prtg-card--primary">
 					<div class="prtg-card__heading"><span class="prtg-icon prtg-icon--plum fa-solid fa-toggle-on" aria-hidden="true"></span><div><p class="prtg-kicker"><?php esc_html_e( 'Protection status', 'publishrank' ); ?></p><h2><?php esc_html_e( 'Enable Traffic Guard', 'publishrank' ); ?></h2></div></div>
 					<label class="prtg-toggle"><input type="checkbox" name="enabled" value="1" <?php checked( $settings['enabled'] ); ?> /><span class="prtg-toggle__track" aria-hidden="true"></span><span><?php esc_html_e( 'Apply the rules below to front-end page requests.', 'publishrank' ); ?></span></label>
+					<label class="prtg-toggle"><input type="checkbox" name="allow_crawlers" value="1" <?php checked( $settings['allow_crawlers'] ); ?> /><span class="prtg-toggle__track" aria-hidden="true"></span><span><?php esc_html_e( 'Never block genuine search-engine crawlers (Google, Bing, Apple, Baidu, Yandex).', 'publishrank' ); ?></span></label>
+					<p class="description"><?php esc_html_e( 'Crawlers are confirmed by reverse and forward DNS, not by User-Agent alone, so spoofed bots are still blocked. The verdict is cached under a salted hash; no visitor IP is stored.', 'publishrank' ); ?></p>
+					<p class="description"><?php echo esc_html( sprintf( /* translators: 1: detected IP address, 2: detected country or "not available". */ __( 'Detected for your current request: IP %1$s · country %2$s. If this is your proxy or CDN address instead of your own, add that proxy range under Trusted proxy networks.', 'publishrank' ), '' !== $detected_ip ? $detected_ip : __( 'unknown', 'publishrank' ), '' !== $detected_cc ? $detected_cc : __( 'not available', 'publishrank' ) ) ); ?></p>
 					<p class="description"><?php esc_html_e( 'WordPress administrators, wp-admin, login, REST, XML-RPC, cron, feeds, robots.txt, llms.txt, and XML sitemap URLs are not blocked. Other visitors, including non-administrator accounts, follow the rules. No visitor IP is stored by Traffic Guard.', 'publishrank' ); ?></p>
 				</section>
 
@@ -80,7 +97,7 @@ final class TrafficGuardPage {
 						<p><?php esc_html_e( 'Enter one IPv4 address, IPv6 address, or CIDR network per line. Examples:', 'publishrank' ); ?> <code>203.0.113.24</code>, <code>2001:db8::24</code>, <code>198.51.100.0/24</code>.</p>
 						<label for="prtg-blocked-ips"><strong><?php esc_html_e( 'Blocked IPs and networks', 'publishrank' ); ?></strong></label>
 						<textarea id="prtg-blocked-ips" name="blocked_ips" rows="7" class="large-text code" spellcheck="false" placeholder="203.0.113.24&#10;198.51.100.0/24"><?php echo esc_textarea( implode( "\n", $settings['blocked_ips'] ) ); ?></textarea>
-						<p class="description"><?php esc_html_e( 'Avoid broad networks unless you intend to restrict every visitor in that range. A /0 network matches all public IP addresses.', 'publishrank' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Avoid broad networks unless you intend to restrict every visitor in that range. Networks broader than /8 (IPv4) or /16 (IPv6), such as /0, are rejected as unsafe.', 'publishrank' ); ?></p>
 					</section>
 
 					<section class="prtg-card">

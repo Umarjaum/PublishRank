@@ -406,30 +406,6 @@ final class SettingsPage {
 			)
 		);
 		$this->reg(
-			'publishrank_public_attribution',
-			array(
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'default'           => true,
-			)
-		);
-		$this->reg(
-			'publishrank_public_attribution_text',
-			array(
-				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
-				'default'           => 'Powered by PublishRank',
-			)
-		);
-		$this->reg(
-			'publishrank_public_attribution_url',
-			array(
-				'type'              => 'string',
-				'sanitize_callback' => array( $this, 'sanitize_public_url' ),
-				'default'           => 'https://publishrank.netlify.app/',
-			)
-		);
-		$this->reg(
 			'publishrank_identity_type',
 			array(
 				'type'              => 'string',
@@ -879,9 +855,6 @@ ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_h
 		<h2 class="pr-settings-section" id="pr-settings-attribution"><?php esc_html_e( 'Attribution', 'publishrank' ); ?></h2>
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th scope="row"><?php esc_html_e( 'Version provenance metadata', 'publishrank' ); ?></th><td><strong><?php esc_html_e( 'Always enabled', 'publishrank' ); ?></strong><p class="description"><?php esc_html_e( 'PublishRank adds technical brand, version, and fingerprint markers to public HTML source. This source attribution cannot be disabled here and does not add a promotional link. Only the visible footer credit below can be turned off.', 'publishrank' ); ?></p></td></tr>
-				<tr><th scope="row"><label for="publishrank_public_attribution">PublishRank footer attribution</label></th><td><input type="hidden" name="publishrank_public_attribution" value="0" /><label><input id="publishrank_public_attribution" name="publishrank_public_attribution" type="checkbox" value="1" <?php checked( $val( 'publishrank_public_attribution', true ), true ); ?> /> <?php esc_html_e( 'Show an optional “Powered by PublishRank” credit in the site footer.', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Enabled by default on fresh installs. This visible footer credit remains administrator-controlled and can be turned off at any time.', 'publishrank' ); ?></p></td></tr>
-				<tr><th scope="row"><label for="publishrank_public_attribution_text">Powered by text</label></th><td><input id="publishrank_public_attribution_text" name="publishrank_public_attribution_text" type="text" value="<?php echo esc_attr( $val( 'publishrank_public_attribution_text', 'Powered by PublishRank' ) ); ?>" class="regular-text" /></td></tr>
-				<tr><th scope="row"><label for="publishrank_public_attribution_url">Attribution URL</label></th><td><input id="publishrank_public_attribution_url" name="publishrank_public_attribution_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_public_attribution_url', 'https://publishrank.netlify.app/' ) ); ?>" class="large-text" /></td></tr>
 			</tbody></table>
 	
 			<h2 class="pr-settings-section" id="pr-settings-breadcrumbs"><?php esc_html_e( 'Breadcrumbs', 'publishrank' ); ?></h2>

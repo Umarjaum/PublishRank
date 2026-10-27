@@ -4,7 +4,6 @@ namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Google\SearchConsoleClient;
-use PublishRankSEO\Google\GscBroker;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -24,7 +23,7 @@ final class SearchConsolePage {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return; }
 		echo '<div class="wrap publishrank-search-console">';
-		AdminAssets::header( __( 'Google Search Console', 'publishrank' ), __( 'Sign in with Google for live, read-only search performance, Discover and Google News tracking, and URL inspection.', 'publishrank' ) );
+		AdminAssets::header( __( 'Google Search Console', 'publishrank' ), __( 'Connect your own Google OAuth client for live, read-only search performance, Discover and Google News tracking, and URL inspection.', 'publishrank' ) );
 			$this->render_notice();
 		if ( ! SearchConsoleClient::connected() ) {
 			$this->render_signin(); } else {
@@ -32,27 +31,23 @@ final class SearchConsolePage {
 			echo '</div>';
 	}
 
-	/** One-click "Sign in with Google" — no client ID, no keys. */
+	/** Connect with the site owner's own Google OAuth client (client ID + secret). */
 	private function render_signin() {
-		$health = ! SearchConsoleClient::configured() ? GscBroker::health() : array(
-			'configured' => true,
-			'reachable'  => true,
-		);
-		$ready  = ! empty( $health['configured'] );
-		$g      = '<svg class="pr-google-btn__g" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
-		echo '<section class="rhs-card pr-gsc-hero"><div class="pr-gsc-hero__main"><span class="pr-eyebrow">' . esc_html__( 'Google Search Console', 'publishrank' ) . '</span><h2>' . esc_html__( 'Connect in one click', 'publishrank' ) . '</h2><p class="pr-gsc-hero__lead">' . esc_html__( 'Sign in with the Google account that manages this site in Search Console. No API keys, no client ID — just your Google account.', 'publishrank' ) . '</p>';
+		if ( ! SearchConsoleClient::configured() ) {
+			echo '<section class="rhs-card pr-gsc-hero"><div class="pr-gsc-hero__main"><span class="pr-eyebrow">' . esc_html__( 'Google Search Console', 'publishrank' ) . '</span><h2>' . esc_html__( 'Connect with your own Google OAuth client', 'publishrank' ) . '</h2><p class="pr-gsc-hero__lead">' . esc_html__( 'Create a Google OAuth client for this site, save its client ID and secret below, then connect the Google account that manages the property in Search Console. Credentials stay on your server.', 'publishrank' ) . '</p><p class="pr-gsc-hero__fine">' . esc_html__( 'Read-only access. PublishRank can’t change your Search Console settings, and you can disconnect at any time.', 'publishrank' ) . '</p></div></section>';
+			$this->render_credentials();
+			return;
+		}
+		$g = '<svg class="pr-google-btn__g" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+		echo '<section class="rhs-card pr-gsc-hero"><div class="pr-gsc-hero__main"><span class="pr-eyebrow">' . esc_html__( 'Google Search Console', 'publishrank' ) . '</span><h2>' . esc_html__( 'Connect your Google account', 'publishrank' ) . '</h2><p class="pr-gsc-hero__lead">' . esc_html__( 'Your OAuth client is saved. Sign in with the Google account that manages this site in Search Console to finish connecting.', 'publishrank' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="publishrank_gsc_connect">';
 		wp_nonce_field( 'publishrank_gsc_connect' );
-		echo '<button type="submit" class="pr-google-btn"' . ( $ready ? '' : ' disabled' ) . '>' . $g . '<span>' . esc_html__( 'Sign in with Google', 'publishrank' ) . '</span></button></form>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
-		if ( ! $ready ) {
-			echo '<p class="pr-gsc-hero__note">' . esc_html( empty( $health['reachable'] ) ? __( 'The PublishRank sign-in service can’t be reached from this server right now. Try again shortly, or use your own Google OAuth client below.', 'publishrank' ) : __( 'Google sign-in is being switched on for the PublishRank service. Use your own Google OAuth client below in the meantime.', 'publishrank' ) ) . '</p>'; }
+		echo '<button type="submit" class="pr-google-btn">' . $g . '<span>' . esc_html__( 'Sign in with Google', 'publishrank' ) . '</span></button></form>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
 		echo '<p class="pr-gsc-hero__fine">' . esc_html__( 'Read-only access. PublishRank can’t change your Search Console settings, and you can disconnect at any time.', 'publishrank' ) . '</p></div>';
-		echo '<ul class="pr-gsc-hero__list"><li><i class="fa-solid fa-bolt" aria-hidden="true"></i><span><strong>' . esc_html__( 'Live numbers', 'publishrank' ) . '</strong> ' . esc_html__( 'Hourly clicks and impressions update on screen without a reload.', 'publishrank' ) . '</span></li><li><i class="fa-solid fa-newspaper" aria-hidden="true"></i><span><strong>' . esc_html__( 'Built for news', 'publishrank' ) . '</strong> ' . esc_html__( 'Google News and Discover tracked alongside Search.', 'publishrank' ) . '</span></li><li><i class="fa-solid fa-ranking-star" aria-hidden="true"></i><span><strong>' . esc_html__( 'What is working', 'publishrank' ) . '</strong> ' . esc_html__( 'Top queries and articles from the last 7 days.', 'publishrank' ) . '</span></li><li><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span><strong>' . esc_html__( 'Zero setup', 'publishrank' ) . '</strong> ' . esc_html__( 'Your property is matched to this site automatically.', 'publishrank' ) . '</span></li></ul></section>';
-		if ( ! SearchConsoleClient::configured() ) {
-			echo '<details class="rhs-card pr-gsc-advanced"><summary>' . esc_html__( 'Advanced: use my own Google OAuth client', 'publishrank' ) . '</summary>';
-			$this->render_credentials();
-			echo '</details>';
-		}
+		echo '<ul class="pr-gsc-hero__list"><li><i class="fa-solid fa-bolt" aria-hidden="true"></i><span><strong>' . esc_html__( 'Live numbers', 'publishrank' ) . '</strong> ' . esc_html__( 'Hourly clicks and impressions update on screen without a reload.', 'publishrank' ) . '</span></li><li><i class="fa-solid fa-newspaper" aria-hidden="true"></i><span><strong>' . esc_html__( 'Built for news', 'publishrank' ) . '</strong> ' . esc_html__( 'Google News and Discover tracked alongside Search.', 'publishrank' ) . '</span></li><li><i class="fa-solid fa-ranking-star" aria-hidden="true"></i><span><strong>' . esc_html__( 'What is working', 'publishrank' ) . '</strong> ' . esc_html__( 'Top queries and articles from the last 7 days.', 'publishrank' ) . '</span></li></ul></section>';
+		echo '<details class="rhs-card pr-gsc-advanced"><summary>' . esc_html__( 'OAuth client settings', 'publishrank' ) . '</summary>';
+		$this->render_credentials();
+		echo '</details>';
 	}
 
 	/** Live panel: JS (assets/js/live.js) fills it from the Heartbeat payload. */

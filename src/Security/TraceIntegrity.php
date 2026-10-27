@@ -28,6 +28,14 @@ final class TraceIntegrity {
 		if ( is_admin() || wp_doing_ajax() || is_feed() ) {
 			return;
 		}
-		echo self::markup(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- markup() uses constants and an escaped version.
+		echo wp_kses(
+			self::markup(),
+			array(
+				'meta' => array(
+					'name'    => true,
+					'content' => true,
+				),
+			)
+		);
 	}
 }

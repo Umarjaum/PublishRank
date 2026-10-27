@@ -35,6 +35,7 @@ final class PublisherLinkIntelligence {
 
 	public function handle_start() {
 		$this->guard( 'publishrank_link_intelligence_start' );
+		check_admin_referer( 'publishrank_link_intelligence_start' ); // Explicit nonce verification for the request data read below.
 		$types = Store::allowed_types();
 		$ids   = get_posts(
 			array(
@@ -344,9 +345,9 @@ final class PublisherLinkIntelligence {
 		$state   = get_transient( self::STATE_KEY );
 		echo '<div class="wrap">';
 		AdminAssets::header( __( 'Publisher Link Intelligence', 'publishrank' ), __( 'Audit broken internal links, identify links that point through redirects, review redirect chains, and optionally check external URLs. Uses local content analysis; no AI API required.', 'publishrank' ) );
-		if ( isset( $_GET['pr_message'] ) ) {
-			$type = sanitize_key( $_GET['pr_type'] ?? 'success' );
-			echo '<div class="notice notice-' . esc_attr( in_array( $type, array( 'error', 'success', 'warning' ), true ) ? $type : 'success' ) . ' is-dismissible"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['pr_message'] ) ) ) . '</p></div>'; }
+		if ( isset( $_GET['pr_message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
+			$type = isset( $_GET['pr_type'] ) ? sanitize_key( wp_unslash( $_GET['pr_type'] ) ) : 'success'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
+			echo '<div class="notice notice-' . esc_attr( in_array( $type, array( 'error', 'success', 'warning' ), true ) ? $type : 'success' ) . ' is-dismissible"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['pr_message'] ) ) ) . '</p></div>'; } // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 		echo '<div class="rhs-grid">';
 		$counts = array(
 			'broken_internal'     => 0,

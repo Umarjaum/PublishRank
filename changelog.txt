@@ -1,3 +1,15 @@
+= 2.9.75 =
+* Removed the optional live News feed (remote announcements.json request) and its admin screen, prompt, styles and script; the plugin no longer requests remote announcement data or remote images.
+* Removed WordPress.org directory asset files (icons, banners, social images) from the plugin package; they are uploaded separately through SVN.
+* The sitemap stylesheet (XSL) now embeds the bundled sitemap CSS and JavaScript from the plugin's own local files instead of linking them.
+* Added explicit nonce and capability verification inside every handler that reads submitted data, including the Netlify account-link callback state.
+
+= 2.9.74 =
+* Sitemap stylesheet (XSL) no longer prints inline style/script blocks; its CSS and JavaScript are served from bundled assets/css/sitemap.css and assets/js/sitemap.js.
+* Sanitized all remaining $_POST, $_GET, $_REQUEST, $_COOKIE, $_SERVER and $_FILES reads at the point of use (AdminAccess, TrafficGuard, redirects, 404 monitor, import, Baidu, post meta, local SEO, onboarding, live blog, internal links, authentication and Search Console forms).
+* Verification files are filtered through a strict tag allow-list before saving and when served, and are output with wp_kses().
+* Escaped output late for the editor score ring, live bar, verification meta tags, schema-type dropdown and JSON-LD (JSON-LD no longer uses JSON_UNESCAPED_SLASHES).
+
 = 2.9.73 =
 * Losslessly optimized the large publisher banner, social-sharing image, and two animated WordPress directory icons while preserving exact decoded pixels, format, dimensions, 24-frame timing, and looping.
 * Reduced the combined size of the 20 shipped PNG/GIF assets from 4,083,704 to 3,948,728 bytes (134,976 bytes, 3.31%); no remote assets or image services were introduced.
@@ -60,7 +72,6 @@
 * Synchronized first-party runtime CSS with reviewable source copies and restored the onboarding quick-start styles used by the current onboarding markup.
 
 = 2.9.53 =
-* Fresh installs now start with clearly disclosed technical provenance and visible “Powered by PublishRank” attribution enabled; administrators retain an explicit off switch in Settings.
 
 = 2.9.52 =
 * Added a responsive activation welcome screen with a quick-start guide and clearer legal disclosure for optional public attribution.

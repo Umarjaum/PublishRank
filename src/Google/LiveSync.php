@@ -383,10 +383,16 @@ final class LiveSync {
 		if ( 'publishrank-search-console' === $page || ! current_user_can( 'manage_options' ) ) {
 			return; }
 		$item = static function ( $label, $path, $fmt = 'int' ) {
-			return '<span class="pr-livebar__item"><span class="pr-livebar__label">' . esc_html( $label ) . '</span><strong data-pr-live="' . esc_attr( $path ) . '" data-fmt="' . esc_attr( $fmt ) . '">—</strong></span>';
+			echo '<span class="pr-livebar__item"><span class="pr-livebar__label">' . esc_html( $label ) . '</span><strong data-pr-live="' . esc_attr( $path ) . '" data-fmt="' . esc_attr( $fmt ) . '">—</strong></span>';
 		};
 		echo '<div class="pr-livebar" data-pr-live-root><span class="pr-live-pill" data-pr-live-pill><i class="pr-live-dot"></i><span>' . esc_html__( 'Live', 'publishrank' ) . '</span></span>';
-		echo $item( __( 'Published today', 'publishrank' ), 'newsroom.published_24h' ) . '<span data-pr-when="connected" class="pr-livebar__group">' . $item( __( 'Clicks · 7d', 'publishrank' ), 'kpi.clicks' ) . $item( __( 'Impressions · 7d', 'publishrank' ), 'kpi.impressions' ) . '</span>' . $item( __( 'IndexNow queue', 'publishrank' ), 'newsroom.indexnow_queue' ) . $item( __( '404s logged', 'publishrank' ), 'newsroom.not_found' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in closure.
+		$item( __( 'Published today', 'publishrank' ), 'newsroom.published_24h' );
+		echo '<span data-pr-when="connected" class="pr-livebar__group">';
+		$item( __( 'Clicks · 7d', 'publishrank' ), 'kpi.clicks' );
+		$item( __( 'Impressions · 7d', 'publishrank' ), 'kpi.impressions' );
+		echo '</span>';
+		$item( __( 'IndexNow queue', 'publishrank' ), 'newsroom.indexnow_queue' );
+		$item( __( '404s logged', 'publishrank' ), 'newsroom.not_found' );
 		echo '<a class="pr-livebar__cta" data-pr-when="disconnected" href="' . esc_url( admin_url( 'admin.php?page=publishrank-search-console' ) ) . '">' . esc_html__( 'Connect Search Console →', 'publishrank' ) . '</a><span class="pr-live__updated" data-pr-live-updated></span></div>';
 	}
 

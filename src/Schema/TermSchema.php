@@ -22,6 +22,20 @@ final class TermSchema {
 		}
 	}
 
+	/** Tags and attributes the schema-type dropdown may contain. */
+	private static function select_kses() {
+		return array(
+			'select' => array(
+				'name' => true,
+				'id'   => true,
+			),
+			'option' => array(
+				'value'    => true,
+				'selected' => true,
+			),
+		);
+	}
+
 	private function select_html( $current ) {
 		$html  = '<select name="' . esc_attr( self::META_KEY ) . '" id="' . esc_attr( self::META_KEY ) . '">';
 		$html .= '<option value="">' . esc_html__( '— Follow the archive default —', 'publishrank' ) . '</option>';
@@ -36,14 +50,14 @@ final class TermSchema {
 		$current = is_object( $term ) && ! empty( $term->term_id ) ? (string) get_term_meta( (int) $term->term_id, self::META_KEY, true ) : '';
 		wp_nonce_field( self::NONCE, self::NONCE . '_nonce' );
 		echo '<tr class="form-field"><th scope="row"><label for="' . esc_attr( self::META_KEY ) . '">' . esc_html__( 'PublishRank schema type', 'publishrank' ) . '</label></th><td>';
-		echo $this->select_html( $current ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts.
+		echo wp_kses( $this->select_html( $current ), self::select_kses() );
 		echo '<p class="description">' . esc_html__( 'Schema type for this archive page. Leave on the default to use the setting from PublishRank → Schema.', 'publishrank' ) . '</p></td></tr>';
 	}
 
 	public function render_add_field() {
 		wp_nonce_field( self::NONCE, self::NONCE . '_nonce' );
 		echo '<div class="form-field"><label for="' . esc_attr( self::META_KEY ) . '">' . esc_html__( 'PublishRank schema type', 'publishrank' ) . '</label>';
-		echo $this->select_html( '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts.
+		echo wp_kses( $this->select_html( '' ), self::select_kses() );
 		echo '</div>';
 	}
 

@@ -7,6 +7,11 @@ defined( 'ABSPATH' ) || exit;
 final class TrafficGuard {
 	const OPTION    = 'publishrank_traffic_guard';
 	const MAX_RULES = 500;
+	/** Narrowest-allowed prefix breadth: networks broader than /8 (IPv4) or /16 (IPv6) are rejected as unsafe. */
+	const MIN_PREFIX_V4 = 8;
+	const MIN_PREFIX_V6 = 16;
+	/** Reverse-DNS domains that genuine search-engine crawlers resolve to. */
+	const CRAWLER_DOMAINS = array( 'googlebot.com', 'google.com', 'search.msn.com', 'applebot.apple.com', 'crawl.baidu.com', 'crawl.baidu.jp', 'yandex.com', 'yandex.ru', 'yandex.net' );
 
 	public function register() {
 		add_action( 'template_redirect', array( $this, 'enforce' ), 0 );
@@ -14,6 +19,10 @@ final class TrafficGuard {
 
 	/** Return normalized settings; malformed stored values are ignored safely. */
 	public static function settings() {
+		static $cache = null;
+		if ( null !== $cache ) {
+			return $cache;
+		}
 		$saved     = get_option( self::OPTION, array() );
 		$saved     = is_array( $saved ) ? $saved : array();
 		$blocked   = self::inspect_networks( isset( $saved['blocked_ips'] ) ? $saved['blocked_ips'] : '' );
@@ -21,13 +30,15 @@ final class TrafficGuard {
 		$proxies   = self::inspect_networks( isset( $saved['trusted_proxies'] ) ? $saved['trusted_proxies'] : '' );
 		$countries = self::inspect_country_codes( isset( $saved['blocked_countries'] ) ? $saved['blocked_countries'] : '' );
 
-		return array(
+		$cache = array(
 			'enabled'           => ! empty( $saved['enabled'] ),
+			'allow_crawlers'    => ! array_key_exists( 'allow_crawlers', $saved ) || ! empty( $saved['allow_crawlers'] ),
 			'blocked_ips'       => $blocked['valid'],
 			'allow_ips'         => $allowed['valid'],
 			'trusted_proxies'   => $proxies['valid'],
 			'blocked_countries' => $countries['valid'],
 		);
+		return $cache;
 	}
 
 	/** Apply rules to anonymous public page requests only. */
@@ -44,14 +55,66 @@ final class TrafficGuard {
 		if ( self::matches_any( $ip, $settings['allow_ips'] ) ) {
 			return;
 		}
-		if ( self::matches_any( $ip, $settings['blocked_ips'] ) ) {
-			self::deny();
+		$blocked = self::matches_any( $ip, $settings['blocked_ips'] );
+		if ( ! $blocked ) {
+			$country = self::country_code( $settings['trusted_proxies'] );
+			$blocked = '' !== $country && in_array( $country, $settings['blocked_countries'], true );
 		}
+		if ( ! $blocked ) {
+			return;
+		}
+		// Never lock out genuine search-engine crawlers (verified by reverse + forward DNS, not by User-Agent alone).
+		if ( ! empty( $settings['allow_crawlers'] ) && self::is_verified_crawler( $ip ) ) {
+			return;
+		}
+		self::deny();
+	}
 
-		$country = self::country_code( $settings['trusted_proxies'] );
-		if ( '' !== $country && in_array( $country, $settings['blocked_countries'], true ) ) {
-			self::deny();
+	/** The client IP as Traffic Guard sees it for the current request (used by the settings screen). */
+	public static function current_client_ip( $trusted_proxies = array() ) {
+		return self::client_ip( $trusted_proxies );
+	}
+
+	/** The trusted-proxy country code for the current request, or an empty string. */
+	public static function current_country( $trusted_proxies = array() ) {
+		return self::country_code( $trusted_proxies );
+	}
+
+	/** Whether an IP matches any rule in a list; used for save-time lock-out checks. */
+	public static function ip_matches_list( $ip, $networks ) {
+		return self::matches_any( $ip, $networks );
+	}
+
+	/** Confirm a crawler claim with reverse DNS plus a matching forward lookup; the verdict is cached. */
+	private static function is_verified_crawler( $ip ) {
+		$agent = isset( $_SERVER['HTTP_USER_AGENT'] ) && is_string( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		if ( '' === $agent || ! preg_match( '/googlebot|google-inspectiontool|bingbot|msnbot|applebot|baiduspider|yandex/i', $agent ) ) {
+			return false;
 		}
+		$key    = 'publishrank_tg_bot_' . substr( hash_hmac( 'sha256', $ip, wp_salt( 'auth' ) ), 0, 32 );
+		$cached = get_transient( $key );
+		if ( false !== $cached ) {
+			return '1' === $cached;
+		}
+		$verified = false;
+		$host     = strtolower( (string) @gethostbyaddr( $ip ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- DNS failure simply means "not verified".
+		if ( '' !== $host && $host !== $ip ) {
+			foreach ( self::CRAWLER_DOMAINS as $domain ) {
+				if ( $host === $domain || substr( $host, -strlen( '.' . $domain ) ) === '.' . $domain ) {
+					$records = @dns_get_record( $host, DNS_A | DNS_AAAA ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+					foreach ( is_array( $records ) ? $records : array() as $record ) {
+						$candidate = isset( $record['ip'] ) ? $record['ip'] : ( isset( $record['ipv6'] ) ? $record['ipv6'] : '' );
+						if ( '' !== self::valid_ip( (string) $candidate ) && self::valid_ip( (string) $candidate ) === $ip ) {
+							$verified = true;
+							break 2;
+						}
+					}
+				}
+			}
+		}
+		// The key is a salted hash, so no visitor IP is stored.
+		set_transient( $key, $verified ? '1' : '0', $verified ? DAY_IN_SECONDS : 15 * MINUTE_IN_SECONDS );
+		return $verified;
 	}
 
 	/** Validate and normalize one-IP-or-CIDR-per-line form data. */
@@ -65,6 +128,9 @@ final class TrafficGuard {
 				continue;
 			}
 			$network = self::normalize_network( $value );
+			if ( '' !== $network && self::is_too_broad( $network ) ) {
+				$network = '';
+			}
 			if ( '' === $network ) {
 				$invalid[] = $value;
 			} elseif ( ! in_array( $network, $valid, true ) ) {
@@ -75,6 +141,17 @@ final class TrafficGuard {
 			'valid'   => $valid,
 			'invalid' => $invalid,
 		);
+	}
+
+	/** Reject networks so broad (e.g. 0.0.0.0/0) that they would match most of the internet. */
+	private static function is_too_broad( $network ) {
+		$parts = explode( '/', $network, 2 );
+		if ( ! isset( $parts[1] ) ) {
+			return false;
+		}
+		$packed = @inet_pton( $parts[0] );
+		$min    = ( is_string( $packed ) && 16 === strlen( $packed ) ) ? self::MIN_PREFIX_V6 : self::MIN_PREFIX_V4;
+		return (int) $parts[1] < $min;
 	}
 
 	/** Validate and normalize ISO alpha-2 country values plus Cloudflare XX/T1. */
@@ -144,6 +221,10 @@ final class TrafficGuard {
 		if ( false === $packed ) {
 			return '';
 		}
+		// Treat IPv4-mapped IPv6 (::ffff:a.b.c.d) as the plain IPv4 address so IPv4 rules cannot be bypassed.
+		if ( 16 === strlen( $packed ) && "\0\0\0\0\0\0\0\0\0\0\xff\xff" === substr( $packed, 0, 12 ) ) {
+			$packed = substr( $packed, 12 );
+		}
 		$canonical = @inet_ntop( $packed );
 		return is_string( $canonical ) ? strtolower( $canonical ) : '';
 	}
@@ -198,17 +279,17 @@ final class TrafficGuard {
 
 	/** Trust forwarded addresses only when the direct peer is explicitly trusted. */
 	private static function client_ip( $trusted_proxies ) {
-		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? self::valid_ip( (string) $_SERVER['REMOTE_ADDR'] ) : '';
+		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? self::valid_ip( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) ) : '';
 		if ( '' === $remote || ! self::matches_any( $remote, $trusted_proxies ) ) {
 			return $remote;
 		}
 
-		$cloudflare_ip = isset( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ? self::valid_ip( (string) $_SERVER['HTTP_CF_CONNECTING_IP'] ) : '';
+		$cloudflare_ip = isset( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ? self::valid_ip( sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) ) : '';
 		if ( '' !== $cloudflare_ip ) {
 			return $cloudflare_ip;
 		}
 
-		$forwarded = isset( $_SERVER['HTTP_X_FORWARDED_FOR'] ) && is_string( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : '';
+		$forwarded = isset( $_SERVER['HTTP_X_FORWARDED_FOR'] ) && is_string( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) : '';
 		if ( '' === $forwarded || strlen( $forwarded ) > 4096 ) {
 			return $remote;
 		}
@@ -232,11 +313,11 @@ final class TrafficGuard {
 
 	/** Read country only from a request whose immediate peer is trusted. */
 	private static function country_code( $trusted_proxies ) {
-		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? self::valid_ip( (string) $_SERVER['REMOTE_ADDR'] ) : '';
+		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? self::valid_ip( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) ) : '';
 		if ( '' === $remote || ! self::matches_any( $remote, $trusted_proxies ) || ! isset( $_SERVER['HTTP_CF_IPCOUNTRY'] ) ) {
 			return '';
 		}
-		$country = strtoupper( trim( (string) $_SERVER['HTTP_CF_IPCOUNTRY'] ) );
+		$country = strtoupper( trim( sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_IPCOUNTRY'] ) ) ) );
 		return preg_match( '/^(?:[A-Z]{2}|T1)$/', $country ) ? $country : '';
 	}
 
@@ -257,8 +338,8 @@ final class TrafficGuard {
 		if ( isset( $_GET['rest_route'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return false;
 		}
-		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '/';
-		$path = parse_url( $uri, PHP_URL_PATH );
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
+		$path = wp_parse_url( $uri, PHP_URL_PATH );
 		$path = is_string( $path ) ? $path : '/';
 		if ( preg_match( '~(?:^|/)wp-admin(?:/|$)|(?:^|/)wp-login\.php$|(?:^|/)wp-cron\.php$|(?:^|/)wp-json(?:/|$)~i', $path ) || preg_match( '/\.(?:xml|txt)$/i', $path ) ) {
 			return false;
@@ -270,10 +351,14 @@ final class TrafficGuard {
 	}
 
 	private static function deny() {
+		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+			define( 'DONOTCACHEPAGE', true );
+		}
 		if ( ! headers_sent() ) {
 			status_header( 403 );
 			nocache_headers();
 			header( 'X-Robots-Tag: noindex, nofollow', true );
+			header( 'Cache-Control: no-store, private', true );
 			header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset', 'UTF-8' ), true );
 		}
 		exit( esc_html__( 'Access restricted by the site administrator.', 'publishrank' ) );

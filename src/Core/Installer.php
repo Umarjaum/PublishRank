@@ -51,8 +51,7 @@ final class Installer {
 				'publishrank_image_license_url'           => '',
 				'publishrank_seo_video_sitemap'           => 1,
 				'publishrank_seo_media_post_types'        => 'all',
-				// Technical source provenance is always enabled in code; only footer branding is configurable.
-				'publishrank_public_attribution'          => 1,
+				// Visible footer credit is opt-in only: off until an administrator ticks the box.
 				'publishrank_sitemap_post_types'          => 'post',
 				'publishrank_sitemap_pages_enabled'       => 1,
 				'publishrank_sitemap_cpt_enabled'         => 1,

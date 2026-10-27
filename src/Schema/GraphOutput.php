@@ -77,13 +77,15 @@ final class GraphOutput {
 		foreach ( ( new SchemaBuilder() )->extra_nodes() as $node ) {
 			$graph[] = $node; }
 			$graph = self::dedupe_graph( $graph );
-			echo '<script type="application/ld+json">' . wp_json_encode(
+			echo '<script type="application/ld+json">';
+			echo wp_json_encode(
 				array(
 					'@context' => 'https://schema.org',
 					'@graph'   => $graph,
 				),
-				JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
-			) . '</script>' . "\n";
+				JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+			);
+			echo '</script>' . "\n";
 			echo "<!-- Structured data graph end -->\n";
 	}
 

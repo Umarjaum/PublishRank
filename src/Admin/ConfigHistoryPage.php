@@ -22,6 +22,7 @@ final class ConfigHistoryPage {
 		AdminAssets::done( self::SLUG, 'success', __( 'Snapshot created.', 'publishrank' ) ); }
 	public function restore() {
 		AdminAssets::guard( 'publishrank_snapshot_restore' );
+		check_admin_referer( 'publishrank_snapshot_restore' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$id = isset( $_POST['snapshot_id'] ) ? sanitize_text_field( wp_unslash( $_POST['snapshot_id'] ) ) : '';
 		$r  = SnapshotStore::restore( $id );
