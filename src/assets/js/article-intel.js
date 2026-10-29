@@ -1,7 +1,7 @@
 /* PublishRank Article SEO Intelligence — editor integration + fix studio.
  * Single initialization (duplicate-safe), debounced live analysis, stale-result
  * protection, Apply/Regenerate/Cancel suggestion flows, alt-text save,
- * internal-link copy, floating widget sync. jQuery + vanilla, no frameworks. */
+ * and accessible internal-link copy. jQuery + vanilla, no frameworks. */
 (function ($) {
   'use strict';
   if (window.__prIntelInit) { return; }
@@ -23,9 +23,9 @@
     return '';
   }
   function getPostId() {
-    var card = document.getElementById('publishrank-editor-score');
-    if (card && card.getAttribute('data-post-id')) { return parseInt(card.getAttribute('data-post-id'), 10) || 0; }
-    return parseInt((window.publishrankIntel && publishrankIntel.postId) || 0, 10) || 0;
+    var postId = parseInt((window.publishrankIntel && publishrankIntel.postId) || 0, 10) || parseInt((document.getElementById('post_ID') || {}).value || 0, 10) || 0;
+    try { if (!postId && window.wp && wp.data && wp.data.select) { postId = parseInt(wp.data.select('core/editor').getCurrentPostId(), 10) || 0; } } catch (e) {}
+    return postId;
   }
   function getEditorContent() {
     try {
@@ -61,72 +61,43 @@
     };
   }
 
-  /* ---------------- Widget helpers ---------------- */
-  function setRing(el, score, rating) {
-    if (!el) { return; }
-    var circles = el.querySelectorAll('.pr-ring__val');
-    for (var i = 0; i < circles.length; i++) {
-      var c = parseFloat(circles[i].getAttribute('stroke-dasharray')) || 326.73;
-      circles[i].setAttribute('stroke-dashoffset', String(c * (1 - score / 100)));
-      circles[i].setAttribute('class', 'pr-ring__val pr-ring__val--' + rating);
-    }
-  }
-  function statusText(score) {
-    return score >= 80 ? 'Well optimized' : (score >= 55 ? 'Needs improvement' : 'Needs work');
-  }
-
   function paint(data) {
     if (!data) { return; }
     var score = parseInt(data.score, 10) || 0;
-    var rating = score >= 80 ? 'good' : (score >= 55 ? 'ok' : 'bad');
     var $box = $('#pr-intel');
+    /* Keep anything the editor has typed into the fix assistant across a live re-analysis. */
+    var keep = {};
+    $('#pr-intel-body .pr-studio__input, #pr-intel-body .pr-studio__textarea').each(function () {
+      if (this.id && $(this).data('dirty')) { keep[this.id] = this.value; }
+    });
     $('#pr-intel-body').html(data.html || '');
+    $.each(keep, function (id, val) {
+      var el = document.getElementById(id);
+      if (el) { el.value = val; $(el).data('dirty', 1); $(el).trigger('input'); }
+    });
     $box.attr('data-score', score);
-
-    /* Floating widget sync */
-    var card = document.getElementById('publishrank-editor-score');
-	    if (card) {
-	      card.setAttribute('data-score', String(score));
-	      var num = card.querySelector('.pr-editor-score-card__number');
-	      if (num) { num.textContent = String(score); }
-	      var ringText = card.querySelector('.pr-ring__text');
-	      if (ringText) { ringText.textContent = String(score); }
-	      setRing(card, score, rating);
-      card.className = card.className.replace(/\bis-(good|ok|bad)\b/g, '').trim();
-      card.classList.add('is-' + rating);
-      var st = card.querySelector('.pr-editor-score-card__status-text');
-      if (st) { st.textContent = statusText(score); }
-      if (data.stats) {
-        var w = card.querySelector('.pr-editor-score-card__words'); if (w) { w.textContent = data.stats.words; }
-        var im = card.querySelector('.pr-editor-score-card__images'); if (im) { im.textContent = data.stats.images; }
-        var kw = card.querySelector('.pr-editor-score-card__keyword');
-        if (kw) {
-          if (data.stats.focus_keyword) { kw.textContent = data.stats.focus_keyword; kw.parentNode.classList.add('has-keyphrase'); }
-          else { kw.textContent = '—'; kw.parentNode.classList.remove('has-keyphrase'); }
-        }
-        var hi = card.querySelector('.pr-editor-score-card__issues b');
-        if (hi) { hi.textContent = String(data.stats.issues_high || 0); }
-      }
-      var at = card.querySelector('.pr-editor-score-card__at');
-      if (at) { at.textContent = t('justNow', 'just now'); }
-    }
+    var live = document.getElementById('pr-intel-status');
+    var status = score >= 80 ? t('wellOptimized', 'Well optimized') : (score >= 55 ? t('needsImprovement', 'Needs improvement') : t('needsWork', 'Needs work'));
+    if (live) { live.textContent = String(t('analysisComplete', 'Analysis complete. SEO score: %1$d out of 100. %2$s.').replace('%1$d', String(score)).replace('%2$s', status)); }
   }
 
   /* ---------------- Analysis (debounced, stale-safe) ---------------- */
   function analyze() {
-    var $box = $('#pr-intel'), $card = $('#publishrank-editor-score');
-    if ((!$box.length && !$card.length) || !window.publishrankIntel) { return; }
+    var $box = $('#pr-intel');
+    if (!$box.length || !window.publishrankIntel) { return; }
     var seq = ++analyzeSeq;
-    $box.add($card).addClass('pr-intel__busy');
-    $('#pr-intel-refresh,#publishrank-editor-score-refresh').prop('disabled', true).each(function () { $(this).text(publishrankIntel.analyzing); });
+    $box.addClass('pr-intel__busy');
+    $('#pr-intel-body').attr('aria-busy', 'true');
+    $('#pr-intel-status').text(publishrankIntel.analyzing);
+    $('#pr-intel-refresh').prop('disabled', true).text(publishrankIntel.analyzing);
     $.post(publishrankIntel.ajaxUrl, payload())
-      .done(function (r) { if (seq !== analyzeSeq) { return; } if (r && r.success) { paint(r.data); } else if (window.console) { console.warn('PublishRank analyzer rejected the request', r); } })
-      .fail(function (xhr) { if (seq === analyzeSeq && window.console) { console.warn('PublishRank analyzer request failed', xhr.status); } })
+      .done(function (r) { if (seq !== analyzeSeq) { return; } if (r && r.success) { paint(r.data); } else { $('#pr-intel-status').text(publishrankIntel.failed); if (window.console) { console.warn('PublishRank analyzer rejected the request', r); } } })
+      .fail(function (xhr) { if (seq === analyzeSeq) { $('#pr-intel-status').text(publishrankIntel.failed); if (window.console) { console.warn('PublishRank analyzer request failed', xhr.status); } } })
       .always(function () {
         if (seq !== analyzeSeq) { return; }
-        $box.add($card).removeClass('pr-intel__busy');
-        $('#pr-intel-refresh').prop('disabled', false).text('Re-analyze');
-        $('#publishrank-editor-score-refresh').prop('disabled', false).text('Analyze article');
+        $box.removeClass('pr-intel__busy');
+        $('#pr-intel-body').attr('aria-busy', 'false');
+        $('#pr-intel-refresh').prop('disabled', false).text(t('reanalyze', 'Re-analyze'));
       });
   }
   function schedule() { window.clearTimeout(timer); timer = window.setTimeout(analyze, 600); }
@@ -155,10 +126,113 @@
     }
     return false;
   }
+  var META_KEYS = {
+    keyphrase: '_publishrank_seo_focus_keyword',
+    description: '_publishrank_seo_description',
+    seo_title: '_publishrank_seo_title'
+  };
+  /* Keep the block editor's own post state in step so "Update" does not write the old value back. */
+  function editMeta(field, value) {
+    try {
+      if (META_KEYS[field] && window.wp && wp.data && wp.data.dispatch && wp.data.select('core/editor')) {
+        var m = {}; m[META_KEYS[field]] = value;
+        wp.data.dispatch('core/editor').editPost({ meta: m });
+      }
+    } catch (e) {}
+  }
+  function fileOf(u) {
+    return String(u || '').split('#')[0].split('?')[0].split('/').pop().replace(/-\d{2,5}x\d{2,5}(?=\.[a-z0-9]+$)/i, '').toLowerCase();
+  }
+  function sameFile(a, b) { var x = fileOf(a); return x !== '' && x === fileOf(b); }
+  /* Write alt text into the image itself (the alt attribute lives in the post content, not in the media library). */
+  function setImageAlt(src, attId, value) {
+    var done = false;
+    try {
+      if (window.wp && wp.data && wp.data.select && wp.data.dispatch && wp.data.select('core/block-editor')) {
+        var be = wp.data.select('core/block-editor'), bd = wp.data.dispatch('core/block-editor');
+        var walk = function (blocks) {
+          (blocks || []).forEach(function (b) {
+            var a = b.attributes || {};
+            if ((b.name === 'core/image' || b.name === 'core/cover') && ((attId && a.id === attId) || (src && sameFile(a.url, src)))) {
+              bd.updateBlockAttributes(b.clientId, { alt: value }); done = true;
+            } else if (b.name === 'core/media-text' && ((attId && a.mediaId === attId) || (src && sameFile(a.mediaUrl, src)))) {
+              bd.updateBlockAttributes(b.clientId, { mediaAlt: value }); done = true;
+            }
+            if (b.innerBlocks && b.innerBlocks.length) { walk(b.innerBlocks); }
+          });
+        };
+        walk(be.getBlocks());
+      }
+    } catch (e) {}
+    try {
+      if (window.tinymce) {
+        var ed = tinymce.get('content');
+        if (ed && !ed.isHidden()) {
+          $(ed.getBody()).find('img').each(function () {
+            var cls = ' ' + (this.className || '') + ' ';
+            if ((src && sameFile(this.getAttribute('src'), src)) || (attId && cls.indexOf(' wp-image-' + attId + ' ') > -1)) {
+              ed.dom.setAttrib(this, 'alt', value); done = true;
+            }
+          });
+          if (done) { ed.setDirty(true); if (ed.save) { ed.save(); } }
+        }
+      }
+    } catch (e) {}
+    var ta = document.getElementById('content');
+    if (!done && ta && typeof ta.value === 'string' && ta.offsetParent !== null) {
+      var html = ta.value;
+      var next = html.replace(/<img\b[^>]*>/gi, function (tag) {
+        var m = tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+        if (!m || !sameFile(m[1], src)) { return tag; }
+        var safe = String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        done = true;
+        return /\balt\s*=/i.test(tag) ? tag.replace(/\balt\s*=\s*(?:"[^"]*"|'[^']*')/i, 'alt="' + safe + '"') : tag.replace(/<img\b/i, '<img alt="' + safe + '"');
+      });
+      if (done) { ta.value = next; }
+    }
+    return done;
+  }
+  /* Replace the text of the first paragraph (block editor, TinyMCE or the plain textarea). */
+  function setFirstParagraph(text) {
+    var done = false;
+    var escaped = $('<div/>').text(text).html();
+    try {
+      if (window.wp && wp.data && wp.data.select && wp.data.select('core/block-editor')) {
+        var blocks = wp.data.select('core/block-editor').getBlocks();
+        for (var i = 0; i < blocks.length; i++) {
+          if (blocks[i].name === 'core/paragraph') {
+            wp.data.dispatch('core/block-editor').updateBlockAttributes(blocks[i].clientId, { content: escaped });
+            return true;
+          }
+        }
+      }
+    } catch (e) {}
+    try {
+      if (window.tinymce) {
+        var ed = tinymce.get('content');
+        if (ed && !ed.isHidden()) {
+          var p = ed.getBody().querySelector('p');
+          if (p) { p.textContent = text; ed.setDirty(true); if (ed.save) { ed.save(); } return true; }
+        }
+      }
+    } catch (e) {}
+    var ta = document.getElementById('content');
+    if (ta && typeof ta.value === 'string' && /<p\b[^>]*>[\s\S]*?<\/p>/i.test(ta.value)) {
+      ta.value = ta.value.replace(/(<p\b[^>]*>)[\s\S]*?(<\/p>)/i, function (m, a, b) { return a + escaped + b; });
+      done = true;
+    }
+    return done;
+  }
+  function findInput($btn) {
+    var id = $btn.data('input');
+    var $in = id ? $(document.getElementById(id)) : $();
+    if (!$in.length) { $in = $btn.closest('.pr-studio__row').find('.pr-studio__input, .pr-studio__textarea').first(); }
+    if (!$in.length) { $in = $btn.closest('.pr-studio__block').find('.pr-studio__input, .pr-studio__textarea').first(); }
+    return $in;
+  }
   function applyValue($btn) {
     var field = $btn.data('field');
-    var $row = $btn.closest('.pr-studio__row');
-    var value = $.trim($row.find('.pr-studio__input, .pr-studio__textarea').first().val() || '');
+    var value = $.trim(findInput($btn).val() || '');
     if (!value) { feedback($btn, false, t('empty', 'Enter a value first.')); return; }
     var data = {
       action: publishrankIntel.applyAction, nonce: publishrankIntel.applyNonce,
@@ -170,8 +244,14 @@
     $.post(publishrankIntel.ajaxUrl, data)
       .done(function (r) {
         if (r && r.success) {
-          feedback($btn, true, t('applied', 'Saved.'));
-          if (field !== 'alt') { setEditorField(field, value); }
+          if (field === 'alt') {
+            var inEditor = setImageAlt(String($btn.data('src') || ''), att, value);
+            feedback($btn, true, inEditor ? t('applied', 'Saved.') : t('altLibraryOnly', 'Saved to the media library. Open the image block and paste the alt text there to finish.'));
+          } else {
+            feedback($btn, true, t('applied', 'Saved.'));
+            setEditorField(field, value);
+            editMeta(field, value);
+          }
           analyze();
         } else {
           feedback($btn, false, (r && r.data && r.data.message) || t('applyFail', 'Could not save the value. Please try again.'));
@@ -179,6 +259,16 @@
       })
       .fail(function () { feedback($btn, false, t('applyFail', 'Could not save the value. Please try again.')); })
       .always(function () { $btn.prop('disabled', false); });
+  }
+  function applyIntro($btn) {
+    var value = $.trim(findInput($btn).val() || '');
+    if (!value) { feedback($btn, false, t('empty', 'Enter a value first.')); return; }
+    if (setFirstParagraph(value)) {
+      feedback($btn, true, t('introInserted', 'First paragraph updated. Review it, then update the post.'));
+      schedule();
+    } else {
+      feedback($btn, false, t('introFail', 'Could not find a first paragraph. Use Copy text and paste it into your content.'));
+    }
   }
   function regenerate($btn) {
     var kind = $btn.data('kind');
@@ -208,38 +298,35 @@
   }
   function copyLink($btn) {
     var url = $btn.data('url') || '';
+    var $status = $btn.closest('.pr-studio__link').find('.pr-studio__copy-feedback').first();
     var done = function (ok) {
       var old = $btn.text();
-      $btn.text(ok ? t('copied', 'Link copied.') : t('copyFail', 'Copy failed — select the URL manually.'));
+      var text = ok ? t('copied', 'Link copied.') : t('copyFail', 'Copy failed — select the URL manually.');
+      $btn.text(text);
+      if ($status.length) { $status.text(text); }
       window.setTimeout(function () { $btn.text(old); }, 2500);
     };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(function () { done(true); }, function () { legacyCopy(url) ? done(true) : done(false); });
-    } else { done(legacyCopy(url)); }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { done(true); }, function () { legacyCopy(url) ? done(true) : done(false); });
+      } else { done(legacyCopy(url)); }
+    } catch (e) { done(legacyCopy(url)); }
   }
   function legacyCopy(text) {
+    var active = document.activeElement;
     try {
       var ta = document.createElement('textarea');
-      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      ta.value = text; ta.setAttribute('aria-hidden', 'true'); ta.tabIndex = -1; ta.style.position = 'fixed'; ta.style.opacity = '0';
       document.body.appendChild(ta); ta.select();
       var ok = document.execCommand('copy');
       document.body.removeChild(ta);
+      if (active && active.focus) { active.focus(); }
       return ok;
-    } catch (e) { return false; }
+    } catch (e) { if (active && active.focus) { active.focus(); } return false; }
   }
 
   /* ---------------- Events (delegated, namespaced, single bind) ---------------- */
-  $(document).on('click.prIntel', '#pr-intel-refresh,#publishrank-editor-score-refresh', function (e) { e.preventDefault(); analyze(); });
-
-  $(document).on('click.prIntel', '#publishrank-editor-score-open', function (e) {
-    e.preventDefault();
-    var box = document.getElementById('pr-intel');
-    if (box) {
-      box.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-      box.classList.add('pr-intel__flash');
-      window.setTimeout(function () { box.classList.remove('pr-intel__flash'); }, 1600);
-    }
-  });
+  $(document).on('click.prIntel', '#pr-intel-refresh', function (e) { e.preventDefault(); analyze(); });
 
   $(document).on('click.prIntel', '.pr-studio__chip', function () {
     var phrase = $(this).data('phrase');
@@ -247,6 +334,16 @@
     $input.val(phrase).trigger('input').trigger('focus');
   });
   $(document).on('click.prIntel', '.pr-studio__apply', function () { applyValue($(this)); });
+  $(document).on('click.prIntel', '.pr-studio__intro-apply', function () { applyIntro($(this)); });
+  $(document).on('click.prIntel', '.pr-studio__copy-text', function () {
+    var $btn = $(this), text = $.trim(findInput($btn).val() || '');
+    if (!text) { feedback($btn, false, t('empty', 'Enter a value first.')); return; }
+    var ok = false;
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text); ok = true; } } catch (e) {}
+    if (!ok) { ok = legacyCopy(text); }
+    feedback($btn, ok, ok ? t('copied', 'Link copied.').replace(/link/i, 'text') : t('copyFail', 'Copy failed — select the text manually.'));
+  });
+  $(document).on('input.prIntel', '.pr-studio__input, .pr-studio__textarea', function () { $(this).data('dirty', 1); });
   $(document).on('click.prIntel', '.pr-studio__regen', function () { regenerate($(this)); });
   $(document).on('click.prIntel', '.pr-studio__cancel', function () {
     var target = document.getElementById($(this).data('target'));
@@ -255,13 +352,15 @@
   $(document).on('click.prIntel', '.pr-studio__copy', function () { copyLink($(this)); });
   $(document).on('input.prIntel', '#pr-studio-description', function () {
     var n = $(this).val().length;
-    $('#pr-studio-description-count').text(n + ' characters (target 70–160)');
+    var format = t(n === 1 ? 'characterCountSingle' : 'characterCountPlural', n === 1 ? '%d character (target 70–160)' : '%d characters (target 70–160)');
+    $('#pr-studio-description-count').text(String(format).replace('%d', String(n)));
   });
 
   /* "Fix" buttons in the priority list: jump to the matching studio block */
   $(document).on('click.prIntel', '.pr-issue__fix', function () {
     var kind = $(this).data('kind');
     var $block = $('.pr-studio__block[data-studio="' + kind + '"]').first();
+    if (!$block.length) { $block = $('.pr-studio').first(); }
     if ($block.length) {
       $block[0].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
       $block.addClass('pr-studio__flash');
@@ -284,24 +383,4 @@
     '#title,.editor-post-title__input,#content,#excerpt,#publishrank_seo_title,#publishrank_meta_description,#publishrank_focus_keyword,[name="publishrank_seo_title"],[name="publishrank_seo_description"],[name="publishrank_focus_keyword"],[name="_publishrank_seo_title"],[name="_publishrank_seo_description"],[name="_publishrank_seo_focus_keyword"]',
     schedule);
 
-  /* Widget collapse toggle */
-  $(document).on('click.prIntel', '.pr-editor-score-card__toggle', function () {
-    var card = document.getElementById('publishrank-editor-score');
-    if (!card) { return; }
-    var collapsed = card.classList.toggle('is-collapsed');
-    this.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-    try { window.localStorage.setItem('prScoreCardCollapsed', collapsed ? '1' : '0'); } catch (e) {}
-  });
-
-  $(function () {
-    var card = document.getElementById('publishrank-editor-score');
-    if (card) {
-      var n = parseInt(card.getAttribute('data-score') || '0', 10);
-      card.classList.add(n >= 80 ? 'is-good' : (n >= 55 ? 'is-ok' : 'is-bad'));
-      try { if (window.localStorage.getItem('prScoreCardCollapsed') === '1') { card.classList.add('is-collapsed'); } } catch (e) {}
-      setRing(card, n, n >= 80 ? 'good' : (n >= 55 ? 'ok' : 'bad'));
-      var st = card.querySelector('.pr-editor-score-card__status-text');
-      if (st) { st.textContent = statusText(n); }
-    }
-  });
 })(jQuery);

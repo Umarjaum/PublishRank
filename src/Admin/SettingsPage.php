@@ -342,6 +342,78 @@ final class SettingsPage {
 			)
 		);
 		$this->reg(
+			'publishrank_breadcrumb_schema_enabled',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => true,
+			)
+		);
+		$this->reg(
+			'publishrank_breadcrumb_style',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_breadcrumb_style' ),
+				'default'           => 'plain',
+			)
+		);
+		$this->reg(
+			'publishrank_breadcrumb_size',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_breadcrumb_size' ),
+				'default'           => 'medium',
+			)
+		);
+		$this->reg(
+			'publishrank_breadcrumb_text_color',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_hex_color',
+				'default'           => '',
+			)
+		);
+		$this->reg(
+			'publishrank_breadcrumb_link_color',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_hex_color',
+				'default'           => '',
+			)
+		);
+		$this->reg(
+			'publishrank_breadcrumb_bg_color',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_hex_color',
+				'default'           => '',
+			)
+		);
+		$this->reg(
+			'publishrank_breadcrumb_placement',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_breadcrumb_placement' ),
+				'default'           => 'auto',
+			)
+		);
+		$this->reg(
+			'publishrank_breadcrumb_hook',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_breadcrumb_hook' ),
+				'default'           => '',
+			)
+		);
+		$this->reg(
+			'publishrank_breadcrumb_home_label',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => '',
+			)
+		);
+		$this->reg(
 			'publishrank_breadcrumbs_separator',
 			array(
 				'type'              => 'string',
@@ -553,6 +625,29 @@ final class SettingsPage {
 		$value = sanitize_key( $value );
 		return in_array( $value, array( 'custom', 'disabled' ), true ) ? $value : 'custom';
 	}
+	/** @param mixed $value @return string */
+	public function sanitize_breadcrumb_style( $value ) {
+		$value = sanitize_key( $value );
+		return in_array( $value, array( 'plain', 'chips', 'bar', 'underline' ), true ) ? $value : 'plain';
+	}
+
+	/** @param mixed $value @return string */
+	public function sanitize_breadcrumb_size( $value ) {
+		$value = sanitize_key( $value );
+		return in_array( $value, array( 'small', 'medium', 'large' ), true ) ? $value : 'medium';
+	}
+
+	/** @param mixed $value @return string */
+	public function sanitize_breadcrumb_placement( $value ) {
+		$value = sanitize_key( $value );
+		return in_array( $value, array( 'auto', 'content', 'hook', 'manual', 'schema_only' ), true ) ? $value : 'auto';
+	}
+
+	/** @param mixed $value @return string */
+	public function sanitize_breadcrumb_hook( $value ) {
+		return trim( (string) preg_replace( '/[^A-Za-z0-9_:\\/\\-]/', '', (string) $value ) );
+	}
+
 	/** @param mixed $value @return string */
 	public function sanitize_breadcrumb_error_mode( $value ) {
 		$value   = sanitize_key( $value );
@@ -859,7 +954,19 @@ ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_h
 	
 			<h2 class="pr-settings-section" id="pr-settings-breadcrumbs"><?php esc_html_e( 'Breadcrumbs', 'publishrank' ); ?></h2>
 				<table class="form-table" role="presentation"><tbody>
-					<tr><th scope="row"><?php esc_html_e( 'Frontend breadcrumbs', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_breadcrumbs_enabled" value="0" /><label><input name="publishrank_breadcrumbs_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_breadcrumbs_enabled', true ) ); ?> /> <?php esc_html_e( 'Output breadcrumbs on singular content', 'publishrank' ); ?></label><br /><label for="publishrank_breadcrumbs_separator"><?php esc_html_e( 'Separator', 'publishrank' ); ?></label> <input id="publishrank_breadcrumbs_separator" name="publishrank_breadcrumbs_separator" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumbs_separator', '→' ) ); ?>" class="small-text" /></td></tr>
+					<tr><th scope="row"><?php esc_html_e( 'Frontend breadcrumbs', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_breadcrumbs_enabled" value="0" /><label><input name="publishrank_breadcrumbs_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_breadcrumbs_enabled', true ) ); ?> /> <?php esc_html_e( 'Show breadcrumbs (posts, pages and category/tag/taxonomy archives)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_breadcrumb_schema_enabled" value="0" /><label><input name="publishrank_breadcrumb_schema_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_breadcrumb_schema_enabled', true ) ); ?> /> <?php esc_html_e( 'Keep BreadcrumbList structured data and SEO enabled', 'publishrank' ); ?></label><br /><label for="publishrank_breadcrumbs_separator"><?php esc_html_e( 'Separator', 'publishrank' ); ?></label> <input id="publishrank_breadcrumbs_separator" name="publishrank_breadcrumbs_separator" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumbs_separator', '→' ) ); ?>" class="small-text" /></td></tr>
+<tr><th scope="row"><?php esc_html_e( 'Breadcrumb placement', 'publishrank' ); ?></th><td><label for="publishrank_breadcrumb_placement"><?php esc_html_e( 'Where to print the visible trail', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_placement" name="publishrank_breadcrumb_placement"><?php foreach ( array( 'auto' => __( 'Automatic (recommended)', 'publishrank' ), 'content' => __( 'Above the post content', 'publishrank' ), 'hook' => __( 'Theme hook (advanced)', 'publishrank' ), 'manual' => __( 'Manual: block, shortcode or template tag', 'publishrank' ), 'schema_only' => __( 'Structured data only (my theme prints its own trail)', 'publishrank' ) ) as $placement_value => $placement_label ) { ?><option value="<?php echo esc_attr( $placement_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_placement', 'auto' ), $placement_value ); ?>><?php echo esc_html( $placement_label ); ?></option><?php } ?></select><p class="description"><?php esc_html_e( 'Google expects the BreadcrumbList structured data to match a breadcrumb trail that visitors can actually see. Automatic prints PublishRank\'s trail above the post title in block themes and above the content in classic themes, using the same items as the structured data. Choose "Structured data only" only if your theme already prints an identical trail, and turn off the theme\'s own trail if you let PublishRank print it so the page does not show two.', 'publishrank' ); ?></p><label for="publishrank_breadcrumb_hook"><?php esc_html_e( 'Theme hook name', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_hook" name="publishrank_breadcrumb_hook" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_hook', '' ) ); ?>" class="regular-text code" placeholder="astra_primary_content_top" /><p class="description"><?php esc_html_e( 'Only used with "Theme hook". Enter an action hook from your theme, for example astra_primary_content_top, generate_before_content or the hook your theme documents for "before content".', 'publishrank' ); ?></p><label for="publishrank_breadcrumb_home_label"><?php esc_html_e( 'First crumb label', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_home_label" name="publishrank_breadcrumb_home_label" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_home_label', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" /><p class="description"><?php esc_html_e( 'Leave blank to use the publication name, or enter "Home".', 'publishrank' ); ?></p><p class="description"><?php esc_html_e( 'Manual placement: add the "PublishRank Breadcrumbs" block, the [publishrank_breadcrumbs] shortcode, or call publishrank_breadcrumbs() in a theme template.', 'publishrank' ); ?></p></td></tr>
+<tr><th scope="row"><?php esc_html_e( 'Breadcrumb style', 'publishrank' ); ?></th><td><?php
+$pr_bc_seps = array( '→' => 'Arrow →', '›' => 'Single angle ›', '»' => 'Double angle »', '/' => 'Slash /', '|' => 'Pipe |', '·' => 'Middle dot ·', '•' => 'Bullet •', '‣' => 'Triangle bullet ‣', '>' => 'Greater than >', '–' => 'En dash –', '~' => 'Tilde ~', '⟩' => 'Mathematical angle ⟩', '➤' => 'Arrowhead ➤', '' => 'None' );
+$pr_bc_sep  = (string) $val( 'publishrank_breadcrumbs_separator', '→' );
+?><label for="publishrank_breadcrumb_sep_preset"><?php esc_html_e( 'Separator symbol', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_sep_preset"><?php foreach ( $pr_bc_seps as $sep_value => $sep_label ) { ?><option value="<?php echo esc_attr( $sep_value ); ?>" <?php selected( $pr_bc_sep, (string) $sep_value ); ?>><?php echo esc_html( $sep_label ); ?></option><?php } ?><option value="__custom" <?php selected( isset( $pr_bc_seps[ $pr_bc_sep ] ), false ); ?>><?php esc_html_e( 'Custom (use the separator field above)', 'publishrank' ); ?></option></select>
+<script>(function(){var s=document.getElementById('publishrank_breadcrumb_sep_preset'),i=document.getElementById('publishrank_breadcrumbs_separator');if(!s||!i){return;}s.addEventListener('change',function(){if(s.value!=='__custom'){i.value=s.value;}else{i.focus();}});i.addEventListener('input',function(){var m=false;for(var k=0;k<s.options.length;k++){if(s.options[k].value===i.value){s.selectedIndex=k;m=true;break;}}if(!m){s.value='__custom';}});}());</script><br />
+<label for="publishrank_breadcrumb_style"><?php esc_html_e( 'Look', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_style" name="publishrank_breadcrumb_style"><?php foreach ( array( 'plain' => __( 'Plain text (inherits theme)', 'publishrank' ), 'chips' => __( 'Chips (rounded pills)', 'publishrank' ), 'bar' => __( 'Bar (soft background strip)', 'publishrank' ), 'underline' => __( 'Underline (thin rule below)', 'publishrank' ) ) as $style_value => $style_label ) { ?><option value="<?php echo esc_attr( $style_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_style', 'plain' ), $style_value ); ?>><?php echo esc_html( $style_label ); ?></option><?php } ?></select>
+<label for="publishrank_breadcrumb_size"><?php esc_html_e( 'Size', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_size" name="publishrank_breadcrumb_size"><?php foreach ( array( 'small' => __( 'Small', 'publishrank' ), 'medium' => __( 'Medium', 'publishrank' ), 'large' => __( 'Large', 'publishrank' ) ) as $size_value => $size_label ) { ?><option value="<?php echo esc_attr( $size_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_size', 'medium' ), $size_value ); ?>><?php echo esc_html( $size_label ); ?></option><?php } ?></select><br />
+<label for="publishrank_breadcrumb_text_color"><?php esc_html_e( 'Text colour', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_text_color" name="publishrank_breadcrumb_text_color" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_text_color', '' ) ); ?>" class="small-text code" placeholder="#444444" />
+<label for="publishrank_breadcrumb_link_color"><?php esc_html_e( 'Link colour', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_link_color" name="publishrank_breadcrumb_link_color" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_link_color', '' ) ); ?>" class="small-text code" placeholder="#0a58ca" />
+<label for="publishrank_breadcrumb_bg_color"><?php esc_html_e( 'Background colour', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_bg_color" name="publishrank_breadcrumb_bg_color" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_bg_color', '' ) ); ?>" class="small-text code" placeholder="#eef2f7" />
+<p class="description"><?php esc_html_e( 'Colours use hex codes such as #0a58ca. Leave them blank to follow your theme. Background applies to the Chips and Bar looks.', 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><?php esc_html_e( 'Breadcrumb error handling', 'publishrank' ); ?></th><td><label for="publishrank_breadcrumb_error_mode"><?php esc_html_e( 'Invalid item behavior', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_error_mode" name="publishrank_breadcrumb_error_mode"><option value="skip" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'skip' ); ?>><?php esc_html_e( 'Skip invalid item', 'publishrank' ); ?></option><option value="fallback" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'fallback' ); ?>><?php esc_html_e( 'Use fallback item', 'publishrank' ); ?></option><option value="text" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'text' ); ?>><?php esc_html_e( 'Keep text without link', 'publishrank' ); ?></option><option value="disable" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'disable' ); ?>><?php esc_html_e( 'Disable breadcrumbs on error', 'publishrank' ); ?></option></select><br /><label for="publishrank_breadcrumb_error_key"><?php esc_html_e( 'Error key', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_error_key" name="publishrank_breadcrumb_error_key" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_error_key', 'breadcrumb_error' ) ); ?>" class="regular-text code" /><br /><label for="publishrank_breadcrumb_fallback_label"><?php esc_html_e( 'Fallback label', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_fallback_label" name="publishrank_breadcrumb_fallback_label" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_fallback_label', 'Home' ) ); ?>" class="regular-text" /><br /><label for="publishrank_breadcrumb_fallback_url"><?php esc_html_e( 'Fallback URL', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_fallback_url" name="publishrank_breadcrumb_fallback_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_fallback_url', home_url( '/' ) ) ); ?>" class="large-text" /><br /><input type="hidden" name="publishrank_breadcrumb_log_errors" value="0" /><label><input name="publishrank_breadcrumb_log_errors" type="checkbox" value="1" <?php checked( $val( 'publishrank_breadcrumb_log_errors', false ) ); ?> /> <?php esc_html_e( 'Record breadcrumb errors for administrators', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Use these controls when a taxonomy, archive, permalink, or canonical URL cannot be resolved. Error logs stay local to this site.', 'publishrank' ); ?></p></td></tr>
 				</tbody></table>
 			<h2 class="pr-settings-section" id="pr-settings-infrastructure"><?php esc_html_e( 'Infrastructure domains', 'publishrank' ); ?></h2>
@@ -888,7 +995,7 @@ news"><?php echo esc_textarea( $val( 'publishrank_seo_news_post_types', 'post' )
 		foreach ( array( 'News', 'Breaking News', 'Live Updates', 'Developing Story', 'Local News', 'National News', 'International News', 'Regional News', 'World News', 'Report', 'Investigative', 'In-Depth', 'Exclusive', 'Special Report', 'Field Report', 'Eyewitness Report', 'Data Journalism', 'Fact Check', 'Verification', 'News Analysis', 'Analysis', 'Explainer', 'Background', 'Context', 'Briefing', 'News Brief', 'Roundup', 'Timeline', 'Opinion', 'Editorial', 'Column', 'Commentary', 'Op-Ed', 'Letter to the Editor', 'Guest Essay', 'Perspective', 'Interview', 'Profile', 'Q&A', 'Portrait', 'Biography', 'Obituary', 'Tribute', 'Live Blog', 'Event Coverage', 'Election Coverage', 'Breaking Coverage', 'Conference Coverage', 'Sports Coverage', 'Review', 'Criticism', 'Preview', 'Guide', 'How-To', 'FAQ', 'Consumer Advice', 'Service Journalism', 'Travel', 'Food', 'Technology', 'Science', 'Health', 'Business', 'Finance', 'Politics', 'Sports', 'Entertainment', 'Culture', 'Press Release', 'Statement', 'Transcript', 'Speech', 'Announcement', 'Official Statement', 'Court Filing', 'Document', 'Public Records', 'Research', 'Study', 'Survey', 'Feature', 'Longform', 'Magazine', 'Essay', 'Human Interest', 'Special Feature', 'Photo Essay', 'Multimedia', 'Documentary', 'Satire', 'User Generated', 'Blog', 'Archive', 'Correction', 'Update', 'Retraction', 'Clarification', 'Fact Correction' ) as $genre ) :
 			?>
 	<option value="<?php echo esc_attr( $genre ); ?>" <?php selected( $val( 'publishrank_editorial_genre' ), $genre ); ?>><?php echo esc_html( $genre ); ?></option><?php endforeach; ?></select><p class="description"><?php esc_html_e( 'Editorial classification for newsroom workflows and publisher taxonomy. This is separate from the Google News genre field above and is not written to the News Sitemap as a Google genre value.', 'publishrank' ); ?></p></td></tr>
-	<tr><th scope="row"><?php esc_html_e( 'News keywords', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_keywords" value="0" /><label><input name="publishrank_seo_news_keywords" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_keywords', true ) ); ?> /> <?php esc_html_e( 'Include tags, categories, and focus keyphrase as news keywords', 'publishrank' ); ?></label></td></tr>
+	<tr><th scope="row"><?php esc_html_e( 'News keywords', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_keywords" value="0" /><label><input name="publishrank_seo_news_keywords" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_keywords', true ) ); ?> /> <?php esc_html_e( 'Include tags, categories, and focus keyword as news keywords', 'publishrank' ); ?></label></td></tr>
 	<tr><th scope="row"><label for="publishrank_sitemap_post_types"><?php esc_html_e( 'Standard sitemap post types', 'publishrank' ); ?></label></th><td><input id="publishrank_sitemap_post_types" name="publishrank_sitemap_post_types" type="text" value="<?php echo esc_attr( $val( 'publishrank_sitemap_post_types', 'post' ) ); ?>" class="large-text" /><p class="description"><?php esc_html_e( 'Public, queryable types included in the standard post sitemap.', 'publishrank' ); ?></p></td></tr>
 	<tr><th scope="row"><?php esc_html_e( 'Additional sitemap providers', 'publishrank' ); ?></th><td>
 		<?php

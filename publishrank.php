@@ -3,7 +3,7 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrank.netlify.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.9.76
+ * Version: 2.9.87
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -15,10 +15,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.9.76' );
+define( 'PUBLISHRANK_SEO_VERSION', '2.9.87' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
+
+// Built-in PublishRank Newsroom editorial workflow module.
+require_once __DIR__ . '/src/Newsroom/advanced.php';
+require_once __DIR__ . '/src/Newsroom/Newsroom.php';
 
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
@@ -39,6 +43,27 @@ spl_autoload_register(
 	}
 );
 
+/**
+ * Template tag for themes that want to place the PublishRank breadcrumb trail themselves:
+ * <?php if ( function_exists( 'publishrank_breadcrumbs' ) ) { publishrank_breadcrumbs(); } ?>
+ *
+ * @param bool $echo Print (true) or return (false) the markup.
+ * @return string
+ */
+if ( ! function_exists( 'publishrank_breadcrumbs' ) ) {
+	function publishrank_breadcrumbs( $echo = true ) {
+		if ( ! class_exists( '\\PublishRankSEO\\SEO\\BreadcrumbEngine' ) ) {
+			return '';
+		}
+		$html = ( new \PublishRankSEO\SEO\BreadcrumbEngine() )->render();
+		if ( $echo ) {
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped while building the markup.
+			return '';
+		}
+		return $html;
+	}
+}
+
 if ( defined( 'WP_CLI' ) && WP_CLI && is_readable( __DIR__ . '/src/CLI/PublishRankCommand.php' ) ) {
 	require_once __DIR__ . '/src/CLI/PublishRankCommand.php';
 }
@@ -52,6 +77,9 @@ register_activation_hook(
 		if ( class_exists( '\\PublishRankSEO\\Indexing\\IndexNow' ) ) {
 			\PublishRankSEO\Indexing\IndexNow::activate();
 		}
+		if ( class_exists( 'PublishRank_Newsroom' ) ) {
+			PublishRank_Newsroom::activate();
+		}
 		// Redirect an activating administrator to the first-run setup wizard.
 		set_transient( 'publishrank_seo_activation_redirect', 1, 120 );
 	}
@@ -63,11 +91,29 @@ register_deactivation_hook(
 		if ( class_exists( '\\PublishRankSEO\\Sitemap\\Engine\\SitemapCursorStore' ) ) {
 			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::unregister();
 		}
+		if ( class_exists( 'PublishRank_Newsroom' ) ) {
+			PublishRank_Newsroom::deactivate();
+		}
 		if ( class_exists( '\\PublishRankSEO\\Monitor\\ScheduledAudit' ) ) {
 			\PublishRankSEO\Monitor\ScheduledAudit::clear_schedule();
 		}
 			wp_clear_scheduled_hook( 'publishrank_daily_analytics_snapshot' );
-			flush_rewrite_rules();
+			// Never leave the custom administration-path block active after deactivation.
+			$publishrank_hide_login = get_option( 'publishrank_wp_hide_login', array() );
+			if ( is_array( $publishrank_hide_login ) ) {
+				$publishrank_hide_login['enabled'] = 0;
+				update_option( 'publishrank_wp_hide_login', $publishrank_hide_login, false );
+			}
+			update_option( 'publishrank_wp_hide_login_apache_rules_active', 0, false );
+			global $wp_rewrite;
+			if ( isset( $wp_rewrite->extra_rules_top ) && is_array( $wp_rewrite->extra_rules_top ) ) {
+				foreach ( $wp_rewrite->extra_rules_top as $publishrank_regex => $publishrank_query ) {
+					if ( is_string( $publishrank_query ) && false !== strpos( $publishrank_query, 'publishrank_custom_login=1' ) ) {
+						unset( $wp_rewrite->extra_rules_top[ $publishrank_regex ] );
+					}
+				}
+			}
+			flush_rewrite_rules( true );
 	}
 );
 
@@ -108,6 +154,7 @@ function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
 	);
 		$items = array(
 			'dashboard'         => array( __( 'Dashboard', 'publishrank' ), $dashboard ),
+			'newsroom'          => array( __( 'Newsroom', 'publishrank' ), admin_url( 'admin.php?page=uj-newsroom' ) ),
 			'settings'          => array( __( 'Settings', 'publishrank' ), $settings ),
 			'setup'             => array( __( 'Setup Wizard', 'publishrank' ), admin_url( 'admin.php?page=publishrank-onboarding' ) ),
 			'seo-score'         => array( __( 'SEO Score', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-score' ) ),

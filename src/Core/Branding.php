@@ -32,6 +32,6 @@ final class Branding {
 	/** True on any PublishRank admin screen. */
 	public static function is_plugin_screen() {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return 0 === strpos( $page, 'publishrank' );
+		return 0 === strpos( $page, 'publishrank' ) || 0 === strpos( $page, 'uj-newsroom' );
 	}
 }

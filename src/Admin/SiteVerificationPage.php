@@ -22,7 +22,7 @@ final class SiteVerificationPage {
 		add_action( 'admin_post_publishrank_verification_check', array( $this, 'check' ) );
 	}
 
-	/** First entry of the PublishRank drop-down (position 0, after the Dashboard menu exists). */
+	/** Register after Dashboard and Newsroom so this item appears directly beneath Newsroom. */
 	public function menu() {
 		add_submenu_page(
 			Branding::MENU_SLUG,
@@ -30,8 +30,7 @@ final class SiteVerificationPage {
 			__( 'Site Verification', 'publishrank' ),
 			'manage_options',
 			self::SLUG,
-			array( $this, 'render' ),
-			0
+			array( $this, 'render' )
 		);
 	}
 

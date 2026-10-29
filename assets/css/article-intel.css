@@ -119,3 +119,11 @@
   .pr-ring__val,.pr-cat__bar span{transition:none}
   .pr-intel__flash,.pr-studio__flash{animation:none}
 }
+
+/* Semantic panel heading and accessible action feedback. */
+.pr-intel__head h2{margin:0;color:#1d2327;font-size:14px;line-height:1.4}
+.pr-intel__head .description{flex:1 1 260px}
+.pr-intel__head button:focus-visible,.pr-studio button:focus-visible,.pr-studio input:focus-visible,.pr-studio textarea:focus-visible{outline:2px solid #2271b1;outline-offset:2px;box-shadow:0 0 0 1px #fff}
+.pr-studio__copy-feedback{min-width:1px;color:#1d2327;font-size:12px}
+@media(max-width:782px){.pr-intel__head{align-items:flex-start}.pr-intel__head h2{flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){.pr-ring__val,.pr-cat__bar span{transition:none!important}.pr-intel__flash{animation:none!important}}

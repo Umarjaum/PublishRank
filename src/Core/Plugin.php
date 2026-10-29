@@ -52,7 +52,6 @@ use PublishRankSEO\Admin\ConfigHistoryPage;
 use PublishRankSEO\AI\LLMSTxt;
 use PublishRankSEO\Admin\LLMSTxtPage;
 use PublishRankSEO\Admin\ImageOptimizerPage;
-use PublishRankSEO\Admin\EditorScoreCard;
 use PublishRankSEO\Admin\IndexNowPage;
 use PublishRankSEO\Admin\PublisherToolkitPage;
 use PublishRankSEO\Admin\HelpDocumentationPage;
@@ -114,6 +113,7 @@ final class Plugin {
 				$this->loader->register( TraceIntegrity::class, false );
 			$this->loader->register( SecurityHeaders::class, false );
 			$this->loader->register( TrafficGuard::class, false );
+		$this->loader->register( \PublishRankSEO\Security\WPHideLogin::class, false );
 			$this->loader->register( ReadingExperience::class, false );
 			$this->loader->register( LinkManager::class, false );
 			$this->loader->register( ResourceHints::class, false );
@@ -143,7 +143,6 @@ final class Plugin {
 			$this->loader->register( ConfigHistoryPage::class, false );
 				$this->loader->register( LLMSTxtPage::class, false );
 				$this->loader->register( ImageOptimizerPage::class, false );
-				$this->loader->register( EditorScoreCard::class, false );
 			$this->loader->register( IndexNowPage::class, false );
 			$this->loader->register( PublisherToolkitPage::class, false );
 			$this->loader->register( HelpDocumentationPage::class, false );

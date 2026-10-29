@@ -62,18 +62,32 @@ final class GraphOutput {
 		if ( ! is_array( $graph ) ) {
 			$graph = array(); }
 		$graph = array_values( array_filter( $graph, 'is_array' ) );
-		if ( is_singular() && false === function_exists( 'yoast_breadcrumb' ) ) {
-			// An empty BreadcrumbList is invalid markup: only emit it when there are real items.
+			if ( BreadcrumbEngine::schema_enabled() && BreadcrumbEngine::context_supported() && false === function_exists( 'yoast_breadcrumb' ) ) {
+			// The BreadcrumbList is built from the same items as the visible trail. A list with fewer than
+			// two real items is not useful (or valid) markup, so it is only emitted when there is a trail.
 			$crumbs = ( new BreadcrumbEngine() )->schema();
-			if ( ! empty( $crumbs['itemListElement'] ) ) {
-				$graph[] = $crumbs; }
+			if ( ! empty( $crumbs['itemListElement'] ) && count( $crumbs['itemListElement'] ) >= 2 ) {
+				$graph[] = $crumbs;
+				foreach ( $graph as $graph_index => $graph_node ) {
+					if ( isset( $graph_node['@id'] ) && '#webpage' === substr( (string) $graph_node['@id'], -8 ) ) {
+						$graph[ $graph_index ]['breadcrumb'] = array( '@id' => $crumbs['@id'] );
+						break;
+					}
+				}
+			} else {
+				foreach ( $graph as $graph_index => $graph_node ) {
+					if ( isset( $graph_node['@id'], $graph_node['breadcrumb'] ) && '#webpage' === substr( (string) $graph_node['@id'], -8 ) ) {
+						unset( $graph[ $graph_index ]['breadcrumb'] ); // Never reference a node that is not output.
+					}
+				}
+			}
 		}
 		$entities = PublicationProfile::identity_is_person() ? 'person,website,webpage' : 'organization,website,webpage';
 		if ( $this->is_editorial_article() ) {
 			$entities .= ',article'; }
 		if ( $list ) {
 			$entities .= ',itemlist'; }
-		echo '<!-- Structured data graph begin; entities=' . esc_attr( $entities ) . " -->\n";
+		echo '<!-- SEO Powered by PublishRank: structured data begin; entities=' . esc_attr( $entities ) . " -->\n";
 		foreach ( ( new SchemaBuilder() )->extra_nodes() as $node ) {
 			$graph[] = $node; }
 			$graph = self::dedupe_graph( $graph );
@@ -86,7 +100,7 @@ final class GraphOutput {
 				JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
 			);
 			echo '</script>' . "\n";
-			echo "<!-- Structured data graph end -->\n";
+			echo "<!-- end of SEO data Powered by PublishRank -->\n";
 	}
 
 
@@ -342,6 +356,16 @@ final class GraphOutput {
 			'copyrightYear'       => (int) get_post_time( 'Y', true, $post ),
 			'copyrightHolder'     => array( '@id' => $this->identity_id() ),
 		);
+		$copyright_notice = trim( sanitize_textarea_field( (string) get_option( 'publishrank_copyright', '' ) ) );
+		if ( '' !== $copyright_notice ) {
+			$uses_current_year = false !== strpos( $copyright_notice, '%current_year%' );
+			if ( $uses_current_year ) {
+				$current_year = wp_date( 'Y' );
+				$copyright_notice = str_replace( '%current_year%', $current_year, $copyright_notice );
+				$article['copyrightYear'] = (int) $current_year;
+			}
+			$article['copyrightNotice'] = $copyright_notice;
+		}
 		$found        = \PublishRankSEO\Meta\SeoData::image_for_post( $post );
 		$story_poster = $this->is_web_story_post( $post ) ? (string) PostMeta::get( $post->ID, PostMeta::WEB_STORY_POSTER, '' ) : '';
 		$image        = $story_poster ? $story_poster : ( $found ? (string) $found['url'] : (string) get_option( 'publishrank_seo_default_social_image', '' ) );

@@ -70,7 +70,7 @@ final class HeadOutput {
 			return;
 		}
 		// Always disclose technical provenance in the public source. This is separate from the optional visible footer credit.
-		echo "<!-- SEO metadata output begin -->\n";
+		echo "<!-- SEO Powered by PublishRank -->\n";
 		echo '<!-- PublishRank: begin; version=' . esc_html( PUBLISHRANK_SEO_VERSION ) . '; output=technical,social,news -->' . "\n";
 		echo '<meta name="generator" content="PublishRank ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
 		echo '<meta name="publishrank" content="active" />' . "\n";
@@ -174,7 +174,7 @@ final class HeadOutput {
 			}
 					echo "<!-- X/Twitter metadata end -->\n";
 		}
-			echo "<!-- SEO metadata output end -->\n";
+			echo "<!-- end of SEO data Powered by PublishRank -->\n";
 	}
 
 	/** Per-post social text override, falling back to the generated value. */

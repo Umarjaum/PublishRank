@@ -6,6 +6,20 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 	$publishrank_cleanup = static function () {
 		global $wpdb;
+		// Remove only PublishRank's managed Apache block so uninstall cannot leave /wp-admin blocked.
+		if ( ! function_exists( 'get_home_path' ) && is_readable( ABSPATH . 'wp-admin/includes/file.php' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		$publishrank_home_path = function_exists( 'get_home_path' ) ? get_home_path() : ABSPATH;
+		$publishrank_htaccess   = trailingslashit( $publishrank_home_path ) . '.htaccess';
+		if ( is_readable( $publishrank_htaccess ) && is_writable( $publishrank_htaccess ) ) {
+			$publishrank_rules = file_get_contents( $publishrank_htaccess );
+			if ( is_string( $publishrank_rules ) ) {
+				$publishrank_rules = preg_replace( '/\n?# BEGIN PublishRank WP Hide Login Dashboard\R.*?\R# END PublishRank WP Hide Login Dashboard\R?/s', "\n", $publishrank_rules, 1 );
+				file_put_contents( $publishrank_htaccess, $publishrank_rules, LOCK_EX );
+			}
+		}
+		delete_option( 'rewrite_rules' );
 		$private_meta      = array( 'publishrank_supabase_session_enc', 'publishrank_supabase_subject', 'publishrank_supabase_verified_at' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE meta_key IN (%s, %s, %s)', $wpdb->usermeta, ...$private_meta ) );

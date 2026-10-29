@@ -193,7 +193,7 @@ body[class*="publishrank"] .wrap .postbox .hndle,body[class*="publishrank"] .wra
 body[class*="publishrank"] .wrap table.widefat thead th,body[class*="publishrank"] .wrap table.widefat thead td{background:linear-gradient(180deg,#ffffff 0%,#eef2fb 100%)}
 .publishrank-tool-card{background:var(--pr-grad-soft)}
 .publishrank-tool-card:hover{background:linear-gradient(135deg,#ffffff 0%,#e8f3ff 100%)}
-#publishrank-schema .hndle,#publishrank-seo-meta .hndle{background:var(--pr-grad-soft)}
+#publishrank-schema .hndle,#publishrank-seo-overrides .hndle{background:var(--pr-grad-soft)}
 .rhs-card{background:var(--pr-grad-surface)}
 .rhs-onboarding-card{background:var(--pr-grad-surface)}
 @media (forced-colors:active){body[class*="publishrank"] .wrap .button-primary{background:ButtonFace;color:ButtonText;border-color:ButtonText}}
@@ -282,3 +282,54 @@ body[class*="publishrank"] .wrap table.widefat thead th,body[class*="publishrank
 }
 @media(max-width:420px){.rhs-welcome-banner__copy{padding:26px 20px 10px}.rhs-welcome-banner h2{font-size:26px}.rhs-welcome-banner__visual{min-height:205px}}
 @media(prefers-reduced-motion:reduce){.rhs-welcome-banner__copy .button.button-primary{transition:none}.rhs-welcome-banner__copy .button.button-primary:hover{transform:none}}
+
+/* Dashboard health: make the route to resolution visible without replacing WP patterns. */
+.pr-health-summary{max-width:1100px;margin:0 0 12px;padding:12px 16px;border:1px solid #dcdcde;border-left:4px solid #2271b1;border-radius:4px;background:#fff;color:#1d2327;line-height:1.55}
+.pr-health-summary:empty{display:none}
+.rhs-table-wrap .widefat td{vertical-align:middle}
+.rhs-table-wrap .widefat th:last-child,.rhs-table-wrap .widefat td:last-child{width:150px}
+.pr-no-action{color:#646970}
+.rhs-copy:focus-visible,.rhs-url-row .button:focus-visible,.rhs-table-wrap .button:focus-visible{outline:2px solid #2271b1;outline-offset:2px;box-shadow:0 0 0 1px #fff}
+@media(max-width:782px){.rhs-url-row{align-items:flex-start;flex-direction:column}.rhs-url-row>span:last-child{display:flex;gap:8px}.rhs-url-row .button{min-height:32px;display:inline-flex;align-items:center}}
+
+/* Clear, responsive editor workflow for optional post-level SEO overrides. */
+.pr-seo-editor-intro{max-width:900px;margin:14px 0 18px;color:#50575e;line-height:1.6}
+.pr-seo-group{margin:20px 0;padding:18px 20px;border:1px solid #dcdcde;border-radius:8px;background:#fff}
+.pr-seo-group h3{margin:0 0 8px;padding-bottom:10px;border-bottom:1px solid #dcdcde;color:#1d2327;font-size:16px}
+.pr-seo-group>.description{margin:0 0 10px;line-height:1.55}
+.pr-seo-field{padding:12px 0;border-top:1px solid #f0f0f1}
+.pr-seo-field>label{display:block;margin-bottom:6px;color:#1d2327}
+.pr-seo-field input.widefat,.pr-seo-field textarea.widefat,.pr-seo-field select.widefat{max-width:900px;box-sizing:border-box}
+.pr-seo-field textarea.widefat{min-height:76px;resize:vertical}
+.pr-seo-field .description{max-width:900px;margin:6px 0 0;line-height:1.55}
+.pr-seo-field input[type=checkbox]{margin-right:5px}
+.pr-seo-field input:focus-visible,.pr-seo-field textarea:focus-visible,.pr-seo-field select:focus-visible{outline:2px solid #2271b1;outline-offset:2px}
+.wrap .pr-health-table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.pr-health-table-wrap .widefat{min-width:760px}
+.pr-health-table-wrap:focus-visible{outline:2px solid #2271b1;outline-offset:2px}
+@media(max-width:782px){.pr-seo-group{margin:16px 0;padding:14px}.pr-seo-field input.widefat,.pr-seo-field textarea.widefat,.pr-seo-field select.widefat{max-width:100%}.pr-health-table-wrap{max-width:100%}}
+
+.pr-check-priority{display:inline-block;margin-top:4px;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:600;line-height:1.5}
+.pr-check-priority--search_visibility{background:#fbeaea;color:#8a2424}
+.pr-check-priority--seo_plugin_conflicts{background:#fff4df;color:#805300}
+.pr-check-priority:not(.pr-check-priority--search_visibility):not(.pr-check-priority--seo_plugin_conflicts){background:#eef4f8;color:#264f68}
+
+/* Accessible, non-destructive social image tools and list controls. */
+.rhs-repeater{min-width:0;margin:14px 0;padding:0;border:0}
+.rhs-repeater>legend{margin:0 0 4px;padding:0;color:#1d2327;font-weight:600}
+.rhs-repeater__row{max-width:900px}
+.rhs-repeater__row .button{min-width:36px;min-height:32px}
+.rhs-repeater__add{min-height:32px}
+.pr-discover-image-tool{max-width:900px;margin:8px 0 16px;padding:16px;border:1px solid #c3c4c7;border-radius:4px;background:#f6f7f7}
+.pr-discover-image-tool h4{margin:0 0 8px;color:#1d2327;font-size:14px}
+.pr-discover-image-tool .description{max-width:760px;line-height:1.55}
+.pr-discover-image-status{margin:10px 0;padding:10px 12px;border-left:3px solid #2271b1;background:#fff;line-height:1.5}
+.pr-discover-image-preview{display:block;width:auto;height:auto;max-width:min(100%,640px);max-height:360px;margin:10px 0;object-fit:contain;object-position:left center;background:#fff}
+.pr-discover-image-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.pr-discover-image-actions .button,.pr-discover-resize{min-height:34px}
+.pr-discover-image-size{display:grid;grid-template-columns:repeat(2,minmax(180px,260px));gap:12px;margin:12px 0}
+.pr-discover-image-size label{display:block;margin-bottom:5px}
+.pr-discover-image-size input{max-width:100%}
+.pr-discover-image-tool input:focus-visible,.pr-discover-image-tool button:focus-visible,.rhs-repeater button:focus-visible,.rhs-repeater input:focus-visible{outline:2px solid #2271b1;outline-offset:2px;box-shadow:0 0 0 1px #fff}
+@media(max-width:600px){.pr-discover-image-tool{padding:12px}.pr-discover-image-size{grid-template-columns:1fr}.pr-discover-image-actions{align-items:flex-start;flex-direction:column}.pr-discover-image-actions .button{width:100%;justify-content:center}}
+@media(prefers-reduced-motion:reduce){.pr-discover-image-tool *{scroll-behavior:auto}}

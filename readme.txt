@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.76
+Stable tag: 2.9.87
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -32,6 +32,7 @@ Features include:
 * Configurable llms.txt and optional llms-full.txt resources.
 * Editorial SEO analysis, internal-link recommendations, sitemap diagnostics and WP-CLI commands.
 * Publisher Toolkit with permission-aware bulk SEO metadata editing, role-based access for the toolkit, and optional image alt-text assistance that preserves existing descriptions.
+* Optional built-in WP Hide Login module with a custom login endpoint, configurable slug, administration URL rewriting where Apache rules are available, and 404 protection for direct default paths.
 * Always-on technical source provenance markers in page source; they do not add a promotional link or visible footer credit.
 
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
@@ -205,3 +206,7 @@ Other website links in the administration interface (including the Schema.org vo
 * Fixed News sitemap freshness, UTC filtering, XML escaping, cache invalidation, HTTP semantics and diagnostics.
 * Added explicit LiveBlogPosting controls, coverage updates, speakable filters and schema graph de-duplication.
 * Earlier versions allowed source attribution to be disabled; v2.9.54 supersedes that behavior with disclosed, always-on technical provenance markers.
+
+
+== PublishRank Newsroom ==
+PublishRank now includes a built-in editorial newsroom module for story pitches and assignments, configurable workflow stages, reporter/editor assignments, planning board, calendar, private notes and discussion, restricted attachments, audit history, CSV export, notifications, and publishing handoff to WordPress drafts. The module uses dedicated newsroom capabilities and retains newsroom records and settings when the plugin is updated. Review newsroom role permissions and private attachment protection before storing confidential material.

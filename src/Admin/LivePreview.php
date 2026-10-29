@@ -52,19 +52,19 @@ final class LivePreview {
 				'json'    => __( 'JSON-LD', 'publishrank' ),
 				'checks'  => __( 'Checks', 'publishrank' ),
 			);
-			echo '<div id="pr-preview" class="pr-preview" data-post-id="' . esc_attr( (int) $post->ID ) . '">';
-			echo '<div class="pr-preview__bar"><span class="pr-live-pill" data-pr-pv-pill><i class="pr-live-dot"></i><span>' . esc_html__( 'Live', 'publishrank' ) . '</span></span><span class="pr-preview__status" data-pr-pv-status>' . esc_html__( 'Starting…', 'publishrank' ) . '</span><button type="button" class="button" data-pr-pv-refresh>' . esc_html__( 'Refresh', 'publishrank' ) . '</button></div>';
+			echo '<div id="pr-preview" class="pr-preview" role="region" aria-label="' . esc_attr__( 'PublishRank live preview', 'publishrank' ) . '" data-post-id="' . esc_attr( (int) $post->ID ) . '">';
+			echo '<div class="pr-preview__bar"><span class="pr-live-pill" data-pr-pv-pill><i class="pr-live-dot" aria-hidden="true"></i><span>' . esc_html__( 'Live', 'publishrank' ) . '</span></span><span class="pr-preview__status" data-pr-pv-status role="status" aria-live="polite" aria-atomic="true">' . esc_html__( 'Starting…', 'publishrank' ) . '</span><button type="button" class="button" data-pr-pv-refresh>' . esc_html__( 'Refresh', 'publishrank' ) . '</button></div>';
 			echo '<p class="pr-preview__note">' . esc_html__( 'Built from your unsaved edits using the same code that outputs your page. Nothing is saved by previewing.', 'publishrank' ) . '</p>';
-			echo '<div class="pr-preview__tabs" role="tablist">';
+			echo '<div class="pr-preview__tabs" role="tablist" aria-label="' . esc_attr__( 'Preview views', 'publishrank' ) . '">';
 			$first = true;
 			foreach ( $tabs as $key => $label ) {
-				echo '<button type="button" role="tab" class="pr-preview__tab' . ( $first ? ' is-active' : '' ) . '" data-pr-pv-tab="' . esc_attr( $key ) . '" aria-selected="' . ( $first ? 'true' : 'false' ) . '">' . esc_html( $label ) . ( 'checks' === $key ? ' <span class="pr-preview__count" data-pr-pv-count hidden></span>' : '' ) . '</button>';
+				echo '<button type="button" role="tab" id="pr-preview-tab-' . esc_attr( $key ) . '" class="pr-preview__tab' . ( $first ? ' is-active' : '' ) . '" data-pr-pv-tab="' . esc_attr( $key ) . '" aria-controls="pr-preview-panel-' . esc_attr( $key ) . '" aria-selected="' . ( $first ? 'true' : 'false' ) . '" tabindex="' . ( $first ? '0' : '-1' ) . '">' . esc_html( $label ) . ( 'checks' === $key ? ' <span class="pr-preview__count" data-pr-pv-count hidden></span>' : '' ) . '</button>';
 				$first = false;
 			}
 			echo '</div>';
 			$first = true;
 			foreach ( $tabs as $key => $label ) {
-				echo '<div class="pr-preview__panel" role="tabpanel" data-pr-pv-panel="' . esc_attr( $key ) . '"' . ( $first ? '' : ' hidden' ) . '></div>';
+				echo '<div class="pr-preview__panel" role="tabpanel" id="pr-preview-panel-' . esc_attr( $key ) . '" aria-labelledby="pr-preview-tab-' . esc_attr( $key ) . '" tabindex="0" data-pr-pv-panel="' . esc_attr( $key ) . '"' . ( $first ? '' : ' hidden' ) . '></div>';
 				$first = false;
 			}
 			echo '</div>';
@@ -111,6 +111,31 @@ final class LivePreview {
 					'unsaved'     => __( 'This post has not been published yet, so Google cannot test its URL. Copy the JSON-LD below instead.', 'publishrank' ),
 					'nodes'       => __( 'Entities', 'publishrank' ),
 					'invalid'     => __( 'Invalid JSON', 'publishrank' ),
+					'editSnippet' => __( 'Edit search snippet', 'publishrank' ),
+					'searchTitle' => __( 'Search title', 'publishrank' ),
+					'metaDescription' => __( 'Meta description', 'publishrank' ),
+					'insertToken' => __( 'Insert %focus_keyword%', 'publishrank' ),
+					'focusTokenHelp' => __( 'Use %focus_keyword% to insert the Focus keyword automatically.', 'publishrank' ),
+					'previewDevice' => __( 'Search snippet preview size', 'publishrank' ),
+					'socialPlatform' => __( 'Social card preview platform', 'publishrank' ),
+					'websiteNote' => __( 'This view shows the content and resolved SEO values visitors and crawlers receive together. The active theme still controls the final visual layout.', 'publishrank' ),
+					'website' => __( 'Website', 'publishrank' ),
+					'untitled' => __( 'Untitled', 'publishrank' ),
+					'visibleHeading' => __( 'Visible heading', 'publishrank' ),
+					'visibleSummary' => __( 'Visible summary', 'publishrank' ),
+					'websiteTable' => __( 'Website content and resolved SEO values', 'publishrank' ),
+					'metadataTable' => __( 'SEO metadata output', 'publishrank' ),
+					'canonicalUrl' => __( 'Canonical URL', 'publishrank' ),
+					'socialImage' => __( 'Social image', 'publishrank' ),
+					'structuredData' => __( 'Structured data', 'publishrank' ),
+					'consistent' => __( 'consistent', 'publishrank' ),
+					'review' => __( 'review', 'publishrank' ),
+					'rewriteNote' => __( 'Search engines and social networks may still rewrite titles, descriptions, images, or snippets.', 'publishrank' ),
+					'headMarkup' => __( 'Raw head markup', 'publishrank' ),
+					'link' => __( 'link', 'publishrank' ),
+					'descriptionIssue' => __( 'Description', 'publishrank' ),
+					'xCard' => __( 'X preview card', 'publishrank' ),
+					'copyFailed' => __( 'Copy failed. Select the code and copy it manually.', 'publishrank' ),
 				),
 			)
 		);

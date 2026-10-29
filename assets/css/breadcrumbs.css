@@ -1,0 +1,97 @@
+/* PublishRank visible breadcrumbs: theme-neutral, inherits the theme's font and colours. */
+.publishrank-breadcrumbs {
+	margin: 0 0 1em;
+	font-size: .875em;
+	line-height: 1.5;
+	color: var(--pr-bc-text, inherit);
+}
+.publishrank-breadcrumbs .publishrank-breadcrumbs__list,
+.publishrank-breadcrumbs ol {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: .25em .5em;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.publishrank-breadcrumbs li {
+	display: inline-flex;
+	align-items: center;
+	gap: .5em;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.publishrank-breadcrumbs li::marker {
+	content: "";
+}
+.publishrank-breadcrumbs a {
+	color: var(--pr-bc-link, inherit);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.publishrank-breadcrumbs a:hover,
+.publishrank-breadcrumbs a:focus-visible {
+	text-decoration-thickness: 2px;
+}
+.publishrank-breadcrumbs [aria-current="page"] {
+	opacity: .75;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
+}
+.publishrank-breadcrumb-separator {
+	display: inline-block;
+	opacity: .6;
+}
+/* Directional separators (such as →) must point the reading direction. */
+[dir="rtl"] .publishrank-breadcrumb-separator,
+.rtl .publishrank-breadcrumb-separator {
+	transform: scaleX(-1);
+}
+@media (max-width: 600px) {
+	.publishrank-breadcrumbs [aria-current="page"] {
+		max-width: 14em;
+	}
+}
+@media print {
+	.publishrank-breadcrumbs {
+		display: none;
+	}
+}
+
+/* Sizes */
+.publishrank-breadcrumbs--size-small { font-size: .8em; }
+.publishrank-breadcrumbs--size-large { font-size: 1em; }
+
+/* Style: bar — a soft full-width strip */
+.publishrank-breadcrumbs--bar {
+	padding: .6em 1em;
+	border-radius: 6px;
+	background: var(--pr-bc-bg, rgba(127, 127, 127, .1));
+}
+
+/* Style: chips — each crumb is a rounded pill */
+.publishrank-breadcrumbs--chips li > a,
+.publishrank-breadcrumbs--chips li > span:not(.publishrank-breadcrumb-separator) {
+	padding: .15em .75em;
+	border-radius: 999px;
+	background: var(--pr-bc-bg, rgba(127, 127, 127, .12));
+	text-decoration: none;
+}
+.publishrank-breadcrumbs--chips li > a:hover,
+.publishrank-breadcrumbs--chips li > a:focus-visible {
+	text-decoration: underline;
+}
+
+/* Style: underline — a quiet rule beneath the trail */
+.publishrank-breadcrumbs--underline {
+	padding-bottom: .6em;
+	border-bottom: 1px solid rgba(127, 127, 127, .35);
+}
+.publishrank-breadcrumbs--underline a { text-decoration: none; }
+.publishrank-breadcrumbs--underline a:hover,
+.publishrank-breadcrumbs--underline a:focus-visible { text-decoration: underline; }

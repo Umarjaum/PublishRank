@@ -49,17 +49,51 @@ final class AdminAssets {
 			wp_enqueue_style( 'publishrank-seo-admin', Branding::asset_url( 'css/admin.css' ), array( 'dashicons', 'publishrank-fa-solid', 'publishrank-fa-brands' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/admin.css' ) );
 			wp_enqueue_style( 'publishrank-seo-palette', Branding::asset_url( 'css/palette.css' ), array( 'publishrank-seo-admin' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/palette.css' ) );
 			wp_enqueue_media();
-		wp_enqueue_script( 'publishrank-seo-admin', Branding::asset_url( 'js/admin.js' ), array( 'jquery' ), Branding::version(), true );
+		$admin_script  = PUBLISHRANK_SEO_PATH . 'assets/js/admin.js';
+		$admin_version = Branding::version() . '.' . ( file_exists( $admin_script ) ? (string) filemtime( $admin_script ) : '0' );
+		wp_enqueue_script( 'publishrank-seo-admin', Branding::asset_url( 'js/admin.js' ), array( 'jquery' ), $admin_version, true );
+		global $post;
+		$current_post_id = $post instanceof \WP_Post ? absint( $post->ID ) : ( isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		wp_localize_script(
-			'publishrank-seo-admin',
-			'publishrankSeo',
-			array(
-				'chooseImage'   => __( 'Choose image', 'publishrank' ),
-				'useImage'      => __( 'Use this image', 'publishrank' ),
-				'copied'        => __( 'Copied', 'publishrank' ),
-				'confirmInsert' => __( 'Insert this approved internal link into published content?', 'publishrank' ),
-			)
-		);
+				'publishrank-seo-admin',
+				'publishrankSeo',
+				array(
+					'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+					'postId'        => $current_post_id,
+					'resizeNonce'   => wp_create_nonce( 'publishrank_resize_discover_image' ),
+					'chooseImage'   => __( 'Choose image', 'publishrank' ),
+					'useImage'      => __( 'Use this image', 'publishrank' ),
+					'copied'        => __( 'Copied', 'publishrank' ),
+					'copyFailed'    => __( 'Copy failed. The URL is shown beside this button; select it and copy it manually.', 'publishrank' ),
+					'repeaterItem'  => __( 'New list item', 'publishrank' ),
+					'removeItem'    => __( 'Remove item', 'publishrank' ),
+					'confirmInsert' => __( 'Insert this approved internal link into published content?', 'publishrank' ),
+					'i18n'          => array(
+						'repeaterFieldLabel' => __( '%1$s, item %2$d', 'publishrank' ),
+						'removeRepeaterItem' => __( 'Remove item %2$d from %1$s', 'publishrank' ),
+						'addedRepeaterItem'  => __( 'Added item %2$d to %1$s.', 'publishrank' ),
+						'removedRepeaterItem' => __( 'Removed item %2$d from %1$s.', 'publishrank' ),
+						'maxItemsReached'    => __( 'No more than %2$d items can be added to %1$s.', 'publishrank' ),
+						'imageDimensions'     => __( 'Current dimensions: %1$s × %2$s px (%3$s pixels).', 'publishrank' ),
+						'discoverMeets'       => __( 'Meets Google’s image-size guidance. A 16:9 landscape ratio is recommended, not required.', 'publishrank' ),
+						'discoverMeetsRatio'  => __( 'Meets Google’s image-size guidance and is close to the recommended 16:9 ratio.', 'publishrank' ),
+						'discoverBelow'       => __( 'Below Google’s suggested size for large Discover images: at least 1200 px wide and more than 300,000 total pixels.', 'publishrank' ),
+						'imageChosen'         => __( 'Choose an image to inspect its pixel dimensions.', 'publishrank' ),
+						'imageNotLocal'       => __( 'This image is not in the WordPress Media Library. You can check its dimensions, but choose or upload it there to create a resized copy.', 'publishrank' ),
+					'checkingDimensions'  => __( 'Checking image dimensions…', 'publishrank' ),
+					'checkDimensionsFail' => __( 'The image dimensions could not be read. Check the URL or choose a Media Library image.', 'publishrank' ),
+					'imageLoadFailed'     => __( 'The image could not be loaded to read its dimensions.', 'publishrank' ),
+						'imageTooSmall'       => __( 'WordPress will not upscale this image. Choose an original large enough for the requested output; enlarging cannot restore image detail.', 'publishrank' ),
+						'alreadyImageSize'    => __( 'This image is already at the requested size. Keep it selected; no resized copy is needed.', 'publishrank' ),
+					'heightRequired'      => __( 'Enter a height before choosing an exact crop.', 'publishrank' ),
+					'validDimensions'     => __( 'Enter a width and optional height from 1 to 6000 px.', 'publishrank' ),
+					'resizeWorking'       => __( 'Creating a resized copy…', 'publishrank' ),
+					'resizeFailed'        => __( 'The resized copy could not be created. Try another size or image.', 'publishrank' ),
+					'resizeCreated'       => __( 'A %1$s × %2$s px copy was created and selected. The original remains unchanged.', 'publishrank' ),
+					'previewAlt'          => __( 'Preview of the selected social image', 'publishrank' ),
+				),
+				)
+			);
 	}
 
 		/** Branded page header using the PublishRank icon. */

@@ -337,6 +337,7 @@ final class OnboardingPage {
 					),
 					$f( 'publishrank_schema_founding_location', 'text', __( 'Founding location', 'publishrank' ), array( 'for' => 'org' ) ),
 					$f( 'publishrank_identity_copyright_holder', 'text', __( 'Copyright holder', 'publishrank' ), array( 'for' => 'org' ) ),
+					$f( 'publishrank_copyright', 'textarea', __( 'Copyright notice', 'publishrank' ), array( 'wide' => true, 'san' => 'textarea', 'help' => __( 'Optional notice included with article structured data. Use %current_year% to keep the year current, for example: © %current_year% Your publication.', 'publishrank' ) ) ),
 					$f( 'publishrank_identity_owner_name', 'text', __( 'Owner / rights holder', 'publishrank' ), array( 'for' => 'org' ) ),
 					$f(
 						'publishrank_identity_owner_url',
@@ -756,9 +757,10 @@ final class OnboardingPage {
 			'publishrank_seo_news_enabled'        => 1,
 			'publishrank_seo_news_window'         => 48,
 			'publishrank_seo_news_keywords'       => 1,
-			'publishrank_sitemap_stylesheet'      => 1,
-			'publishrank_breadcrumbs_enabled'     => 1,
-			'publishrank_meta_enabled'            => 1,
+				'publishrank_sitemap_stylesheet'      => 1,
+				'publishrank_breadcrumbs_enabled'     => 1,
+				'publishrank_breadcrumb_schema_enabled' => 1,
+				'publishrank_meta_enabled'            => 1,
 			'publishrank_schema_enabled'          => 1,
 			'publishrank_local_seo_profile'       => array(
 				'enabled'       => 0,
