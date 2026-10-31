@@ -228,7 +228,7 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 	/** Publication name exactly as configured (Google requires it to match the name shown on news.google.com). */
 	public static function publication_name() {
 		$name = trim( preg_replace( '/\s*\([^)]*\)/', '', PublicationProfile::publication_name() ) ); // Spec: omit anything in parentheses.
-		return '' !== $name ? $name : trim( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ) );
+		return '' !== $name ? $name : trim( wp_strip_all_tags( (string) \PublishRankSEO\Core\PublicationProfile::publication_name() ) );
 	}
 
 	/** ISO 639 two/three-letter code; zh-cn / zh-tw for Chinese per Google's specification. */

@@ -1,36 +1,6 @@
-/* PublishRank floating SEO score widget */
-.pr-editor-score-card{position:fixed;right:20px;bottom:20px;z-index:100000;width:174px;padding:10px 12px;background:#fff;color:#1d2327;border:1px solid #dcdcde;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);font-size:12px;cursor:grab;touch-action:none;user-select:none}
-.pr-editor-score-card.is-dragging{cursor:grabbing}
-.pr-editor-score-card__top{display:flex;gap:10px;align-items:center}
-.pr-editor-score-card__titles{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;min-width:0}
-.pr-editor-score-card__brand{color:#1d2327;font-size:13px}
-.pr-editor-score-card__status-text{color:#646970;font-size:11px}
-.pr-editor-score-card__toggle{flex:0 0 auto;width:22px;height:22px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:transparent;color:#fff;cursor:pointer;line-height:1;padding:0}
-.pr-editor-score-card__toggle:focus-visible{outline:2px solid #19d3ff;outline-offset:2px}
-.pr-editor-score-card__ring .pr-ring__bg{stroke:#dcdcde}
-.pr-editor-score-card__ring .pr-ring__val--good,.pr-editor-score-card__ring .pr-ring__val--ok,.pr-editor-score-card__ring .pr-ring__val--bad{stroke:url(#publishrank-score-gradient)!important}
-.pr-editor-score-card__ring .pr-ring__val{fill:none;stroke-linecap:round}
-.pr-editor-score-card__ring .pr-ring__text{fill:#16803c!important;color:#16803c!important;font-weight:700}
-.pr-editor-score-card__body{margin-top:8px}
-.pr-editor-score-card.is-collapsed .pr-editor-score-card__body{display:none}
-.pr-editor-score-card__metrics{display:flex;gap:6px;flex-wrap:wrap;color:#e5e5e5;margin-bottom:8px}
-.pr-editor-score-card__metrics span{padding:4px 6px;background:rgba(255,255,255,.1);border-radius:5px}
-.pr-editor-score-card__metrics b{color:#19d3ff}
-.pr-editor-score-card__keyphrase-pill.has-keyphrase{background:rgba(97,226,148,.18)}
-.pr-editor-score-card__keyphrase-pill.has-keyphrase b{color:#61e294}
-.pr-editor-score-card__issues b{color:#ff8991}
-.pr-editor-score-card__at-line{margin:0 0 8px;color:#9fb3cc;font-size:11px}
-.pr-editor-score-card__actions{display:flex;gap:6px;flex-wrap:wrap}
-.pr-editor-score-card__actions .button{font-size:12px}
-.pr-editor-score-card.is-good .pr-editor-score-card__status-text{color:#61e294}
-.pr-editor-score-card.is-ok .pr-editor-score-card__status-text{color:#ffd166}
-.pr-editor-score-card.is-bad .pr-editor-score-card__status-text{color:#ff8991}
-.pr-intel__busy .pr-editor-score-card__actions{pointer-events:none}
-@media(max-width:782px){
-  .pr-editor-score-card{right:10px;bottom:10px;width:auto;max-width:calc(100vw - 20px);padding:10px 12px}
-  .pr-editor-score-card__metrics span:nth-child(n+3){display:none}
-  .pr-editor-score-card.is-collapsed .pr-editor-score-card__metrics{display:none}
-}
-@media (prefers-reduced-motion:reduce){
-  .pr-editor-score-card *{transition:none!important}
-}
+/* PublishRank robust floating editor score panel */
+.pr-editor-score-card{position:fixed;right:20px;bottom:20px;z-index:100000;width:286px;box-sizing:border-box;padding:14px;background:#fff;color:#1d2327;border:1px solid #c3c4c7;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:grab;touch-action:none;user-select:none}
+.pr-editor-score-card.is-dragging{cursor:grabbing}.pr-editor-score-card__top{display:flex;gap:12px;align-items:center}.pr-editor-score-card__ring-wrap{flex:0 0 58px;text-align:center}.pr-editor-score-card__ring-label{display:block;font-size:10px;color:#646970;margin-top:2px}.pr-editor-score-card__titles{display:flex;flex-direction:column;gap:4px;min-width:0}.pr-editor-score-card__brand{font-size:15px}.pr-editor-score-card__status-text{font-size:11px;color:#646970;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pr-editor-score-card__schema{font-size:12px;color:#50575e}.pr-editor-score-card__schema b{color:#16803c}.pr-editor-score-card__ring .pr-ring__bg{stroke:#dcdcde}.pr-editor-score-card__ring .pr-ring__val{fill:none;stroke-linecap:round}.pr-editor-score-card__ring .pr-ring__text{fill:#16803c!important;font-weight:700}
+.pr-editor-score-card__metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 10px}.pr-editor-score-card__metrics span{display:flex;flex-direction:column;min-width:0;padding:7px 4px;text-align:center;background:#f6f7f7;border-radius:6px}.pr-editor-score-card__metrics b{font-size:14px;color:#135e96}.pr-editor-score-card__metrics small{font-size:9px;color:#646970;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pr-editor-score-card__footer{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid #f0f0f1;padding-top:8px}.pr-editor-score-card__live-status{font-size:10px;color:#646970;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pr-editor-score-card__refresh{font-size:11px;flex:0 0 auto}.pr-editor-score-card.is-good .pr-ring__text{fill:#16803c!important}.pr-editor-score-card.is-ok .pr-ring__text{fill:#996800!important}.pr-editor-score-card.is-bad .pr-ring__text{fill:#b32d2e!important}
+@media(max-width:782px){.pr-editor-score-card{right:10px;bottom:10px;width:min(286px,calc(100vw - 20px));padding:12px}.pr-editor-score-card__metrics{gap:4px}.pr-editor-score-card__metrics span{padding:6px 2px}}
+@media(prefers-reduced-motion:reduce){.pr-editor-score-card *{transition:none!important}}

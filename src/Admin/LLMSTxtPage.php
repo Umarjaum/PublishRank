@@ -3,6 +3,7 @@
 namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\AI\LLMSTxt;
+use PublishRankSEO\Schema\SchemaAggregator;
 use PublishRankSEO\Core\Branding;
 
 defined( 'ABSPATH' ) || exit;
@@ -61,6 +62,11 @@ final class LLMSTxtPage {
 			LLMSTxt::OPTION_RESOURCES     => ! empty( $_POST[ LLMSTxt::OPTION_RESOURCES ] ),
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 			LLMSTxt::OPTION_OPTIONAL      => ! empty( $_POST[ LLMSTxt::OPTION_OPTIONAL ] ),
+			LLMSTxt::OPTION_OVERRIDE      => ! empty( $_POST[ LLMSTxt::OPTION_OVERRIDE ] ),
+			LLMSTxt::OPTION_OVERRIDE_TEXT => sanitize_textarea_field( wp_unslash( $_POST[ LLMSTxt::OPTION_OVERRIDE_TEXT ] ?? '' ) ),
+			SchemaAggregator::OPTION_ENABLED => ! empty( $_POST[ SchemaAggregator::OPTION_ENABLED ] ),
+			SchemaAggregator::OPTION_OVERRIDE => ! empty( $_POST[ SchemaAggregator::OPTION_OVERRIDE ] ),
+			SchemaAggregator::OPTION_CUSTOM => $this->sanitize_json( wp_unslash( $_POST[ SchemaAggregator::OPTION_CUSTOM ] ?? '' ) ),
 		);
 		foreach ( $fields as $key => $value ) {
 			update_option( $key, $value ); }
@@ -74,6 +80,7 @@ final class LLMSTxtPage {
 		$enabled = (bool) get_option( LLMSTxt::OPTION_ENABLED, 1 );
 		$url     = home_url( '/llms.txt' );
 		$full    = home_url( '/llms-full.txt' );
+		$aggregator = rest_url( 'publishrank/v1/schema-aggregator' );
 		?>
 		<div class="rhs-ai-intro rhs-card">
 			<div class="rhs-ai-intro__icon"><span class="dashicons dashicons-editor-code" aria-hidden="true"></span></div>
@@ -87,6 +94,7 @@ final class LLMSTxtPage {
 		<div class="rhs-grid rhs-ai-links">
 			<div class="rhs-card"><p class="rhs-label"><?php esc_html_e( 'Published file', 'publishrank' ); ?></p><code><?php echo esc_html( $url ); ?></code><p><a class="button button-small" href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open llms.txt', 'publishrank' ); ?></a></p></div>
 			<div class="rhs-card"><p class="rhs-label"><?php esc_html_e( 'Optional extended file', 'publishrank' ); ?></p><code><?php echo esc_html( $full ); ?></code><p><a class="button button-small" href="<?php echo esc_url( $full ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open llms-full.txt', 'publishrank' ); ?></a></p></div>
+			<div class="rhs-card"><p class="rhs-label"><?php esc_html_e( 'Schema Aggregator endpoint', 'publishrank' ); ?></p><code><?php echo esc_html( $aggregator ); ?></code><p><a class="button button-small" href="<?php echo esc_url( $aggregator ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open schema feed', 'publishrank' ); ?></a></p></div>
 		</div>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -94,8 +102,8 @@ final class LLMSTxtPage {
 			<?php wp_nonce_field( 'publishrank_llms_save' ); ?>
 			<div class="rhs-card"><h2><span class="dashicons dashicons-admin-settings" aria-hidden="true"></span> <?php esc_html_e( 'Core configuration', 'publishrank' ); ?></h2>
 				<p><label><input type="checkbox" name="<?php echo esc_attr( LLMSTxt::OPTION_ENABLED ); ?>" value="1" <?php checked( $enabled ); ?> /> <strong><?php esc_html_e( 'Enable llms.txt', 'publishrank' ); ?></strong></label><br /><span class="description"><?php esc_html_e( 'Publishes /llms.txt on your domain. Enabled by default, but you can disable it at any time.', 'publishrank' ); ?></span></p>
-				<p><label><strong><?php esc_html_e( 'Site / project name', 'publishrank' ); ?></strong><br /><input class="large-text" type="text" name="<?php echo esc_attr( LLMSTxt::OPTION_TITLE ); ?>" value="<?php echo esc_attr( get_option( LLMSTxt::OPTION_TITLE, get_bloginfo( 'name' ) ) ); ?>" /></label></p>
-				<p><label><strong><?php esc_html_e( 'Short summary', 'publishrank' ); ?></strong><br /><textarea class="large-text" rows="3" name="<?php echo esc_attr( LLMSTxt::OPTION_SUMMARY ); ?>"><?php echo esc_textarea( get_option( LLMSTxt::OPTION_SUMMARY, get_bloginfo( 'description' ) ) ); ?></textarea></label><br /><span class="description"><?php esc_html_e( 'Write one or two sentences explaining who you are, what the site publishes, and its authority/topic.', 'publishrank' ); ?></span></p>
+				<p><label><strong><?php esc_html_e( 'Site / project name', 'publishrank' ); ?></strong><br /><input class="large-text" type="text" name="<?php echo esc_attr( LLMSTxt::OPTION_TITLE ); ?>" value="<?php echo esc_attr( get_option( LLMSTxt::OPTION_TITLE, \PublishRankSEO\Core\PublicationProfile::publication_name() ) ); ?>" /></label></p>
+				<p><label><strong><?php esc_html_e( 'Short summary', 'publishrank' ); ?></strong><br /><textarea class="large-text" rows="3" name="<?php echo esc_attr( LLMSTxt::OPTION_SUMMARY ); ?>"><?php echo esc_textarea( get_option( LLMSTxt::OPTION_SUMMARY, \PublishRankSEO\Core\PublicationProfile::publication_description() ) ); ?></textarea></label><br /><span class="description"><?php esc_html_e( 'Write one or two sentences explaining who you are, what the site publishes, and its authority/topic.', 'publishrank' ); ?></span></p>
 				<p><label><strong><?php esc_html_e( 'Additional context', 'publishrank' ); ?></strong><br /><textarea class="large-text" rows="4" name="<?php echo esc_attr( LLMSTxt::OPTION_INTRO ); ?>"><?php echo esc_textarea( get_option( LLMSTxt::OPTION_INTRO, '' ) ); ?></textarea></label><br /><span class="description"><?php esc_html_e( 'Optional context for compatible agents. Do not put access rules, secrets, API keys, or private information here.', 'publishrank' ); ?></span></p>
 			</div>
 
@@ -127,6 +135,20 @@ final class LLMSTxtPage {
 				<p><label><strong><?php esc_html_e( 'Maximum words', 'publishrank' ); ?></strong><br /><input type="number" min="1000" max="10000" name="<?php echo esc_attr( LLMSTxt::OPTION_FULL_WORDS ); ?>" value="<?php echo esc_attr( get_option( LLMSTxt::OPTION_FULL_WORDS, 8000 ) ); ?>" /></label> <span class="description"><?php esc_html_e( 'Maximum 10,000 words per generated extended resource.', 'publishrank' ); ?></span></p>
 				<p><label><strong><?php esc_html_e( 'Maximum words per article', 'publishrank' ); ?></strong><br /><input type="number" min="150" max="3000" name="<?php echo esc_attr( LLMSTxt::OPTION_FULL_PER_POST ); ?>" value="<?php echo esc_attr( get_option( LLMSTxt::OPTION_FULL_PER_POST, 1200 ) ); ?>" /></label> <span class="description"><?php esc_html_e( 'Stops one long article from using the whole budget, so more stories fit. Cut articles link back to the full text.', 'publishrank' ); ?></span></p>
 			</div>
+			<div class="rhs-card" id="pr-schema-aggregator"><h2><span class="dashicons dashicons-database-view" aria-hidden="true"></span> <?php esc_html_e( 'Schema Aggregator for AI crawlers', 'publishrank' ); ?></h2>
+				<p><?php esc_html_e( 'Publishes one JSON-LD endpoint containing every public, indexable page and article. The endpoint is linked from llms.txt and robots.txt so compatible AI crawlers can discover it.', 'publishrank' ); ?></p>
+				<p><label><input type="checkbox" name="<?php echo esc_attr( SchemaAggregator::OPTION_ENABLED ); ?>" value="1" <?php checked( get_option( SchemaAggregator::OPTION_ENABLED, 1 ) ); ?> /> <strong><?php esc_html_e( 'Enable Schema Aggregator endpoint', 'publishrank' ); ?></strong></label></p>
+				<p><label><input type="checkbox" name="<?php echo esc_attr( SchemaAggregator::OPTION_OVERRIDE ); ?>" value="1" <?php checked( get_option( SchemaAggregator::OPTION_OVERRIDE, 0 ) ); ?> /> <strong><?php esc_html_e( 'Use custom JSON-LD instead of generated content', 'publishrank' ); ?></strong></label></p>
+				<textarea class="large-text code" rows="8" name="<?php echo esc_attr( SchemaAggregator::OPTION_CUSTOM ); ?>" placeholder="&#123; &quot;@context&quot;: &quot;https://schema.org&quot;, &quot;@type&quot;: &quot;DataFeed&quot; &#125;"><?php echo esc_textarea( get_option( SchemaAggregator::OPTION_CUSTOM, '' ) ); ?></textarea>
+				<p class="description"><?php esc_html_e( 'Custom JSON is checked before saving. Leave override off to keep the automatically generated feed.', 'publishrank' ); ?></p>
+			</div>
+			<div class="rhs-card"><h2><span class="dashicons dashicons-lock" aria-hidden="true"></span> <?php esc_html_e( 'Override llms.txt', 'publishrank' ); ?></h2>
+				<p><label><input type="checkbox" name="<?php echo esc_attr( LLMSTxt::OPTION_OVERRIDE ); ?>" value="1" <?php checked( get_option( LLMSTxt::OPTION_OVERRIDE, 0 ) ); ?> /> <strong><?php esc_html_e( 'Serve my custom llms.txt text', 'publishrank' ); ?></strong></label></p>
+				<textarea class="large-text code" rows="8" name="<?php echo esc_attr( LLMSTxt::OPTION_OVERRIDE_TEXT ); ?>" placeholder="# My custom llms.txt
+
+> A short description of this site."><?php echo esc_textarea( get_option( LLMSTxt::OPTION_OVERRIDE_TEXT, '' ) ); ?></textarea>
+				<p class="description"><?php esc_html_e( 'When enabled, this replaces the generated root /llms.txt file. The extended /llms-full.txt file remains separate.', 'publishrank' ); ?></p>
+			</div>
 			<?php submit_button( __( 'Save AI configuration', 'publishrank' ), 'primary' ); ?>
 		</form>
 
@@ -151,6 +173,7 @@ final class LLMSTxtPage {
 		$llms   = new LLMSTxt();
 		$stats  = $llms->stats();
 		$issues = $llms->analyze();
+		$issues[] = SchemaAggregator::verify();
 		$text   = $llms->build();
 		$icons  = array(
 			'error' => '✕',
@@ -166,6 +189,7 @@ final class LLMSTxtPage {
 		echo '<textarea readonly rows="16" class="large-text code" aria-label="' . esc_attr__( 'Generated llms.txt', 'publishrank' ) . '">' . esc_textarea( $text ) . '</textarea></div>';
 	}
 
+	private function sanitize_json( $value ) { $value = trim( (string) $value ); if ( '' === $value ) return ''; $decoded = json_decode( $value, true ); return is_array( $decoded ) ? wp_json_encode( $decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) : ''; }
 	private function sanitize_custom( $value ) {
 		$lines = array();
 		foreach ( preg_split( '/\r\n|\r|\n/', (string) $value ) as $line ) {

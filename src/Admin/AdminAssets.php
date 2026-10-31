@@ -34,6 +34,7 @@ final class AdminAssets {
 		if ( function_exists( 'is_admin_bar_showing' ) && ! is_admin_bar_showing() && ! is_admin() ) {
 			return; }
 		wp_enqueue_style( 'publishrank-seo-menu', Branding::asset_url( 'css/admin-menu.css' ), array(), Branding::version() );
+		wp_enqueue_script( 'publishrank-seo-menu', Branding::asset_url( 'js/admin-menu.js' ), array(), Branding::version(), true );
 	}
 
 	public function enqueue() {
@@ -123,7 +124,7 @@ final class AdminAssets {
 		}
 		echo '<div class="rhs-header">';
 		echo '<div class="rhs-header__icon" aria-hidden="true"><i class="' . esc_attr( $icon ) . '"></i></div>';
-		echo '<img class="rhs-header__logo" src="' . esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ) . '" width="40" height="40" alt="" />';
+		echo '<img class="rhs-header__logo" src="' . esc_url( Branding::image( 'publishrank.svg' ) ) . '" width="40" height="40" alt="" />';
 		echo '<div class="rhs-header__text"><h1 class="rhs-header__title">' . esc_html( $title ) . '</h1>';
 		if ( '' !== (string) $subtitle ) {
 			echo '<p class="rhs-header__sub">' . esc_html( $subtitle ) . '</p>';

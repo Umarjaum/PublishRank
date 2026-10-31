@@ -20,7 +20,7 @@ final class HeadOutput {
 	}
 
 	public function register() {
-		if ( ! get_option( 'publishrank_meta_enabled', true ) ) {
+		if ( ! \PublishRankSEO\Core\OutputSettings::meta() ) {
 			return;
 		}
 		add_action( 'after_setup_theme', array( $this, 'ensure_title_support' ), 1 );
@@ -39,7 +39,9 @@ final class HeadOutput {
 	}
 
 	public function title( $title ) {
-		if ( is_admin() || wp_doing_ajax() ) {
+		// The saved switch is honoured at run time as well, so turning metadata off takes effect on the next request
+		// even for hooks registered earlier in the same request.
+		if ( is_admin() || wp_doing_ajax() || ! \PublishRankSEO\Core\OutputSettings::meta() ) {
 			return $title;
 		}
 
@@ -66,7 +68,7 @@ final class HeadOutput {
 	}
 
 	private function render_output() {
-		if ( is_admin() || wp_doing_ajax() || ! get_option( 'publishrank_meta_enabled', true ) ) {
+		if ( is_admin() || wp_doing_ajax() || ! \PublishRankSEO\Core\OutputSettings::meta() ) {
 			return;
 		}
 		// Always disclose technical provenance in the public source. This is separate from the optional visible footer credit.
@@ -182,7 +184,12 @@ final class HeadOutput {
 		if ( is_singular() ) {
 			$override = PostMeta::get( get_queried_object_id(), $meta_key, '' );
 			if ( '' !== (string) $override ) {
-				return wp_strip_all_tags( (string) $override );
+				// The override is a template: resolve %%variables%% (unknown ones are dropped) instead of printing raw tokens.
+				$field    = PostMeta::OG_TITLE === $meta_key ? 'title' : 'description';
+				$resolved = $this->meta->resolve_template( (string) $override, (int) get_queried_object_id(), $field );
+				if ( '' !== $resolved ) {
+					return $resolved;
+				}
 			}
 		}
 		return $fallback;

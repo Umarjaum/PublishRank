@@ -5,6 +5,8 @@ use PublishRankSEO\Meta\HeadOutput;
 use PublishRankSEO\Meta\FrontendOutputRecovery;
 use PublishRankSEO\Meta\LanguageAlternates;
 use PublishRankSEO\Schema\GraphOutput;
+use PublishRankSEO\Schema\SchemaIndexEndpoint;
+use PublishRankSEO\Schema\SchemaAggregator;
 use PublishRankSEO\Schema\SchemaSuite;
 use PublishRankSEO\Admin\SchemaPage;
 use PublishRankSEO\Sitemap\SitemapController;
@@ -26,6 +28,8 @@ use PublishRankSEO\Indexing\IndexNow;
 use PublishRankSEO\Indexing\BaiduSubmission;
 use PublishRankSEO\SEO\BreadcrumbEngine;
 use PublishRankSEO\Security\TraceIntegrity;
+use PublishRankSEO\Core\FrontendVisibility;
+use PublishRankSEO\Core\IdentityOverride;
 use PublishRankSEO\Security\IntegrityManager;
 use PublishRankSEO\Security\AdminAccess;
 use PublishRankSEO\Sitemap\SitemapStylesheet;
@@ -83,16 +87,21 @@ final class Plugin {
 		$this->loader = new ModuleLoader();
 		$this->loader->register( IntegrityManager::class, false );
 		$this->loader->register( AdminAccess::class, false );
-		$this->loader->register( FrontendBranding::class, false );
+			$this->loader->register( FrontendBranding::class, false );
+			$this->loader->register( FrontendVisibility::class, false );
+			$this->loader->register( IdentityOverride::class, false );
 		$this->registry = new OutputRegistry();
 		$this->loader->register( HeadOutput::class, true, array( $this->registry ) );
 		$this->loader->register( FrontendOutputRecovery::class, true, array( $this->registry ) );
 		$this->loader->register( LanguageAlternates::class, false );
 		$this->loader->register( GraphOutput::class, true, array( $this->registry ) );
+		$this->loader->register( SchemaIndexEndpoint::class, false );
+		$this->loader->register( SchemaAggregator::class, false );
 		$this->loader->register( SchemaSuite::class, false );
 		$this->loader->register( SitemapController::class, true );
 		$this->loader->register( SitemapStylesheet::class, false );
 			$this->loader->register( RobotsTxt::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\CrawlOptimizationPage::class, false );
 			$this->loader->register( SiteConnections::class, false );
 		$this->loader->register( LocalSEO::class, false );
 		add_action( 'init', array( Installer::class, 'maybe_upgrade' ), 99 );
@@ -127,6 +136,8 @@ final class Plugin {
 			$this->loader->register( DashboardPage::class, false, array( $this->registry, new JNewsAdapter() ) );
 			$this->loader->register( SettingsPage::class, false );
 			$this->loader->register( SiteVerificationPage::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\VariablePicker::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\BreadcrumbsPage::class, false );
 			$this->loader->register( OnboardingPage::class, false );
 			$this->loader->register( DiagnosticsPage::class, false, array( $this->registry, new JNewsAdapter() ) );
 			$this->loader->register( ImportExport::class, false );
@@ -154,6 +165,49 @@ final class Plugin {
 		}
 
 		do_action( 'publishrank_seo_loaded', $this );
+	}
+
+	/**
+	 * Refresh everything derived from publication-identity, schema, breadcrumb and SEO-template settings whenever one of
+	 * those options is added, changed or deleted. Structured data and metadata are rendered from the saved options on every
+	 * request, so nothing in PublishRank itself can serve stale identity data; this clears the per-request caches, bumps the
+	 * cache epoch and the schema-index generation, and tells page-cache plugins to purge through an action.
+	 */
+	private function register_output_cache_invalidation() {
+		$prefixes = array( 'publishrank_identity_', 'publishrank_schema_', 'publishrank_social_', 'publishrank_breadcrumb', 'publishrank_org_website_', 'publishrank_seo_publication_', 'publishrank_seo_publisher_', 'publishrank_seo_title_', 'publishrank_home_', 'publishrank_local_seo_' );
+		$exact    = array( 'publishrank_meta_enabled', 'publishrank_primary_url', 'publishrank_publication_short_name', 'publishrank_default_locale', 'publishrank_country', 'publishrank_copyright', 'publishrank_contact' );
+		$skip     = array( 'publishrank_schema_index_generation', 'publishrank_seo_cache_epoch', 'publishrank_seo_last_invalidation' );
+		$refresh  = static function ( $option ) use ( $prefixes, $exact, $skip ) {
+			static $running = false;
+			if ( $running || ! is_string( $option ) || 0 !== strpos( $option, 'publishrank_' ) || in_array( $option, $skip, true ) ) {
+				return;
+			}
+			$matches = in_array( $option, $exact, true );
+			foreach ( $prefixes as $prefix ) {
+				if ( 0 === strpos( $option, $prefix ) ) {
+					$matches = true;
+					break;
+				}
+			}
+			if ( ! $matches ) {
+				return;
+			}
+			$running = true;
+			\PublishRankSEO\Meta\SeoData::flush();
+			BreadcrumbEngine::reset();
+			update_option( 'publishrank_seo_cache_epoch', time(), false );
+			update_option( 'publishrank_schema_index_generation', (int) get_option( 'publishrank_schema_index_generation', 1 ) + 1, false );
+			/**
+			 * Fires after a setting that changes public SEO output was saved, so page-cache plugins can purge.
+			 *
+			 * @param string $option Option name.
+			 */
+			do_action( 'publishrank_seo_output_settings_changed', $option );
+			$running = false;
+		};
+		foreach ( array( 'added_option', 'updated_option', 'deleted_option' ) as $hook ) {
+			add_action( $hook, $refresh, 20, 1 );
+		}
 	}
 
 	/** Invalidate derived sitemap payloads when content or settings change. */
@@ -240,6 +294,7 @@ final class Plugin {
 			add_action( 'update_option_publishrank_seo_publisher_name', $invalidate, 20 );
 			add_action( 'update_option_publishrank_seo_publisher_logo', $invalidate, 20 );
 			add_action( 'update_option_publishrank_seo_publisher_type', $invalidate, 20 );
+		$this->register_output_cache_invalidation();
 		foreach ( array( 'publishrank_primary_url', 'publishrank_media_host', 'publishrank_cdn_enabled', 'publishrank_cdn_host', 'publishrank_video_host', 'publishrank_api_host', 'publishrank_publication_short_name', 'publishrank_default_language', 'publishrank_indexnow_enabled', 'publishrank_indexnow_key', 'publishrank_indexnow_key_location', 'publishrank_indexnow_post_types', 'publishrank_seo_multilingual_enabled', 'publishrank_seo_hreflang_map', 'publishrank_seo_x_default_url', 'publishrank_default_locale', 'publishrank_timezone', 'publishrank_country', 'publishrank_copyright', 'publishrank_contact', 'publishrank_social_profiles', 'publishrank_author_mode', 'publishrank_seo_title_separator', 'publishrank_seo_default_robots', 'publishrank_seo_default_social_image', 'publishrank_seo_twitter_site', 'publishrank_sitemap_stylesheet', 'publishrank_robots_enabled', 'publishrank_robots_sitemaps', 'publishrank_robots_block_ai', 'publishrank_robots_custom', 'publishrank_seo_title_template_home', 'publishrank_seo_title_template_post', 'publishrank_seo_title_template_page', 'publishrank_seo_title_template_archive' ) as $setting ) {
 			add_action( 'update_option_' . $setting, $invalidate, 20 ); }
 	}

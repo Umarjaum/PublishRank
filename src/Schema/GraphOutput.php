@@ -4,6 +4,7 @@
 namespace PublishRankSEO\Schema;
 
 use PublishRankSEO\Core\OutputRegistry;
+use PublishRankSEO\Core\OutputSettings;
 use PublishRankSEO\Core\PublicationProfile;
 use PublishRankSEO\Meta\PostMeta;
 use PublishRankSEO\SEO\BreadcrumbEngine;
@@ -39,7 +40,7 @@ final class GraphOutput {
 
 	/** Render one connected graph when PublishRank owns the JSON-LD slot. */
 	private function render_output() {
-		if ( is_admin() || wp_doing_ajax() || ! get_option( 'publishrank_schema_enabled', true ) || ! $this->registry->claim( 'jsonld', 'graph-output' ) ) {
+		if ( is_admin() || wp_doing_ajax() || ! OutputSettings::schema() || ! $this->registry->claim( 'jsonld', 'graph-output' ) ) {
 			return; }
 		$identity = $this->identity_entity();
 		$graph    = array( $identity, $this->website(), $this->webpage() );
@@ -62,47 +63,95 @@ final class GraphOutput {
 		if ( ! is_array( $graph ) ) {
 			$graph = array(); }
 		$graph = array_values( array_filter( $graph, 'is_array' ) );
-			if ( BreadcrumbEngine::schema_enabled() && BreadcrumbEngine::context_supported() && false === function_exists( 'yoast_breadcrumb' ) ) {
+		$crumbs_emitted = false;
+		if ( BreadcrumbEngine::schema_enabled() && BreadcrumbEngine::context_supported() && '' === BreadcrumbEngine::external_schema_owner() ) {
 			// The BreadcrumbList is built from the same items as the visible trail. A list with fewer than
 			// two real items is not useful (or valid) markup, so it is only emitted when there is a trail.
 			$crumbs = ( new BreadcrumbEngine() )->schema();
 			if ( ! empty( $crumbs['itemListElement'] ) && count( $crumbs['itemListElement'] ) >= 2 ) {
-				$graph[] = $crumbs;
+				$graph[]        = $crumbs;
+				$crumbs_emitted = true;
 				foreach ( $graph as $graph_index => $graph_node ) {
 					if ( isset( $graph_node['@id'] ) && '#webpage' === substr( (string) $graph_node['@id'], -8 ) ) {
 						$graph[ $graph_index ]['breadcrumb'] = array( '@id' => $crumbs['@id'] );
 						break;
 					}
 				}
-			} else {
-				foreach ( $graph as $graph_index => $graph_node ) {
-					if ( isset( $graph_node['@id'], $graph_node['breadcrumb'] ) && '#webpage' === substr( (string) $graph_node['@id'], -8 ) ) {
-						unset( $graph[ $graph_index ]['breadcrumb'] ); // Never reference a node that is not output.
-					}
+			}
+		}
+		if ( ! $crumbs_emitted ) {
+			// Never reference a BreadcrumbList that is not output (switched off, no trail, or owned by another plugin).
+			foreach ( $graph as $graph_index => $graph_node ) {
+				if ( isset( $graph_node['@id'], $graph_node['breadcrumb'] ) && '#webpage' === substr( (string) $graph_node['@id'], -8 ) ) {
+					unset( $graph[ $graph_index ]['breadcrumb'] );
 				}
 			}
 		}
-		$entities = PublicationProfile::identity_is_person() ? 'person,website,webpage' : 'organization,website,webpage';
+		foreach ( ( new SchemaBuilder() )->extra_nodes() as $node ) {
+			$graph[] = $node; }
+		$graph = self::dedupe_graph( $graph );
+		// "Organization and website schema" is a separate switch: the identity and WebSite nodes are removed here, after
+		// every filter and extra node has been merged, together with any reference that would otherwise point at them.
+		$identity_on = OutputSettings::org_website_schema();
+		if ( ! $identity_on ) {
+			$graph = self::without_identity_nodes( $graph );
+		}
+		if ( empty( $graph ) ) {
+			return; }
+		$entities = $identity_on ? ( PublicationProfile::identity_is_person() ? 'person,website,webpage' : 'organization,website,webpage' ) : 'webpage';
 		if ( $this->is_editorial_article() ) {
 			$entities .= ',article'; }
 		if ( $list ) {
 			$entities .= ',itemlist'; }
 		echo '<!-- SEO Powered by PublishRank: structured data begin; entities=' . esc_attr( $entities ) . " -->\n";
-		foreach ( ( new SchemaBuilder() )->extra_nodes() as $node ) {
-			$graph[] = $node; }
-			$graph = self::dedupe_graph( $graph );
-			echo '<script type="application/ld+json">';
-			echo wp_json_encode(
-				array(
-					'@context' => 'https://schema.org',
-					'@graph'   => $graph,
-				),
-				JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
-			);
-			echo '</script>' . "\n";
-			echo "<!-- end of SEO data Powered by PublishRank -->\n";
+		echo '<script type="application/ld+json">';
+		echo wp_json_encode(
+			array(
+				'@context' => 'https://schema.org',
+				'@graph'   => $graph,
+			),
+			JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+		);
+		echo '</script>' . "\n";
+		echo "<!-- end of SEO data Powered by PublishRank -->\n";
 	}
 
+	/**
+	 * Remove the Organization/Person and WebSite nodes of the primary identity and every { "@id": ... } reference to them.
+	 * Other nodes (WebPage, Article, BreadcrumbList ...) stay valid because optional links are simply dropped.
+	 *
+	 * @param array<int,array<string,mixed>> $graph Graph nodes.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function without_identity_nodes( array $graph ) {
+		$base    = trailingslashit( PublicationProfile::primary_url() );
+		$removed = array( $base . '#organization', $base . '#person', $base . '#website' );
+		$kept    = array();
+		foreach ( $graph as $node ) {
+			if ( is_array( $node ) && isset( $node['@id'] ) && in_array( (string) $node['@id'], $removed, true ) ) {
+				continue; }
+			$kept[] = self::strip_references( $node, $removed );
+		}
+		return $kept;
+	}
+
+	/** @param mixed $value Node or property value. @param string[] $ids Ids to drop. @return mixed */
+	private static function strip_references( $value, array $ids ) {
+		if ( ! is_array( $value ) ) {
+			return $value; }
+		$is_list = array_keys( $value ) === range( 0, count( $value ) - 1 );
+		$out     = array();
+		foreach ( $value as $key => $child ) {
+			if ( is_array( $child ) && 1 === count( $child ) && isset( $child['@id'] ) && in_array( (string) $child['@id'], $ids, true ) ) {
+				continue; // A pure reference to a removed node.
+			}
+			$child = self::strip_references( $child, $ids );
+			if ( $is_list ) {
+				$out[] = $child; } else {
+				$out[ $key ] = $child; }
+		}
+		return $out;
+	}
 
 	/** @return array<string, mixed> */
 	private function identity_entity() {
@@ -255,7 +304,7 @@ final class GraphOutput {
 			'@id'             => $url . '#website',
 			'url'             => $url,
 			'name'            => PublicationProfile::publication_name(),
-			'description'     => wp_strip_all_tags( (string) get_bloginfo( 'description' ) ),
+			'description'     => wp_strip_all_tags( (string) \PublishRankSEO\Core\PublicationProfile::publication_description() ),
 			'publisher'       => array( '@id' => $this->identity_id() ),
 			'inLanguage'      => sanitize_text_field( (string) get_option( 'publishrank_default_locale', get_bloginfo( 'language' ) ) ),
 			'potentialAction' => array(
@@ -328,8 +377,9 @@ final class GraphOutput {
 		if ( 'WebStory' === $schema_type || $this->is_web_story_post( $post ) ) {
 			$schema_type = 'Article'; }
 			$schema_type = LiveBlogSchema::is_live_blog( $post ) ? 'LiveBlogPosting' : $schema_type;
-		$description     = (string) PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' );
-		$description     = $description ? wp_strip_all_tags( $description ) : wp_strip_all_tags( get_the_excerpt( $post ) );
+			$seo             = \PublishRankSEO\Meta\SeoData::for_post( $post );
+			$description     = isset( $seo['description'] ) ? (string) $seo['description'] : '';
+			$description     = wp_strip_all_tags( $description );
 		$author_node_id  = trailingslashit( $author_url ) . '#author';
 		$identity        = $this->identity_entity();
 		$article         = array(

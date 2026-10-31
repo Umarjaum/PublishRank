@@ -1,0 +1,5 @@
+.pr-var-slot{display:block;margin-top:4px}
+.pr-var-picker{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.pr-var-select{max-width:100%;min-width:220px}
+.pr-var-help{margin:0!important;flex:1 1 220px}
+@media (max-width:600px){.pr-var-select{width:100%}}

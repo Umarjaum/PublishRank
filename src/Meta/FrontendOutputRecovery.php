@@ -3,6 +3,7 @@
 namespace PublishRankSEO\Meta;
 
 use PublishRankSEO\Core\OutputRegistry;
+use PublishRankSEO\Core\OutputSettings;
 use PublishRankSEO\Schema\GraphOutput;
 use PublishRankSEO\Security\TraceIntegrity;
 
@@ -23,7 +24,7 @@ final class FrontendOutputRecovery {
 	public function register() {
 		if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 			return; }
-		if ( ! get_option( 'publishrank_meta_enabled', true ) && ! get_option( 'publishrank_schema_enabled', true ) ) {
+		if ( ! OutputSettings::meta() && ! OutputSettings::schema() ) {
 			return; }
 		// WordPress 6.9+ provides a standard template-enhancement output buffer.
 		add_filter( 'wp_template_enhancement_output_buffer', array( $this, 'inject' ) );
@@ -85,8 +86,8 @@ final class FrontendOutputRecovery {
 		// wp_head() is missing in some themes; in that case TraceIntegrity's wp_head
 		// callback never runs. Keep provenance independent of metadata/schema recovery.
 		$this->trace_payload = TraceIntegrity::markup();
-		$needs_head          = (bool) get_option( 'publishrank_meta_enabled', true ) && ! $this->registry->has( 'canonical' );
-		$needs_graph         = (bool) get_option( 'publishrank_schema_enabled', true ) && ! $this->registry->has( 'jsonld' );
+		$needs_head          = OutputSettings::meta() && ! $this->registry->has( 'canonical' );
+		$needs_graph         = OutputSettings::schema() && ! $this->registry->has( 'jsonld' );
 		if ( ! $needs_head && ! $needs_graph ) {
 			return; }
 		$rendered = '';

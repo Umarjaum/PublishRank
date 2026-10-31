@@ -1,5 +1,10 @@
 /* PublishRank visible breadcrumbs: theme-neutral, inherits the theme's font and colours. */
 .publishrank-breadcrumbs {
+	display: block;
+	box-sizing: border-box;
+	flex: 0 0 100%; /* Inside Elementor / flex containers the trail takes its own full row. */
+	width: 100%;
+	max-width: 100%;
 	margin: 0 0 1em;
 	font-size: .875em;
 	line-height: 1.5;
@@ -46,10 +51,12 @@
 .publishrank-breadcrumb-separator {
 	display: inline-block;
 	opacity: .6;
+	/* Keep the spaces of spaced separators and the width of space-only separators. */
+	white-space: pre;
 }
-/* Directional separators (such as →) must point the reading direction. */
-[dir="rtl"] .publishrank-breadcrumb-separator,
-.rtl .publishrank-breadcrumb-separator {
+/* Only directional separators (such as →) flip to point the reading direction; text separators are never mirrored. */
+[dir="rtl"] .publishrank-breadcrumb-separator--directional,
+.rtl .publishrank-breadcrumb-separator--directional {
 	transform: scaleX(-1);
 }
 @media (max-width: 600px) {
@@ -95,3 +102,9 @@
 .publishrank-breadcrumbs--underline a { text-decoration: none; }
 .publishrank-breadcrumbs--underline a:hover,
 .publishrank-breadcrumbs--underline a:focus-visible { text-decoration: underline; }
+
+/* Elementor and other builders: keep the trail an ordinary block even when a container centres or wraps its children. */
+.elementor .publishrank-breadcrumbs,
+.wp-site-blocks .publishrank-breadcrumbs {
+	text-align: start;
+}

@@ -79,7 +79,7 @@ final class RestFields {
 			'cornerstone'          => '1' === PostMeta::get( $post_id, PostMeta::CORNERSTONE, '0' ),
 			'reading_minutes'      => ReadingExperience::reading_time( $post_id ),
 			'links'                => LinkManager::counts( $post_id ),
-			'schema_enabled'       => (bool) get_option( 'publishrank_schema_enabled', 1 ),
+			'schema_enabled'       => \PublishRankSEO\Core\OutputSettings::schema(),
 		);
 	}
 }

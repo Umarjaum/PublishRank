@@ -9,10 +9,33 @@ namespace PublishRankSEO\Core;
 defined( 'ABSPATH' ) || exit;
 
 final class PublicationProfile {
-	/** @return string */
+	/**
+	 * Publication (website) title. Owned by PublishRank: read only from PublishRank settings and never from the WordPress
+	 * Site Title, so the name is the same in titles, meta, schema, sitemaps and llms.txt. Empty until the publisher sets it.
+	 *
+	 * @return string
+	 */
 	public static function publication_name() {
-		$name = get_option( 'publishrank_seo_publication_name', '' );
-		return $name ? sanitize_text_field( (string) $name ) : sanitize_text_field( (string) get_bloginfo( 'name' ) );
+		foreach ( array( 'publishrank_seo_publication_name', 'publishrank_identity_name' ) as $key ) {
+			$name = trim( (string) get_option( $key, '' ) );
+			if ( '' !== $name ) {
+				return sanitize_text_field( $name ); }
+		}
+		return '';
+	}
+
+	/**
+	 * Publication description / tagline, owned by PublishRank (never the WordPress Tagline).
+	 *
+	 * @return string
+	 */
+	public static function publication_description() {
+		foreach ( array( 'publishrank_identity_description', 'publishrank_schema_org_description' ) as $key ) {
+			$text = trim( (string) get_option( $key, '' ) );
+			if ( '' !== $text ) {
+				return sanitize_text_field( $text ); }
+		}
+		return '';
 	}
 
 	/** @return string */

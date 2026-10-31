@@ -71,6 +71,8 @@ final class RobotsPage {
 				'default'           => '',
 			)
 		);
+		register_setting( 'publishrank_seo_robots', RobotsTxt::OPT_OVERRIDE, array( 'type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean', 'default' => 0 ) );
+		register_setting( 'publishrank_seo_robots', RobotsTxt::OPT_OVERRIDE_TEXT, array( 'type' => 'string', 'sanitize_callback' => array( RobotsTxt::class, 'clean_rules' ), 'default' => '' ) );
 	}
 
 	public function enqueue() {
@@ -229,6 +231,11 @@ final class RobotsPage {
 					<h2><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> <?php esc_html_e( 'Custom rules', 'publishrank' ); ?></h2>
 					<textarea id="publishrank_robots_custom" name="<?php echo esc_attr( RobotsTxt::OPT_CUSTOM ); ?>" rows="7" class="large-text code" placeholder="User-agent: *&#10;Disallow: /private/"><?php echo esc_textarea( (string) get_option( RobotsTxt::OPT_CUSTOM, '' ) ); ?></textarea>
 					<p class="description"><?php esc_html_e( 'Supported lines: User-agent, Disallow, Allow, Crawl-delay, Content-Signal, Sitemap and # comments. Anything else is removed on save. Watch the checks on the right as you type.', 'publishrank' ); ?></p>
+				</section>
+				<section class="rhs-card"><h2><i class="fa-solid fa-file-shield" aria-hidden="true"></i> <?php esc_html_e( 'Full robots.txt override', 'publishrank' ); ?></h2>
+					<?php $this->toggle( RobotsTxt::OPT_OVERRIDE, __( 'Serve custom robots.txt only', 'publishrank' ), __( 'Replaces all generated rules with the verified custom file below. Use this only when you manage every directive yourself.', 'publishrank' ) ); ?>
+					<textarea name="<?php echo esc_attr( RobotsTxt::OPT_OVERRIDE_TEXT ); ?>" rows="8" class="large-text code" placeholder="User-agent: *&#10;Allow: /"><?php echo esc_textarea( (string) get_option( RobotsTxt::OPT_OVERRIDE_TEXT, '' ) ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'The preview and checks on the right validate this override before you publish it.', 'publishrank' ); ?></p>
 				</section>
 				<?php submit_button( __( 'Save robots.txt settings', 'publishrank' ) ); ?>
 			</form>

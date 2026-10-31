@@ -3,6 +3,7 @@ namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\SEO\ArticleIntelligence;
+use PublishRankSEO\Core\OutputSettings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -45,14 +46,31 @@ final class EditorScoreCard {
 		$stored = $id ? ArticleIntelligence::stored( $id ) : null;
 		$score  = $stored ? (int) $stored['score'] : 0;
 		$rating = $score >= 80 ? 'good' : ( $score >= 55 ? 'ok' : 'bad' );
+		$schema_score = OutputSettings::schema() ? 100 : 0;
 		$at     = ( $stored && ! empty( $stored['at'] ) )
 			? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $stored['at'] ) )
-			: __( 'not analyzed yet', 'publishrank' );
-		echo '<aside id="publishrank-editor-score" class="pr-editor-score-card" data-score="' . esc_attr( (string) $score ) . '" data-post-id="' . esc_attr( (string) $id ) . '" aria-label="' . esc_attr__( 'PublishRank SEO score', 'publishrank' ) . '">';
+			: __( 'Not analyzed yet', 'publishrank' );
+		$stats  = $stored && ! empty( $stored['stats'] ) && is_array( $stored['stats'] ) ? $stored['stats'] : array();
+		if ( $id && empty( $stats ) ) {
+			$editor_post = get_post( $id );
+			if ( $editor_post instanceof \WP_Post ) {
+				$initial_report = ArticleIntelligence::analyze( ArticleIntelligence::data_from_post( $editor_post ), true );
+				$stats = isset( $initial_report['stats'] ) && is_array( $initial_report['stats'] ) ? $initial_report['stats'] : array();
+			}
+		}
+		$metric = static function ( $key, $default = 0 ) use ( $stats ) { return isset( $stats[ $key ] ) ? (int) $stats[ $key ] : $default; };
+		echo '<aside id="publishrank-editor-score" class="pr-editor-score-card" data-score="' . esc_attr( (string) $score ) . '" data-post-id="' . esc_attr( (string) $id ) . '" data-schema-score="' . esc_attr( (string) $schema_score ) . '" aria-label="' . esc_attr__( 'PublishRank editorial scores', 'publishrank' ) . '">';
 		echo '<div class="pr-editor-score-card__top">';
+		echo '<div class="pr-editor-score-card__ring-wrap">';
 		self::ring( $score, $rating );
-		echo '<div class="pr-editor-score-card__titles"><strong class="pr-editor-score-card__brand">PublishRank</strong><span class="pr-editor-score-card__status-text"></span></div>';
+		echo '<span class="pr-editor-score-card__ring-label">' . esc_html__( 'SEO score', 'publishrank' ) . '</span></div>';
+		echo '<div class="pr-editor-score-card__titles"><strong class="pr-editor-score-card__brand">PublishRank</strong><span class="pr-editor-score-card__status-text">' . esc_html( $at ) . '</span><span class="pr-editor-score-card__schema">' . esc_html__( 'Schema score:', 'publishrank' ) . ' <b class="pr-editor-score-card__schema-value">' . esc_html( (string) $schema_score ) . '/100</b></span></div>';
 		echo '</div>';
+		echo '<div class="pr-editor-score-card__metrics" role="list">';
+		foreach ( array( 'words' => __( 'Words', 'publishrank' ), 'images' => __( 'Images', 'publishrank' ), 'internal' => __( 'Internal links', 'publishrank' ), 'external' => __( 'External links', 'publishrank' ) ) as $key => $label ) {
+			echo '<span role="listitem"><b class="pr-editor-score-card__' . esc_attr( $key ) . '">' . esc_html( (string) $metric( $key ) ) . '</b><small>' . esc_html( $label ) . '</small></span>';
+		}
+		echo '</div><div class="pr-editor-score-card__footer"><span class="pr-editor-score-card__live-status" aria-live="polite">' . esc_html__( 'Values update as you edit.', 'publishrank' ) . '</span><button type="button" class="button-link pr-editor-score-card__refresh" id="publishrank-editor-score-refresh">' . esc_html__( 'Refresh', 'publishrank' ) . '</button></div>';
 		echo '</aside>';
 	}
 }

@@ -20,7 +20,7 @@ final class RedirectController {
 		if ( ! is_array( $rules ) ) {
 			return; }
 		foreach ( $rules as $rule ) {
-			if ( ! is_array( $rule ) || empty( $rule['enabled'] ) || ! $this->matches( $rule, $path ) ) {
+			if ( ! is_array( $rule ) || empty( $rule['enabled'] ) || ! RedirectStore::is_scheduled_active( $rule ) || ! $this->matches( $rule, $path ) ) {
 				continue; }
 			$status = (int) ( $rule['status'] ?? 301 );
 			$status = in_array( $status, array( 301, 302, 303, 307, 308, 410, 451 ), true ) ? $status : 301;

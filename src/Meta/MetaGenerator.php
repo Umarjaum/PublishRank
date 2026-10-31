@@ -15,14 +15,18 @@ final class MetaGenerator {
 	public function title() {
 		$post_id = is_singular() ? get_queried_object_id() : 0;
 		if ( is_front_page() || is_home() ) {
-			$home_title = sanitize_text_field( (string) get_option( 'publishrank_home_title', '' ) );
-			if ( $home_title ) {
+			$home_title = $this->resolve_template( TemplateResolver::sanitize_template( (string) get_option( 'publishrank_home_title', '' ) ), $post_id, 'title' );
+			if ( '' !== $home_title ) {
 				return function_exists( 'mb_substr' ) ? mb_substr( $home_title, 0, 180 ) : substr( $home_title, 0, 180 ); }
 		}
 		if ( $post_id ) {
-				$override = PostMeta::get( $post_id, PostMeta::TITLE, '' );
+			$override = PostMeta::get( $post_id, PostMeta::TITLE, '' );
 			if ( '' !== (string) $override ) {
-				return $this->resolve_snippet_variables( wp_strip_all_tags( (string) $override ), $post_id );
+				$resolved = $this->resolve_template( (string) $override, $post_id, 'title' );
+				if ( '' !== $resolved ) {
+					return $resolved;
+				}
+				// An override that resolves to nothing (for example only unknown variables) falls back to the global template.
 			}
 		}
 		$context = is_front_page() || is_home() ? 'home' : ( $this->is_editorial_article() ? 'post' : ( is_singular() ? 'page' : 'archive' ) );
@@ -34,7 +38,10 @@ final class MetaGenerator {
 		$post_id  = (int) $post_id;
 		$override = PostMeta::get( $post_id, PostMeta::TITLE, '' );
 		if ( '' !== (string) $override ) {
-			return $this->resolve_snippet_variables( wp_strip_all_tags( (string) $override ), $post_id ); }
+			$resolved = $this->resolve_template( (string) $override, $post_id, 'title' );
+			if ( '' !== $resolved ) {
+				return $resolved; }
+		}
 		$type    = get_post_type_object( (string) get_post_type( $post_id ) );
 		$context = $type && $type->public && $type->publicly_queryable && ! in_array( $type->name, array( 'page', 'attachment' ), true ) ? 'post' : 'page';
 		return $this->render_title( $context, $post_id );
@@ -46,20 +53,9 @@ final class MetaGenerator {
 		if ( '' === $template ) {
 			$template = 'home' === $context ? '%%sitename%% %%page%%' : '%%title%% %%sep%% %%sitename%% %%page%%';
 		}
-		$values = array(
-			// This method feeds pre_get_document_title; calling wp_get_document_title()
-			// here would recurse on archives and search results.
-			'%%title%%'    => $post_id ? get_the_title( $post_id ) : $this->context_title( $context ),
-			'%%sitename%%' => get_bloginfo( 'name' ),
-			'%%category%%' => $post_id ? $this->category( $post_id ) : '',
-			'%%author%%'   => $post_id ? get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) : '',
-			'%%date%%'     => $post_id ? get_the_date( '', $post_id ) : '',
-			'%%excerpt%%'  => $post_id ? ( has_excerpt( $post_id ) && ! post_password_required( $post_id ) ? SeoData::clean( get_post_field( 'post_excerpt', $post_id ) ) : '' ) : get_bloginfo( 'description' ),
-			'%%page%%'     => $this->page_suffix(),
-			'%%sep%%'      => (string) get_option( 'publishrank_seo_title_separator', '|' ),
-		);
-		$title  = strtr( $template, $values );
-		$title  = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( html_entity_decode( $title, ENT_QUOTES, 'UTF-8' ) ) ), " \t\n\r\0\x0B|–—-" );
+		// This method feeds pre_get_document_title; calling wp_get_document_title() here would recurse on
+		// archives and search results, so the archive title comes from get_the_archive_title() instead.
+		$title = $this->resolve_template( $template, $post_id, 'title', array( 'title' => $this->context_title( $context ) ) );
 		return function_exists( 'mb_substr' ) ? mb_substr( $title, 0, 180 ) : substr( $title, 0, 180 );
 	}
 
@@ -67,14 +63,17 @@ final class MetaGenerator {
 	public function description() {
 		$post_id = is_singular() ? get_queried_object_id() : 0;
 		if ( is_front_page() || is_home() ) {
-			$home_description = trim( wp_strip_all_tags( (string) get_option( 'publishrank_home_description', '' ) ) );
-			if ( $home_description ) {
+			$home_description = SeoData::clean( $this->resolve_template( TemplateResolver::sanitize_template( (string) get_option( 'publishrank_home_description', '' ) ), $post_id, 'description' ) );
+			if ( '' !== $home_description ) {
 				return function_exists( 'mb_substr' ) ? mb_substr( $home_description, 0, 160 ) : substr( $home_description, 0, 160 ); }
 		}
 		$override = $post_id ? PostMeta::get( $post_id, PostMeta::DESCRIPTION, '' ) : '';
 		// A manually written SEO description always wins over anything fetched automatically. A manually written SEO description must win over the generated excerpt.
 		if ( '' !== (string) $override ) {
-				return SeoData::truncate( SeoData::clean( $this->resolve_snippet_variables( (string) $override, $post_id ) ), 160 );
+			$resolved = SeoData::clean( $this->resolve_template( (string) $override, $post_id, 'description' ) );
+			if ( '' !== $resolved ) {
+				return SeoData::truncate( $resolved, 160 );
+			}
 		}
 		if ( $post_id ) {
 			$auto = SeoData::auto_description( $post_id );
@@ -83,20 +82,36 @@ final class MetaGenerator {
 		}
 		$text = $this->archive_description();
 		if ( '' === $text ) {
-			$text = SeoData::clean( get_bloginfo( 'description' ) ); }
+			$text = SeoData::clean( \PublishRankSEO\Core\PublicationProfile::publication_description() ); }
 		return SeoData::truncate( $text, 160 );
 	}
 
-	/** Resolve editor-friendly Rank Math-style variables in post-level snippet overrides. */
-	private function resolve_snippet_variables( $value, $post_id ) {
-		$keyword = (string) PostMeta::get( $post_id, PostMeta::FOCUS_KEYWORD, '' );
-		$values  = array(
-			'%%focus_keyword%%' => $keyword,
-			'%%focuskw%%'       => $keyword,
-			'%focus_keyword%'   => $keyword,
-			'%focuskw%'         => $keyword,
+	/**
+	 * Resolve a title or description template through the shared TemplateResolver.
+	 * Every template field (global and per-post) goes through here, so they always support the same variables.
+	 *
+	 * @param string $template Template text.
+	 * @param int    $post_id  Post the template belongs to, or 0.
+	 * @param string $field    'title' or 'description'.
+	 * @param array  $extra    Extra resolver context (for example a non-post title).
+	 * @return string Plain text.
+	 */
+	public function resolve_template( $template, $post_id, $field = 'title', $extra = array() ) {
+		$post_id = absint( $post_id );
+		$main_id = is_singular() ? (int) get_queried_object_id() : 0;
+		$context = array_merge(
+			array(
+				'field'   => $field,
+				'post_id' => $post_id,
+				// Pagination belongs to the main request only; a post resolved for REST/editor use has no page suffix.
+				'page'    => ( ! $post_id || $post_id === $main_id ) ? TemplateResolver::current_page() : 0,
+			),
+			is_array( $extra ) ? $extra : array()
 		);
-		return strtr( (string) $value, $values );
+		if ( ! $post_id && ! isset( $context['permalink'] ) && false !== stripos( (string) $template, 'permalink' ) ) {
+			$context['permalink'] = $this->canonical();
+		}
+		return TemplateResolver::resolve( $template, $context );
 	}
 
 	/** Description for term, author and post-type archives, fetched from WordPress. */
@@ -226,15 +241,10 @@ final class MetaGenerator {
 		return implode( ',', $tokens ? $tokens : array( 'index', 'follow' ) );
 	}
 
-	private function category( $post_id ) {
-		$categories = get_the_category( $post_id );
-		return ! empty( $categories ) ? (string) $categories[0]->name : '';
-	}
-
 	/** @param string $context @return string */
 	private function context_title( $context ) {
 		if ( 'home' === $context ) {
-			return get_bloginfo( 'name' );
+			return \PublishRankSEO\Core\PublicationProfile::publication_name();
 		}
 		if ( function_exists( 'get_the_archive_title' ) && ( is_archive() || is_search() ) ) {
 			return wp_strip_all_tags( (string) get_the_archive_title() );
@@ -242,13 +252,7 @@ final class MetaGenerator {
 		if ( is_404() ) {
 			return __( 'Page not found', 'publishrank' );
 		}
-		return get_bloginfo( 'name' );
-	}
-
-	private function page_suffix() {
-		$page = max( 1, (int) get_query_var( 'paged' ), (int) get_query_var( 'page' ) );
-		/* translators: %d: numeric count or measurement described by the message. */
-		return $page > 1 ? sprintf( __( 'Page %d', 'publishrank' ), $page ) : '';
+		return \PublishRankSEO\Core\PublicationProfile::publication_name();
 	}
 
 	private function is_media_host( $host ) {

@@ -13,11 +13,20 @@ final class SettingsPage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 10 );
 		add_action( 'admin_init', array( $this, 'settings' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 	}
 
 	/** Register the settings page. */
 	public function menu() {
 		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'PublishRank Settings', 'publishrank' ), __( 'Settings', 'publishrank' ), 'manage_options', 'publishrank', array( $this, 'page' ) );
+	}
+
+	/** Load the existing variable picker for the global title-template fields. */
+	public function enqueue() {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( 'publishrank' === $page ) {
+			VariablePicker::enqueue( '' );
+		}
 	}
 
 	/**
@@ -27,7 +36,7 @@ final class SettingsPage {
 	private function reg( $option, $args ) {
 		static $unmanaged = null;
 		if ( null === $unmanaged ) {
-			$unmanaged = array_merge( \PublishRankSEO\Admin\OnboardingPage::setup_keys(), array( 'publishrank_indexnow_enabled', 'publishrank_indexnow_key', 'publishrank_indexnow_post_types', 'publishrank_indexnow_key_location', 'publishrank_seo_title_template_home', 'publishrank_seo_title_template_post', 'publishrank_seo_title_template_page', 'publishrank_seo_title_template_archive', 'publishrank_author_mode', 'publishrank_schema_legal_name' ) );
+			$unmanaged = array_merge( \PublishRankSEO\Admin\OnboardingPage::setup_keys(), array( 'publishrank_indexnow_enabled', 'publishrank_indexnow_key', 'publishrank_indexnow_post_types', 'publishrank_indexnow_key_location', 'publishrank_author_mode', 'publishrank_schema_legal_name' ) );
 		}
 		register_setting( in_array( $option, $unmanaged, true ) ? 'publishrank_seo_unmanaged' : 'publishrank_seo', $option, $args );
 	}
@@ -202,7 +211,7 @@ final class SettingsPage {
 					'default'           => '|',
 				)
 			);
-		foreach ( array( 'publishrank_meta_enabled', 'publishrank_schema_enabled' ) as $field ) {
+		foreach ( array( 'publishrank_meta_enabled', 'publishrank_schema_enabled', 'publishrank_org_website_schema_enabled' ) as $field ) {
 			$this->reg(
 				$field,
 				array(
@@ -265,7 +274,7 @@ final class SettingsPage {
 				$field,
 				array(
 					'type'              => 'string',
-					'sanitize_callback' => 'sanitize_textarea_field',
+					'sanitize_callback' => array( $this, 'sanitize_home_text' ),
 					'default'           => '',
 				)
 			); }
@@ -417,7 +426,8 @@ final class SettingsPage {
 			'publishrank_breadcrumbs_separator',
 			array(
 				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
+				// Not sanitize_text_field(): that trims the spaces of spaced separators and cannot represent "none" or a non-breaking space.
+				'sanitize_callback' => array( \PublishRankSEO\SEO\BreadcrumbSeparators::class, 'sanitize_setting' ),
 				'default'           => '→',
 			)
 		);
@@ -453,15 +463,25 @@ final class SettingsPage {
 				'default'           => home_url( '/' ),
 			)
 		);
-		$this->reg(
-			'publishrank_breadcrumb_log_errors',
-			array(
-				'type'              => 'boolean',
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'default'           => false,
-			)
-		);
-		$this->reg(
+			$this->reg(
+				'publishrank_breadcrumb_log_errors',
+				array(
+					'type'              => 'boolean',
+					'sanitize_callback' => 'rest_sanitize_boolean',
+					'default'           => false,
+				)
+			);
+			foreach ( array( 'publishrank_hide_visible_site_title', 'publishrank_hide_visible_site_description', 'publishrank_override_wp_identity' ) as $field ) {
+				$this->reg(
+					$field,
+					array(
+						'type'              => 'boolean',
+						'sanitize_callback' => 'rest_sanitize_boolean',
+						'default'           => true,
+					)
+				);
+			}
+			$this->reg(
 			'publishrank_indexnow_enabled',
 			array(
 				'type'              => 'boolean',
@@ -813,8 +833,14 @@ final class SettingsPage {
 
 		/** @param mixed $value @return string */
 	public function sanitize_template( $value ) {
-		$value = sanitize_text_field( (string) $value );
-		return preg_replace( '/[^\p{L}\p{N}\s%_\-–—|.,:()]+/u', '', $value );
+		// Keeps %%variables%% intact and, unlike the previous character allow-list, keeps symbols such as › » · & ' ! ?.
+		// Markup is removed here and the resolved text is escaped at the output boundary.
+		return \PublishRankSEO\Meta\TemplateResolver::sanitize_template( $value, 300 );
+	}
+
+	/** @param mixed $value @return string Homepage SEO title/description: plain text that may contain %%variables%%. */
+	public function sanitize_home_text( $value ) {
+		return \PublishRankSEO\Meta\TemplateResolver::sanitize_template( $value, 320 );
 	}
 
 		/** @param mixed $value @return int */
@@ -902,6 +928,18 @@ final class SettingsPage {
 		$val = static function ( $key, $default = '' ) {
 			return get_option( $key, $default );
 		};
+		$title_separator   = (string) $val( 'publishrank_seo_title_separator', '|' );
+		$separator_options = OnboardingPage::title_separator_options();
+		if ( ! array_key_exists( $title_separator, $separator_options ) ) {
+			/* translators: %s: the currently saved title separator. */
+			$separator_options = array( $title_separator => sprintf( __( 'Current value: %s', 'publishrank' ), $title_separator ) ) + $separator_options;
+		}
+		$title_templates = array(
+			'home'    => array( 'label' => __( 'Homepage title', 'publishrank' ), 'default' => '%%sitename%% %%page%%', 'context' => 'home' ),
+			'post'    => array( 'label' => __( 'Post title', 'publishrank' ), 'default' => '%%title%% %%sep%% %%sitename%% %%page%%', 'context' => 'post' ),
+			'page'    => array( 'label' => __( 'Page title', 'publishrank' ), 'default' => '%%title%% %%sep%% %%sitename%%', 'context' => 'post' ),
+			'archive' => array( 'label' => __( 'Archive title', 'publishrank' ), 'default' => '%%title%% %%sep%% %%sitename%%', 'context' => 'archive' ),
+		);
 		?>
 			<div class="wrap publishrank-settings-page">
 		<?php
@@ -916,13 +954,26 @@ final class SettingsPage {
 					<div style="flex:1;min-width:240px"><strong><?php esc_html_e( 'One-time setup lives in the Setup Wizard', 'publishrank' ); ?></strong><p style="margin:4px 0 0"><?php esc_html_e( 'Publisher identity, organization or person details, social profiles, site verification, language and country, and homepage metadata are configured once in the wizard. This page keeps the ongoing controls.', 'publishrank' ); ?></p></div>
 					<a class="button button-primary" href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( \PublishRankSEO\Admin\OnboardingPage::SLUG ) . '&edit=1&step=2' ); ?>"><?php esc_html_e( 'Edit in Setup Wizard', 'publishrank' ); ?></a>
 			</div>
-			<nav class="pr-settings-nav" aria-label="<?php esc_attr_e( 'Settings sections', 'publishrank' ); ?>"><a href="#pr-settings-output"><?php esc_html_e( 'Output & indexing', 'publishrank' ); ?></a><a href="#pr-settings-international"><?php esc_html_e( 'International SEO', 'publishrank' ); ?></a><a href="#pr-settings-breadcrumbs"><?php esc_html_e( 'Breadcrumbs', 'publishrank' ); ?></a><a href="#pr-settings-infrastructure"><?php esc_html_e( 'Infrastructure', 'publishrank' ); ?></a><a href="#pr-settings-news"><?php esc_html_e( 'News & sitemaps', 'publishrank' ); ?></a><a href="#pr-settings-portability"><?php esc_html_e( 'Portability', 'publishrank' ); ?></a></nav>
+			<nav class="pr-settings-nav" aria-label="<?php esc_attr_e( 'Settings sections', 'publishrank' ); ?>"><a href="#pr-settings-titles"><?php esc_html_e( 'Titles & Meta', 'publishrank' ); ?></a><a href="#pr-settings-output"><?php esc_html_e( 'Output & indexing', 'publishrank' ); ?></a><a href="#pr-settings-international"><?php esc_html_e( 'International SEO', 'publishrank' ); ?></a><a href="#pr-settings-breadcrumbs"><?php esc_html_e( 'Breadcrumbs', 'publishrank' ); ?></a><a href="#pr-settings-infrastructure"><?php esc_html_e( 'Infrastructure', 'publishrank' ); ?></a><a href="#pr-settings-news"><?php esc_html_e( 'News & sitemaps', 'publishrank' ); ?></a><a href="#pr-settings-portability"><?php esc_html_e( 'Portability', 'publishrank' ); ?></a></nav>
+			<h2 class="pr-settings-section" id="pr-settings-titles"><?php esc_html_e( 'Titles & Meta', 'publishrank' ); ?></h2>
+			<p><?php esc_html_e( 'Control the global search-title format. Individual posts and pages can still override their own SEO title.', 'publishrank' ); ?></p>
+			<table class="form-table" role="presentation"><tbody>
+				<tr><th scope="row"><label for="publishrank_seo_title_separator"><?php esc_html_e( 'Title Separator', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_title_separator" name="publishrank_seo_title_separator">
+					<?php foreach ( $separator_options as $separator_value => $separator_label ) : ?>
+						<option value="<?php echo esc_attr( $separator_value ); ?>" <?php selected( $title_separator, (string) $separator_value ); ?>><?php echo esc_html( $separator_label ); ?></option>
+					<?php endforeach; ?>
+				</select><p class="description"><?php esc_html_e( 'Used wherever a title template contains %%sep%%. The Setup Wizard and frontend titles read this same saved value.', 'publishrank' ); ?></p></td></tr>
+				<?php foreach ( $title_templates as $template_context => $template ) : ?>
+					<?php $template_option = 'publishrank_seo_title_template_' . $template_context; ?>
+					<tr><th scope="row"><label for="<?php echo esc_attr( $template_option ); ?>"><?php echo esc_html( $template['label'] ); ?></label></th><td><input id="<?php echo esc_attr( $template_option ); ?>" name="<?php echo esc_attr( $template_option ); ?>" type="text" class="large-text code" value="<?php echo esc_attr( $val( $template_option, $template['default'] ) ); ?>" /> <?php echo VariablePicker::slot( $template_option, 'title', $template['context'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by VariablePicker::slot(). ?><p class="description"><?php esc_html_e( 'Use Insert variable to add a supported token, including %%sep%% for the separator above.', 'publishrank' ); ?></p></td></tr>
+				<?php endforeach; ?>
+			</tbody></table>
 			<h2 class="pr-settings-section" id="pr-settings-identity"><?php esc_html_e( 'Publisher identity variants', 'publishrank' ); ?></h2>
 			<table class="form-table" role="presentation"><tbody><tr><th scope="row"><label for="publishrank_identity_alternate_names"><?php esc_html_e( 'Organization name variants', 'publishrank' ); ?></label></th><td><textarea id="publishrank_identity_alternate_names" name="publishrank_identity_alternate_names" class="large-text" rows="4" placeholder="One variant per line"><?php echo esc_textarea( $val( 'publishrank_identity_alternate_names', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'Optional. Add recognized names, abbreviations, or spelling variants. Each line becomes an Organization alternateName value.', 'publishrank' ); ?></p></td></tr></tbody></table>
 		<h2 class="pr-settings-section" id="pr-settings-output"><?php esc_html_e( 'Output and indexing', 'publishrank' ); ?></h2>
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th scope="row"><?php esc_html_e( 'External link policy', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_links_enabled" value="0" /><label><input name="publishrank_links_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_links_enabled', true ) ); ?> /> <?php esc_html_e( 'Automatically add nofollow to external links', 'publishrank' ); ?></label><br /><label for="publishrank_links_follow_domains"><?php esc_html_e( 'Approved external domains (follow)', 'publishrank' ); ?></label><textarea id="publishrank_links_follow_domains" name="publishrank_links_follow_domains" class="large-text" rows="2" placeholder="example.org, partner.example"><?php echo esc_textarea( $val( 'publishrank_links_follow_domains', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'One domain per line or comma-separated. Your main domain and all subdomains remain index/follow.', 'publishrank' ); ?></p><input type="hidden" name="publishrank_links_sponsored" value="0" /><label><input name="publishrank_links_sponsored" type="checkbox" value="1" <?php checked( $val( 'publishrank_links_sponsored', false ) ); ?> /> <?php esc_html_e( 'Mark external links as sponsored', 'publishrank' ); ?></label></td></tr>
-					<tr><th scope="row"><?php esc_html_e( 'Output controls', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_meta_enabled" value="0" /><label><input name="publishrank_meta_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_meta_enabled', true ) ); ?> /> <?php esc_html_e( 'Output PublishRank title, canonical, robots, Open Graph and X/Twitter metadata', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_schema_enabled" value="0" /><label><input name="publishrank_schema_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_schema_enabled', true ) ); ?> /> <?php esc_html_e( 'Output the connected JSON-LD schema graph', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Leave both enabled for the complete technical SEO layer. Disable only if another SEO plugin owns these outputs.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><?php esc_html_e( 'Output controls', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_meta_enabled" value="0" /><label><input name="publishrank_meta_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::meta() ); ?> /> <?php esc_html_e( 'Output PublishRank title, description, canonical, robots, Open Graph and X/Twitter metadata', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_schema_enabled" value="0" /><label><input name="publishrank_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::schema() ); ?> /> <?php esc_html_e( 'Output the connected JSON-LD schema graph (structured data)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_org_website_schema_enabled" value="0" /><label><input name="publishrank_org_website_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::org_website_schema() ); ?> /> <?php esc_html_e( 'Include Organization (or Person) and WebSite entities in the schema graph', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'All of these are enabled by default and each one controls only its own output: turning off structured data does not affect the SEO metadata above, and turning off Organization/WebSite keeps the page and article entities. Your Organization, logo and website details are read from the Setup Wizard on every page view, so a change appears on the whole site without editing individual posts. Disable an option only if another SEO plugin owns that output.', 'publishrank' ); ?></p><p class="description"><?php esc_html_e( 'What PublishRank can and cannot change: it controls its own head metadata, JSON-LD and breadcrumb trail. A logo, site title, breadcrumb trail or metadata that your theme or another plugin hard-codes is theme output and is not rewritten. If the theme prints its own breadcrumbs, choose "Structured data only" under Breadcrumb placement; if a theme prints a second title or description tag, switch that off in the theme.', 'publishrank' ); ?></p></td></tr>
 						<tr class="publishrank-new-security-feature"><th scope="row"><label for="publishrank_admin_access_mode"><?php esc_html_e( 'Custom login URL', 'publishrank' ); ?></label></th><td><select id="publishrank_admin_access_mode" name="publishrank_admin_access_mode"><option value="custom" <?php selected( $val( 'publishrank_admin_access_mode', 'custom' ), 'custom' ); ?>><?php esc_html_e( 'Enable custom login URL and hide standard login', 'publishrank' ); ?></option><option value="disabled" <?php selected( $val( 'publishrank_admin_access_mode', 'custom' ), 'disabled' ); ?>><?php esc_html_e( 'Disabled — use standard WordPress access URLs', 'publishrank' ); ?></option></select><p><label for="publishrank_admin_access_slug"><strong><?php esc_html_e( 'Private link key', 'publishrank' ); ?></strong></label><br /><code><?php echo esc_html( home_url( '/?publishrank_access=' ) ); ?></code><input id="publishrank_admin_access_slug" name="publishrank_admin_access_slug" type="text" value="<?php echo esc_attr( $val( 'publishrank_admin_access_slug' ) ); ?>" class="regular-text code" placeholder="newsroom-control" pattern="[a-z][a-z0-9_-]{5,63}" /></p><?php $admin_access_url = \PublishRankSEO\Security\AdminAccess::url(); ?>
 						<?php
 						if ( '' !== $admin_access_url ) :
@@ -954,13 +1005,19 @@ ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_h
 	
 			<h2 class="pr-settings-section" id="pr-settings-breadcrumbs"><?php esc_html_e( 'Breadcrumbs', 'publishrank' ); ?></h2>
 				<table class="form-table" role="presentation"><tbody>
-					<tr><th scope="row"><?php esc_html_e( 'Frontend breadcrumbs', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_breadcrumbs_enabled" value="0" /><label><input name="publishrank_breadcrumbs_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_breadcrumbs_enabled', true ) ); ?> /> <?php esc_html_e( 'Show breadcrumbs (posts, pages and category/tag/taxonomy archives)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_breadcrumb_schema_enabled" value="0" /><label><input name="publishrank_breadcrumb_schema_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_breadcrumb_schema_enabled', true ) ); ?> /> <?php esc_html_e( 'Keep BreadcrumbList structured data and SEO enabled', 'publishrank' ); ?></label><br /><label for="publishrank_breadcrumbs_separator"><?php esc_html_e( 'Separator', 'publishrank' ); ?></label> <input id="publishrank_breadcrumbs_separator" name="publishrank_breadcrumbs_separator" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumbs_separator', '→' ) ); ?>" class="small-text" /></td></tr>
-<tr><th scope="row"><?php esc_html_e( 'Breadcrumb placement', 'publishrank' ); ?></th><td><label for="publishrank_breadcrumb_placement"><?php esc_html_e( 'Where to print the visible trail', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_placement" name="publishrank_breadcrumb_placement"><?php foreach ( array( 'auto' => __( 'Automatic (recommended)', 'publishrank' ), 'content' => __( 'Above the post content', 'publishrank' ), 'hook' => __( 'Theme hook (advanced)', 'publishrank' ), 'manual' => __( 'Manual: block, shortcode or template tag', 'publishrank' ), 'schema_only' => __( 'Structured data only (my theme prints its own trail)', 'publishrank' ) ) as $placement_value => $placement_label ) { ?><option value="<?php echo esc_attr( $placement_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_placement', 'auto' ), $placement_value ); ?>><?php echo esc_html( $placement_label ); ?></option><?php } ?></select><p class="description"><?php esc_html_e( 'Google expects the BreadcrumbList structured data to match a breadcrumb trail that visitors can actually see. Automatic prints PublishRank\'s trail above the post title in block themes and above the content in classic themes, using the same items as the structured data. Choose "Structured data only" only if your theme already prints an identical trail, and turn off the theme\'s own trail if you let PublishRank print it so the page does not show two.', 'publishrank' ); ?></p><label for="publishrank_breadcrumb_hook"><?php esc_html_e( 'Theme hook name', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_hook" name="publishrank_breadcrumb_hook" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_hook', '' ) ); ?>" class="regular-text code" placeholder="astra_primary_content_top" /><p class="description"><?php esc_html_e( 'Only used with "Theme hook". Enter an action hook from your theme, for example astra_primary_content_top, generate_before_content or the hook your theme documents for "before content".', 'publishrank' ); ?></p><label for="publishrank_breadcrumb_home_label"><?php esc_html_e( 'First crumb label', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_home_label" name="publishrank_breadcrumb_home_label" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_home_label', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" /><p class="description"><?php esc_html_e( 'Leave blank to use the publication name, or enter "Home".', 'publishrank' ); ?></p><p class="description"><?php esc_html_e( 'Manual placement: add the "PublishRank Breadcrumbs" block, the [publishrank_breadcrumbs] shortcode, or call publishrank_breadcrumbs() in a theme template.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><?php esc_html_e( 'Frontend breadcrumbs', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_breadcrumbs_enabled" value="0" /><label><input name="publishrank_breadcrumbs_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::is_on( 'publishrank_breadcrumbs_enabled' ) ); ?> /> <?php esc_html_e( 'Show PublishRank breadcrumbs (posts, pages and category/tag/taxonomy archives)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_breadcrumb_schema_enabled" value="0" /><label><input name="publishrank_breadcrumb_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::is_on( 'publishrank_breadcrumb_schema_enabled' ) ); ?> /> <?php esc_html_e( 'Output BreadcrumbList structured data', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'These two switches are independent: you can show the visible trail without the structured data, or keep the structured data while your theme prints the visible trail. BreadcrumbList data is part of the JSON-LD graph, so it also needs "Output the connected JSON-LD schema graph" (Output controls above) to be on. Both are enabled by default and only change what PublishRank itself prints; a breadcrumb trail drawn by your theme or another plugin is not modified.', 'publishrank' ); ?></p></td></tr>
+<tr><th scope="row"><?php esc_html_e( 'Visible publication identity', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_override_wp_identity" value="0" /><label><input name="publishrank_override_wp_identity" type="checkbox" value="1" <?php checked( $val( 'publishrank_override_wp_identity', true ) ); ?> /> <?php esc_html_e( 'Use the PublishRank publication title and description as the WordPress Site Title and Tagline on the public site (on by default)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_hide_visible_site_title" value="0" /><label><input name="publishrank_hide_visible_site_title" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_title', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site/publication title on the public site (on by default)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_hide_visible_site_description" value="0" /><label><input name="publishrank_hide_visible_site_description" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_description', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site description/tagline on the public site (on by default)', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'This is a visual-only control for common WordPress classic and block-theme selectors. It does not remove the site title or description from SEO meta tags, Open Graph, X/Twitter, JSON-LD, feeds or the WordPress General Settings fields. The publication title and description themselves are set in PublishRank (Identity), not taken from WordPress General Settings.', 'publishrank' ); ?></p></td></tr>
+
+<tr><th scope="row"><?php esc_html_e( 'Breadcrumb placement', 'publishrank' ); ?></th><td><label for="publishrank_breadcrumb_placement"><?php esc_html_e( 'Where to print the visible trail', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_placement" name="publishrank_breadcrumb_placement"><?php foreach ( array( 'auto' => __( 'Automatic (recommended)', 'publishrank' ), 'content' => __( 'Above the post content', 'publishrank' ), 'hook' => __( 'Theme hook (advanced)', 'publishrank' ), 'manual' => __( 'Manual: block, shortcode or template tag', 'publishrank' ), 'schema_only' => __( 'Structured data only (my theme prints its own trail)', 'publishrank' ) ) as $placement_value => $placement_label ) { ?><option value="<?php echo esc_attr( $placement_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_placement', 'auto' ), $placement_value ); ?>><?php echo esc_html( $placement_label ); ?></option><?php } ?></select><p class="description"><?php esc_html_e( 'Google expects the BreadcrumbList structured data to match a breadcrumb trail that visitors can actually see. Automatic prints PublishRank\'s trail above the post title in block themes and above the content in classic themes, using the same items as the structured data. Choose "Structured data only" only if your theme already prints an identical trail, and turn off the theme\'s own trail if you let PublishRank print it so the page does not show two.', 'publishrank' ); ?></p><label for="publishrank_breadcrumb_hook"><?php esc_html_e( 'Theme hook name', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_hook" name="publishrank_breadcrumb_hook" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_hook', '' ) ); ?>" class="regular-text code" placeholder="astra_primary_content_top" /><p class="description"><?php esc_html_e( 'Only used with "Theme hook". Enter an action hook from your theme, for example astra_primary_content_top, generate_before_content or the hook your theme documents for "before content".', 'publishrank' ); ?></p><label for="publishrank_breadcrumb_home_label"><?php esc_html_e( 'First crumb label', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_home_label" name="publishrank_breadcrumb_home_label" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_home_label', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( \PublishRankSEO\Core\PublicationProfile::publication_name() ); ?>" /><p class="description"><?php esc_html_e( 'Leave blank to use the publication name, or enter "Home".', 'publishrank' ); ?></p><p class="description"><?php esc_html_e( 'Manual placement: add the "PublishRank Breadcrumbs" block, the [publishrank_breadcrumbs] shortcode, or call publishrank_breadcrumbs() in a theme template.', 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><?php esc_html_e( 'Breadcrumb style', 'publishrank' ); ?></th><td><?php
-$pr_bc_seps = array( '→' => 'Arrow →', '›' => 'Single angle ›', '»' => 'Double angle »', '/' => 'Slash /', '|' => 'Pipe |', '·' => 'Middle dot ·', '•' => 'Bullet •', '‣' => 'Triangle bullet ‣', '>' => 'Greater than >', '–' => 'En dash –', '~' => 'Tilde ~', '⟩' => 'Mathematical angle ⟩', '➤' => 'Arrowhead ➤', '' => 'None' );
-$pr_bc_sep  = (string) $val( 'publishrank_breadcrumbs_separator', '→' );
-?><label for="publishrank_breadcrumb_sep_preset"><?php esc_html_e( 'Separator symbol', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_sep_preset"><?php foreach ( $pr_bc_seps as $sep_value => $sep_label ) { ?><option value="<?php echo esc_attr( $sep_value ); ?>" <?php selected( $pr_bc_sep, (string) $sep_value ); ?>><?php echo esc_html( $sep_label ); ?></option><?php } ?><option value="__custom" <?php selected( isset( $pr_bc_seps[ $pr_bc_sep ] ), false ); ?>><?php esc_html_e( 'Custom (use the separator field above)', 'publishrank' ); ?></option></select>
-<script>(function(){var s=document.getElementById('publishrank_breadcrumb_sep_preset'),i=document.getElementById('publishrank_breadcrumbs_separator');if(!s||!i){return;}s.addEventListener('change',function(){if(s.value!=='__custom'){i.value=s.value;}else{i.focus();}});i.addEventListener('input',function(){var m=false;for(var k=0;k<s.options.length;k++){if(s.options[k].value===i.value){s.selectedIndex=k;m=true;break;}}if(!m){s.value='__custom';}});}());</script><br />
+$pr_bc_groups = \PublishRankSEO\SEO\BreadcrumbSeparators::groups();
+$pr_bc_sep    = \PublishRankSEO\SEO\BreadcrumbSeparators::current();
+$pr_bc_is_preset = \PublishRankSEO\SEO\BreadcrumbSeparators::is_preset( $pr_bc_sep );
+?><label for="publishrank_breadcrumb_sep_preset"><?php esc_html_e( 'Separator symbol', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_sep_preset"><?php foreach ( $pr_bc_groups as $group_label => $group_options ) { ?><optgroup label="<?php echo esc_attr( $group_label ); ?>"><?php foreach ( $group_options as $sep_value => $sep_label ) { ?><option value="<?php echo esc_attr( (string) $sep_value ); ?>" data-sep="<?php echo esc_attr( (string) $sep_value ); ?>" <?php selected( $pr_bc_sep, (string) $sep_value ); ?>><?php echo esc_html( $sep_label ); ?></option><?php } ?></optgroup><?php } ?><option value="__custom" <?php selected( $pr_bc_is_preset, false ); ?>><?php esc_html_e( 'Custom (type it in the field next to this list)', 'publishrank' ); ?></option></select>
+<label for="publishrank_breadcrumbs_separator"><?php esc_html_e( 'Separator text', 'publishrank' ); ?></label> <input id="publishrank_breadcrumbs_separator" name="publishrank_breadcrumbs_separator" type="text" value="<?php echo esc_attr( $pr_bc_sep ); ?>" class="small-text" maxlength="<?php echo esc_attr( (string) \PublishRankSEO\SEO\BreadcrumbSeparators::MAX_LENGTH ); ?>" spellcheck="false" autocomplete="off" />
+<p class="description"><?php echo esc_html( sprintf( /* translators: %d: maximum number of characters. */ __( 'Pick a preset or type your own symbol or short text (up to %d characters). It is printed as plain text between crumbs, so HTML is not allowed. Leading and trailing spaces are kept; leave the field empty for no visible separator. The separator is a visual setting only and never appears in BreadcrumbList structured data.', 'publishrank' ), \PublishRankSEO\SEO\BreadcrumbSeparators::MAX_LENGTH ) ); ?></p>
+<p class="description"><?php esc_html_e( 'Preview:', 'publishrank' ); ?> <code id="publishrank_breadcrumb_sep_preview" style="white-space:pre-wrap" aria-live="polite"></code></p>
+<script>(function(){var s=document.getElementById('publishrank_breadcrumb_sep_preset'),i=document.getElementById('publishrank_breadcrumbs_separator'),p=document.getElementById('publishrank_breadcrumb_sep_preview');if(!s||!i){return;}function preview(){if(p){p.textContent='Home'+i.value+'News'+i.value+'Article';}}s.addEventListener('change',function(){var o=s.options[s.selectedIndex];if(o&&o.value!=='__custom'){i.value=o.getAttribute('data-sep');preview();}else{i.focus();}});i.addEventListener('input',function(){var m=false;for(var k=0;k<s.options.length;k++){if(s.options[k].value!=='__custom'&&s.options[k].getAttribute('data-sep')===i.value){s.selectedIndex=k;m=true;break;}}if(!m){s.value='__custom';}preview();});preview();}());</script><br />
 <label for="publishrank_breadcrumb_style"><?php esc_html_e( 'Look', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_style" name="publishrank_breadcrumb_style"><?php foreach ( array( 'plain' => __( 'Plain text (inherits theme)', 'publishrank' ), 'chips' => __( 'Chips (rounded pills)', 'publishrank' ), 'bar' => __( 'Bar (soft background strip)', 'publishrank' ), 'underline' => __( 'Underline (thin rule below)', 'publishrank' ) ) as $style_value => $style_label ) { ?><option value="<?php echo esc_attr( $style_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_style', 'plain' ), $style_value ); ?>><?php echo esc_html( $style_label ); ?></option><?php } ?></select>
 <label for="publishrank_breadcrumb_size"><?php esc_html_e( 'Size', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_size" name="publishrank_breadcrumb_size"><?php foreach ( array( 'small' => __( 'Small', 'publishrank' ), 'medium' => __( 'Medium', 'publishrank' ), 'large' => __( 'Large', 'publishrank' ) ) as $size_value => $size_label ) { ?><option value="<?php echo esc_attr( $size_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_size', 'medium' ), $size_value ); ?>><?php echo esc_html( $size_label ); ?></option><?php } ?></select><br />
 <label for="publishrank_breadcrumb_text_color"><?php esc_html_e( 'Text colour', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_text_color" name="publishrank_breadcrumb_text_color" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_text_color', '' ) ); ?>" class="small-text code" placeholder="#444444" />

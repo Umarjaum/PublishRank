@@ -29,8 +29,10 @@ final class RedirectsPage {
 		$target = isset( $_POST['target'] ) ? esc_url_raw( wp_unslash( $_POST['target'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$status = isset( $_POST['status'] ) ? absint( $_POST['status'] ) : 301;
+		$start_at = isset( $_POST['start_at'] ) ? sanitize_text_field( wp_unslash( $_POST['start_at'] ) ) : '';
+		$end_at   = isset( $_POST['end_at'] ) ? sanitize_text_field( wp_unslash( $_POST['end_at'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-		$result = RedirectStore::add( $source, $target, $status, ! empty( $_POST['regex'] ) );
+		$result = RedirectStore::add( $source, $target, $status, ! empty( $_POST['regex'] ), $start_at, $end_at );
 		if ( is_wp_error( $result ) ) {
 			AdminAssets::done( self::SLUG, 'error', $result->get_error_message() );
 		}
@@ -111,6 +113,7 @@ final class RedirectsPage {
 							<option value="451"><?php esc_html_e( '451 — Unavailable for legal reasons (no target)', 'publishrank' ); ?></option>
 						</select></p>
 					<p><label><input type="checkbox" name="regex" value="1" /> <?php esc_html_e( 'Treat the old path as a regular expression', 'publishrank' ); ?></label><br /><span class="description"><?php esc_html_e( 'Regex rules are limited to 255 characters; matching is bounded to protect request performance.', 'publishrank' ); ?></span></p>
+					<fieldset><legend><strong><?php esc_html_e( 'Schedule (optional)', 'publishrank' ); ?></strong></legend><p><label for="rhs-start-at"><?php esc_html_e( 'Start time', 'publishrank' ); ?></label><br /><input id="rhs-start-at" name="start_at" type="datetime-local" /></p><p><label for="rhs-end-at"><?php esc_html_e( 'End time', 'publishrank' ); ?></label><br /><input id="rhs-end-at" name="end_at" type="datetime-local" /></p><span class="description"><?php echo esc_html( sprintf( __( 'Uses the site timezone: %s. Before the start and after the end, this redirect automatically becomes inactive.', 'publishrank' ), wp_timezone_string() ?: 'UTC' ) ); ?></span></fieldset>
 					<button type="submit" class="button button-primary"><?php esc_html_e( 'Save redirect', 'publishrank' ); ?></button>
 				</form>
 			</div>
@@ -140,10 +143,10 @@ final class RedirectsPage {
 		<p class="description"><?php esc_html_e( 'Redirects apply to addresses that would otherwise return a 404 page. Rules are checked top to bottom and the first match wins.', 'publishrank' ); ?></p>
 		<h2><?php echo esc_html( sprintf( /* translators: %d: number of rules. */ _n( '%d rule', '%d rules', $total, 'publishrank' ), $total ) ); ?></h2>
 		<div class="rhs-table-wrap"><table class="widefat striped">
-			<thead><tr><th><?php esc_html_e( 'Old', 'publishrank' ); ?></th><th><?php esc_html_e( 'New', 'publishrank' ); ?></th><th><?php esc_html_e( 'Type', 'publishrank' ); ?></th><th><?php esc_html_e( 'Match', 'publishrank' ); ?></th><th></th></tr></thead>
+			<thead><tr><th><?php esc_html_e( 'Old', 'publishrank' ); ?></th><th><?php esc_html_e( 'New', 'publishrank' ); ?></th><th><?php esc_html_e( 'Type', 'publishrank' ); ?></th><th><?php esc_html_e( 'Match', 'publishrank' ); ?></th><th><?php esc_html_e( 'Schedule', 'publishrank' ); ?></th><th></th></tr></thead>
 			<tbody>
 			<?php if ( empty( $slice ) ) : ?>
-				<tr><td colspan="5"><?php esc_html_e( 'No redirects yet.', 'publishrank' ); ?></td></tr>
+				<tr><td colspan="6"><?php esc_html_e( 'No redirects yet.', 'publishrank' ); ?></td></tr>
 			<?php endif; ?>
 			<?php
 			foreach ( $slice as $rule ) :
@@ -163,6 +166,7 @@ final class RedirectsPage {
 					<td><?php echo ! empty( $rule['target'] ) ? '<code>' . esc_html( $rule['target'] ) . '</code>' : '&mdash;'; ?></td>
 					<td><?php echo esc_html( isset( $rule['status'] ) ? (string) (int) $rule['status'] : '301' ); ?></td>
 					<td><?php echo ! empty( $rule['regex'] ) ? esc_html__( 'Regex', 'publishrank' ) : esc_html__( 'Exact', 'publishrank' ); ?></td>
+					<td><span class="description"><?php echo esc_html( RedirectStore::schedule_label( $rule ) ); ?></span><?php if ( ! RedirectStore::is_scheduled_active( $rule ) ) : ?><br /><em><?php esc_html_e( 'Inactive now', 'publishrank' ); ?></em><?php endif; ?></td>
 					<td><a class="button-link-delete" href="<?php echo esc_url( $delete ); ?>"><?php esc_html_e( 'Delete', 'publishrank' ); ?></a></td>
 				</tr>
 			<?php endforeach; ?>

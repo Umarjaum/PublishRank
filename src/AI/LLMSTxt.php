@@ -36,6 +36,8 @@ final class LLMSTxt {
 	const OPTION_OPTIONAL      = 'publishrank_llms_txt_optional';
 	const OPTION_FULL_PER_POST = 'publishrank_llms_full_per_post';
 	const OPTION_VERSION       = 'publishrank_llms_cache_ver';
+	const OPTION_OVERRIDE      = 'publishrank_llms_txt_override';
+	const OPTION_OVERRIDE_TEXT = 'publishrank_llms_txt_override_text';
 	/** Slug fragments that identify the pages that show who is behind a publication. */
 	const POLICY_PATTERN = '/(^|-)(about|contact|editorial|ethics|corrections?|fact-?check\w*|standards|masthead|team|staff|ownership|funding|advertis\w*|tips|submit|diversity|trust|privacy|terms)(-|$)/';
 
@@ -129,7 +131,7 @@ final class LLMSTxt {
 			echo "PublishRank llms.txt is disabled.\n";
 			exit;
 		}
-		$body = $this->cached( $full ? 'full' : 'root' );
+		if ( ! $full && get_option( self::OPTION_OVERRIDE, 0 ) && trim( (string) get_option( self::OPTION_OVERRIDE_TEXT, '' ) ) !== '' ) { $body = trim( (string) get_option( self::OPTION_OVERRIDE_TEXT, '' ) ) . "\n"; } else { $body = $this->cached( $full ? 'full' : 'root' ); }
 		$etag = '"' . md5( $body ) . '"';
 		$mod  = $this->last_modified();
 		header( 'Content-Type: text/plain; charset=UTF-8' );
@@ -176,10 +178,10 @@ final class LLMSTxt {
 	/* ------------------------------------------------------------------ concise llms.txt */
 
 	public function build() {
-		$title   = trim( (string) get_option( self::OPTION_TITLE, get_bloginfo( 'name' ) ) );
-		$summary = trim( (string) get_option( self::OPTION_SUMMARY, get_bloginfo( 'description' ) ) );
+		$title   = trim( (string) get_option( self::OPTION_TITLE, \PublishRankSEO\Core\PublicationProfile::publication_name() ) );
+		$summary = trim( (string) get_option( self::OPTION_SUMMARY, \PublishRankSEO\Core\PublicationProfile::publication_description() ) );
 		$intro   = trim( (string) get_option( self::OPTION_INTRO, '' ) );
-		$lines   = array( '# ' . $this->line( '' !== $title ? $title : get_bloginfo( 'name' ) ) );
+		$lines   = array( '# ' . $this->line( '' !== $title ? $title : \PublishRankSEO\Core\PublicationProfile::publication_name() ) );
 		if ( '' !== $summary ) {
 			$lines[] = '> ' . $this->line( $summary ); }
 		if ( '' !== $intro ) {
@@ -192,7 +194,7 @@ final class LLMSTxt {
 		if ( get_option( self::OPTION_HOME, 1 ) ) {
 			$sections[] = array(
 				'name'  => __( 'Website', 'publishrank' ),
-				'links' => array( array( get_bloginfo( 'name' ), home_url( '/' ), ! empty( $this->line( get_bloginfo( 'description' ) ) ) ? $this->line( get_bloginfo( 'description' ) ) : __( 'Official website homepage.', 'publishrank' ) ) ),
+				'links' => array( array( \PublishRankSEO\Core\PublicationProfile::publication_name(), home_url( '/' ), ! empty( $this->line( \PublishRankSEO\Core\PublicationProfile::publication_description() ) ) ? $this->line( \PublishRankSEO\Core\PublicationProfile::publication_description() ) : __( 'Official website homepage.', 'publishrank' ) ) ),
 			); }
 		if ( get_option( self::OPTION_POLICY, 1 ) && $key ) {
 			$sections[] = array(
@@ -266,11 +268,11 @@ final class LLMSTxt {
 	/* ------------------------------------------------------------------ llms-full.txt */
 
 	public function build_full() {
-		$title   = trim( (string) get_option( self::OPTION_TITLE, get_bloginfo( 'name' ) ) );
-		$summary = trim( (string) get_option( self::OPTION_SUMMARY, get_bloginfo( 'description' ) ) );
+		$title   = trim( (string) get_option( self::OPTION_TITLE, \PublishRankSEO\Core\PublicationProfile::publication_name() ) );
+		$summary = trim( (string) get_option( self::OPTION_SUMMARY, \PublishRankSEO\Core\PublicationProfile::publication_description() ) );
 		$limit   = max( 1000, min( 10000, absint( get_option( self::OPTION_FULL_WORDS, 8000 ) ) ) );
 		$each    = max( 150, min( 3000, absint( get_option( self::OPTION_FULL_PER_POST, 1200 ) ) ) );
-		$lines   = array( '# ' . $this->line( '' !== $title ? $title : get_bloginfo( 'name' ) ) );
+		$lines   = array( '# ' . $this->line( '' !== $title ? $title : \PublishRankSEO\Core\PublicationProfile::publication_name() ) );
 		if ( '' !== $summary ) {
 			$lines[] = '';
 			$lines[] = '> ' . $this->line( $summary ); }
@@ -473,6 +475,10 @@ final class LLMSTxt {
 	/** The machine-readable entry points for a newsroom: sitemaps, robots.txt and the full-text companion. */
 	private function resources() {
 		$out = array( array( __( 'Sitemap index', 'publishrank' ), SitemapUrls::index_url(), __( 'Every sitemap on this site.', 'publishrank' ) ) );
+		if ( \PublishRankSEO\Core\OutputSettings::schema() ) {
+			$out[] = array( __( 'Schema Aggregator', 'publishrank' ), rest_url( 'publishrank/v1/schema-aggregator' ), __( 'Complete JSON-LD content index for AI crawlers and knowledge systems.', 'publishrank' ) );
+			$out[] = array( __( 'Structured-data discovery index', 'publishrank' ), rest_url( 'publishrank/v1/schema-index' ), __( 'Paginated index of public URLs and their schema types.', 'publishrank' ) );
+		}
 		if ( get_option( 'publishrank_seo_news_enabled', true ) ) {
 			$out[] = array( __( 'News sitemap', 'publishrank' ), SitemapUrls::shard_url( 'news', 1 ), __( 'Articles from the last two days, in Google News format.', 'publishrank' ) ); }
 		$out[] = array( 'robots.txt', home_url( '/robots.txt' ), __( 'Crawler access rules.', 'publishrank' ) );
@@ -559,13 +565,14 @@ final class LLMSTxt {
 			);
 		};
 		$text   = $this->build();
+		if ( get_option( self::OPTION_OVERRIDE, 0 ) && trim( (string) get_option( self::OPTION_OVERRIDE_TEXT, '' ) ) === '' ) { $add( 'error', __( 'The llms.txt override is enabled but empty.', 'publishrank' ) ); }
 		if ( ! get_option( self::OPTION_ENABLED, 1 ) ) {
 			$add( 'warn', __( 'llms.txt is switched off, so /llms.txt returns 404.', 'publishrank' ) ); }
 		if ( file_exists( ABSPATH . 'llms.txt' ) ) {
 			$add( 'error', __( 'A physical llms.txt file exists in your site root. The web server delivers that file instead of this one.', 'publishrank' ) ); }
 		if ( '0' === (string) get_option( 'blog_public', '1' ) ) {
 			$add( 'warn', __( 'WordPress is set to discourage search engines, which tells AI crawlers to stay away as well.', 'publishrank' ) ); }
-		if ( '' === trim( (string) get_option( self::OPTION_SUMMARY, get_bloginfo( 'description' ) ) ) ) {
+		if ( '' === trim( (string) get_option( self::OPTION_SUMMARY, \PublishRankSEO\Core\PublicationProfile::publication_description() ) ) ) {
 			$add( 'warn', __( 'There is no summary. The one-sentence description under the title is the first thing an AI agent reads.', 'publishrank' ) ); } elseif ( strlen( (string) get_option( self::OPTION_SUMMARY, '' ) ) > 400 ) {
 			$add( 'info', __( 'The summary is long. Keep it to one or two sentences and move detail to Additional context.', 'publishrank' ) ); }
 			if ( preg_match( '/\b(api[_ -]?key|password|secret|token)\b\s*[:=]/i', (string) get_option( self::OPTION_INTRO, '' ) . ' ' . (string) get_option( self::OPTION_SUMMARY, '' ) ) ) {

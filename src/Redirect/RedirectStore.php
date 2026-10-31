@@ -109,12 +109,43 @@ final class RedirectStore {
 			'enabled'        => 1,
 			'preserve_query' => 1,
 			'note'           => '',
+			'start_at'       => 0,
+			'end_at'         => 0,
 		);
 	}
 
+	/** Convert admin/local timestamps to UTC epoch seconds and validate the window. */
+public static function schedule_window( $start_at = 0, $end_at = 0 ) {
+$start = self::timestamp( $start_at ); $end = self::timestamp( $end_at );
+		if ( ! is_numeric( $start_at ) && '' !== trim( (string) $start_at ) && ! $start ) return new \WP_Error( 'publishrank_redirect_schedule_start', __( 'The start time is not valid.', 'publishrank' ) );
+		if ( ! is_numeric( $end_at ) && '' !== trim( (string) $end_at ) && ! $end ) return new \WP_Error( 'publishrank_redirect_schedule_end', __( 'The end time is not valid.', 'publishrank' ) );
+if ( $start && $end && $end <= $start ) return new \WP_Error( 'publishrank_redirect_schedule', __( 'The end time must be later than the start time.', 'publishrank' ) );
+return array( 'start_at' => $start, 'end_at' => $end );
+}
+private static function timestamp( $value ) {
+if ( is_numeric( $value ) ) return max( 0, (int) $value );
+$value = trim( (string) $value ); if ( '' === $value ) return 0;
+try { $dt = new \DateTimeImmutable( $value, wp_timezone() ); return $dt->getTimestamp(); } catch ( \Exception $e ) { return 0; }
+}
+/** A window is inclusive at the start and exclusive after its end. */
+public static function is_scheduled_active( array $rule, $now = null ) {
+$now = null === $now ? time() : (int) $now; $start = self::timestamp( $rule['start_at'] ?? 0 ); $end = self::timestamp( $rule['end_at'] ?? 0 );
+return ( ! $start || $now >= $start ) && ( ! $end || $now < $end );
+}
+public static function schedule_label( array $rule ) {
+$fmt = get_option( 'date_format', 'Y-m-d' ) . ' ' . get_option( 'time_format', 'H:i' ); $out = array();
+foreach ( array( 'start_at' => __( 'Starts', 'publishrank' ), 'end_at' => __( 'Ends', 'publishrank' ) ) as $key => $label ) { $t = self::timestamp( $rule[ $key ] ?? 0 ); if ( $t ) $out[] = $label . ': ' . wp_date( $fmt, $t, wp_timezone() ); }
+return $out ? implode( ' · ', $out ) : __( 'Always active', 'publishrank' );
+}
 	/** Add a rule, or replace the rule that has the same source. @return true|\WP_Error */
-	public static function add( $source, $target, $status = 301, $regex = false ) {
+	public static function add( $source, $target, $status = 301, $regex = false, $start_at = 0, $end_at = 0 ) {
 		$rule = self::build_rule( $source, $target, $status, $regex );
+		if ( ! is_wp_error( $rule ) ) {
+			$window = self::schedule_window( $start_at, $end_at );
+			if ( is_wp_error( $window ) ) return $window;
+			$rule['start_at'] = $window['start_at'];
+			$rule['end_at'] = $window['end_at'];
+		}
 		if ( is_wp_error( $rule ) ) {
 			return $rule;
 		}

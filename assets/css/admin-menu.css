@@ -40,12 +40,119 @@
   color: transparent !important;
   content: "" !important;
   font-size: 0 !important;
-  -webkit-mask-image: url("../images/publishrank-menu-icon-20.png");
-  mask-image: url("../images/publishrank-menu-icon-20.png");
+  -webkit-mask-image: url("../images/publishrank.svg");
+  mask-image: url("../images/publishrank.svg");
   -webkit-mask-position: center;
   mask-position: center;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-size: contain;
   mask-size: contain;
+}
+
+/* Task groups are labels on real destinations, not extra links or menu pages. */
+#adminmenu .pr-submenu-group-start > a { padding-top: 7px; }
+#adminmenu .pr-submenu-group {
+  display: block;
+  margin: 7px -9px 5px;
+  padding: 8px 9px 5px;
+  border-top: 1px solid rgba(240, 246, 252, .16);
+  color: #a7aaad;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+#adminmenu .pr-submenu-item-label { display: block; }
+#adminmenu .current .pr-submenu-group,
+#adminmenu a:hover .pr-submenu-group,
+#adminmenu a:focus .pr-submenu-group { color: inherit; }
+@media (max-width: 782px) {
+  #adminmenu .pr-submenu-group { margin-top: 4px; padding-top: 6px; }
+}
+
+/* PublishRank 2.9.104 navigation refresh: expandable groups and visible tool icons. */
+#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu {
+  padding: 6px 0 8px !important;
+  background: #172033 !important;
+}
+#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li > a {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 34px !important;
+  padding: 6px 10px 6px 12px !important;
+  color: #dce7f5 !important;
+  line-height: 1.25 !important;
+}
+#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li > a:hover,
+#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li > a:focus,
+#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li.current > a {
+  background: #263653 !important;
+  color: #ffffff !important;
+}
+#adminmenu .pr-submenu-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 5px 0 1px;
+  padding: 8px 10px 6px 12px;
+  border: 0;
+  border-top: 1px solid rgba(220, 231, 245, .18);
+  background: transparent;
+  color: #9fb4ce;
+  font: 700 10px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: .08em;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+#adminmenu .pr-submenu-group-toggle:hover,
+#adminmenu .pr-submenu-group-toggle:focus-visible {
+  color: #ffffff;
+  background: #22304a;
+  outline: none;
+}
+#adminmenu .pr-submenu-group-toggle__chevron {
+  color: #79a9df;
+  font-size: 16px;
+  line-height: 10px;
+  transition: transform .16s ease;
+}
+#adminmenu .pr-submenu-group-toggle[aria-expanded="false"] .pr-submenu-group-toggle__chevron {
+  transform: rotate(-90deg);
+}
+#adminmenu .pr-submenu-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 7px;
+  color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .18);
+}
+#adminmenu .pr-submenu-icon .dashicons {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  line-height: 14px;
+}
+#adminmenu .pr-submenu-icon--blue { background: #2563eb; }
+#adminmenu .pr-submenu-icon--violet { background: #7c3aed; }
+#adminmenu .pr-submenu-icon--teal { background: #0f766e; }
+#adminmenu .pr-submenu-icon--orange { background: #c2410c; }
+#adminmenu .pr-submenu-icon--pink { background: #be185d; }
+#adminmenu .pr-submenu-icon--green { background: #15803d; }
+#adminmenu .pr-submenu-icon--cyan { background: #0e7490; }
+#adminmenu .pr-submenu-icon--red { background: #b91c1c; }
+#adminmenu .pr-submenu-icon--purple { background: #9333ea; }
+#adminmenu .pr-submenu-icon--indigo { background: #4338ca; }
+#adminmenu .pr-submenu-icon--yellow { background: #a16207; }
+#adminmenu .pr-submenu-icon--slate { background: #475569; }
+#adminmenu .pr-submenu-item-label { min-width: 0; }
+@media (prefers-reduced-motion: reduce) {
+  #adminmenu .pr-submenu-group-toggle__chevron { transition: none; }
 }

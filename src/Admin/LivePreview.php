@@ -79,7 +79,8 @@ final class LivePreview {
 		$css = Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/live-preview.css' );
 		$js  = Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/js/live-preview.js' );
 		wp_enqueue_style( 'publishrank-live-preview', Branding::asset_url( 'css/live-preview.css' ), array(), $css );
-		wp_enqueue_script( 'publishrank-live-preview', Branding::asset_url( 'js/live-preview.js' ), array( 'jquery' ), $js, true );
+		\PublishRankSEO\Admin\VariablePicker::enqueue( (string) $screen->post_type );
+		wp_enqueue_script( 'publishrank-live-preview', Branding::asset_url( 'js/live-preview.js' ), array( 'jquery', \PublishRankSEO\Admin\VariablePicker::HANDLE ), $js, true );
 		wp_localize_script(
 			'publishrank-live-preview',
 			'publishrankPreview',
@@ -114,8 +115,7 @@ final class LivePreview {
 					'editSnippet' => __( 'Edit search snippet', 'publishrank' ),
 					'searchTitle' => __( 'Search title', 'publishrank' ),
 					'metaDescription' => __( 'Meta description', 'publishrank' ),
-					'insertToken' => __( 'Insert %focus_keyword%', 'publishrank' ),
-					'focusTokenHelp' => __( 'Use %focus_keyword% to insert the Focus keyword automatically.', 'publishrank' ),
+					'variableHelp' => __( 'Use “Insert variable” to add dynamic values such as the post title or focus keyword. The preview shows them resolved.', 'publishrank' ),
 					'previewDevice' => __( 'Search snippet preview size', 'publishrank' ),
 					'socialPlatform' => __( 'Social card preview platform', 'publishrank' ),
 					'websiteNote' => __( 'This view shows the content and resolved SEO values visitors and crawlers receive together. The active theme still controls the final visual layout.', 'publishrank' ),
@@ -287,7 +287,7 @@ final class LivePreview {
 			'visible_description' => wp_trim_words( wp_strip_all_tags( get_the_excerpt( $clone ) ), 45, '…' ),
 			'canonical'           => $canonical ? $canonical : $permalink,
 			'robots'              => $get( 'name:robots' ),
-			'site_name'           => (string) get_bloginfo( 'name' ),
+			'site_name'           => (string) \PublishRankSEO\Core\PublicationProfile::publication_name(),
 			'favicon'             => (string) get_site_icon_url( 32 ),
 			'date'                => get_post_time( 'c', true, $clone ),
 			'permalink'           => $permalink,

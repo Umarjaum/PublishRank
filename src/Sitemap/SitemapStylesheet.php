@@ -162,7 +162,7 @@ final class SitemapStylesheet {
 			'%%CSSLINK%%'  => self::inline_asset( 'css/sitemap.css', 'style' ),
 			'%%JSLINK%%'   => self::inline_asset( 'js/sitemap.js', 'script' ),
 			'%%LOGO%%'     => esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ),
-			'%%SITE%%'     => esc_html( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ) ),
+			'%%SITE%%'     => esc_html( wp_strip_all_tags( (string) \PublishRankSEO\Core\PublicationProfile::publication_name() ) ),
 			'%%HOME%%'     => esc_url( ! empty( wp_make_link_relative( $home ) ) ? wp_make_link_relative( $home ) : '/' ),
 			'%%INDEX%%'    => esc_url( wp_make_link_relative( SitemapUrls::index_url() ) ),
 			'%%INDEXURL%%' => esc_html( SitemapUrls::index_url() ),

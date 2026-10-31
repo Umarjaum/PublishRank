@@ -21,6 +21,8 @@ final class RobotsTxt {
 	const OPT_ENV_BLOCK = 'publishrank_robots_env_block';
 	const OPT_SIGNALS   = 'publishrank_robots_content_signal';
 	const OPT_CUSTOM    = 'publishrank_robots_custom';
+	const OPT_OVERRIDE  = 'publishrank_robots_override';
+	const OPT_OVERRIDE_TEXT = 'publishrank_robots_override_text';
 	const OPT_HOUSEKEEP = 'publishrank_robots_housekeeping';
 	const OPT_AI_PATHS  = 'publishrank_robots_ai_paths';
 	const MARKER        = '# --- PublishRank ---';
@@ -61,6 +63,8 @@ final class RobotsTxt {
 				'ai_train' => '',
 			),
 			self::OPT_CUSTOM    => '',
+			self::OPT_OVERRIDE  => 0,
+			self::OPT_OVERRIDE_TEXT => '',
 		);
 	}
 
@@ -323,6 +327,7 @@ final class RobotsTxt {
 	/** @param string $output Current robots.txt. @param mixed $public Value of blog_public. */
 	public function filter( $output, $public ) {
 		$output = (string) $output;
+		if ( self::opt( self::OPT_OVERRIDE, 0 ) && trim( (string) self::opt( self::OPT_OVERRIDE_TEXT, '' ) ) !== '' ) { return trim( (string) self::opt( self::OPT_OVERRIDE_TEXT, '' ) ) . "\n"; }
 		if ( ! self::opt( self::OPT_ENABLED, 1 ) || '0' === (string) $public ) {
 			return $output;
 		}
@@ -439,6 +444,8 @@ final class RobotsTxt {
 		}
 		if ( apply_filters( 'publishrank_robots_llms_hint', true ) && get_option( 'publishrank_llms_txt_enabled', 1 ) ) {
 			$lines[] = '# AI-readable site summary: ' . home_url( '/llms.txt' );
+		}
+		if ( apply_filters( 'publishrank_robots_schema_aggregator_hint', true ) && get_option( 'publishrank_schema_aggregator_enabled', 1 ) ) { $lines[] = '# AI-readable structured content: ' . rest_url( 'publishrank/v1/schema-aggregator' );
 		}
 		return rtrim( $output ) . "\n" . rtrim( implode( "\n", $lines ) ) . "\n";
 	}

@@ -3,7 +3,7 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrank.netlify.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.9.87
+ * Version: 2.9.104
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.9.87' );
+define( 'PUBLISHRANK_SEO_VERSION', '2.9.104' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
@@ -124,7 +124,7 @@ function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
 		return;
 	}
 
-	$icon_url  = add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank-toolbar-icon-v2.png', __FILE__ ) );
+	$icon_url  = add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank.svg', __FILE__ ) );
 	$icon      = '<img class="publishrank-toolbar-icon" src="' . esc_url( $icon_url ) . '" alt="" width="18" height="18" /><span class="ab-label">' . esc_html__( 'PublishRank', 'publishrank' ) . '</span>';
 	$dashboard = admin_url( 'admin.php?page=publishrank-seo-dashboard' );
 	$settings  = admin_url( 'admin.php?page=publishrank' );
@@ -152,28 +152,14 @@ function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
 			),
 		)
 	);
+		// Keep the toolbar focused; the grouped dashboard submenu exposes every tool.
 		$items = array(
-			'dashboard'         => array( __( 'Dashboard', 'publishrank' ), $dashboard ),
-			'newsroom'          => array( __( 'Newsroom', 'publishrank' ), admin_url( 'admin.php?page=uj-newsroom' ) ),
-			'settings'          => array( __( 'Settings', 'publishrank' ), $settings ),
-			'setup'             => array( __( 'Setup Wizard', 'publishrank' ), admin_url( 'admin.php?page=publishrank-onboarding' ) ),
-			'seo-score'         => array( __( 'SEO Score', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-score' ) ),
-			'expertise'         => array( __( 'Author Expertise', 'publishrank' ), admin_url( 'admin.php?page=publishrank-author-expertise' ) ),
-			'sitemaps'          => array( __( 'Sitemap Health', 'publishrank' ), admin_url( 'admin.php?page=publishrank-sitemap-health' ) ),
-			'diagnostics'       => array( __( 'Diagnostics', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-diagnostics' ) ),
-			'schema'            => array( __( 'Schema', 'publishrank' ), admin_url( 'admin.php?page=publishrank-schema' ) ),
-			'redirects'         => array( __( 'Redirects', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-redirects' ) ),
-			'robots'            => array( __( 'Robots.txt', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-robots' ) ),
-			'insights'          => array( __( 'Insights', 'publishrank' ), admin_url( 'admin.php?page=publishrank-insights' ) ),
-			'internal-links'    => array( __( 'Internal Links', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-internal-links' ) ),
-			'link-intelligence' => array( __( 'Link Intelligence', 'publishrank' ), admin_url( 'admin.php?page=publishrank-link-intelligence' ) ),
-			'llms'              => array( __( 'AI & llms.txt', 'publishrank' ), admin_url( 'admin.php?page=publishrank-llms-txt' ) ),
-			'indexnow'          => array( __( 'IndexNow', 'publishrank' ), admin_url( 'admin.php?page=publishrank-indexnow' ) ),
-			'image-optimizer'   => array( __( 'Image Optimizer', 'publishrank' ), admin_url( 'admin.php?page=publishrank-image-optimizer' ) ),
-			'toolkit'           => array( __( 'Publisher Toolkit', 'publishrank' ), admin_url( 'admin.php?page=publishrank-publisher-toolkit' ) ),
-			'404'               => array( __( '404 Monitor', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-404' ) ),
-			'config-history'    => array( __( 'Configuration History', 'publishrank' ), admin_url( 'admin.php?page=publishrank-seo-config-history' ) ),
-			'documentation'     => array( __( 'Documentation & Help', 'publishrank' ), admin_url( 'admin.php?page=publishrank-documentation' ) ),
+			'dashboard' => array( __( 'Dashboard', 'publishrank' ), $dashboard ),
+			'newsroom'  => array( __( 'Newsroom', 'publishrank' ), admin_url( 'admin.php?page=uj-newsroom' ) ),
+			'titles'    => array( __( 'Titles & Meta', 'publishrank' ), $settings . '#pr-settings-titles' ),
+			'settings'  => array( __( 'Settings', 'publishrank' ), $settings ),
+			'setup'     => array( __( 'Setup Wizard', 'publishrank' ), admin_url( 'admin.php?page=publishrank-onboarding' ) ),
+			'help'      => array( __( 'Documentation & Help', 'publishrank' ), admin_url( 'admin.php?page=publishrank-documentation' ) ),
 		);
 		$items = apply_filters( 'publishrank_seo_admin_toolbar_items', $items );
 		foreach ( (array) $items as $key => $item ) {

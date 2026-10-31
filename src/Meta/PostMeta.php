@@ -72,7 +72,6 @@ final class PostMeta {
 			self::OG_IMAGE       => 'public_url',
 			self::OG_IMAGE_ALT   => 'text',
 			self::ROBOTS         => 'robots',
-			self::FOCUS_KEYWORD  => 'text',
 		);
 	}
 
@@ -121,8 +120,8 @@ final class PostMeta {
 	}
 
 	public static function sanitize_text( $value, $length = 255 ) {
-		$value = sanitize_text_field( wp_unslash( (string) $value ) );
-		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $length ) : substr( $value, 0, $length );
+		// Token-preserving: sanitize_text_field() alone would turn "%%date%%" into "%te%%" and "%%category%%" into "%tegory%%".
+		return TemplateResolver::sanitize_template( wp_unslash( (string) $value ), $length );
 	}
 
 	/** Trim an already-sanitized string to a maximum number of characters. */
@@ -185,8 +184,6 @@ final class PostMeta {
 			self::OG_DESCRIPTION    => 320,
 			self::OG_IMAGE_ALT      => 255,
 			self::TWITTER_CREATOR   => 15,
-			self::FOCUS_KEYWORD     => 100,
-			self::PRIMARY_KEYPHRASE => 100,
 			self::ENTITY_TOPIC      => 120,
 			self::VIDEO_DURATION    => 32,
 			self::AUTHOR_NAME       => 255,
@@ -196,7 +193,7 @@ final class PostMeta {
 		);
 		foreach ( $text_fields as $key => $length ) {
 			if ( isset( $_POST[ $key ] ) ) {
-				update_post_meta( $post_id, $key, self::truncate( sanitize_text_field( wp_unslash( $_POST[ $key ] ) ), $length ) ); }
+				update_post_meta( $post_id, $key, TemplateResolver::sanitize_template( wp_unslash( $_POST[ $key ] ), $length ) ); }
 		}
 		foreach ( array(
 			self::SECONDARY_KEYPHRASES => array( 10, 100 ),

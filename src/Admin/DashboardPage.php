@@ -27,6 +27,7 @@ final class DashboardPage {
 
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 9 );
+		add_action( 'admin_menu', array( $this, 'organize_submenu' ), 100 );
 		// Keep every registered destination in WordPress's submenu registry. The
 		// dashboard cards link directly to these pages and WordPress uses that
 		// registry when authorizing admin.php?page=... requests.
@@ -48,10 +49,113 @@ final class DashboardPage {
 			'manage_options',
 			Branding::MENU_SLUG,
 			array( $this, 'render' ),
-			add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank-menu-icon-20.png' ) ),
+			add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank.svg' ) ),
 			58
 		);
 		add_submenu_page( Branding::MENU_SLUG, __( 'Dashboard', 'publishrank' ), __( 'Dashboard', 'publishrank' ), 'manage_options', Branding::MENU_SLUG, array( $this, 'render' ) );
+	}
+
+	/**
+	 * Order the existing screens into task-based groups and add deep links to
+	 * useful sections of the existing Settings screen. No page callbacks,
+	 * capabilities, or top-level menus are duplicated here.
+	 */
+	public function organize_submenu() {
+		global $submenu;
+
+		$parent = Branding::MENU_SLUG;
+		if ( empty( $submenu[ $parent ] ) || ! is_array( $submenu[ $parent ] ) ) {
+			return;
+		}
+
+		$registered = array();
+		foreach ( $submenu[ $parent ] as $item ) {
+			if ( ! is_array( $item ) || count( $item ) < 3 ) {
+				continue;
+			}
+			$slug = (string) $item[2];
+			if ( ! isset( $registered[ $slug ] ) ) {
+				$registered[ $slug ] = $item;
+			}
+		}
+
+		$groups = array(
+			array(
+				'label' => '',
+				'items' => array( Branding::MENU_SLUG ),
+			),
+			array(
+				'label' => __( 'Content & publishing', 'publishrank' ),
+				'items' => array( 'publishrank-seo-score', 'publishrank-author-expertise', 'publishrank-publisher-toolkit', 'publishrank-image-optimizer', 'publishrank-seo-internal-links', 'publishrank-link-intelligence', 'publishrank-local-seo' ),
+			),
+			array(
+				'label' => __( 'Newsroom', 'publishrank' ),
+				'items' => array( 'uj-newsroom', 'uj-newsroom-board', 'uj-newsroom-calendar', 'uj-newsroom-activity', 'uj-newsroom-notifications', 'uj-newsroom-settings', 'uj-newsroom-roles' ),
+			),
+			array(
+				'label' => __( 'Search & discovery', 'publishrank' ),
+				'items' => array( 'publishrank-search-console', 'publishrank-sitemap-health', 'publishrank-indexnow', 'publishrank-baidu', 'publishrank-verification', 'publishrank-schema', 'publishrank-breadcrumbs', 'publishrank-seo-robots', 'publishrank-crawl-optimization', 'publishrank-llms-txt' ),
+			),
+			array(
+				'label' => __( 'Measure & maintain', 'publishrank' ),
+				'items' => array( 'publishrank-analytics', 'publishrank-insights', 'publishrank-seo-redirects', 'publishrank-seo-404', 'publishrank-traffic-guard', 'publishrank-wp-hide-login', 'publishrank-seo-config-history', 'publishrank-seo-diagnostics' ),
+			),
+			array(
+				'label' => __( 'Settings & support', 'publishrank' ),
+				'items' => array(
+					'publishrank',
+					array( __( 'Titles & Meta', 'publishrank' ), 'manage_options', 'admin.php?page=publishrank#pr-settings-titles', __( 'PublishRank Title Settings', 'publishrank' ) ),
+					array( __( 'Import / Export', 'publishrank' ), 'manage_options', 'admin.php?page=publishrank#pr-settings-portability', __( 'PublishRank Settings Portability', 'publishrank' ) ),
+					'publishrank-onboarding',
+					'publishrank-documentation',
+				),
+			),
+		);
+
+		$ordered = array();
+		foreach ( $groups as $group ) {
+			$items = array();
+			foreach ( $group['items'] as $entry ) {
+				if ( is_array( $entry ) ) {
+					$items[] = $entry;
+					continue;
+				}
+				if ( isset( $registered[ $entry ] ) ) {
+					$items[] = $registered[ $entry ];
+					unset( $registered[ $entry ] );
+				}
+			}
+			if ( empty( $items ) ) {
+				continue;
+			}
+			if ( '' !== $group['label'] ) {
+				$items[0][0] = '<span class="pr-submenu-group" aria-hidden="true">' . esc_html( $group['label'] ) . '</span><span class="pr-submenu-item-label">' . $items[0][0] . '</span>';
+				$items[0][4] = trim( ( isset( $items[0][4] ) ? $items[0][4] . ' ' : '' ) . 'pr-submenu-group-start' );
+			}
+			foreach ( $items as $item ) {
+				$ordered[] = $item;
+			}
+		}
+
+		// Preserve screens added by other modules or third-party extensions.
+		if ( ! empty( $registered ) ) {
+			$first = true;
+			foreach ( $registered as $item ) {
+				if ( $first ) {
+					$item[0] = '<span class="pr-submenu-group" aria-hidden="true">' . esc_html__( 'Additional tools', 'publishrank' ) . '</span><span class="pr-submenu-item-label">' . $item[0] . '</span>';
+					$item[4] = trim( ( isset( $item[4] ) ? $item[4] . ' ' : '' ) . 'pr-submenu-group-start' );
+					$first   = false;
+				}
+				$ordered[] = $item;
+			}
+		}
+
+		// Keep every registered destination in WordPress's submenu registry.
+		// Dashboard cards and toolbar links use direct admin.php?page=... URLs;
+		// removing those entries makes WordPress reject the request with its
+		// generic "Sorry, you are not allowed to access this page" screen,
+		// including for administrators who have the required capability.
+		$submenu[ $parent ] = $ordered;
 	}
 
 	public function render() {
@@ -151,8 +255,24 @@ final class DashboardPage {
 					<p class="description"><?php esc_html_e( 'Submit these in Google Search Console and Bing Webmaster Tools.', 'publishrank' ); ?></p>
 				</div>
 			</div>
-			<section class="pr-dashboard-workspace" aria-labelledby="pr-dashboard-workspace-title">
-				<div class="pr-dashboard-workspace__heading"><div><p class="pr-dashboard-kicker"><?php esc_html_e( 'Publisher workspace', 'publishrank' ); ?></p><h2 id="pr-dashboard-workspace-title"><?php esc_html_e( 'Move the work forward', 'publishrank' ); ?></h2><p><?php esc_html_e( 'Choose a focused workspace. Every card opens its settings directly—no nested action menus.', 'publishrank' ); ?></p></div></div>
+			<section class="rhs-card pr-dashboard-config-summary" aria-labelledby="pr-dashboard-config-summary-title">
+				<h2 id="pr-dashboard-config-summary-title"><?php esc_html_e( 'Current configuration', 'publishrank' ); ?></h2>
+				<div class="pr-dashboard-config-summary__grid">
+					<div><span class="rhs-label"><?php esc_html_e( 'Publication', 'publishrank' ); ?></span><strong><?php echo esc_html( \PublishRankSEO\Core\PublicationProfile::publication_name() ?: __( 'Not configured', 'publishrank' ) ); ?></strong><p><?php echo esc_html( \PublishRankSEO\Core\PublicationProfile::publication_description() ?: __( 'No publisher description configured.', 'publishrank' ) ); ?></p></div>
+					<div><span class="rhs-label"><?php esc_html_e( 'Homepage SEO title', 'publishrank' ); ?></span><strong><?php echo esc_html( OnboardingPage::homepage_title_preview() ); ?></strong><p><?php echo esc_html( sprintf( /* translators: %s: title separator. */ __( 'Separator: %s', 'publishrank' ), (string) get_option( 'publishrank_seo_title_separator', '|' ) ) ); ?></p></div>
+				</div>
+				<p><a class="button button-secondary" href="<?php echo esc_url( Branding::page_url( OnboardingPage::SLUG ) . '&edit=1&step=2' ); ?>"><?php esc_html_e( 'Review setup', 'publishrank' ); ?></a> <a class="button button-secondary" href="<?php echo esc_url( Branding::page_url( 'publishrank' ) . '#pr-settings-titles' ); ?>"><?php esc_html_e( 'Edit Titles & Meta', 'publishrank' ); ?></a></p>
+			</section>
+				<section class="pr-dashboard-workspace" aria-labelledby="pr-dashboard-workspace-title">
+					<div class="pr-dashboard-workspace__heading"><div><p class="pr-dashboard-kicker"><?php esc_html_e( 'Publisher workspace', 'publishrank' ); ?></p><h2 id="pr-dashboard-workspace-title"><?php esc_html_e( 'Tools Showcase', 'publishrank' ); ?></h2><p><?php esc_html_e( 'Explore PublishRank tools from one dashboard. Search by name or description instead of opening a long submenu.', 'publishrank' ); ?></p></div></div>
+					<div class="pr-tools-toolbar" role="search" aria-label="<?php esc_attr_e( 'Filter PublishRank tools', 'publishrank' ); ?>">
+						<label class="screen-reader-text" for="pr-tools-search"><?php esc_html_e( 'Search tools', 'publishrank' ); ?></label>
+						<input id="pr-tools-search" type="search" class="regular-text" placeholder="<?php esc_attr_e( 'Search tools…', 'publishrank' ); ?>" autocomplete="off" />
+						<label class="screen-reader-text" for="pr-tools-category"><?php esc_html_e( 'Filter by category', 'publishrank' ); ?></label>
+						<select id="pr-tools-category"><option value="all"><?php esc_html_e( 'All categories', 'publishrank' ); ?></option><option value="discovery"><?php esc_html_e( 'Search & discovery', 'publishrank' ); ?></option><option value="publishing"><?php esc_html_e( 'Content & publishing', 'publishrank' ); ?></option><option value="operations"><?php esc_html_e( 'Measure & maintain', 'publishrank' ); ?></option><option value="setup"><?php esc_html_e( 'Settings & help', 'publishrank' ); ?></option></select>
+						<button type="button" class="button" id="pr-tools-clear"><?php esc_html_e( 'Clear', 'publishrank' ); ?></button><span id="pr-tools-count" class="description" role="status" aria-live="polite"></span>
+					</div>
+					<p id="pr-tools-empty" class="pr-tools-empty" hidden><?php esc_html_e( 'No tools match those filters. Try a different search or clear the filters.', 'publishrank' ); ?></p>
 						<?php
 						$tool_groups = array(
 							'discovery' => array(
@@ -165,8 +285,11 @@ final class DashboardPage {
 									array( 'slug' => 'publishrank-search-console', 'icon' => 'fa-magnifying-glass-chart', 'tone' => 'plum', 'kicker' => __( 'Search visibility', 'publishrank' ), 'title' => __( 'Search Console', 'publishrank' ), 'description' => __( 'Review connected property status and available search performance data.', 'publishrank' ), 'button' => __( 'Open Search Console', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-baidu', 'icon' => 'fa-earth-asia', 'tone' => 'ink', 'kicker' => __( 'Search engines', 'publishrank' ), 'title' => __( 'Search engines', 'publishrank' ), 'description' => __( 'Review additional search-engine submission and discovery options.', 'publishrank' ), 'button' => __( 'View search engines', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-robots', 'icon' => 'fa-robot', 'tone' => 'ink', 'kicker' => __( 'Crawler access', 'publishrank' ), 'title' => __( 'Robots.txt', 'publishrank' ), 'description' => __( 'Review crawl directives and the sitemap reference exposed to crawlers.', 'publishrank' ), 'button' => __( 'Review robots rules', 'publishrank' ) ),
+									array( 'slug' => 'publishrank-crawl-optimization', 'icon' => 'fa-filter', 'tone' => 'brass', 'kicker' => __( 'Crawl hygiene', 'publishrank' ), 'title' => __( 'Crawl optimization', 'publishrank' ), 'description' => __( 'Manage optional discovery-link, feed, search, and URL cleanup controls.', 'publishrank' ), 'button' => __( 'Review crawl controls', 'publishrank' ) ),
+									array( 'slug' => 'publishrank-breadcrumbs', 'icon' => 'fa-chevron-right', 'tone' => 'brass', 'kicker' => __( 'Navigation trail', 'publishrank' ), 'title' => __( 'Breadcrumbs', 'publishrank' ), 'description' => __( 'Set where the visible trail prints, its separator and the frontend override, control BreadcrumbList structured data, and run a site check that shows why a trail is or is not visible.', 'publishrank' ), 'button' => __( 'Configure breadcrumbs', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-verification', 'icon' => 'fa-circle-check', 'tone' => 'sage', 'kicker' => __( 'Site ownership', 'publishrank' ), 'title' => __( 'Site verification', 'publishrank' ), 'description' => __( 'Manage verification codes used to confirm ownership with supported services.', 'publishrank' ), 'button' => __( 'Manage verification', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-llms-txt', 'icon' => 'fa-robot', 'tone' => 'plum', 'kicker' => __( 'AI discovery', 'publishrank' ), 'title' => __( 'AI & llms.txt', 'publishrank' ), 'description' => __( 'Review the optional llms.txt file and AI-crawler guidance for your site.', 'publishrank' ), 'button' => __( 'Review AI guidance', 'publishrank' ) ),
+											array( 'url' => Branding::page_url( 'publishrank-llms-txt' ) . '#pr-schema-aggregator', 'icon' => 'fa-database', 'tone' => 'sage', 'kicker' => __( 'AI schema feed', 'publishrank' ), 'title' => __( 'Schema Aggregator', 'publishrank' ), 'description' => __( 'Publish and verify a complete JSON-LD content feed for AI crawlers, llms.txt, and robots.txt discovery.', 'publishrank' ), 'button' => __( 'Manage schema feed', 'publishrank' ) ),
 								),
 							),
 							'publishing' => array(
@@ -180,6 +303,7 @@ final class DashboardPage {
 									array( 'slug' => 'publishrank-local-seo', 'icon' => 'fa-location-dot', 'tone' => 'brass', 'kicker' => __( 'Local visibility', 'publishrank' ), 'title' => __( 'Local SEO', 'publishrank' ), 'description' => __( 'Configure local business identity and location-oriented search signals.', 'publishrank' ), 'button' => __( 'Manage local SEO', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-image-optimizer', 'icon' => 'fa-images', 'tone' => 'sage', 'kicker' => __( 'Media workflow', 'publishrank' ), 'title' => __( 'Image optimizer', 'publishrank' ), 'description' => __( 'Review media optimization tools and image delivery settings.', 'publishrank' ), 'button' => __( 'Open image tools', 'publishrank' ), 'capability' => 'upload_files' ),
 									array( 'slug' => 'publishrank-publisher-toolkit', 'icon' => 'fa-toolbox', 'tone' => 'ink', 'kicker' => __( 'Publisher tools', 'publishrank' ), 'title' => __( 'Publisher toolkit', 'publishrank' ), 'description' => __( 'Access focused utilities for newsroom publishing and site maintenance.', 'publishrank' ), 'button' => __( 'Open toolkit', 'publishrank' ) ),
+									array( 'slug' => 'uj-newsroom', 'icon' => 'fa-newspaper', 'tone' => 'plum', 'kicker' => __( 'Editorial workflow', 'publishrank' ), 'title' => __( 'Newsroom', 'publishrank' ), 'description' => __( 'Open the existing newsroom workspace for assignments, planning, calendar, activity, and notifications.', 'publishrank' ), 'button' => __( 'Open Newsroom', 'publishrank' ), 'capability' => 'uj_newsroom_access' ),
 									array( 'slug' => 'publishrank-seo-internal-links', 'icon' => 'fa-link', 'tone' => 'plum', 'kicker' => __( 'Content connections', 'publishrank' ), 'title' => __( 'Internal links', 'publishrank' ), 'description' => __( 'Review internal-link opportunities and strengthen related content paths.', 'publishrank' ), 'button' => __( 'Review internal links', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-link-intelligence', 'icon' => 'fa-diagram-project', 'tone' => 'brass', 'kicker' => __( 'Link strategy', 'publishrank' ), 'title' => __( 'Link intelligence', 'publishrank' ), 'description' => __( 'Explore publisher-focused link recommendations and relationship insights.', 'publishrank' ), 'button' => __( 'Open link intelligence', 'publishrank' ) ),
 								),
@@ -193,6 +317,7 @@ final class DashboardPage {
 									array( 'slug' => 'publishrank-seo-redirects', 'icon' => 'fa-arrow-right-arrow-left', 'tone' => 'ink', 'kicker' => __( 'Link maintenance', 'publishrank' ), 'title' => __( 'Redirects', 'publishrank' ), 'description' => __( 'Create and review permanent or temporary redirects for changed URLs.', 'publishrank' ), 'button' => __( 'Manage redirects', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-404', 'icon' => 'fa-triangle-exclamation', 'tone' => 'rose', 'kicker' => __( 'Broken links', 'publishrank' ), 'title' => __( '404 monitor', 'publishrank' ), 'description' => __( 'Review not-found requests and decide which URLs need redirects.', 'publishrank' ), 'button' => __( 'Review 404s', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-traffic-guard', 'icon' => 'fa-shield-halved', 'tone' => 'rose', 'kicker' => __( 'Access policy', 'publishrank' ), 'title' => __( 'Traffic Guard', 'publishrank' ), 'description' => __( 'Review optional IP, proxy, and country-based access rules.', 'publishrank' ), 'button' => __( 'Configure Traffic Guard', 'publishrank' ) ),
+									array( 'slug' => 'publishrank-wp-hide-login', 'icon' => 'fa-key', 'tone' => 'ink', 'kicker' => __( 'Login & access', 'publishrank' ), 'title' => __( 'WP Hide Login', 'publishrank' ), 'description' => __( 'Review the optional custom login and administration URL settings.', 'publishrank' ), 'button' => __( 'Review login settings', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-config-history', 'icon' => 'fa-clock-rotate-left', 'tone' => 'ink', 'kicker' => __( 'Change control', 'publishrank' ), 'title' => __( 'Configuration history', 'publishrank' ), 'description' => __( 'Review recorded SEO configuration changes and prior values.', 'publishrank' ), 'button' => __( 'View configuration history', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-diagnostics', 'icon' => 'fa-stethoscope', 'tone' => 'brass', 'kicker' => __( 'Troubleshooting', 'publishrank' ), 'title' => __( 'Diagnostics', 'publishrank' ), 'description' => __( 'Check plugin health, compatibility notices, and technical configuration.', 'publishrank' ), 'button' => __( 'Run diagnostics', 'publishrank' ) ),
 								),
@@ -203,6 +328,8 @@ final class DashboardPage {
 								'cards'       => array(
 									array( 'slug' => 'publishrank-onboarding', 'icon' => 'fa-wand-magic-sparkles', 'tone' => 'plum', 'kicker' => __( 'Guided setup', 'publishrank' ), 'title' => __( 'Setup wizard', 'publishrank' ), 'description' => __( 'Review the core site identity and SEO settings in a guided sequence.', 'publishrank' ), 'button' => __( 'Review setup', 'publishrank' ) ),
 									array( 'slug' => 'publishrank', 'icon' => 'fa-sliders', 'tone' => 'ink', 'kicker' => __( 'Global defaults', 'publishrank' ), 'title' => __( 'Settings', 'publishrank' ), 'description' => __( 'Manage site-wide SEO defaults, integrations, and plugin preferences.', 'publishrank' ), 'button' => __( 'Open settings', 'publishrank' ) ),
+									array( 'url' => Branding::page_url( 'publishrank' ) . '#pr-settings-titles', 'icon' => 'fa-heading', 'tone' => 'plum', 'kicker' => __( 'Search appearance', 'publishrank' ), 'title' => __( 'Titles & Meta', 'publishrank' ), 'description' => __( 'Change the shared title separator and edit global title templates without rerunning setup.', 'publishrank' ), 'button' => __( 'Edit title settings', 'publishrank' ) ),
+									array( 'url' => Branding::page_url( 'publishrank' ) . '#pr-settings-portability', 'icon' => 'fa-file-import', 'tone' => 'sage', 'kicker' => __( 'Configuration', 'publishrank' ), 'title' => __( 'Import / Export', 'publishrank' ), 'description' => __( 'Back up or restore PublishRank settings from the existing portability controls.', 'publishrank' ), 'button' => __( 'Open portability tools', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-documentation', 'icon' => 'fa-book-open', 'tone' => 'sage', 'kicker' => __( 'Guidance', 'publishrank' ), 'title' => __( 'Documentation & help', 'publishrank' ), 'description' => __( 'Find explanations of PublishRank features and their recommended use.', 'publishrank' ), 'button' => __( 'Browse help', 'publishrank' ) ),
 								),
 							),
@@ -210,12 +337,12 @@ final class DashboardPage {
 						foreach ( $tool_groups as $group_id => $group ) :
 							$heading_id = 'pr-dashboard-tools-' . sanitize_html_class( $group_id );
 							?>
-							<section class="pr-tool-group" aria-labelledby="<?php echo esc_attr( $heading_id ); ?>">
+							<section class="pr-tool-group" data-tool-category="<?php echo esc_attr( $group_id ); ?>" aria-labelledby="<?php echo esc_attr( $heading_id ); ?>">
 								<div class="pr-tool-group__heading"><h3 id="<?php echo esc_attr( $heading_id ); ?>"><?php echo esc_html( $group['title'] ); ?></h3><p><?php echo esc_html( $group['description'] ); ?></p></div>
 								<div class="pr-dashboard-actions">
 									<?php foreach ( $group['cards'] as $card ) : ?>
 										<?php if ( isset( $card['capability'] ) && ! current_user_can( $card['capability'] ) ) { continue; } ?>
-										<article class="pr-action-card pr-action-card--<?php echo esc_attr( $card['tone'] ); ?>">
+										<article class="pr-action-card pr-action-card--<?php echo esc_attr( $card['tone'] ); ?>" data-tool-search="<?php echo esc_attr( strtolower( wp_strip_all_tags( $card['kicker'] . ' ' . $card['title'] . ' ' . $card['description'] ) ) ); ?>">
 											<div class="pr-action-card__icon" aria-hidden="true"><i class="fa-solid <?php echo esc_attr( $card['icon'] ); ?>"></i></div>
 											<p class="pr-action-card__kicker"><?php echo esc_html( $card['kicker'] ); ?></p>
 											<h4><?php echo esc_html( $card['title'] ); ?></h4>
@@ -305,7 +432,7 @@ final class DashboardPage {
 				'message' => $news ? __( 'The Google News sitemap is enabled.', 'publishrank' ) : __( 'Enable the News sitemap in settings.', 'publishrank' ),
 			);
 
-			$schema_enabled = (bool) get_option( 'publishrank_schema_enabled', true );
+			$schema_enabled = \PublishRankSEO\Core\OutputSettings::schema();
 			$page_type      = sanitize_text_field( (string) get_option( 'publishrank_schema_default_page_type', 'WebPage' ) );
 			/* translators: %s: schema page type. */
 			$schema_message = $schema_enabled ? sprintf( __( 'Organization, WebSite, WebPage (%s), breadcrumbs and eligible article/media entities are enabled.', 'publishrank' ), ! empty( $page_type ) ? $page_type : 'WebPage' ) : __( 'Enable the structured-data graph so pages and eligible articles receive JSON-LD.', 'publishrank' );

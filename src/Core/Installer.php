@@ -34,7 +34,13 @@ final class Installer {
 				'publishrank_editorial_genre'             => '',
 				'publishrank_seo_title_separator'         => '|',
 				'publishrank_meta_enabled'                => 1,
+				'publishrank_llms_txt_override' => 0,
+				'publishrank_llms_txt_override_text' => '',
+				'publishrank_schema_aggregator_enabled' => 1,
+				'publishrank_schema_aggregator_override' => 0,
+				'publishrank_schema_aggregator_custom' => '',
 				'publishrank_schema_enabled'              => 1,
+				'publishrank_org_website_schema_enabled'  => 1,
 				'publishrank_schema_default_page_type'    => 'WebPage',
 				'publishrank_twitter_card'                => 'summary_large_image',
 				'publishrank_facebook_app_id'             => '',
@@ -61,6 +67,7 @@ final class Installer {
 				'publishrank_sitemap_stylesheet'          => 1,
 				'publishrank_breadcrumbs_enabled'         => 1,
 				'publishrank_breadcrumb_schema_enabled'   => 1,
+				'publishrank_breadcrumb_frontend_override' => 1,
 				'publishrank_breadcrumbs_separator'       => '→',
 				'publishrank_breadcrumb_style' => 'plain',
 				'publishrank_breadcrumb_size' => 'medium',
@@ -73,10 +80,13 @@ final class Installer {
 				'publishrank_breadcrumb_error_mode'       => 'skip',
 				'publishrank_breadcrumb_error_key'        => 'breadcrumb_error',
 				'publishrank_breadcrumb_fallback_label'   => 'Home',
-				'publishrank_breadcrumb_fallback_url'     => home_url( '/' ),
-				'publishrank_breadcrumb_log_errors'       => 0,
-				'publishrank_seo_publication_name'        => get_bloginfo( 'name' ),
-				'publishrank_seo_publisher_name'          => get_bloginfo( 'name' ),
+					'publishrank_breadcrumb_fallback_url'     => home_url( '/' ),
+					'publishrank_breadcrumb_log_errors'       => 0,
+					'publishrank_hide_visible_site_title'     => 1,
+					'publishrank_hide_visible_site_description' => 1,
+					'publishrank_override_wp_identity'        => 1,
+					'publishrank_seo_publication_name'        => '',
+				'publishrank_seo_publisher_name'          => '',
 				'publishrank_seo_publisher_logo'          => '',
 				'publishrank_identity_alternate_names'    => '',
 				'publishrank_seo_publisher_type'          => 'NewsMediaOrganization',
@@ -132,8 +142,8 @@ final class Installer {
 				'publishrank_redirect_max_hops'           => 10,
 				'publishrank_seo_config_snapshots'        => array(),
 				'publishrank_llms_txt_enabled'            => 1,
-				'publishrank_llms_txt_title'              => get_bloginfo( 'name' ),
-				'publishrank_llms_txt_summary'            => get_bloginfo( 'description' ),
+				'publishrank_llms_txt_title'              => '',
+				'publishrank_llms_txt_summary'            => '',
 				'publishrank_llms_txt_intro'              => '',
 				'publishrank_llms_txt_home'               => 1,
 				'publishrank_llms_txt_posts'              => 1,
@@ -184,6 +194,7 @@ final class Installer {
 		if ( ! is_admin() || PUBLISHRANK_SEO_VERSION === (string) get_option( self::VERSION_OPTION, '' ) ) {
 			return;
 		}
+		$previous_version = (string) get_option( self::VERSION_OPTION, '0' );
 		self::install_defaults();
 		\PublishRankSEO\InternalLinks\Store::install();
 		( new \PublishRankSEO\Indexing\IndexNow() )->rewrite();
@@ -196,8 +207,48 @@ final class Installer {
 		if ( version_compare( (string) get_option( self::VERSION_OPTION, '0' ), '2.9.44', '<' ) ) {
 			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::bump_many( array( 'news', 'image', 'video' ) );
 		}
+		// 2.9.91: output-switch normalisation and repair of template tokens damaged by older sanitizers. Safe to rerun.
+		if ( version_compare( $previous_version, '2.9.91', '<' ) ) {
+			self::migrate_2_9_91();
+		}
+			// 2.9.102: make PublishRank's visible breadcrumb trail the default after upgrade, as requested.
+			// This is a one-time migration; administrators can turn it off again in the Breadcrumbs screen.
+			if ( version_compare( $previous_version, '2.9.102', '<' ) ) {
+			update_option( 'publishrank_breadcrumbs_enabled', 1 );
+		}
 		update_option( 'publishrank_seo_cache_epoch', time(), false );
 		update_option( self::VERSION_OPTION, PUBLISHRANK_SEO_VERSION, true );
 		flush_rewrite_rules( false );
+	}
+
+	/**
+	 * 2.9.91 data migration. It never turns an output on or off: saved choices are only rewritten into the canonical 1/0 form
+	 * (so a stray "false" or "off" string keeps meaning "off"), and options that never existed receive the enabled default
+	 * from install_defaults() through add_option(), which cannot overwrite a saved value. Running it again changes nothing.
+	 */
+	public static function migrate_2_9_91() {
+		foreach ( OutputSettings::keys() as $option ) {
+			$sentinel = new \stdClass();
+			$stored   = get_option( $option, $sentinel );
+			if ( $sentinel === $stored ) {
+				add_option( $option, 1 ); // Missing legacy switch: the documented default is enabled.
+				continue;
+			}
+			$canonical = OutputSettings::is_on( $option ) ? 1 : 0;
+			if ( $stored !== $canonical && $stored !== (string) $canonical ) {
+				update_option( $option, $canonical );
+			}
+		}
+		// sanitize_text_field() used to cut %%date%% to "%te%%" and %%category%% to "%tegory%%" when a template was saved.
+		foreach ( array( 'publishrank_seo_title_template_home', 'publishrank_seo_title_template_post', 'publishrank_seo_title_template_page', 'publishrank_seo_title_template_archive', 'publishrank_home_title', 'publishrank_home_description' ) as $option ) {
+			$value = get_option( $option, '' );
+			if ( ! is_string( $value ) || false === strpos( $value, '%' ) ) {
+				continue;
+			}
+			$fixed = preg_replace( array( '/(?<!%)%te%%/', '/(?<!%)%tegory%%/' ), array( '%%date%%', '%%category%%' ), $value );
+			if ( is_string( $fixed ) && $fixed !== $value ) {
+				update_option( $option, $fixed );
+			}
+		}
 	}
 }

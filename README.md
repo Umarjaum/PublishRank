@@ -1,104 +1,225 @@
 # PublishRank
 
-**Advanced technical SEO and publishing controls for WordPress newsrooms, publishers, and content teams.**
+![PublishRank](assets/images/publishrank-brand-mark.png)
 
-PublishRank keeps title generation, canonical URLs, Open Graph metadata, X/Twitter cards, connected JSON-LD, News SEO, sitemaps, redirects, editorial signals, and publishing diagnostics in one WordPress plugin.
+**Publisher-first technical SEO, structured data, sitemaps, and newsroom controls for WordPress.**
 
-> PublishRank is a technical publishing layer. Search engines and social networks may rewrite titles, descriptions, images, snippets, and rich-result presentations.
+PublishRank is an open-source WordPress plugin for news publishers, magazines, editorial teams, blogs, and content-heavy websites. It brings technical SEO controls, connected JSON-LD, Google News and XML sitemaps, redirects, robots management, author expertise, editorial tooling, and diagnostics into one capability-aware administration workspace.
+
+> PublishRank generates and validates technical publishing signals. Search engines and social networks may still rewrite titles, descriptions, images, snippets, and rich-result presentations.
+
+## Current release
+
+- **Version:** 2.9.104
+- **License:** GPLv2 or later
+- **Requires WordPress:** 6.3 or newer
+- **Requires PHP:** 7.4 or newer
+- **Repository:** <https://github.com/Umarjaum/PublishRank>
+- **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
+
+Version 2.9.104 adds an expandable, keyboard-accessible admin navigation, distinct colored Dashicons for every tool, the dashboard authorization fix, and safe resolution of schema description template variables.
 
 ## Highlights
 
-- Real-time **Website View** and Google SERP Preview for posts, pages, and public custom post types.
-- Unsaved editor previews that use the same PublishRank generation path as the public page.
-- Desktop and mobile search-result simulations with title pixel and description-length indicators.
-- Connected schema graph output with Organization, Person, WebSite, WebPage, Article, NewsArticle, BlogPosting, BreadcrumbList, VideoObject, Product, LocalBusiness, FAQ, Event, Recipe, Review, and related supported entities.
-- Per-content schema selection with type-specific fields and JSON-LD preview/validation checks.
-- Facebook publisher Page and per-author profile attribution through existing Open Graph output.
-- Optional non-destructive social-share image watermarking with cached output, transparent logos, placement, opacity, size, and margin controls.
-- Canonical URLs, robots directives, hreflang, News Sitemap, image/video sitemap support, IndexNow, redirects, 404 monitoring, and diagnostics.
-- Publisher identity, social profiles, author expertise, and connected `sameAs` data.
-- Responsive WordPress admin interfaces with capability checks, nonces, sanitization, and graceful fallbacks.
+### SEO and metadata
 
-## Installation
+- SEO titles and descriptions with shared template variables.
+- Canonical URLs, robots directives, Open Graph, and X/Twitter metadata.
+- Hreflang and language alternates.
+- Live Search, Website, Social, Meta, and JSON-LD previews.
+- Per-post and per-page overrides with capability and nonce checks.
 
-1. Download the latest release ZIP from [GitHub Releases](https://github.com/Umarjaum/PublishRank/releases).
-2. In WordPress, open **Plugins → Add New → Upload Plugin**.
-3. Upload the ZIP, install it, and activate PublishRank.
-4. Complete the Setup Wizard to configure publisher identity, site details, language, social profiles, and verification settings.
-5. Open **PublishRank → Settings** for ongoing technical SEO controls.
+### Connected structured data
 
-PublishRank does not require a paid API or mandatory external service. Optional integrations can be configured only when needed.
+PublishRank produces a connected JSON-LD graph rather than unrelated duplicate blocks. Depending on content and configuration it can publish Organization, Person, WebSite, WebPage, Article, NewsArticle, BlogPosting, BreadcrumbList, ImageObject, VideoObject, FAQ, Event, Recipe, Review, Product, LocalBusiness, and related entities.
 
-## Editor workflow
-
-Open any supported post or page. PublishRank provides the existing SEO fields, schema controls, editorial fields, and **PublishRank Live Preview**.
-
-The Live Preview includes:
-
-- **Search snippet** — Google-style desktop and mobile preview.
-- **Website view** — visitor-facing heading and summary, canonical URL, social image, structured-data entities, and consistency indicators.
-- **Social card** — Facebook/LinkedIn and X/Twitter simulations.
-- **Meta tags** — resolved metadata and canonical links.
-- **JSON-LD** — parsed connected entities, validity status, and copyable JSON-LD.
-- **Checks** — actionable warnings and validation information.
-
-Preview requests use unsaved Gutenberg or Classic Editor values and do not save content. Updates are debounced for responsiveness and can be manually refreshed.
-
-## Schema architecture
-
-PublishRank emits one connected JSON-LD graph rather than unrelated duplicate blocks. Existing Organization, WebSite, WebPage, publisher, author, article, image, and breadcrumb entities are reused through `@id` references wherever applicable.
-
-Schema selection is content-aware. PublishRank does not output every schema type on every page, and type-specific entities are emitted only when their required content is complete. Valid JSON-LD is not a guarantee of Google rich-result eligibility.
-
-## Social image watermarking
-
-Watermarking is disabled by default. When enabled under **PublishRank → Settings → Social share image watermark**, PublishRank:
-
-- Preserves the original media file.
-- Generates a separate cached copy for social metadata only.
-- Supports top-left, top-right, bottom-left, bottom-right, and center placement.
-- Supports opacity, relative logo size, and pixel margins.
-- Falls back to the original image when the image library or source file is unavailable.
-- Regenerates output when the source image or watermark settings change.
-
-The feature processes social metadata images only; it does not alter images displayed in article content.
-
-## Facebook attribution
-
-Configure the official Facebook Page URL in **PublishRank → Settings**. Author profile URLs can be configured in each WordPress user profile under **PublishRank Author Schema**.
-
-PublishRank uses the existing Open Graph output path and avoids duplicate attribution tags. Facebook may ignore authorship metadata or display it differently, so the plugin does not promise a visible Facebook authorship label.
-
-## Developer notes
-
-The plugin keeps its public slug as `publishrank` and its main bootstrap file as `publishrank.php`.
-
-Important namespaces and components:
+The public Schema Aggregator is available at:
 
 ```text
-src/Core/       bootstrap, branding, installer, output registry
-src/Meta/       title, description, canonical, robots, social metadata
-src/Schema/     connected JSON-LD graph and editor schema suite
-src/SEO/        editorial and social SEO features
-src/Admin/      dashboard, settings, editor panels, diagnostics
-assets/js/      admin and Live Preview behavior
-assets/css/     responsive admin and preview styles
+/wp-json/publishrank/v1/schema-aggregator
 ```
 
-Useful extension points include:
+The endpoint includes only public, published, indexable content. Template variables such as `%%focus_keyword%%` and `%%excerpt%%` are resolved before descriptions are returned; unresolved editor tokens are never exposed in the public feed.
+
+### XML and News sitemaps
+
+PublishRank provides a human-readable XSLT view backed by standards-compliant XML:
+
+```text
+/publishrank-sitemap.xml
+/publishrank-post-sitemap-1.xml
+/publishrank-news-sitemap-1.xml
+/publishrank-sitemap.xsl
+```
+
+The sitemap index includes responsive cards, content-type badges, child-file counts, URL counts, last-modified information, a copy-link action, raw XML access, and a robots.txt shortcut. The readable view is for people; search engines receive the underlying XML.
+
+### Redirects, crawl controls, and diagnostics
+
+- Redirect rules with safe validation.
+- Local 404 monitoring and grouped hit data.
+- Robots.txt controls and crawl-budget hygiene.
+- Sitemap health checks and frontend diagnostics.
+- IndexNow and optional Baidu submission workflows.
+- Optional traffic controls and WordPress login protection.
+
+### Publisher and newsroom workflows
+
+- Publisher identity and social profiles.
+- Author expertise and author schema fields.
+- Newsroom assignments, stages, deadlines, calendar, activity, and notifications.
+- SEO score cards, internal-link recommendations, and publisher toolkit controls.
+
+## WordPress installation
+
+1. Download the latest ZIP from [GitHub Releases](https://github.com/Umarjaum/PublishRank/releases).
+2. In WordPress, open **Plugins → Add New → Upload Plugin**.
+3. Upload the ZIP, install it, and activate **PublishRank**.
+4. Open **PublishRank → Setup Wizard** and complete the publisher identity, site, social, search, and content-scope steps.
+5. Review **PublishRank → Settings**, **Schema**, **Sitemap Health**, and **Robots.txt** before production use.
+6. Submit `/publishrank-sitemap.xml` to Google Search Console and other webmaster tools when ready.
+
+For an update, back up the site, upload the new ZIP, and allow WordPress to replace the existing plugin. Clear page, object, CDN, and browser caches after activation.
+
+## New admin navigation in 2.9.104
+
+The PublishRank menu is organized into expandable groups:
+
+- **Content & publishing** — SEO score, author expertise, publisher tools, images, internal links, and local SEO.
+- **Newsroom** — editorial workspace, board, calendar, activity, notifications, settings, and roles.
+- **Search & discovery** — Search Console, sitemap health, IndexNow, verification, schema, breadcrumbs, robots, crawl optimization, and llms.txt.
+- **Measure & maintain** — analytics, insights, redirects, 404 monitoring, traffic guard, login protection, configuration history, and diagnostics.
+- **Settings & support** — titles and meta, import/export, setup wizard, and documentation.
+
+Each tool has a native Dashicon inside a high-contrast colored tile. The colors are decorative only; the text label remains the authoritative accessible name. Group toggles are real buttons with `aria-expanded` and `aria-controls`, and keyboard focus is visibly styled.
+
+The navigation fix also keeps every registered submenu destination in WordPress's `$submenu` registry. Dashboard cards and toolbar shortcuts therefore remain authorized when they open a direct `admin.php?page=...` URL.
+
+## Breadcrumbs
+
+PublishRank breadcrumbs support Home-first trails, category and parent-page hierarchies, separators, visibility controls, placement, current-page labels, and BreadcrumbList JSON-LD. The visible trail and structured data are generated from the same hierarchy.
+
+Typical article output:
+
+```text
+Home → Category → Article title
+```
+
+Typical nested page output:
+
+```text
+Home → About Us → Editorial Team
+```
+
+The publication name remains available for titles, publisher identity, Open Graph, and WebSite/Organization structured data; it is not required to be a breadcrumb item.
+
+## Template variables
+
+The shared resolver supports variables including:
+
+```text
+%%title%%
+%%sitename%%
+%%site_description%%
+%%category%%
+%%primary_category%%
+%%author%%
+%%date%%
+%%modified%%
+%%excerpt%%
+%%sep%%
+%%page%%
+%%id%%
+%%permalink%%
+%%focus_keyword%%
+```
+
+Templates are sanitized without corrupting percent-delimited tokens. Unknown variables are removed rather than printed literally. Descriptions use a safe fallback when the resolved value is empty.
+
+## Architecture
+
+```text
+publishrank.php                 Bootstrap, hooks, version metadata
+src/Core/                       Installer, branding, output settings, plugin boot
+src/Admin/                      Dashboard, settings, onboarding, diagnostics, tools
+src/Meta/                       Titles, descriptions, canonicals, robots, templates
+src/Schema/                     Connected JSON-LD and public schema endpoints
+src/Sitemap/                    XML providers, cache, audit, XSL stylesheet
+src/SEO/                        Breadcrumbs, article intelligence, social and editorial SEO
+src/Newsroom/                   Newsroom workflow and editorial actions
+src/Security/                   Admin access, traffic guard, integrity and headers
+assets/css/                     Shipped admin, sitemap, editor and frontend styles
+assets/js/                      Shipped admin, editor, preview and navigation scripts
+assets/images/                  Local brand and interface assets
+tests/                          Standalone regression and integration checks
+docs/                           Feature, architecture, privacy and release documentation
+```
+
+The plugin has no mandatory build step and ships first-party JavaScript and CSS in readable form. Font Awesome Free is bundled locally where used; the refreshed admin menu uses WordPress-native Dashicons so it does not depend on a third-party icon CDN.
+
+## Development
+
+Clone the repository and inspect the current branch:
+
+```bash
+git clone https://github.com/Umarjaum/PublishRank.git
+cd PublishRank
+```
+
+Useful checks:
+
+```bash
+# Run the standalone test suite when a WordPress test environment is configured.
+php tests/run.php
+
+# Build an installable ZIP.
+python3 tools/build_plugin_zip.py
+
+# PHP syntax check for changed files.
+php -l publishrank.php
+php -l src/Admin/AdminAssets.php
+php -l src/Admin/DashboardPage.php
+php -l src/Schema/SchemaAggregator.php
+```
+
+The plugin uses WordPress APIs for capabilities, nonces, settings, REST permissions, escaping, URL validation, scheduled work, and cache invalidation. Do not test destructive settings changes on a production database.
+
+## Extension points
+
+Common filters and actions include:
 
 - `publishrank_seo_post_data`
 - `publishrank_schema_graph`
 - `publishrank_seo_robots`
 - `publishrank_seo_meta_box_post_types`
 - `publishrank_schema_speakable_selectors`
+- `publishrank_breadcrumb_schema_external_owner`
+- `publishrank_sitemap_providers`
+- `publishrank_seo_after_admin_header`
+- `publishrank_seo_admin_toolbar_items`
 
-## Security and compatibility
+Review the source and `docs/DEVELOPER-HOOKS.md` before extending output behavior.
 
-PublishRank follows WordPress capability, nonce, sanitization, escaping, and public-URL validation practices. Preview REST requests require permission to edit the selected post. Watermark output is cached in the WordPress uploads directory and never overwrites original media.
+## Compatibility and ownership
 
-Always review generated metadata on a staging site before deploying changes to a high-traffic publication. Keep only one plugin responsible for each public title, canonical, Open Graph, robots, and schema output layer to avoid conflicts.
+Use only one plugin as the owner of each public title, canonical, robots, Open Graph, and schema output layer. Running multiple SEO plugins with overlapping output can create duplicate or conflicting metadata.
+
+PublishRank is designed for WordPress 6.3+ and PHP 7.4+. Always stage upgrades, check active theme integrations, clear caches, and review rendered HTML, JSON-LD, robots.txt, and XML sitemaps after updating.
+
+## Privacy and external services
+
+Core metadata, schema, redirects, sitemap generation, and diagnostics run locally. Optional integrations such as Google Search Console, IndexNow, Baidu, or external-link diagnostics make network requests only after an administrator configures or explicitly starts them. Review the provider documentation and your site's privacy obligations before enabling them.
+
+## Release process
+
+1. Update the plugin header and `PUBLISHRANK_SEO_VERSION` in `publishrank.php`.
+2. Update `readme.txt` stable tag and changelog.
+3. Add a release entry to `changelog.txt` and relevant `docs/` notes.
+4. Run syntax checks and the standalone test suite where available.
+5. Build the ZIP with `python3 tools/build_plugin_zip.py`.
+6. Commit with a descriptive message and create a matching Git tag.
+7. Publish GitHub release notes with the ZIP attached.
 
 ## License
 
-PublishRank is distributed under the license files included in this repository. See [`LICENSE`](LICENSE) and [`LICENSE.txt`](LICENSE.txt).
+PublishRank is distributed under the GPLv2-or-later license. See [LICENSE](LICENSE) and [LICENSE.txt](LICENSE.txt).

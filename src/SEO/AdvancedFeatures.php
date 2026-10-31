@@ -84,8 +84,8 @@ final class AdvancedFeatures {
 		$seo              = SeoData::for_post( $post );
 		$seo_image        = isset( $seo['image'] ) && is_array( $seo['image'] ) ? $seo['image'] : array();
 		$placeholders     = array(
-		PostMeta::TITLE          => isset( $seo['title'] ) ? $seo['title'] : '',
-		PostMeta::DESCRIPTION    => isset( $seo['description'] ) ? $seo['description'] : '',
+		PostMeta::TITLE          => '%%title%% %%sep%% %%sitename%%',
+		PostMeta::DESCRIPTION    => '%%excerpt%%',
 		PostMeta::CANONICAL      => isset( $seo['canonical'] ) ? $seo['canonical'] : '',
 		PostMeta::OG_TITLE       => isset( $seo['title'] ) ? $seo['title'] : '',
 		PostMeta::OG_DESCRIPTION => isset( $seo['description'] ) ? $seo['description'] : '',
@@ -95,18 +95,14 @@ final class AdvancedFeatures {
 		$is_article = $this->is_article_type( $post->post_type );
 		$this->render_resolved_summary( $post );
 		echo '<div class="notice notice-success inline"><p><strong>' . esc_html__( 'Automatic SEO is active.', 'publishrank' ) . '</strong> ' . esc_html__( 'PublishRank fills in search and social details from the article by default. Use the sections below only when you need an override; blank fields stay automatic.', 'publishrank' ) . '</p></div>';
-		echo '<p class="pr-seo-editor-intro">' . esc_html__( 'Work from top to bottom: search appearance, keyword plan, social sharing, article details, then indexing. These settings affect search and sharing output, not the way your theme displays the article.', 'publishrank' ) . '</p>';
+		echo '<p class="pr-seo-editor-intro">' . esc_html__( 'Work from top to bottom: search appearance, social sharing, article details, then indexing. These settings affect search and sharing output, not the way your theme displays the article.', 'publishrank' ) . '</p>';
 
-		echo '<section class="pr-seo-group" aria-labelledby="pr-seo-search-title"><h3 id="pr-seo-search-title">' . esc_html__( '1. Search appearance', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Set the Focus keyword first if you plan to use %focus_keyword%. The title and description below control the search snippet; leave either blank to use its automatic value shown above.', 'publishrank' ) . '</p>';
-		$this->render_seo_field( $post->ID, PostMeta::FOCUS_KEYWORD, __( 'Focus keyword', 'publishrank' ), __( 'The main search term for this article. It is used by the article analysis and replaces %focus_keyword% in supported SEO title and description templates.', 'publishrank' ), 'text', 100 );
-		$this->render_seo_field( $post->ID, PostMeta::TITLE, __( 'SEO title', 'publishrank' ), __( 'The title shown in search results. Leave blank to use the article title. You can use %focus_keyword% to insert the Focus keyword above.', 'publishrank' ), 'text', 255, $placeholders );
-		$this->render_seo_field( $post->ID, PostMeta::DESCRIPTION, __( 'Meta description', 'publishrank' ), __( 'The short summary shown beneath the search title. Leave blank for an automatic summary. The %focus_keyword% token is supported.', 'publishrank' ), 'textarea', 320, $placeholders );
+		echo '<section class="pr-seo-group" aria-labelledby="pr-seo-search-title"><h3 id="pr-seo-search-title">' . esc_html__( '1. Search appearance', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Use dynamic variables instead of hard-coded text when you want reusable templates. Pick a variable from the “Insert variable” list under each field, or type it. Leave a field blank to use its automatic value.', 'publishrank' ) . '</p>';
+		$this->render_seo_field( $post->ID, PostMeta::TITLE, __( 'SEO title', 'publishrank' ), __( 'The title shown in search results. Use variables such as %%title%% %%sep%% %%sitename%% rather than hard-coding article-specific text. Leave blank for the global template.', 'publishrank' ), 'text', 255, $placeholders );
+		$this->render_seo_field( $post->ID, PostMeta::DESCRIPTION, __( 'Meta description', 'publishrank' ), __( 'The short summary shown beneath the search title. Use the “Insert variable” list to add dynamic values. Leave blank for an automatic summary.', 'publishrank' ), 'textarea', 320, $placeholders );
 		$this->render_seo_field( $post->ID, PostMeta::CANONICAL, __( 'Canonical URL', 'publishrank' ), __( 'Usually leave blank. Add a URL only when this article is a copy or syndicated version and another page should be treated as the original.', 'publishrank' ), 'url', 0, $placeholders );
 		echo '</section>';
-		echo '<section class="pr-seo-group" aria-labelledby="pr-seo-keyword-title"><h3 id="pr-seo-keyword-title">' . esc_html__( '2. Keyword plan', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Add supporting phrases and article context. The Focus keyword above is the primary term used by article analysis.', 'publishrank' ) . '</p>';
-		$this->render_seo_field( $post->ID, PostMeta::PRIMARY_KEYPHRASE, __( 'Additional keyword (page metadata)', 'publishrank' ), __( 'An optional extra phrase stored in page keyword metadata. It does not power article analysis or the %focus_keyword% token; use Focus keyword above for those.', 'publishrank' ), 'text', 100 );
-		$this->render_repeater( $post->ID, PostMeta::SECONDARY_KEYPHRASES, __( 'Supporting keyphrases', 'publishrank' ), __( 'Optional additional phrases. They are included in keyword metadata and eligible news sitemaps.', 'publishrank' ), 10 );
-		$this->render_repeater( $post->ID, PostMeta::RELATED_TERMS, __( 'Related terms', 'publishrank' ), __( 'Optional synonyms and closely related words that describe this article.', 'publishrank' ), 20 );
+			echo '<section class="pr-seo-group" aria-labelledby="pr-seo-context-title"><h3 id="pr-seo-context-title">' . esc_html__( '2. Article context', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Add article context used to enrich structured data and editorial organization.', 'publishrank' ) . '</p>';
 		$this->render_seo_field( $post->ID, PostMeta::ENTITY_TOPIC, __( 'Main entity or topic', 'publishrank' ), __( 'The person, organization, place, or subject this article is mainly about. Used to enrich structured data.', 'publishrank' ), 'text', 120 );
 		echo '<div class="pr-seo-field"><label for="' . esc_attr( PostMeta::PRIMARY_CATEGORY ) . '"><strong>' . esc_html__( 'Primary category', 'publishrank' ) . '</strong></label><select class="widefat" id="' . esc_attr( PostMeta::PRIMARY_CATEGORY ) . '" name="' . esc_attr( PostMeta::PRIMARY_CATEGORY ) . '" aria-describedby="pr-seo-primary-category-help"><option value="0">' . esc_html__( 'Use the post category', 'publishrank' ) . '</option>';
 		foreach ( get_categories( array( 'hide_empty' => false ) ) as $category ) {
@@ -117,8 +113,8 @@ final class AdvancedFeatures {
 		echo '<div class="pr-seo-field"><label><input type="checkbox" name="' . esc_attr( PostMeta::CORNERSTONE ) . '" value="1" aria-describedby="' . esc_attr( $cornerstone_help ) . '" ' . checked( PostMeta::get( $post->ID, PostMeta::CORNERSTONE, '0' ), '1', false ) . ' /> <strong>' . esc_html__( 'Mark as a cornerstone article', 'publishrank' ) . '</strong></label><p class="description" id="' . esc_attr( $cornerstone_help ) . '">' . esc_html__( 'Flag this as an important, long-term reference article on your site.', 'publishrank' ) . '</p></div></section>';
 
 		echo '<section class="pr-seo-group" aria-labelledby="pr-seo-social-title"><h3 id="pr-seo-social-title">' . esc_html__( '3. Social sharing', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Optional overrides for the preview card when this article is shared on social networks.', 'publishrank' ) . '</p>';
-		$this->render_seo_field( $post->ID, PostMeta::OG_TITLE, __( 'Social title', 'publishrank' ), __( 'The headline used on Facebook, LinkedIn, and other Open Graph previews.', 'publishrank' ), 'text', 255, $placeholders );
-		$this->render_seo_field( $post->ID, PostMeta::OG_DESCRIPTION, __( 'Social description', 'publishrank' ), __( 'The summary used on social preview cards.', 'publishrank' ), 'textarea', 320, $placeholders );
+		$this->render_seo_field( $post->ID, PostMeta::OG_TITLE, __( 'Social title', 'publishrank' ), __( 'The headline used on Facebook, LinkedIn, X and other previews. Dynamic variables are supported. Leave blank to use the SEO title.', 'publishrank' ), 'text', 255, $placeholders );
+		$this->render_seo_field( $post->ID, PostMeta::OG_DESCRIPTION, __( 'Social description', 'publishrank' ), __( 'The summary used on social preview cards. Dynamic variables are supported. Leave blank to use the meta description.', 'publishrank' ), 'textarea', 320, $placeholders );
 		$this->render_seo_field( $post->ID, PostMeta::OG_IMAGE, __( 'Social image URL', 'publishrank' ), __( 'An image URL for social cards. Leave blank to use the featured image or site default.', 'publishrank' ), 'url', 0, $placeholders );
 		$this->render_discover_image_tools( $post, isset( $seo_image['url'] ) ? $seo_image['url'] : '' );
 		$this->render_seo_field( $post->ID, PostMeta::OG_IMAGE_ALT, __( 'Social image alt text', 'publishrank' ), __( 'A concise description of the social image for people using assistive technology.', 'publishrank' ), 'text', 255, $placeholders );
@@ -326,6 +322,15 @@ final class AdvancedFeatures {
 		}
 		if ( '' !== $help ) {
 			echo '<p class="description" id="' . esc_attr( $help_id ) . '">' . esc_html( $help ) . '</p>';
+		}
+		$variable_fields = array(
+			PostMeta::TITLE          => 'title',
+			PostMeta::OG_TITLE       => 'title',
+			PostMeta::DESCRIPTION    => 'description',
+			PostMeta::OG_DESCRIPTION => 'description',
+		);
+		if ( isset( $variable_fields[ $key ] ) ) {
+			echo \PublishRankSEO\Admin\VariablePicker::slot( $id, $variable_fields[ $key ], 'post' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in slot().
 		}
 		echo '</div>';
 	}

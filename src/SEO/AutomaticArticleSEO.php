@@ -81,7 +81,7 @@ final class AutomaticArticleSEO {
 
 	private function legacy_title( $post ) {
 		$raw       = wp_strip_all_tags( (string) $post->post_title );
-		$site      = wp_strip_all_tags( (string) get_bloginfo( 'name' ) );
+		$site      = wp_strip_all_tags( (string) \PublishRankSEO\Core\PublicationProfile::publication_name() );
 		$separator = (string) get_option( 'publishrank_seo_title_separator', '|' );
 		$value     = $raw && $site ? $raw . ' ' . $separator . ' ' . $site : ( ! empty( $raw ) ? $raw : $site );
 		return $this->limit( preg_replace( '/\s+/', ' ', trim( $value ) ), 180 );

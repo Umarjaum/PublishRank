@@ -24,6 +24,7 @@ final class PublishRank_Newsroom {
         add_action('admin_post_uj_download_attachment', [$this, 'download_attachment']);
         add_action('admin_post_uj_personal_settings', [$this, 'save_personal_settings']);
         add_action('admin_post_uj_save_view', [$this, 'save_view']);
+        add_action('admin_post_uj_delete_view', [$this, 'delete_view']);
         add_action('admin_post_uj_export_csv', [$this, 'export_csv']);
         add_action('admin_post_uj_calendar_feed', [$this, 'calendar_feed']);
         add_action('admin_post_nopriv_uj_calendar_feed', [$this, 'calendar_feed']);

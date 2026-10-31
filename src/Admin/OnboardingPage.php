@@ -77,6 +77,23 @@ final class OnboardingPage {
 	}
 
 	/**
+	 * Separators supported by both the setup wizard and ongoing title settings.
+	 * Keys are the literal values stored in publishrank_seo_title_separator.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function title_separator_options() {
+		return array(
+			'|' => 'Pipe |', '¦' => 'Broken bar ¦', '/' => 'Slash /', '⁄' => 'Fraction slash ⁄',
+			'-' => 'Hyphen -', '–' => 'En dash –', '—' => 'Em dash —', '−' => 'Minus −',
+			':' => 'Colon :', '·' => 'Middle dot ·', '•' => 'Bullet •', '‧' => 'Hyphenation point ‧',
+			'»' => 'Double angle »', '›' => 'Single angle ›', '>' => 'Greater than >', '→' => 'Arrow →',
+			'➜' => 'Long arrow ➜', '⇒' => 'Double arrow ⇒', '⋅' => 'Dot operator ⋅', '~' => 'Tilde ~',
+			'_' => 'Underscore _', ' ' => 'Space',
+		);
+	}
+
+	/**
 	 * Field definitions for a step.
 	 *
 	 * Keys: key (option + input name), type, label, san (sanitizer), required, help, placeholder,
@@ -127,7 +144,7 @@ final class OnboardingPage {
 						__( 'Publication / publisher name', 'publishrank' ),
 						array(
 							'required'      => true,
-							'default'       => get_bloginfo( 'name' ),
+							'default'       => '',
 							'mirror'        => array( 'publishrank_seo_publication_name', 'publishrank_seo_publisher_name' ),
 							'person_mirror' => 'publishrank_identity_person_name',
 							'fallback'      => array( 'publishrank_seo_publisher_name' ),
@@ -162,7 +179,7 @@ final class OnboardingPage {
 						array(
 							'wide'          => true,
 							'san'           => 'textarea',
-							'default'       => get_bloginfo( 'description' ),
+							'default'       => '',
 							'mirror'        => array( 'publishrank_schema_org_description' ),
 							'person_mirror' => 'publishrank_identity_person_description',
 							'fallback'      => array( 'publishrank_schema_org_description' ),
@@ -454,7 +471,8 @@ final class OnboardingPage {
 						__( 'Homepage SEO title', 'publishrank' ),
 						array(
 							'wide'        => true,
-							'placeholder' => get_bloginfo( 'name' ),
+							'san'         => 'sanitize_home_text',
+							'placeholder' => '',
 							'help'        => __( 'Leave empty to use the site name.', 'publishrank' ),
 						)
 					),
@@ -464,8 +482,8 @@ final class OnboardingPage {
 						__( 'Homepage meta description', 'publishrank' ),
 						array(
 							'wide'    => true,
-							'san'     => 'textarea',
-							'default' => get_bloginfo( 'description' ),
+							'san'     => 'sanitize_home_text',
+							'default' => '',
 						)
 					),
 					$f(
@@ -474,15 +492,7 @@ final class OnboardingPage {
 						__( 'Title separator', 'publishrank' ),
 						array(
 							'default' => '|',
-							'options' => array(
-								'|' => '|',
-								'-' => '-',
-								'–' => '–',
-								'—' => '—',
-								'·' => '·',
-								'•' => '•',
-								'»' => '»',
-							),
+							'options' => self::title_separator_options(),
 						)
 					),
 				);
@@ -549,7 +559,7 @@ final class OnboardingPage {
 	 * @return string[]
 	 */
 	public static function setup_keys() {
-		$keep = array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_post_types', 'publishrank_sitemap_post_types' ); // Also editable in Settings.
+		$keep = array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_post_types', 'publishrank_sitemap_post_types', 'publishrank_seo_title_separator' ); // Also editable in Settings.
 		$keys = array( 'publishrank_social_profiles', 'publishrank_copyright', 'publishrank_identity_person_name', 'publishrank_identity_person_alternate_name', 'publishrank_identity_person_description', 'publishrank_identity_person_image', 'publishrank_identity_person_email' );
 		foreach ( array_keys( self::steps() ) as $step ) {
 			foreach ( self::fields( $step ) as $field ) {
@@ -656,7 +666,7 @@ final class OnboardingPage {
 		if ( $is_wizard ) {
 			return;
 		}
-		$icon       = add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank-header-icon-v2.png' ) );
+		$icon       = add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank.svg' ) );
 		$wizard_url = Branding::page_url( self::SLUG );
 		echo '<div class="notice notice-info prw-setup-notice" style="border-left-color:#5a4be2;padding:14px 16px;max-width:1000px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
 		echo '<img src="' . esc_url( $icon ) . '" alt="" width="48" height="48" style="width:48px;height:48px;object-fit:contain;flex:0 0 48px" />';
@@ -673,6 +683,7 @@ final class OnboardingPage {
 		wp_enqueue_media();
 		wp_enqueue_style( 'publishrank-seo-onboarding', Branding::asset_url( 'css/onboarding.css' ), array( 'dashicons', 'publishrank-seo-admin' ), Branding::version() );
 		wp_enqueue_script( 'publishrank-seo-onboarding', Branding::asset_url( 'js/onboarding.js' ), array( 'jquery' ), Branding::version(), true );
+		\PublishRankSEO\Admin\VariablePicker::enqueue( '' );
 	}
 
 	/** Leave the wizard without completing it. Not available while the wizard is locked. */
@@ -743,14 +754,14 @@ final class OnboardingPage {
 		AdminAssets::guard( 'publishrank_onboarding_defaults' );
 		$defaults = array(
 			'publishrank_identity_type'           => 'organization',
-			'publishrank_identity_name'           => get_bloginfo( 'name' ),
-			'publishrank_identity_description'    => get_bloginfo( 'description' ),
-			'publishrank_seo_publication_name'    => get_bloginfo( 'name' ),
-			'publishrank_seo_publisher_name'      => get_bloginfo( 'name' ),
+			'publishrank_identity_name'           => '',
+			'publishrank_identity_description'    => '',
+			'publishrank_seo_publication_name'    => '',
+			'publishrank_seo_publisher_name'      => '',
 			'publishrank_seo_publisher_logo'      => '',
 			'publishrank_identity_logo'           => '',
 			'publishrank_home_title'              => '',
-			'publishrank_home_description'        => get_bloginfo( 'description' ),
+			'publishrank_home_description'        => '',
 			'publishrank_seo_default_robots'      => 'index,follow',
 			'publishrank_seo_title_template_home' => '%%sitename%% %%page%%',
 			'publishrank_seo_title_separator'     => '|',
@@ -762,6 +773,7 @@ final class OnboardingPage {
 				'publishrank_breadcrumb_schema_enabled' => 1,
 				'publishrank_meta_enabled'            => 1,
 			'publishrank_schema_enabled'          => 1,
+			'publishrank_org_website_schema_enabled' => 1,
 			'publishrank_local_seo_profile'       => array(
 				'enabled'       => 0,
 				'name'          => '',
@@ -921,6 +933,9 @@ final class OnboardingPage {
 			switch ( $field['type'] ) {
 				case 'textarea':
 					echo '<textarea id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" rows="3" placeholder="' . esc_attr( $field['placeholder'] ) . '"' . $req . '>' . esc_textarea( (string) $value ) . '</textarea>'; // phpcs:ignore WordPress.Security.EscapeOutput
+					if ( 'publishrank_home_description' === $key ) {
+						echo \PublishRankSEO\Admin\VariablePicker::slot( $id, 'description', 'home' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in slot().
+					}
 					break;
 				case 'select':
 					echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '">';
@@ -957,6 +972,9 @@ final class OnboardingPage {
 				default: // text, url, email.
 					$input = in_array( $field['type'], array( 'url', 'email' ), true ) ? $field['type'] : 'text';
 					echo '<input type="' . esc_attr( $input ) . '" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $value ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '"' . $req . ' />'; // phpcs:ignore WordPress.Security.EscapeOutput
+					if ( 'publishrank_home_title' === $key ) {
+						echo \PublishRankSEO\Admin\VariablePicker::slot( $id, 'title', 'home' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in slot().
+					}
 			}
 			if ( $field['help'] ) {
 				echo '<small class="prw-help">' . esc_html( $field['help'] ) . '</small>';
@@ -965,18 +983,28 @@ final class OnboardingPage {
 		echo '</div>';
 	}
 
+	/** Resolve the saved homepage SEO title for administrative summaries. */
+	public static function homepage_title_preview() {
+		$template = (string) get_option( 'publishrank_home_title', '' );
+		if ( '' === trim( $template ) ) {
+			$template = (string) get_option( 'publishrank_seo_title_template_home', '%%sitename%% %%page%%' );
+		}
+		$template = \PublishRankSEO\Meta\TemplateResolver::sanitize_template( $template );
+		$resolved = ( new \PublishRankSEO\Meta\MetaGenerator() )->resolve_template( $template, 0, 'title', array( 'title' => PublicationProfile::publication_name() ) );
+		return '' !== $resolved ? $resolved : __( 'Not configured', 'publishrank' );
+	}
 	/** Summary cards for the review step and the completed view. */
 	private function recap() {
-		$name  = (string) get_option( 'publishrank_identity_name', get_bloginfo( 'name' ) );
-		$title = (string) get_option( 'publishrank_home_title', '' );
+		$name  = (string) get_option( 'publishrank_identity_name', \PublishRankSEO\Core\PublicationProfile::publication_name() );
+		$title = self::homepage_title_preview();
 		$local = get_option( 'publishrank_local_seo_profile', array() );
 		$local = is_array( $local ) ? $local : array();
 		$news  = (bool) get_option( 'publishrank_seo_news_enabled', true );
 		$items = array(
-			array( ! empty( $name ) ? $name : get_bloginfo( 'name' ), 'person' === PublicationProfile::identity_type() ? __( 'Publisher (person)', 'publishrank' ) : __( 'Publisher (organization)', 'publishrank' ) ),
+			array( ! empty( $name ) ? $name : \PublishRankSEO\Core\PublicationProfile::publication_name(), 'person' === PublicationProfile::identity_type() ? __( 'Publisher (person)', 'publishrank' ) : __( 'Publisher (organization)', 'publishrank' ) ),
 			array( ! empty( strtoupper( (string) get_option( 'publishrank_identity_country', '' ) ) ) ? strtoupper( (string) get_option( 'publishrank_identity_country', '' ) ) : '—', __( 'Country', 'publishrank' ) ),
 			array( count( PublicationProfile::social_profiles() ) . ' ' . __( 'profiles', 'publishrank' ), __( 'Social profiles (sameAs)', 'publishrank' ) ),
-			array( ! empty( $title ) ? $title : get_bloginfo( 'name' ), __( 'Homepage SEO title', 'publishrank' ) ),
+			array( $title, __( 'Homepage SEO title', 'publishrank' ) ),
 			array( $news ? __( 'News sitemap on', 'publishrank' ) : __( 'News sitemap off', 'publishrank' ), (string) get_option( 'publishrank_sitemap_post_types', 'post' ) ),
 			array( ! empty( $local['enabled'] ) ? ( $local['name'] ?? __( 'Local business on', 'publishrank' ) ) : __( 'Local SEO off', 'publishrank' ), __( 'Local business', 'publishrank' ) ),
 		);
@@ -1073,7 +1101,7 @@ final class OnboardingPage {
 			<div class="prw-modal-backdrop" id="prw-modal">
 				<div class="prw-modal" role="dialog" aria-modal="true" aria-labelledby="prw-modal-title">
 					<header class="prw-modal__head">
-						<img src="<?php echo esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ); ?>" alt="" width="40" height="40" />
+						<img src="<?php echo esc_url( Branding::image( 'publishrank.svg' ) ); ?>" alt="" width="40" height="40" />
 						<div class="prw-modal__title">
 							<span class="rhs-eyebrow"><?php echo esc_html( $complete ? __( 'Edit setup', 'publishrank' ) : __( 'First-time setup', 'publishrank' ) ); ?> · <?php echo esc_html( sprintf( /* translators: 1: step, 2: total. */ __( 'Step %1$d of %2$d', 'publishrank' ), $step, self::TOTAL_STEPS ) ); ?></span>
 							<h1 id="prw-modal-title"><?php echo esc_html( $steps[ $step ]['label'] ); ?></h1>

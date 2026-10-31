@@ -459,93 +459,7 @@ final class ArticleIntelligence {
 			);
 		};
 
-		/* ---- Keyphrase ---- */
-		if ( '' === $keyphrase ) {
-			$add( 'keyphrase_missing', 'keyphrase', 'bad', 3, __( 'Set a focus keyword so PublishRank can check how well the article targets it.', 'publishrank' ) );
-		} else {
-			$phrase = self::stems( self::tokens( $keyphrase ) );
-			$pcount = count( $phrase );
-			if ( $pcount >= 1 && $pcount <= 6 ) {
-				$add( 'keyphrase_length', 'keyphrase', 'good', 1, __( 'The focus keyword has a sensible length.', 'publishrank' ) );
-			} else {
-				$add( 'keyphrase_length', 'keyphrase', 'ok', 1, __( 'Keep the focus keyword between one and six words.', 'publishrank' ) );
-			}
-			$in_title                    = self::phrase_count( self::stems( self::tokens( $serp_title ) ), $phrase ) > 0;
-			$keyphrase_coverage['title'] = $in_title;
-			if ( $in_title ) {
-				$early = self::phrase_position( self::stems( self::tokens( $serp_title ) ), $phrase ) <= 3;
-				$add( 'keyphrase_title', 'keyphrase', $early ? 'good' : 'ok', 3, $early ? __( 'The focus keyword appears at the start of the search title.', 'publishrank' ) : __( 'The focus keyword is in the search title; moving it closer to the start usually helps.', 'publishrank' ) );
-			} else {
-				$add( 'keyphrase_title', 'keyphrase', 'bad', 3, __( 'Add the focus keyword to the headline or SEO title.', 'publishrank' ) );
-			}
-			if ( '' !== $description ) {
-				$in_desc                           = self::phrase_count( self::stems( self::tokens( $description ) ), $phrase ) > 0;
-				$keyphrase_coverage['description'] = $in_desc;
-				$add( 'keyphrase_description', 'keyphrase', $in_desc ? 'good' : 'bad', 2, $in_desc ? __( 'The meta description contains the focus keyword.', 'publishrank' ) : __( 'Mention the focus keyword in the meta description.', 'publishrank' ) );
-			}
-			$slug_words = array_filter( explode( '-', strtolower( (string) $d['slug'] ) ) );
-			$ascii      = (bool) preg_match( '/^[a-z0-9 \'\-]+$/i', $keyphrase );
-			if ( $ascii && $slug_words ) {
-				$slug_stems                 = self::stems( array_values( $slug_words ) );
-				$missing                    = array_diff( $phrase, $slug_stems );
-				$keyphrase_coverage['slug'] = empty( $missing );
-				$add( 'keyphrase_slug', 'keyphrase', $missing ? 'ok' : 'good', 1, $missing ? __( 'Consider including the focus keyword words in the URL slug.', 'publishrank' ) : __( 'The URL slug contains the focus keyword.', 'publishrank' ) );
-			}
-			if ( $paragraphs ) {
-				$first                       = self::stems( self::tokens( $paragraphs[0] ) );
-				$in_first                    = self::phrase_count( array_slice( $first, 0, 80 ), $phrase ) > 0;
-				$keyphrase_coverage['intro'] = $in_first;
-				$add( 'keyphrase_intro', 'keyphrase', $in_first ? 'good' : 'bad', 2, $in_first ? __( 'The focus keyword appears in the opening paragraph.', 'publishrank' ) : __( 'Use the focus keyword within the opening paragraph.', 'publishrank' ) );
-			}
-			$sub = array_filter(
-				$headings,
-				static function ( $h ) {
-					return $h['level'] >= 2 && $h['level'] <= 4;
-				}
-			);
-			if ( $sub ) {
-				$hit = false;
-				foreach ( $sub as $h ) {
-					if ( self::phrase_count( self::stems( self::tokens( $h['text'] ) ), $phrase ) > 0 ) {
-						$hit = true;
-						break; }
-				}
-				$keyphrase_coverage['heading'] = $hit;
-				$add( 'keyphrase_heading', 'keyphrase', $hit ? 'good' : 'ok', 1, $hit ? __( 'A subheading contains the focus keyword.', 'publishrank' ) : __( 'Use the focus keyword (or a close variation) in at least one subheading.', 'publishrank' ) );
-			}
-			if ( $images ) {
-				$hit = false;
-				foreach ( $images as $img ) {
-					if ( '' !== $img['alt'] && self::phrase_count( self::stems( self::tokens( $img['alt'] ) ), $phrase ) > 0 ) {
-						$hit = true;
-						break; }
-				}
-				$keyphrase_coverage['alt'] = $hit;
-				$add( 'keyphrase_alt', 'keyphrase', $hit ? 'good' : 'ok', 1, $hit ? __( 'An image alt text contains the focus keyword.', 'publishrank' ) : __( 'Describe at least one image using the focus keyword where it is accurate.', 'publishrank' ) );
-			}
-			$stemmed                    = self::stems( $words );
-			$found                      = self::phrase_count( $stemmed, $phrase );
-			$keyphrase_occurrences      = $found;
-			$keyphrase_coverage['body'] = $found > 0;
-			$keyphrase_density          = ( $found * $pcount / max( 1, $word_count ) ) * 100;
-			if ( $word_count >= 100 ) {
-				$density = $keyphrase_density;
-				if ( 0 === $found ) {
-					$add( 'keyphrase_density', 'keyphrase', 'bad', 2, __( 'The focus keyword does not appear in the article body.', 'publishrank' ) );
-				} elseif ( $density > 3.0 ) {
-					/* translators: %s: formatted keyphrase density percentage. */
-					$add( 'keyphrase_density', 'keyphrase', 'bad', 2, sprintf( __( 'Keyphrase density is %s%%, which reads as stuffing. Vary the wording.', 'publishrank' ), self::num( $density ) ) );
-				} elseif ( $density < 0.3 ) {
-					/* translators: %s: formatted keyphrase density percentage. */
-					$add( 'keyphrase_density', 'keyphrase', 'ok', 2, sprintf( __( 'Keyphrase density is %s%%; mention the topic a little more naturally.', 'publishrank' ), self::num( $density ) ) );
-				} else {
-					/* translators: %s: formatted keyphrase density percentage. */
-					$add( 'keyphrase_density', 'keyphrase', 'good', 2, sprintf( __( 'Keyphrase density is a healthy %s%%.', 'publishrank' ), self::num( $density ) ) );
-				}
-			} else {
-				$add( 'keyphrase_density_short', 'keyphrase', 'info', 0, __( 'Keyphrase density is not evaluated for articles under 100 words.', 'publishrank' ) );
-			}
-		}
+		/* Focus-keyword scoring is intentionally disabled. */
 
 		/* ---- Headline ---- */
 		$tlen = self::len( $title );
@@ -815,11 +729,6 @@ final class ArticleIntelligence {
 			'stats'       => array(
 				'words'                        => $word_count,
 				'images'                       => count( $images ),
-				'focus_keyword'                => $keyphrase,
-				'focus_keyword_occurrences'    => $keyphrase_occurrences,
-				'focus_keyword_density'        => round( $keyphrase_density, 2 ),
-				'focus_keyword_coverage'       => count( array_filter( $keyphrase_coverage ) ),
-				'focus_keyword_coverage_total' => '' !== $keyphrase ? count( $keyphrase_coverage ) : 0,
 				'sentences'                    => $sentence_count,
 				'paragraphs'                   => count( $paragraphs ),
 				'reading_min'                  => max( 1, (int) ceil( $word_count / 238 ) ),
@@ -856,42 +765,7 @@ final class ArticleIntelligence {
 		$pid    = (int) $d['post_id'];
 		if ( ! function_exists( 'get_posts' ) ) {
 			return $checks; }
-		if ( '' !== $keyphrase ) {
-			$others = get_posts(
-				array(
-					'post_type'        => self::supported_post_types(),
-					'post_status'      => array( 'publish', 'future', 'pending', 'draft' ),
-					'posts_per_page'   => 5,
-					'post__not_in'     => $pid ? array( $pid ) : array(),
-					'meta_key'         => PostMeta::FOCUS_KEYWORD, // phpcs:ignore WordPress.DB.SlowDBQuery
-					'meta_value'       => $keyphrase, // phpcs:ignore WordPress.DB.SlowDBQuery
-					'no_found_rows'    => true,
-					'suppress_filters' => true,
-				)
-			);
-			if ( $others ) {
-				$names = array();
-				foreach ( $others as $other ) {
-					$names[] = '“' . wp_strip_all_tags( get_the_title( $other ) ) . '”'; }
-				/* translators: %s: list of competing article titles. */
-				$checks[] = array(
-					'id'      => 'site_cannibalization',
-					'group'   => 'site',
-					'status'  => 'bad',
-					'weight'  => 2,
-					/* translators: %s: comma-separated titles of articles with the same keyphrase. */
-					'message' => sprintf( __( 'Other articles target the same focus keyword and may compete with this one: %s', 'publishrank' ), implode( ', ', $names ) ),
-				);
-			} else {
-				$checks[] = array(
-					'id'      => 'site_cannibalization',
-					'group'   => 'site',
-					'status'  => 'good',
-					'weight'  => 2,
-					'message' => __( 'No other article uses this focus keyword.', 'publishrank' ),
-				);
-			}
-		}
+
 		global $wpdb;
 		if ( '' !== $title && isset( $wpdb ) && is_object( $wpdb ) ) {
 			$types = self::supported_post_types();
@@ -948,7 +822,6 @@ final class ArticleIntelligence {
 
 	private static function why_for( $id ) {
 		$map = array(
-			'keyphrase_missing'     => __( 'Without a focus keyword the analyzer cannot verify that the article targets a clear subject.', 'publishrank' ),
 			'keyphrase_title'       => __( 'Search engines weigh the title heavily; a missing subject weakens relevance signals.', 'publishrank' ),
 			'keyphrase_intro'       => __( 'Stating the subject early confirms to readers and crawlers what the article covers.', 'publishrank' ),
 			'keyphrase_density'     => __( 'An absent or overstuffed keyphrase reads as off-topic or spammy.', 'publishrank' ),
@@ -969,7 +842,6 @@ final class ArticleIntelligence {
 			'links_external'        => __( 'Citing primary sources supports credibility and E-E-A-T signals.', 'publishrank' ),
 			'links_anchor_text'     => __( 'Descriptive anchors tell readers and crawlers what the destination covers.', 'publishrank' ),
 			'news_byline'           => __( 'A named byline is a strong trust and news-eligibility signal.', 'publishrank' ),
-			'site_cannibalization'  => __( 'Multiple articles on one keyphrase compete with each other in search.', 'publishrank' ),
 			'site_duplicate_title'  => __( 'Duplicate headlines confuse search engines about which article to rank.', 'publishrank' ),
 			'site_inbound'          => __( 'Orphan pages are crawled rarely and receive little internal authority.', 'publishrank' ),
 		);
@@ -980,7 +852,6 @@ final class ArticleIntelligence {
 		if ( 'good' === $status || 'info' === $status ) {
 			return null; }
 		$map = array(
-			'keyphrase_missing'     => 'keyphrase',
 			'keyphrase_length'      => 'keyphrase',
 			'keyphrase_title'       => 'headline',
 			'keyphrase_intro'       => 'intro',
@@ -1309,7 +1180,6 @@ final class ArticleIntelligence {
 
 	public static function group_labels() {
 		return array(
-			'keyphrase'   => __( 'Focus keyword', 'publishrank' ),
 			'headline'    => __( 'SEO headline', 'publishrank' ),
 			'snippet'     => __( 'Search snippet & meta description', 'publishrank' ),
 			'structure'   => __( 'Content structure', 'publishrank' ),
@@ -1323,7 +1193,6 @@ final class ArticleIntelligence {
 
 	public static function check_label( $id ) {
 		$labels = array(
-			'keyphrase_missing'     => __( 'No focus keyword', 'publishrank' ),
 			'keyphrase_title'       => __( 'Keyphrase not in title', 'publishrank' ),
 			'keyphrase_description' => __( 'Keyphrase not in description', 'publishrank' ),
 			'keyphrase_intro'       => __( 'Keyphrase not in opening paragraph', 'publishrank' ),
@@ -1345,7 +1214,6 @@ final class ArticleIntelligence {
 			'media_weight'          => __( 'Image file size', 'publishrank' ),
 			'media_dimensions'      => __( 'Image dimensions', 'publishrank' ),
 			'media_format'          => __( 'Image format', 'publishrank' ),
-			'site_cannibalization'  => __( 'Keyphrase cannibalization', 'publishrank' ),
 			'site_duplicate_title'  => __( 'Duplicate headline', 'publishrank' ),
 			'site_inbound'          => __( 'Orphan article', 'publishrank' ),
 		);
@@ -1427,10 +1295,7 @@ final class ArticleIntelligence {
 		} else {
 			$out .= '<span class="pr-dash__delta pr-dash__delta--first">' . esc_html__( 'First analysis for this article — scores are saved when the post is saved.', 'publishrank' ) . '</span>';
 		}
-		if ( ! empty( $s['focus_keyword'] ) ) {
-			/* translators: %1$d: number of occurrence; %2$s: dynamic value identified by the surrounding label or sentence; %d: numeric count or measurement described by the message; %3$d: percentage value; %4$d: percentage value. */
-			$out .= '<span class="pr-dash__kpi"><strong>' . esc_html__( 'Focus keyword:', 'publishrank' ) . '</strong> ' . esc_html( $s['focus_keyword'] ) . ' · ' . esc_html( sprintf( __( '%1$d occurrence(s), %2$s%% density, %3$d/%4$d placement signals', 'publishrank' ), $s['focus_keyword_occurrences'], $s['focus_keyword_density'], $s['focus_keyword_coverage'], $s['focus_keyword_coverage_total'] ) ) . '</span>';
-		}
+
 		$out .= '</div></div>';
 
 		/* --- Category bars --- */
@@ -1577,51 +1442,21 @@ final class ArticleIntelligence {
 		$shown    = 0;
 		$out      = '<section class="pr-studio" aria-label="' . esc_attr__( 'SEO fix assistant', 'publishrank' ) . '"><h3 class="pr-dash__subtitle">' . esc_html__( 'Fix assistant', 'publishrank' ) . '</h3>';
 		$out     .= '<p class="pr-studio__note">' . esc_html__( 'Every suggestion below is derived from this article. Review, edit, then apply — nothing changes until you apply it.', 'publishrank' ) . '</p>';
-
-		/* ---- Focus keyword ---- */
-		if ( ! empty( $sug['keyphrases'] ) || $flagged( array( 'keyphrase_missing', 'keyphrase_length' ) ) ) {
-			++$shown;
-			$out .= '<div class="pr-studio__block" data-studio="keyphrase"><h4>' . esc_html__( 'Focus keyword', 'publishrank' ) . '</h4><div class="pr-studio__chips">';
-			foreach ( (array) $sug['keyphrases'] as $k ) {
-				$out .= '<button type="button" class="button button-small pr-studio__chip" data-phrase="' . esc_attr( $k['phrase'] ) . '">' . esc_html( $k['phrase'] ) . ' <span class="pr-intel__count">×' . esc_html( (string) $k['count'] ) . '</span></button>';
-			}
-			$out .= '</div><div class="pr-studio__row"><label class="screen-reader-text" for="pr-studio-keyphrase">' . esc_html__( 'Focus keyword input', 'publishrank' ) . '</label><input type="text" class="pr-studio__input" id="pr-studio-keyphrase" maxlength="100" value="' . esc_attr( $cur( 'keyphrase' ) ) . '" placeholder="' . esc_attr__( 'Select a suggestion or type your own (1–6 words)', 'publishrank' ) . '" /><button type="button" class="button button-primary pr-studio__apply" data-field="keyphrase" data-input="pr-studio-keyphrase">' . esc_html__( 'Apply keyphrase', 'publishrank' ) . '</button><button type="button" class="button pr-studio__regen" data-kind="keyphrase">' . esc_html__( 'Regenerate', 'publishrank' ) . '</button>' . $feedback . '</div></div>';
-		}
-
-		/* ---- SEO headline (also fixes "add the focus keyword to the title") ---- */
+		/* ---- SEO headline ---- */
 		$headline_value = '' !== $sug['headline'] ? $sug['headline'] : ( '' !== $cur( 'seo_title' ) ? $cur( 'seo_title' ) : $cur( 'title' ) );
-		if ( '' !== $sug['headline'] || $flagged( array( 'keyphrase_title', 'headline_length', 'headline_tone', 'snippet_title_width' ) ) ) {
+		if ( '' !== $sug['headline'] || $flagged( array( 'headline_length', 'headline_tone', 'snippet_title_width' ) ) ) {
 			++$shown;
-			$out .= '<div class="pr-studio__block" data-studio="headline"><h4>' . esc_html__( 'SEO headline', 'publishrank' ) . '</h4><p class="pr-studio__why">' . esc_html__( 'The title shown in search results. Your WordPress post title stays unchanged; this saves the SEO title only.', 'publishrank' ) . '</p><div class="pr-studio__row"><label class="screen-reader-text" for="pr-studio-headline">' . esc_html__( 'SEO headline input', 'publishrank' ) . '</label><input type="text" class="pr-studio__input" id="pr-studio-headline" maxlength="255" value="' . esc_attr( $headline_value ) . '" placeholder="' . esc_attr__( 'Write a 30–65 character search title that includes the focus keyword', 'publishrank' ) . '" /><button type="button" class="button button-primary pr-studio__apply" data-field="seo_title" data-input="pr-studio-headline">' . esc_html__( 'Apply SEO title', 'publishrank' ) . '</button><button type="button" class="button pr-studio__regen" data-kind="headline">' . esc_html__( 'Regenerate', 'publishrank' ) . '</button>' . $feedback . '</div></div>';
+			$out .= '<div class="pr-studio__block" data-studio="headline"><h4>' . esc_html__( 'SEO headline', 'publishrank' ) . '</h4><p class="pr-studio__why">' . esc_html__( 'The title shown in search results. Your WordPress post title stays unchanged; this saves the SEO title only.', 'publishrank' ) . '</p><div class="pr-studio__row"><label class="screen-reader-text" for="pr-studio-headline">' . esc_html__( 'SEO headline input', 'publishrank' ) . '</label><input type="text" class="pr-studio__input" id="pr-studio-headline" maxlength="255" value="' . esc_attr( $headline_value ) . '" placeholder="' . esc_attr__( 'Write a 30–65 character search title that summarizes the article', 'publishrank' ) . '" /><button type="button" class="button button-primary pr-studio__apply" data-field="seo_title" data-input="pr-studio-headline">' . esc_html__( 'Apply SEO title', 'publishrank' ) . '</button><button type="button" class="button pr-studio__regen" data-kind="headline">' . esc_html__( 'Regenerate', 'publishrank' ) . '</button>' . $feedback . '</div></div>';
 		}
 
 		/* ---- Meta description ---- */
 		$desc_value = '' !== $cur( 'description' ) ? $cur( 'description' ) : (string) $sug['description'];
-		if ( '' !== $desc_value || $flagged( array( 'snippet_description', 'keyphrase_description' ) ) ) {
+		if ( '' !== $desc_value || $flagged( array( 'snippet_description' ) ) ) {
 			++$shown;
 			$count = self::len( $desc_value );
-			$out  .= '<div class="pr-studio__block" data-studio="description"><h4>' . esc_html__( 'Meta description', 'publishrank' ) . '</h4><div class="pr-studio__row pr-studio__row--stack"><label class="screen-reader-text" for="pr-studio-description">' . esc_html__( 'Meta description input', 'publishrank' ) . '</label><textarea class="pr-studio__textarea" id="pr-studio-description" aria-describedby="pr-studio-description-count" maxlength="300" rows="3" placeholder="' . esc_attr__( 'Write 70–160 characters that summarize the article and include the focus keyword', 'publishrank' ) . '">' . esc_textarea( $desc_value ) . '</textarea><span class="pr-studio__count" id="pr-studio-description-count">' . esc_html( sprintf( _n( '%d character (target 70–160)', '%d characters (target 70–160)', $count, 'publishrank' ), $count ) ) . '</span></div><div class="pr-studio__row"><button type="button" class="button button-primary pr-studio__apply" data-field="description" data-input="pr-studio-description">' . esc_html__( 'Apply description', 'publishrank' ) . '</button><button type="button" class="button pr-studio__regen" data-kind="description">' . esc_html__( 'Regenerate', 'publishrank' ) . '</button><button type="button" class="button pr-studio__cancel" data-target="pr-studio-description">' . esc_html__( 'Cancel', 'publishrank' ) . '</button>' . $feedback . '</div></div>';
+			$out  .= '<div class="pr-studio__block" data-studio="description"><h4>' . esc_html__( 'Meta description', 'publishrank' ) . '</h4><div class="pr-studio__row pr-studio__row--stack"><label class="screen-reader-text" for="pr-studio-description">' . esc_html__( 'Meta description input', 'publishrank' ) . '</label><textarea class="pr-studio__textarea" id="pr-studio-description" aria-describedby="pr-studio-description-count" maxlength="300" rows="3" placeholder="' . esc_attr__( 'Write 70–160 characters that summarize the article ', 'publishrank' ) . '">' . esc_textarea( $desc_value ) . '</textarea><span class="pr-studio__count" id="pr-studio-description-count">' . esc_html( sprintf( _n( '%d character (target 70–160)', '%d characters (target 70–160)', $count, 'publishrank' ), $count ) ) . '</span></div><div class="pr-studio__row"><button type="button" class="button button-primary pr-studio__apply" data-field="description" data-input="pr-studio-description">' . esc_html__( 'Apply description', 'publishrank' ) . '</button><button type="button" class="button pr-studio__regen" data-kind="description">' . esc_html__( 'Regenerate', 'publishrank' ) . '</button><button type="button" class="button pr-studio__cancel" data-target="pr-studio-description">' . esc_html__( 'Cancel', 'publishrank' ) . '</button>' . $feedback . '</div></div>';
 		}
 
-		/* ---- Opening paragraph ---- */
-		$intro_value = isset( $sug['intro'] ) ? (string) $sug['intro'] : '';
-		if ( '' !== $intro_value && $flagged( array( 'keyphrase_intro' ) ) ) {
-			++$shown;
-			$out .= '<div class="pr-studio__block" data-studio="intro"><h4>' . esc_html__( 'Opening paragraph', 'publishrank' ) . '</h4><p class="pr-studio__why">' . esc_html__( 'Your first paragraph with a short lead-in that states the focus keyword. Edit it, then insert it — in the block editor it replaces the first paragraph; otherwise copy it into your content.', 'publishrank' ) . '</p><div class="pr-studio__row pr-studio__row--stack"><label class="screen-reader-text" for="pr-studio-intro">' . esc_html__( 'Opening paragraph input', 'publishrank' ) . '</label><textarea class="pr-studio__textarea" id="pr-studio-intro" rows="4">' . esc_textarea( $intro_value ) . '</textarea></div><div class="pr-studio__row"><button type="button" class="button button-primary pr-studio__intro-apply" data-input="pr-studio-intro">' . esc_html__( 'Insert as first paragraph', 'publishrank' ) . '</button><button type="button" class="button pr-studio__copy-text" data-input="pr-studio-intro">' . esc_html__( 'Copy text', 'publishrank' ) . '</button>' . $feedback . '</div></div>';
-		}
-
-		/* ---- Image alt text: every image without alt gets an input, with or without a suggestion ---- */
-		if ( ! empty( $sug['alt'] ) ) {
-			++$shown;
-			$out .= '<div class="pr-studio__block" data-studio="alt"><h4>' . esc_html__( 'Image alt text', 'publishrank' ) . '</h4><p class="pr-studio__why">' . esc_html__( 'These images are missing alt text in this article. PublishRank first uses the latest Media Library alt text, then the caption or filename. Review it, edit it to override it, and save it to the article image.', 'publishrank' ) . '</p>';
-			foreach ( $sug['alt'] as $i => $item ) {
-				$att      = (int) $item['attachment_id'];
-				$field_id = 'pr-studio-alt-' . sanitize_html_class( (string) $i );
-				$src      = isset( $item['src'] ) ? (string) $item['src'] : '';
-				$out     .= '<div class="pr-studio__row pr-studio__alt" data-index="' . esc_attr( (string) $i ) . '"><label class="pr-studio__file" for="' . esc_attr( $field_id ) . '">' . esc_html( $item['identifier'] ) . '</label><input id="' . esc_attr( $field_id ) . '" type="text" class="pr-studio__input" maxlength="255" value="' . esc_attr( $item['suggestion'] ) . '" placeholder="' . esc_attr__( 'Add alt text, e.g. “Soldiers advancing across a snowy field”', 'publishrank' ) . '" /><button type="button" class="button button-small pr-studio__apply" data-field="alt" data-input="' . esc_attr( $field_id ) . '" data-attachment="' . esc_attr( (string) $att ) . '" data-src="' . esc_attr( $src ) . '">' . esc_html__( 'Save alt text', 'publishrank' ) . '</button>' . $feedback . '</div>';
-			}
-			$out .= '</div>';
-		}
 
 		/* ---- Internal links ---- */
 		if ( ! empty( $sug['links'] ) ) {

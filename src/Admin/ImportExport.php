@@ -49,6 +49,8 @@ final class ImportExport {
 				'publishrank_image_license_url',
 				'publishrank_breadcrumbs_enabled',
 				'publishrank_breadcrumb_schema_enabled',
+				'publishrank_breadcrumb_frontend_override',
+				'publishrank_org_website_schema_enabled',
 				'publishrank_breadcrumbs_separator',
 			'publishrank_error_mode',
 			'publishrank_breadcrumb_style',
@@ -64,6 +66,9 @@ final class ImportExport {
 			'publishrank_breadcrumb_fallback_label',
 			'publishrank_breadcrumb_fallback_url',
 			'publishrank_breadcrumb_log_errors',
+			'publishrank_hide_visible_site_title',
+			'publishrank_hide_visible_site_description',
+			'publishrank_override_wp_identity',
 			'publishrank_seo_multilingual_enabled',
 			'publishrank_seo_hreflang_map',
 			'publishrank_seo_hreflang_mirror',
@@ -124,7 +129,7 @@ final class ImportExport {
 				wp_die( esc_html__( 'You are not allowed to import PublishRank settings.', 'publishrank' ), 403 );
 			}
 			check_admin_referer( 'publishrank_seo_import' );
-			// Title templates contain %%tokens%%; protect "%" so the text sanitizer does not strip hex-looking pairs such as %%date%%.
+			// Title templates contain %%tokens%%; sanitize() below shields them from the text sanitizer.
 			$raw  = isset( $_POST['publishrank_seo_json'] ) ? wp_strip_all_tags( wp_unslash( $_POST['publishrank_seo_json'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_admin_referer() above.
 			$data = json_decode( $raw, true ); // Every decoded value is sanitized per option key in sanitize() below.
 			if ( ! is_array( $data ) || ! in_array( ( $data['_schema'] ?? '' ), array( 'publishrank/v1', 'publishrank/v2' ), true ) ) {
@@ -137,7 +142,7 @@ final class ImportExport {
 				update_option( $key, $this->sanitize( $key, $value ), false );
 			}
 			update_option( 'publishrank_seo_cache_epoch', time(), false );
-			wp_safe_redirect( add_query_arg( 'publishrank_seo_imported', '1', admin_url( 'admin.php?page=publishrank-seo' ) ) );
+			wp_safe_redirect( add_query_arg( 'publishrank_seo_imported', '1', admin_url( 'admin.php?page=publishrank' ) ) . '#pr-settings-portability' );
 			exit;
 		}
 
@@ -176,6 +181,9 @@ final class ImportExport {
 			if ( 'publishrank_seo_x_default_url' === $key ) {
 				return esc_url_raw( (string) $value );
 			}
+			if ( in_array( $key, array( 'publishrank_org_website_schema_enabled', 'publishrank_breadcrumbs_enabled', 'publishrank_breadcrumb_schema_enabled', 'publishrank_breadcrumb_frontend_override' ), true ) ) {
+				return \PublishRankSEO\Core\OutputSettings::is_on_value( $value ) ? 1 : 0;
+			}
 			if ( 'publishrank_seo_multilingual_enabled' === $key || 'publishrank_seo_news_enabled' === $key || 'publishrank_seo_news_keywords' === $key ) {
 				return (bool) $value;
 			}
@@ -213,7 +221,8 @@ final class ImportExport {
 						! empty( $redirect['regex'] )
 					);
 					if ( ! is_wp_error( $rule ) ) {
-						$redirects[] = $rule;
+						$window = \PublishRankSEO\Redirect\RedirectStore::schedule_window( $redirect['start_at'] ?? 0, $redirect['end_at'] ?? 0 );
+						if ( ! is_wp_error( $window ) ) { $rule['start_at'] = $window['start_at']; $rule['end_at'] = $window['end_at']; $redirects[] = $rule; }
 					}
 				}
 				return array_slice( $redirects, 0, \PublishRankSEO\Redirect\RedirectStore::MAX_RULES );
@@ -231,6 +240,14 @@ final class ImportExport {
 					),
 					-500
 				) : array();
+			}
+			if ( 0 === strpos( $key, 'publishrank_seo_title_template_' ) || in_array( $key, array( 'publishrank_home_title', 'publishrank_home_description' ), true ) ) {
+				// Templates contain %%variables%%; sanitize_text_field() alone would corrupt %%date%% and %%category%%.
+				return \PublishRankSEO\Meta\TemplateResolver::sanitize_template( $value, 320 );
+			}
+			if ( 'publishrank_breadcrumbs_separator' === $key ) {
+				$separator = \PublishRankSEO\SEO\BreadcrumbSeparators::normalize( $value );
+				return null === $separator ? \PublishRankSEO\SEO\BreadcrumbSeparators::current() : $separator;
 			}
 			return sanitize_text_field( (string) $value );
 		}

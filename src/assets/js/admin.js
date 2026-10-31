@@ -329,4 +329,34 @@
 	$(document).on('change', '#publishrank-select-all', function () {
 		$('input[name="post_ids[]"]').prop('checked', this.checked);
 	});
+	$(function () {
+		var $search = $('#pr-tools-search');
+		var $category = $('#pr-tools-category');
+		if (!$search.length || !$category.length) { return; }
+		var $groups = $('.pr-tool-group[data-tool-category]');
+		var $count = $('#pr-tools-count');
+		var $empty = $('#pr-tools-empty');
+		function filterTools() {
+			var query = String($search.val() || '').toLowerCase().trim();
+			var category = String($category.val() || 'all');
+			var visible = 0;
+			$groups.each(function () {
+				var $group = $(this);
+				var groupMatches = category === 'all' || $group.data('tool-category') === category;
+				var groupVisible = 0;
+				$group.find('[data-tool-search]').each(function () {
+					var matches = groupMatches && (!query || String($(this).data('tool-search') || '').indexOf(query) !== -1);
+					$(this).toggle(matches);
+					if (matches) { groupVisible++; visible++; }
+				});
+				$group.toggle(groupVisible > 0);
+			});
+			$count.text(visible + ' ' + (visible === 1 ? 'tool' : 'tools'));
+			$empty.prop('hidden', visible !== 0);
+		}
+		$search.on('input', filterTools);
+		$category.on('change', filterTools);
+		$('#pr-tools-clear').on('click', function () { $search.val(''); $category.val('all'); filterTools(); $search.trigger('focus'); });
+		filterTools();
+	});
 })(jQuery);

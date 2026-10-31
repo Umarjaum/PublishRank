@@ -48,7 +48,16 @@ final class SeoData {
 		$robots_set     = (string) PostMeta::get( $id, PostMeta::ROBOTS, '' );
 
 		$title       = $meta->title_for_post( $id );
-		$description = '' !== $desc_override ? self::clean( $desc_override, 320 ) : self::auto_description( $post );
+		// The override is a template: resolve %%variables%% exactly as the front-end meta description does.
+		$description = '' !== $desc_override ? self::clean( $meta->resolve_template( $desc_override, $id, 'description' ), 320 ) : self::auto_description( $post );
+		if ( '' === $description ) {
+			$description = self::auto_description( $post );
+		}
+		// Social overrides are templates too: resolve %%variables%% so raw tokens never reach og:/twitter: tags.
+		$og_title       = '' !== $ogt_override ? self::clean( $meta->resolve_template( $ogt_override, $id, 'title' ), 255 ) : '';
+		$og_title       = '' !== $og_title ? $og_title : $title;
+		$og_description = '' !== $ogd_override ? self::clean( $meta->resolve_template( $ogd_override, $id, 'description' ), 320 ) : '';
+		$og_description = '' !== $og_description ? $og_description : $description;
 		$canonical   = $meta->canonical_for_post( $id );
 		$image       = self::image_for_post( $id );
 
@@ -58,8 +67,8 @@ final class SeoData {
 			'description'    => $description,
 			'canonical'      => $canonical,
 			'robots'         => '' !== $robots_set ? $robots_set : (string) get_option( 'publishrank_seo_default_robots', 'index,follow' ),
-			'og_title'       => '' !== $ogt_override ? self::clean( $ogt_override, 255 ) : $title,
-			'og_description' => '' !== $ogd_override ? self::clean( $ogd_override, 320 ) : $description,
+			'og_title'       => $og_title,
+			'og_description' => $og_description,
 			'image'          => $image,
 			'sources'        => array(
 				'title'       => '' !== $title_override ? 'override' : 'auto',
