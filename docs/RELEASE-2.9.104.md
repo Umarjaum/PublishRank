@@ -4,6 +4,8 @@
 
 PublishRank 2.9.104 is a navigation, visibility, and reliability release. It updates the uploaded 2.9.103 code baseline, resolves the dashboard deep-link authorization regression, makes the WordPress admin menu easier to scan, and prevents unresolved SEO template tokens from leaking into the public Schema Aggregator.
 
+The follow-up 2.9.104 maintenance commit also makes the breadcrumb root `Home` by default, linked to the actual site homepage. Explicit custom first-label values remain supported, while publication identity stays unchanged in titles, Open Graph, Organization/WebSite schema, and other SEO output.
+
 ## User-visible changes
 
 ### Expandable admin navigation
@@ -31,6 +33,10 @@ The dashboard cards use direct `admin.php?page=...` links. WordPress authorizes 
 ### Schema Aggregator fix
 
 The Schema Aggregator now resolves descriptions through `Meta\TemplateResolver` with a post context. Values such as `%%focus_keyword%%` and `%%excerpt%%` are therefore converted to their real content before the public JSON-LD response is cached. Empty or punctuation-only results fall back to the post excerpt/automatic description path.
+
+### Home-first breadcrumbs
+
+The breadcrumb engine now starts with `Home → ...` rather than the publication name. Category ancestors, parent pages, archive labels, current-page labels, separators, visibility controls, custom root labels, and the shared BreadcrumbList source remain intact. The front page still omits a redundant trail by default.
 
 ## Files changed
 

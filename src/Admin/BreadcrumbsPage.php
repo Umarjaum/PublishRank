@@ -210,7 +210,7 @@ final class BreadcrumbsPage {
 		}
 		echo '</select> <label for="pr-bc-hook">' . esc_html__( 'Theme hook name', 'publishrank' ) . '</label> <input type="text" id="pr-bc-hook" name="publishrank_breadcrumb_hook" value="' . esc_attr( (string) get_option( 'publishrank_breadcrumb_hook', '' ) ) . '" class="regular-text code" /></td></tr>';
 
-			echo '<tr><th scope="row"><label for="pr-bc-home">' . esc_html__( 'First crumb label', 'publishrank' ) . '</label></th><td><input type="text" id="pr-bc-home" name="publishrank_breadcrumb_home_label" value="' . esc_attr( (string) get_option( 'publishrank_breadcrumb_home_label', '' ) ) . '" class="regular-text" /><p class="description">' . esc_html__( 'Leave empty to use the site name. The hierarchy follows the post’s primary category, parent pages, taxonomy ancestors and archives.', 'publishrank' ) . '</p></td></tr>';
+				echo '<tr><th scope="row"><label for="pr-bc-home">' . esc_html__( 'First crumb label', 'publishrank' ) . '</label></th><td><input type="text" id="pr-bc-home" name="publishrank_breadcrumb_home_label" value="' . esc_attr( (string) get_option( 'publishrank_breadcrumb_home_label', '' ) ) . '" class="regular-text" placeholder="' . esc_attr__( 'Home', 'publishrank' ) . '" /><p class="description">' . esc_html__( 'Leave empty to use Home and the site homepage URL. Enter a custom label only when you intentionally want a different root label. The hierarchy follows the post’s primary category, parent pages, taxonomy ancestors and archives.', 'publishrank' ) . '</p></td></tr>';
 			$style = sanitize_key( (string) get_option( 'publishrank_breadcrumb_style', 'plain' ) );
 			$size  = sanitize_key( (string) get_option( 'publishrank_breadcrumb_size', 'medium' ) );
 			echo '<tr><th scope="row">' . esc_html__( 'Appearance', 'publishrank' ) . '</th><td><label for="pr-bc-style">' . esc_html__( 'Look', 'publishrank' ) . '</label> <select id="pr-bc-style" name="publishrank_breadcrumb_style">';
@@ -288,7 +288,7 @@ final class BreadcrumbsPage {
 		private function preview_items() {
 			$items = array(
 				array(
-					'name' => (string) ( get_option( 'publishrank_breadcrumb_home_label', '' ) ?: \PublishRankSEO\Core\PublicationProfile::publication_name() ),
+						'name' => (string) ( get_option( 'publishrank_breadcrumb_home_label', '' ) ?: __( 'Home', 'publishrank' ) ),
 					'url'  => home_url( '/' ),
 				),
 			);

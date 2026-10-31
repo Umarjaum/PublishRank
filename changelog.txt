@@ -1,4 +1,5 @@
 ## 2.9.104
+- Corrected the breadcrumb root to `Home` using the actual homepage URL; publication identity remains unchanged everywhere else.
 - Added expandable, keyboard-accessible PublishRank admin submenu groups.
 - Added distinct colored Dashicons so tool icons remain visible against the WordPress admin menu background.
 - Preserved every registered submenu destination to prevent WordPress's generic authorization error on dashboard deep links.

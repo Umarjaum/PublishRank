@@ -203,7 +203,8 @@ return array(
 					pr_same( $el['item'], esc_url_raw( $el['item'] ), 'item is a clean URL' );
 				}
 			}
-			pr_same( array( 'Test Site', 'News', 'Hello World' ), $names, 'names are the real hierarchy' );
+			pr_same( array( 'Home', 'News', 'Hello World' ), $names, 'names are the real hierarchy with Home as the root' );
+			pr_same( esc_url_raw( home_url( '/' ) ), esc_url_raw( $list['itemListElement'][0]['item'] ), 'Home uses the actual homepage URL' );
 			$encoded = wp_json_encode( $list );
 			foreach ( array( '→', '›', '⸺' ) as $symbol ) {
 				pr_not_contains( $symbol, $encoded, 'separator ' . $symbol . ' must not leak into JSON-LD' );

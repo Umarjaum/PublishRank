@@ -120,6 +120,7 @@ Other website links in the administration interface (including the Schema.org vo
 == Changelog ==
 
 = 2.9.104 =
+* Corrected the default breadcrumb root to "Home" with the site's actual homepage URL. Publication identity remains unchanged in document titles, publisher/WebSite schema, Open Graph, and other SEO output.
 * Added an expandable PublishRank admin navigation with keyboard-accessible dropdown groups for Content & publishing, Newsroom, Search & discovery, Measure & maintain, and Settings & support.
 * Added distinct high-contrast Dashicons with colored backgrounds for PublishRank tools so icons remain visible against the WordPress admin menu background.
 * Fixed the dashboard authorization regression by retaining all registered PublishRank submenu destinations in WordPress's submenu registry.

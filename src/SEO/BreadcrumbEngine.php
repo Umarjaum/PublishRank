@@ -1,7 +1,6 @@
 <?php
 namespace PublishRankSEO\SEO;
 
-use PublishRankSEO\Core\PublicationProfile;
 use PublishRankSEO\Meta\MetaGenerator;
 use PublishRankSEO\Meta\PostMeta;
 
@@ -452,10 +451,10 @@ final class BreadcrumbEngine {
 	private function build_items( $object_id ) {
 		$items       = array();
 		$label       = trim( (string) get_option( 'publishrank_breadcrumb_home_label', '' ) );
-		$publication = '' !== $label ? $label : PublicationProfile::publication_name();
-		if ( '' === trim( (string) $publication ) ) {
-			$publication = \PublishRankSEO\Core\PublicationProfile::publication_name(); }
-		if ( ! $this->add_item( $items, $publication, PublicationProfile::primary_url(), array( 'source' => 'publication' ) ) && 'disable' === $this->mode() ) {
+		// Home is the breadcrumb root. Publication identity remains available to document titles,
+		// publisher/WebSite schema and other SEO output, but is not a breadcrumb item by default.
+		$home_label = '' !== $label ? $label : __( 'Home', 'publishrank' );
+		if ( ! $this->add_item( $items, $home_label, home_url( '/' ), array( 'source' => 'home' ) ) && 'disable' === $this->mode() ) {
 			return array(); }
 		$current = '';
 		if ( is_front_page() && ! is_singular() ) {
