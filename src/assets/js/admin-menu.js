@@ -45,7 +45,7 @@
 	};
 
 	function addToolIcon(item) {
-		var link = item.querySelector(':scope > a');
+		var link = item.querySelector('a');
 		if (!link || link.querySelector('.pr-submenu-icon')) {
 			return;
 		}
@@ -66,10 +66,12 @@
 		var currentGroup = null;
 		var groupNumber = 0;
 		items.forEach(function (item) {
-			var marker = item.querySelector(':scope > a .pr-submenu-group');
+			var link = item.querySelector('a');
+			var marker = link ? link.querySelector('.pr-submenu-group') : null;
 			if (marker) {
 				groupNumber += 1;
 				currentGroup = 'group-' + groupNumber;
+				var groupKey = currentGroup;
 				var title = marker.textContent.trim();
 				marker.remove();
 				item.id = currentGroup;
@@ -85,7 +87,7 @@
 					var expanded = toggle.getAttribute('aria-expanded') === 'true';
 					toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
 					Array.prototype.slice.call(menu.children).forEach(function (candidate) {
-						if (candidate.getAttribute('data-pr-group') === currentGroup) {
+					if (candidate.getAttribute('data-pr-group') === groupKey) {
 							candidate.hidden = expanded;
 						}
 					});
@@ -99,7 +101,7 @@
 	}
 
 	function init() {
-		var menu = document.querySelector('#toplevel_page_publishrank-seo-dashboard > .wp-submenu');
+		var menu = document.querySelector('#toplevel_page_publishrank-seo-dashboard > .wp-submenu') || document.querySelector('#toplevel_page_publishrank-seo-dashboard .wp-submenu');
 		if (!menu) {
 			return;
 		}

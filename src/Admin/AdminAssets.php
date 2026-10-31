@@ -33,8 +33,12 @@ final class AdminAssets {
 	public function menu_alignment_css() {
 		if ( function_exists( 'is_admin_bar_showing' ) && ! is_admin_bar_showing() && ! is_admin() ) {
 			return; }
+		if ( is_admin() ) {
+			wp_enqueue_style( 'dashicons' );
+			$menu_script = PUBLISHRANK_SEO_PATH . 'assets/js/admin-menu.js';
+			wp_enqueue_script( 'publishrank-seo-menu', Branding::asset_url( 'js/admin-menu.js' ), array(), Branding::version() . '.' . ( file_exists( $menu_script ) ? (string) filemtime( $menu_script ) : '0' ), true );
+		}
 		wp_enqueue_style( 'publishrank-seo-menu', Branding::asset_url( 'css/admin-menu.css' ), array(), Branding::version() );
-		wp_enqueue_script( 'publishrank-seo-menu', Branding::asset_url( 'js/admin-menu.js' ), array(), Branding::version(), true );
 	}
 
 	public function enqueue() {

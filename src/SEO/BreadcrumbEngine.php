@@ -223,11 +223,19 @@ final class BreadcrumbEngine {
 			add_filter( 'the_content', array( $this, 'prepend' ), 20 );
 			self::$registered[] = 'the_content';
 		}
-		if ( ! $singular ) {
-			// Classic archives and the posts page: before the first post of the main loop.
-			add_action( 'loop_start', array( $this, 'on_loop_start' ), 5 );
-			self::$registered[] = 'loop_start';
-		}
+			if ( ! $singular ) {
+				// Classic archives and the posts page: before the first post of the main loop.
+				add_action( 'loop_start', array( $this, 'on_loop_start' ), 5 );
+				self::$registered[] = 'loop_start';
+			} else {
+				// Classic themes normally print the headline inside the main loop. Prefer loop_start
+				// so the trail is above that headline, while the content fallback supports themes
+				// that render the queried post without firing loop_start.
+				add_action( 'loop_start', array( $this, 'on_loop_start' ), 5 );
+				self::$registered[] = 'loop_start';
+				add_filter( 'the_content', array( $this, 'prepend' ), 20 );
+				self::$registered[] = 'the_content';
+			}
 		// Elementor (documented hooks): title widgets of theme-builder templates, and the Canvas / Header-Footer page templates.
 		add_filter( 'elementor/widget/render_content', array( $this, 'before_elementor_title' ), 10, 2 );
 		add_action( 'elementor/page_templates/canvas/before_content', array( $this, 'echo_once' ), 5 );
@@ -301,9 +309,9 @@ final class BreadcrumbEngine {
 	}
 
 	/** Classic archives and the posts page: print before the first post of the MAIN loop only. */
-	public function on_loop_start( $query = null ) {
-		if ( ! $query instanceof \WP_Query || ! $query->is_main_query() || is_singular() ) {
-			return; }
+		public function on_loop_start( $query = null ) {
+			if ( ! $query instanceof \WP_Query || ! $query->is_main_query() ) {
+				return; }
 		$this->echo_once();
 	}
 

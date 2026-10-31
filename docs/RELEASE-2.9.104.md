@@ -6,6 +6,8 @@ PublishRank 2.9.104 is a navigation, visibility, and reliability release. It upd
 
 The follow-up 2.9.104 maintenance commit also makes the breadcrumb root `Home` by default, linked to the actual site homepage. Explicit custom first-label values remain supported, while publication identity stays unchanged in titles, Open Graph, Organization/WebSite schema, and other SEO output.
 
+The latest maintenance commit also loads the navigation script and Dashicons across wp-admin, fixes independent dropdown handlers for each menu group, and prefers main-loop placement for classic singular pages so automatic breadcrumbs appear above the headline path.
+
 ## User-visible changes
 
 ### Expandable admin navigation

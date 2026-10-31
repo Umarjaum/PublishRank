@@ -65,6 +65,15 @@ return array(
 		pr_contains( '>Parent<', $html, 'parent crumb' );
 		pr_contains( 'aria-current="page">Child<', $html, 'current crumb' );
 	},
+	'automatic classic placement prints at loop start before the headline path' => function () {
+		$id = pr08_post();
+		pr08_go( get_permalink( $id ), 'auto' );
+		ob_start();
+		do_action( 'loop_start', $GLOBALS['wp_query'] );
+		$before_headline = ob_get_clean();
+		pr_same( 1, pr08_navs( $before_headline ), 'automatic trail is emitted at loop start' );
+		pr_contains( '>Home<', $before_headline, 'automatic trail starts with Home' );
+	},
 	'block theme: the trail goes before the post title block, never inside a Query Loop, and falls back to post content' => function () {
 		$id = pr08_post();
 		pr08_go( get_permalink( $id ) );

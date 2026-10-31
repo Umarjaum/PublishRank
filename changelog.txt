@@ -1,4 +1,6 @@
 ## 2.9.104
+- Ensured the colored admin tool icons load on every wp-admin screen with Dashicons available, and fixed dropdown group handlers for multiple navigation groups.
+- Automatic classic-theme breadcrumbs now print at main-loop start, above the headline path, with the content filter retained as a fallback for non-standard themes.
 - Corrected the breadcrumb root to `Home` using the actual homepage URL; publication identity remains unchanged everywhere else.
 - Added expandable, keyboard-accessible PublishRank admin submenu groups.
 - Added distinct colored Dashicons so tool icons remain visible against the WordPress admin menu background.
