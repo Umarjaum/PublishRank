@@ -9,6 +9,7 @@ $controller = $read( 'src/Sitemap/SitemapController.php' );
 $controller_source = $controller;
 $providers = array( 'AbstractPostProvider.php', 'AuthorSitemapProvider.php', 'TaxonomySitemapProvider.php', 'AttachmentSitemapProvider.php' );
 $graph = $read( 'src/Schema/GraphOutput.php' );
+$output_settings = $read( 'src/Core/OutputSettings.php' );
 $settings = $read( 'src/Admin/SettingsPage.php' );
 $head = $read( 'src/Meta/HeadOutput.php' );
 $meta = $read( 'src/Meta/MetaGenerator.php' );
@@ -23,8 +24,10 @@ if ( false === strpos( $engine, 'SitemapCursorStore::version' ) || false === str
 if ( false === strpos( $engine, 'return null' ) || false === strpos( $controller_source, 'Retry-After: 60' ) ) { exit( 8 ); }
 if ( false === strpos( $controller, 'SitemapUrls::shard_prefix' ) || false === strpos( $controller, '([a-z-]+)-sitemap-([0-9]+)' ) ) { exit( 6 ); }
 foreach ( array( 'publishrank_schema_enabled', 'publishrank_schema_org_description', 'publishrank_schema_legal_name', 'publishrank_schema_founding_date' ) as $needle ) { if ( false === strpos( $settings, $needle ) ) { exit( 9 ); } }
-foreach ( array( 'foundingDate', 'PostalAddress', 'legalName', 'publishrank_schema_enabled' ) as $needle ) { if ( false === strpos( $graph, $needle ) ) { exit( 10 ); } }
-foreach ( array( 'publishrank_meta_enabled', 'og:image:width', 'og:image:height', 'og:image:type', 'article:publisher', 'image_details', 'publisher_profile' ) as $needle ) { if ( false === strpos( $head, $needle ) ) { exit( 11 ); } }
+foreach ( array( 'foundingDate', 'PostalAddress', 'legalName' ) as $needle ) { if ( false === strpos( $graph, $needle ) ) { exit( 10 ); } }
+if ( false === strpos( $output_settings, 'publishrank_schema_enabled' ) ) { exit( 10 ); }
+foreach ( array( 'og:image:width', 'og:image:height', 'og:image:type', 'article:publisher', 'image_details', 'publisher_profile' ) as $needle ) { if ( false === strpos( $head, $needle ) ) { exit( 11 ); } }
+if ( false === strpos( $output_settings, 'publishrank_meta_enabled' ) ) { exit( 11 ); }
 foreach ( array( 'publishrank_home_title', 'publishrank_home_description', 'noindex_author_archives', 'noindex_date_archives' ) as $needle ) { if ( false === strpos( $meta, $needle ) ) { exit( 12 ); } }
 foreach ( array( 'OG_IMAGE_ALT', 'TWITTER_CREATOR', 'ACCESSIBLE_FOR_FREE', 'CONTENT_TIER', 'CITATIONS' ) as $needle ) { if ( false === strpos( $post_meta, $needle ) ) { exit( 13 ); } }
 foreach ( array( 'google-site-verification', 'msvalidate.01', 'yandex-verification', 'baidu-site-verification', 'p:domain_verify' ) as $tag ) { if ( false === strpos( $read( 'src/SEO/SiteConnections.php' ), $tag ) ) { exit( 7 ); } }

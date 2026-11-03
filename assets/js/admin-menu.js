@@ -1,4 +1,4 @@
-/* PublishRank admin navigation: collapsible task groups and visible, colored tool icons. */
+/* PublishRank admin navigation: collapsible task groups and uniform tool icons (no coloured tiles). */
 (function () {
 	'use strict';
 
@@ -12,36 +12,38 @@
 	}
 
 	var icons = {
-		'publishrank-seo-dashboard': ['dashicons-dashboard', 'blue'],
-		'publishrank-seo-score': ['dashicons-chart-area', 'violet'],
-		'publishrank-author-expertise': ['dashicons-admin-users', 'teal'],
-		'publishrank-publisher-toolkit': ['dashicons-admin-tools', 'orange'],
-		'publishrank-image-optimizer': ['dashicons-format-image', 'pink'],
-		'publishrank-seo-internal-links': ['dashicons-admin-links', 'green'],
-		'publishrank-link-intelligence': ['dashicons-networking', 'cyan'],
-		'publishrank-local-seo': ['dashicons-location', 'red'],
-		'uj-newsroom': ['dashicons-media-document', 'purple'],
-		'publishrank-search-console': ['dashicons-search', 'blue'],
-		'publishrank-sitemap-health': ['dashicons-sitemap', 'indigo'],
-		'publishrank-indexnow': ['dashicons-upload', 'green'],
-		'publishrank-baidu': ['dashicons-globe', 'orange'],
-		'publishrank-verification': ['dashicons-yes-alt', 'teal'],
-		'publishrank-schema': ['dashicons-editor-code', 'violet'],
-		'publishrank-breadcrumbs': ['dashicons-menu-alt', 'pink'],
-		'publishrank-seo-robots': ['dashicons-shield', 'red'],
-		'publishrank-crawl-optimization': ['dashicons-performance', 'cyan'],
-		'publishrank-llms-txt': ['dashicons-database-view', 'indigo'],
-		'publishrank-analytics': ['dashicons-chart-line', 'blue'],
-		'publishrank-insights': ['dashicons-lightbulb', 'yellow'],
-		'publishrank-seo-redirects': ['dashicons-randomize', 'orange'],
-		'publishrank-seo-404': ['dashicons-warning', 'red'],
-		'publishrank-traffic-guard': ['dashicons-lock', 'purple'],
-		'publishrank-wp-hide-login': ['dashicons-hidden', 'slate'],
-		'publishrank-seo-config-history': ['dashicons-backup', 'teal'],
-		'publishrank-seo-diagnostics': ['dashicons-heart', 'green'],
-		'publishrank': ['dashicons-admin-settings', 'slate'],
-		'publishrank-onboarding': ['dashicons-welcome-learn-more', 'yellow'],
-		'publishrank-documentation': ['dashicons-book', 'cyan']
+		'publishrank-seo-dashboard': ['dashicons-dashboard'],
+		'publishrank-seo-score': ['dashicons-chart-area'],
+		'publishrank-author-expertise': ['dashicons-admin-users'],
+		'publishrank-publisher-toolkit': ['dashicons-admin-tools'],
+		'publishrank-image-optimizer': ['dashicons-format-image'],
+		'publishrank-seo-internal-links': ['dashicons-admin-links'],
+		'publishrank-link-intelligence': ['dashicons-networking'],
+		'publishrank-local-seo': ['dashicons-location'],
+		'uj-newsroom': ['dashicons-media-document'],
+		'uj-newsroom-notifications': ['dashicons-bell'],
+		'publishrank-search-console': ['dashicons-search'],
+		'publishrank-sitemap-health': ['dashicons-sitemap'],
+		'publishrank-indexnow': ['dashicons-upload'],
+		'publishrank-baidu': ['dashicons-globe'],
+		'publishrank-google-preferred-sources': ['dashicons-star-filled'],
+		'publishrank-verification': ['dashicons-yes-alt'],
+		'publishrank-schema': ['dashicons-editor-code'],
+		'publishrank-breadcrumbs': ['dashicons-menu-alt'],
+		'publishrank-seo-robots': ['dashicons-shield'],
+		'publishrank-crawl-optimization': ['dashicons-performance'],
+		'publishrank-llms-txt': ['dashicons-database-view'],
+		'publishrank-analytics': ['dashicons-chart-line'],
+		'publishrank-insights': ['dashicons-lightbulb'],
+		'publishrank-seo-redirects': ['dashicons-randomize'],
+		'publishrank-seo-404': ['dashicons-warning'],
+		'publishrank-traffic-guard': ['dashicons-lock'],
+		'publishrank-wp-hide-login': ['dashicons-hidden'],
+		'publishrank-seo-config-history': ['dashicons-backup'],
+		'publishrank-seo-diagnostics': ['dashicons-heart'],
+		'publishrank': ['dashicons-admin-settings'],
+		'publishrank-onboarding': ['dashicons-welcome-learn-more'],
+		'publishrank-documentation': ['dashicons-book']
 	};
 
 	function addToolIcon(item) {
@@ -50,13 +52,15 @@
 			return;
 		}
 		var slug = pageSlug(link);
-		var config = icons[slug] || ['dashicons-admin-generic', 'slate'];
+		var config = icons[slug] || ['dashicons-admin-generic'];
 		var icon = document.createElement('span');
-		icon.className = 'pr-submenu-icon pr-submenu-icon--' + config[1];
+		icon.className = 'pr-submenu-icon' + ('publishrank-seo-dashboard' === slug ? ' pr-submenu-icon--brand' : '');
 		icon.setAttribute('aria-hidden', 'true');
-		var glyph = document.createElement('span');
-		glyph.className = 'dashicons ' + config[0];
-		icon.appendChild(glyph);
+		if ('publishrank-seo-dashboard' !== slug) {
+			var glyph = document.createElement('span');
+			glyph.className = 'dashicons ' + config[0];
+			icon.appendChild(glyph);
+		}
 		link.insertBefore(icon, link.firstChild);
 		item.setAttribute('data-pr-page', slug);
 	}

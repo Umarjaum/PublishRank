@@ -20,19 +20,27 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			}
 		}
 		delete_option( 'rewrite_rules' );
-		$private_meta      = array( 'publishrank_supabase_session_enc', 'publishrank_supabase_subject', 'publishrank_supabase_verified_at' );
+		$private_meta      = array( 'publishrank_supabase_session_enc', 'publishrank_supabase_subject', 'publishrank_supabase_verified_at', 'publishrank_ps_seen' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE meta_key IN (%s, %s, %s)', $wpdb->usermeta, ...$private_meta ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE meta_key IN (%s, %s, %s, %s)', $wpdb->usermeta, ...$private_meta ) );
 		$post_meta              = array( '_publishrank_baidu_submitted', '_publishrank_baidu_pending' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE meta_key IN (%s, %s)', $wpdb->postmeta, ...$post_meta ) );
 		$like = $wpdb->esc_like( 'publishrank_' ) . '%';
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s", $like, $wpdb->esc_like( '_transient_publishrank_' ) . '%', $wpdb->esc_like( '_transient_timeout_publishrank_' ) . '%' ) );
+		// Newsroom settings (workflow, desks, calendar token, reminders) use the uj_newsroom_ prefix.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'uj_newsroom_' ) . '%' ) );
+		wp_unschedule_hook( 'uj_newsroom_daily_reminders' );
+		wp_unschedule_hook( 'publishrank_indexnow_flush_queue' );
 		wp_unschedule_hook( 'publishrank_gsc_sync' );
 		wp_unschedule_hook( 'publishrank_indexnow_submit' );
 		wp_unschedule_hook( 'publishrank_baidu_submit_post' );
 		wp_unschedule_hook( 'publishrank_daily_analytics_snapshot' );
+		wp_unschedule_hook( 'publishrank_weekly_audit' );
+		wp_unschedule_hook( 'publishrank_prepare_sitemap_cursors' );
+		wp_unschedule_hook( 'publishrank_continue_sitemap_cursor_preparation' );
 		require_once plugin_dir_path( __FILE__ ) . 'src/InternalLinks/Store.php';
 		\PublishRankSEO\InternalLinks\Store::drop();
 	};

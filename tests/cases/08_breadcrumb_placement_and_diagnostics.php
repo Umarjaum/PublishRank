@@ -272,7 +272,7 @@ return array(
 		pr_assert( false !== strpos( (string) $style->ver, '.' ), 'versioned' );
 		$css = (string) file_get_contents( PUBLISHRANK_SEO_PATH . 'assets/css/breadcrumbs.css' );
 		pr_assert( ! preg_match( '/!important/', $css ), 'no !important' );
-		preg_match_all( '/^([^{}@\/\n][^{]*)\{/m', $css, $m );
+		preg_match_all( '/^([^{}@\/\n][^{}]*)\{/m', $css, $m );
 		foreach ( $m[1] as $selector ) {
 			foreach ( explode( ',', $selector ) as $one ) {
 				$one = trim( $one );

@@ -1,7 +1,8 @@
 <?php
 // Minimal WordPress stub: enough to execute PublishRank's wizard + settings page for verification.
-define( 'ABSPATH', '/tmp/' ); define( 'PUBLISHRANK_SEO_VERSION', '2.9.48' ); define( 'PUBLISHRANK_SEO_URL', 'http://x/wp-content/plugins/publishrank/' );
+define( 'ABSPATH', '/tmp/' ); define( 'PUBLISHRANK_SEO_VERSION', '2.9.110' ); define( 'PUBLISHRANK_SEO_URL', 'http://x/wp-content/plugins/publishrank/' );
 class RedirectException extends Exception { public $url; }
+class PublishRank_Newsroom { const CAP_SETUP = 'uj_publishrank_setup_wizard'; }
 $GLOBALS['opts'] = array(); $GLOBALS['registered'] = array(); $GLOBALS['caps'] = true; $GLOBALS['pagenow']='admin.php';
 function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['opts'] ) ? $GLOBALS['opts'][ $k ] : $d; }
 function update_option( $k, $v, $a = null ) { $GLOBALS['opts'][ $k ] = $v; return true; }
@@ -16,6 +17,7 @@ function __( $t ) { return $t; } function _n( $a, $b, $n ) { return 1 === $n ? $
 function esc_html( $t ) { return htmlspecialchars( (string) $t ); } function esc_attr( $t ) { return htmlspecialchars( (string) $t ); } function esc_url( $t ) { return htmlspecialchars( (string) $t ); } function esc_textarea( $t ) { return htmlspecialchars( (string) $t ); } function esc_url_raw( $u ) { return filter_var( trim( (string) $u ), FILTER_VALIDATE_URL ) ? trim( $u ) : ''; }
 function esc_attr_e( $t ) { echo htmlspecialchars( $t ); }
 function sanitize_text_field( $t ) { return trim( strip_tags( (string) $t ) ); } function sanitize_textarea_field( $t ) { return trim( strip_tags( (string) $t ) ); }
+function wp_check_invalid_utf8( $text, $strip = false ) { return (string) $text; }
 function map_deep( $value, $callback ) { if ( is_array( $value ) ) { foreach ( $value as $key => $item ) { $value[ $key ] = map_deep( $item, $callback ); } return $value; } return call_user_func( $callback, $value ); }
 function wp_kses( $html, $allowed_html = array() ) { return (string) $html; }
 function sanitize_key( $k ) { return strtolower( preg_replace( '/[^A-Za-z0-9_\-]/', '', (string) $k ) ); } function sanitize_email( $e ) { return filter_var( $e, FILTER_VALIDATE_EMAIL ) ? $e : ''; }
@@ -26,6 +28,7 @@ function wp_nonce_field( $a ) { echo '<input type="hidden" name="_wpnonce" value
 function current_user_can( $c ) { return $GLOBALS['caps']; } function wp_die( $m ) { throw new Exception( 'wp_die:' . $m ); }
 function wp_safe_redirect( $u ) { $e = new RedirectException( 'redirect' ); $e->url = $u; throw $e; }
 function wp_doing_ajax() { return false; } function is_network_admin() { return false; } function is_ssl() { return true; }
+function is_singular() { return false; } function get_queried_object_id() { return 0; } function get_query_var( $key ) { return 0; }
 function add_query_arg( $k, $v, $u ) { return $u . '?' . $k . '=' . $v; } function rawurlencode_( $x ) { return $x; }
 function add_action() {} function add_filter() {} function apply_filters( $t, $v ) { return $v; } function function_exists_( $f ) { return true; }
 function set_url_scheme( $u ) { return $u; } function wp_parse_url( $u ) { return parse_url( $u ); } function wp_get_environment_type() { return 'production'; } function trailingslashit( $s ) { return rtrim( $s, '/' ) . '/'; }

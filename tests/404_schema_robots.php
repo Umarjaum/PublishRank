@@ -32,7 +32,7 @@ $llms_page = $read( 'src/Admin/LLMSTxtPage.php' );
 
 $assert( strpos( $monitor, "add_action( 'template_redirect'" ) !== false && strpos( $monitor, 'is_404()' ) !== false, '404 capture is hooked into frontend requests and checks actual 404 responses' );
 $assert( strpos( $monitor, "'publishrank_seo_404_monitor', false" ) !== false, '404 logging is opt-in by default' );
-$assert( strpos( $monitor, 'array_slice( $log, 0, 500 )' ) !== false, '404 log is bounded to 500 grouped entries' );
+$assert( strpos( $monitor, 'const MAX_ENTRIES  = 500;' ) !== false && strpos( $monitor, 'array_slice( $log, 0, self::MAX_ENTRIES )' ) !== false, '404 log is bounded to 500 grouped entries' );
 $assert( strpos( $monitor, 'HTTP_REFERER' ) !== false && strpos( $monitor, 'REMOTE_ADDR' ) === false, '404 entries retain referrer context without storing visitor IP addresses' );
 $assert( strpos( $not_found, 'publishrank_seo_404_clear' ) !== false && strpos( $not_found, "update_option( self::OPTION, array(), false )" ) !== false, 'administrator can clear the entire 404 log' );
 $assert( strpos( $not_found, 'publishrank_seo_404_redirect' ) !== false && strpos( $not_found, 'RedirectStore::add( $path, $target, 301, false )' ) !== false, '404 entries can create validated 301 redirects' );

@@ -40,7 +40,7 @@ final class GraphOutput {
 
 	/** Render one connected graph when PublishRank owns the JSON-LD slot. */
 	private function render_output() {
-		if ( is_admin() || wp_doing_ajax() || ! OutputSettings::schema() || ! $this->registry->claim( 'jsonld', 'graph-output' ) ) {
+		if ( is_admin() || wp_doing_ajax() || ! OutputSettings::schema_graph_output() || ! $this->registry->claim( 'jsonld', 'graph-output' ) ) {
 			return; }
 		$identity = $this->identity_entity();
 		$graph    = array( $identity, $this->website(), $this->webpage() );
@@ -92,7 +92,7 @@ final class GraphOutput {
 		$graph = self::dedupe_graph( $graph );
 		// "Organization and website schema" is a separate switch: the identity and WebSite nodes are removed here, after
 		// every filter and extra node has been merged, together with any reference that would otherwise point at them.
-		$identity_on = OutputSettings::org_website_schema();
+		$identity_on = OutputSettings::org_website_schema() && PublicationProfile::identity_schema_ready();
 		if ( ! $identity_on ) {
 			$graph = self::without_identity_nodes( $graph );
 		}
@@ -172,12 +172,6 @@ final class GraphOutput {
 		}
 		if ( ! $logo_url && function_exists( 'get_site_icon_url' ) ) {
 			$logo_url = get_site_icon_url( 512 ); }
-		if ( ! $logo_url && is_singular() ) {
-			$current = get_queried_object();
-			if ( $current instanceof \WP_Post ) {
-				$logo_url = (string) PostMeta::get( $current->ID, PostMeta::WEB_STORY_PUBLISHER_LOGO, '' ); }
-		}
-
 		$country      = strtoupper( sanitize_text_field( $org['country'] ) );
 		$organization = array(
 			'@type' => $type,
@@ -634,6 +628,42 @@ final class GraphOutput {
 			if ( '' !== $id ) {
 				$by_id[ $id ] = count( $out ); }
 			$out[] = $node;
+		}
+		// BreadcrumbList is a singleton for the current document. A third-party
+		// graph filter can add a second list with a different @id, so @id-only
+		// deduplication is not sufficient here. Prefer the canonical current-page
+		// list, then the list with the most usable items, and make every WebPage
+		// breadcrumb reference point at the retained node.
+		$breadcrumb_indexes = array();
+		$canonical_breadcrumb_id = trailingslashit( ( new \PublishRankSEO\Meta\MetaGenerator() )->canonical() ) . '#breadcrumb';
+		foreach ( $out as $index => $node ) {
+			$type = $node['@type'] ?? '';
+			$type = is_array( $type ) ? $type : array( $type );
+			if ( in_array( 'BreadcrumbList', $type, true ) ) {
+				$breadcrumb_indexes[] = $index;
+			}
+		}
+		if ( count( $breadcrumb_indexes ) > 1 ) {
+			$keep = reset( $breadcrumb_indexes );
+			foreach ( $breadcrumb_indexes as $index ) {
+				$current_score = ( (string) ( $out[ $index ]['@id'] ?? '' ) === $canonical_breadcrumb_id ? 1000000 : 0 ) + count( (array) ( $out[ $index ]['itemListElement'] ?? array() ) );
+				$keep_score = ( (string) ( $out[ $keep ]['@id'] ?? '' ) === $canonical_breadcrumb_id ? 1000000 : 0 ) + count( (array) ( $out[ $keep ]['itemListElement'] ?? array() ) );
+				if ( $current_score > $keep_score ) {
+					$keep = $index;
+				}
+			}
+			$kept_breadcrumb_id = (string) ( $out[ $keep ]['@id'] ?? $canonical_breadcrumb_id );
+			$result = array();
+			foreach ( $out as $index => $node ) {
+				if ( in_array( $index, $breadcrumb_indexes, true ) && $index !== $keep ) {
+					continue;
+				}
+				if ( isset( $node['breadcrumb']['@id'] ) ) {
+					$node['breadcrumb']['@id'] = $kept_breadcrumb_id;
+				}
+				$result[] = $node;
+			}
+			$out = $result;
 		}
 		$primary_for = array();
 		$drop        = array();

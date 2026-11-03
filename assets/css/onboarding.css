@@ -58,7 +58,7 @@ body.rtl.folded .prw-modal-backdrop{right:36px}
 .prw-modal{display:flex;flex-direction:column;width:100%;max-width:880px;max-height:100%;background:#ffffff;border-radius:16px;box-shadow:0 30px 80px rgba(15, 22, 42,.35);overflow:hidden}
 @media(max-width:782px){.prw-modal{max-width:none;border-radius:0}}
 .prw-modal__head{display:flex;align-items:center;gap:14px;padding:18px 24px 14px}
-.prw-modal__head img{width:40px;height:40px;object-fit:contain;flex:0 0 40px}
+.prw-modal__head img{width:44px;height:44px;padding:6px;box-sizing:border-box;border-radius:12px;background:#590d22;object-fit:contain;flex:0 0 44px}
 .prw-modal__title{flex:1;min-width:0}
 .prw-modal__title h1{margin:2px 0 0;padding:0;font-size:22px;line-height:1.2;color:#171717}
 .prw-modal__close{font-size:28px;line-height:1;text-decoration:none;color:#667085;padding:4px 10px;border-radius:8px}
@@ -91,3 +91,4 @@ body.rtl.folded .prw-modal-backdrop{right:36px}
 @media(max-width:782px){.prw-fields{grid-template-columns:1fr}.prw-modal .prw-stepper{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));row-gap:10px;margin:12px 16px 0}.prw-modal .prw-stepper__item::before{display:none}.prw-modal__body{padding:6px 16px 16px}.prw-modal__head{padding:14px 16px 10px}}
 .prw-modal .rhs-choice{min-height:0;padding:14px 16px}
 .prw-modal .rhs-choice:hover{transform:none}
+.prw-field-error{display:block;margin-top:6px;color:#b32d2e;font-size:12px;font-weight:600;line-height:1.4}

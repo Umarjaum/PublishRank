@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: PublishRank
- * Plugin URI: https://publishrank.netlify.app/
+ * Plugin URI: https://publishrankseo.vercel.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.9.104
+ * Version: 2.9.110
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.9.104' );
+define( 'PUBLISHRANK_SEO_VERSION', '2.9.110' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
@@ -124,7 +124,7 @@ function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
 		return;
 	}
 
-	$icon_url  = add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank.svg', __FILE__ ) );
+	$icon_url  = add_query_arg( 'ver', PUBLISHRANK_SEO_VERSION, plugins_url( 'assets/images/publishrank-brand-mark.png', __FILE__ ) );
 	$icon      = '<img class="publishrank-toolbar-icon" src="' . esc_url( $icon_url ) . '" alt="" width="18" height="18" /><span class="ab-label">' . esc_html__( 'PublishRank', 'publishrank' ) . '</span>';
 	$dashboard = admin_url( 'admin.php?page=publishrank-seo-dashboard' );
 	$settings  = admin_url( 'admin.php?page=publishrank' );
@@ -199,7 +199,7 @@ function publishrank_seo_plugin_action_links( $links ) {
 	$wizard      = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-onboarding' ) ) . '">' . esc_html__( 'Setup Wizard', 'publishrank' ) . '</a>';
 	$sitemap     = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-sitemap-health' ) ) . '">' . esc_html__( 'Sitemap Health', 'publishrank' ) . '</a>';
 	$diagnostics = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-seo-diagnostics' ) ) . '">' . esc_html__( 'Diagnostics', 'publishrank' ) . '</a>';
-	$support     = '<a href="https://publishrank.netlify.app/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Support', 'publishrank' ) . '</a>';
+	$support     = '<a href="https://publishrankseo.vercel.app/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Official Website', 'publishrank' ) . '</a>';
 	return array_merge( array( $settings, $wizard, $sitemap, $diagnostics, $support ), $links );
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'publishrank_seo_plugin_action_links' );

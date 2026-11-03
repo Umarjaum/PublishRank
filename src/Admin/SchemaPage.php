@@ -3,6 +3,7 @@
 namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Core\Branding;
+use PublishRankSEO\Core\PublicationProfile;
 use PublishRankSEO\Schema\SchemaTypes;
 defined( 'ABSPATH' ) || exit;
 final class SchemaPage {
@@ -91,7 +92,11 @@ final class SchemaPage {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return; }
 		echo '<div class="wrap"><h1>' . esc_html__( 'PublishRank News Schema', 'publishrank' ) . '</h1>';
-		echo '<p>' . esc_html__( 'The schema editor supports NewsArticle and specialist Article subtypes, FAQPage, VideoObject, ImageGallery, AudioObject, PodcastEpisode, Event, Product, Recipe and Review. Advanced entities emit only when their type-specific fields are complete; publisher, WebSite, WebPage, author, image and breadcrumb nodes remain connected automatically. Use the Schema Test action to validate live output.', 'publishrank' ) . '</p>';
+		echo '<p>' . esc_html__( 'The schema editor supports NewsArticle and specialist Article subtypes, FAQPage, VideoObject, ImageGallery, AudioObject, PodcastEpisode, Event, Product, Recipe and Review. Advanced entities emit only when their type-specific fields are complete; named publisher and WebSite nodes connect automatically once identity setup is complete. Use the Schema Test action to validate live output.', 'publishrank' ) . '</p>';
+		if ( ! PublicationProfile::identity_schema_ready() ) {
+			$wizard_url = Branding::page_url( 'publishrank-onboarding' );
+			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Organization/WebSite schema is currently omitted because the publication and publisher names are incomplete. Add both names in the Setup Wizard; PublishRank will not publish blank identity entities.', 'publishrank' ) . ' <a href="' . esc_url( $wizard_url ) . '">' . esc_html__( 'Complete publisher identity', 'publishrank' ) . '</a></p></div>';
+		}
 		echo '<form method="post" action="options.php">';
 		settings_fields( 'publishrank_schema' );
 		echo '<table class="form-table"><tr><th scope="row">' . esc_html__( 'Default schema for news posts', 'publishrank' ) . '</th><td>';

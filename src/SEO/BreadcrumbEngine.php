@@ -269,7 +269,7 @@ final class BreadcrumbEngine {
 	 */
 	public function before_title_block( $content, $block = array(), $instance = null ) {
 		$name = empty( $block['blockName'] ) ? '' : (string) $block['blockName'];
-		if ( ! in_array( $name, array( 'core/post-title', 'core/query-title', 'core/post-content' ), true ) || self::was_printed() || ! self::context_supported() ) {
+		if ( ! self::visible_enabled() || 'auto' !== self::placement() || ! in_array( $name, array( 'core/post-title', 'core/query-title', 'core/post-content' ), true ) || self::was_printed() || ! self::context_supported() ) {
 			return $content; }
 		if ( 'core/query-title' === $name ) {
 			if ( is_singular() || ( isset( $block['attrs']['type'] ) && 'archive' !== $block['attrs']['type'] ) ) {
@@ -293,7 +293,7 @@ final class BreadcrumbEngine {
 
 	/** Elementor Pro theme-builder title widgets: print above the post/archive title. */
 	public function before_elementor_title( $content, $widget = null ) {
-		if ( ! is_object( $widget ) || ! method_exists( $widget, 'get_name' ) || self::was_printed() ) {
+		if ( ! self::visible_enabled() || 'auto' !== self::placement() || ! is_object( $widget ) || ! method_exists( $widget, 'get_name' ) || self::was_printed() ) {
 			return $content; }
 		$name = (string) $widget->get_name();
 		if ( 'theme-post-title' === $name ) {
@@ -310,7 +310,7 @@ final class BreadcrumbEngine {
 
 	/** Classic archives and the posts page: print before the first post of the MAIN loop only. */
 		public function on_loop_start( $query = null ) {
-			if ( ! $query instanceof \WP_Query || ! $query->is_main_query() ) {
+			if ( ! self::visible_enabled() || 'auto' !== self::placement() || ! $query instanceof \WP_Query || ! $query->is_main_query() || ( is_singular() && $this->content_has_manual_trail() ) ) {
 				return; }
 		$this->echo_once();
 	}
@@ -330,11 +330,11 @@ final class BreadcrumbEngine {
 
 	public function prepend( $content ) {
 		$original = $content;
-		if ( is_admin() || is_feed() || ! is_singular() || ! self::visible_enabled() || ! $this->in_main_content() || self::was_printed() ) {
-			return $original; }
-		if ( has_shortcode( (string) $content, 'publishrank_breadcrumbs' ) || ( function_exists( 'has_block' ) && has_block( self::BLOCK_NAME, (string) $content ) ) ) {
-			return $original; // The editor placed the trail by hand.
-		}
+		if ( is_admin() || is_feed() || ! is_singular() || ! self::visible_enabled() || ! in_array( self::placement(), array( 'auto', 'content' ), true ) || ! $this->in_main_content() || self::was_printed() ) {
+				return $original; }
+			if ( $this->content_has_manual_trail() || has_shortcode( (string) $content, 'publishrank_breadcrumbs' ) || ( function_exists( 'has_block' ) && has_block( self::BLOCK_NAME, (string) $content ) ) ) {
+				return $original; // The editor placed the trail by hand.
+			}
 		$html = $this->render();
 		if ( '' === $html ) {
 			return $original; }
@@ -355,7 +355,7 @@ final class BreadcrumbEngine {
 
 	/** Action callback for the "theme hook" placement. */
 	public function echo_once() {
-		if ( self::was_printed() ) {
+		if ( ! self::visible_enabled() || ! in_array( self::placement(), array( 'auto', 'hook' ), true ) || self::was_printed() ) {
 			return; }
 		$html = $this->render();
 		if ( '' === $html ) {
@@ -452,6 +452,22 @@ final class BreadcrumbEngine {
 		 */
 		$items = apply_filters( 'publishrank_breadcrumb_items', $items );
 		$items = is_array( $items ) ? array_values( $items ) : array();
+		$unique = array();
+		$seen   = array();
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue; }
+			$name = sanitize_text_field( (string) ( $item['name'] ?? '' ) );
+			$url  = esc_url_raw( (string) ( $item['url'] ?? '' ) );
+			if ( '' === $name ) {
+				continue; }
+			$item_key = strtolower( $name ) . '|' . $url;
+			if ( isset( $seen[ $item_key ] ) ) {
+				continue; }
+			$seen[ $item_key ] = true;
+			$unique[] = array( 'name' => $name, 'url' => $url );
+		}
+		$items = $unique;
 		self::$cache[ $key ] = $items;
 		return $items;
 	}

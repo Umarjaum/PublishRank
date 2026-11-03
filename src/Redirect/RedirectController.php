@@ -69,23 +69,30 @@ final class RedirectController {
 		$rules = get_option( 'publishrank_seo_redirects', array() );
 		if ( ! is_array( $rules ) ) {
 			return false; }
-		$edges = array();
-		foreach ( $rules as $rule ) {
-			if ( ! is_array( $rule ) || ! empty( $rule['regex'] ) ) {
-				continue; }
-			$from = $this->normalise_path( (string) ( $rule['source'] ?? '' ) );
-			$to   = $this->normalise_path( (string) ( $rule['target'] ?? '' ) );
-			if ( '/' !== $from && '' !== $to ) {
-				$edges[ $from ] = $to; }
-		}
 		$current = $this->normalise_path( $target );
-		$seen    = array( $source => true );
-		for ( $depth = 0; $depth < min( 50, max( 1, absint( get_option( 'publishrank_redirect_max_hops', 10 ) ) ) ) && isset( $edges[ $current ] ); $depth++ ) {
+		$seen    = array( $this->normalise_path( $source ) => true );
+		// Follow the same first-match rule order as handle(). Regex rules are included, and a chain
+		// that exceeds the configured analysis depth is blocked rather than assumed to be safe.
+		$limit = min( 50, max( 1, absint( get_option( 'publishrank_redirect_max_hops', 10 ) ) ) );
+		for ( $depth = 0; $depth < $limit; $depth++ ) {
 			if ( isset( $seen[ $current ] ) ) {
 				return true; }
 			$seen[ $current ] = true;
-			$current          = $edges[ $current ];
+			$next             = '';
+			foreach ( $rules as $rule ) {
+				if ( ! is_array( $rule ) || empty( $rule['enabled'] ) || ! RedirectStore::is_scheduled_active( $rule ) || ! $this->matches( $rule, $current ) ) {
+					continue; }
+				$status = (int) ( $rule['status'] ?? 301 );
+				if ( in_array( $status, array( 410, 451 ), true ) ) {
+					return false; }
+				$next = $this->safe_target( (string) ( $rule['target'] ?? '' ) );
+				break;
+			}
+			if ( '' === $next ) {
+				return false; }
+			$current = $this->normalise_path( $next );
 		}
-		return isset( $seen[ $current ] );
+		// Fail closed if another redirect remains beyond the checked chain depth.
+		return true;
 	}
 }

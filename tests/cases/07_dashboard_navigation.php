@@ -63,13 +63,14 @@ return array(
 
 		$ordered = array(
 			$parent,
+			'publishrank-onboarding',
 			'publishrank-seo-score',
+			'uj-newsroom',
 			'publishrank-search-console',
 			'publishrank-analytics',
 			'publishrank',
 			'admin.php?page=publishrank#pr-settings-titles',
 			'admin.php?page=publishrank#pr-settings-portability',
-			'publishrank-onboarding',
 			'publishrank-documentation',
 		);
 		$previous = -1;
@@ -147,6 +148,7 @@ return array(
 			pr_same( $template, get_option( 'publishrank_seo_title_template_' . $context ), 'template persists: ' . $context );
 		}
 		pr_same( '—', get_option( 'publishrank_seo_title_separator' ) );
+		update_option( 'publishrank_seo_publication_name', 'Test Site' );
 		$id = pr_make_post( array( 'post_title' => 'Shared title' ) );
 		pr_same( 'Shared title — Test Site', ( new MetaGenerator() )->title_for_post( $id ), 'frontend consumes the saved separator and template' );
 		pr_assert( ! in_array( 'publishrank_seo_title_separator', OnboardingPage::setup_keys(), true ), 'saving Settings cannot blank the wizard-shared separator' );

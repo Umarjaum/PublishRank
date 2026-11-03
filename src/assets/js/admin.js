@@ -336,6 +336,9 @@
 		var $groups = $('.pr-tool-group[data-tool-category]');
 		var $count = $('#pr-tools-count');
 		var $empty = $('#pr-tools-empty');
+		var total = $('.pr-action-card[data-tool-search]').length;
+		var singularCount = String($count.data('count-singular') || 'Showing %1$d of %2$d tool');
+		var pluralCount = String($count.data('count-plural') || 'Showing %1$d of %2$d tools');
 		function filterTools() {
 			var query = String($search.val() || '').toLowerCase().trim();
 			var category = String($category.val() || 'all');
@@ -351,7 +354,8 @@
 				});
 				$group.toggle(groupVisible > 0);
 			});
-			$count.text(visible + ' ' + (visible === 1 ? 'tool' : 'tools'));
+			var countText = visible === 1 ? singularCount : pluralCount;
+			$count.text(countText.replace('%1$d', visible).replace('%2$d', total));
 			$empty.prop('hidden', visible !== 0);
 		}
 		$search.on('input', filterTools);

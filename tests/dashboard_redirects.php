@@ -16,14 +16,15 @@ $assert     = static function ( $condition, $message ) use ( &$checks ) {
 };
 $dashboard = $read( 'src/Admin/DashboardPage.php' );
 $assets    = $read( 'src/Admin/AdminAssets.php' );
+$branding  = $read( 'src/Core/Branding.php' );
 $css       = $read( 'assets/css/admin.css' );
 $store     = $read( 'src/Redirect/RedirectStore.php' );
 $controller = $read( 'src/Redirect/RedirectController.php' );
 $plugin    = $read( 'publishrank.php' );
 $readme    = $read( 'readme.txt' );
 
-$assert( false !== strpos( $dashboard, 'Welcome to PublishRank.' ) && false !== strpos( $dashboard, 'Publisher-first SEO workspace' ), 'current dashboard welcome copy remains present' );
-$assert( false !== strpos( $assets, 'publishrank-header-icon-v2.png' ) && false !== strpos( $assets, 'Branding::version()' ), 'branded admin header uses cache-busted PublishRank artwork' );
+$assert( false !== strpos( $dashboard, 'Publisher-first SEO workspace' ) && false !== strpos( $dashboard, 'Built for Publishers' ), 'publisher-focused dashboard hero remains present' );
+$assert( false !== strpos( $assets, 'Branding::logo_url()' ) && false !== strpos( $branding, 'const LOGO_FILE' ) && false !== strpos( $branding, "add_query_arg( 'ver', rawurlencode( self::version() ), self::image( self::LOGO_FILE ) )" ), 'branded admin header uses cache-busted official PublishRank artwork' );
 $assert( false !== strpos( $css, '.wrap .rhs-welcome-banner h2' ) && false !== strpos( $css, 'color:#ffffff!important' ) && false !== strpos( $css, '.wrap .rhs-header__title' ), 'dashboard header and welcome copy have explicit high-contrast guards' );
 $assert( false !== strpos( $store, '301' ) && false !== strpos( $store, '451' ), 'redirect status allow-list includes supported permanent and removal statuses' );
 $assert( false !== strpos( $store, 'publishrank_redirect_loop' ) && false !== strpos( $store, 'home_url' ), 'redirect storage validates same-site targets and rejects loops' );

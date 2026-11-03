@@ -21,3 +21,5 @@ Coverage added in 2.9.97: tests/cases/08_breadcrumb_placement_and_diagnostics.ph
 Coverage added in 2.9.98: tests/cases/09_publication_identity.php (publication identity ownership, source guard against reading WordPress title/tagline, default-hidden visible identity).
 
 Coverage added in 2.9.99: tests/cases/10_identity_override.php.
+
+Coverage added in 2.9.110: tests/cases/11_rankmath_handoff.php verifies that the active Rank Math package is detected and that the opt-in ownership handoff suppresses only PublishRank's overlapping metadata and page schema without changing the saved output preferences.

@@ -85,13 +85,31 @@ final class NotFoundPage {
 			return;
 		}
 		$entries = self::entries();
+		$search  = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$visitor = isset( $_GET['visitor'] ) ? sanitize_key( wp_unslash( $_GET['visitor'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$sort    = isset( $_GET['sort'] ) ? sanitize_key( wp_unslash( $_GET['sort'] ) ) : 'hits'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! in_array( $visitor, array( '', 'browser', 'mobile', 'crawler' ), true ) ) {
+			$visitor = ''; }
+		if ( ! in_array( $sort, array( 'hits', 'recent' ), true ) ) {
+			$sort = 'hits'; }
+		if ( '' !== $search || '' !== $visitor ) {
+			$entries = array_values( array_filter( $entries, static function ( $entry ) use ( $search, $visitor ) {
+				$path_match = '' === $search || false !== stripos( (string) ( $entry['path'] ?? '' ), $search );
+				$type_match = '' === $visitor || $visitor === (string) ( $entry['agent_category'] ?? '' );
+				return $path_match && $type_match;
+			} ) );
+		}
 		usort(
 			$entries,
-			static function ( $a, $b ) {
-				return (int) ( isset( $b['count'] ) ? $b['count'] : 0 ) - (int) ( isset( $a['count'] ) ? $a['count'] : 0 );
+			static function ( $a, $b ) use ( $sort ) {
+				if ( 'recent' === $sort ) {
+					return strcmp( (string) ( $b['last_seen'] ?? '' ), (string) ( $a['last_seen'] ?? '' ) );
+				}
+				return (int) ( $b['count'] ?? 0 ) - (int) ( $a['count'] ?? 0 );
 			}
 		);
 		$total = count( $entries );
+		$total_hits = array_sum( array_map( static function ( $entry ) { return absint( $entry['count'] ?? 0 ); }, $entries ) );
 		$pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
 		$paged = isset( $_GET['paged'] ) ? min( $pages, max( 1, absint( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$slice = array_slice( $entries, ( $paged - 1 ) * self::PER_PAGE, self::PER_PAGE );
@@ -99,11 +117,13 @@ final class NotFoundPage {
 		echo '<div class="wrap">';
 		AdminAssets::header( __( '404 Monitor', 'publishrank' ), __( 'Broken URLs visitors and crawlers hit, most frequent first.', 'publishrank' ) );
 		AdminAssets::render_flash();
-		echo '<div class="notice notice-info inline"><p>' . esc_html__( 'PublishRank groups hits by URL and broad visitor category (browser, mobile or crawler). It does not identify individual people or store IP addresses. Use the referrer and hit count to prioritize fixes.', 'publishrank' ) . '</p></div>';
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'PublishRank groups hits by URL and broad visitor category (browser, mobile or crawler). It does not identify individual people or store IP addresses. The monitor ignores common static-asset and infrastructure probes, keeps a 90-day rolling history, and caps storage at 500 entries.', 'publishrank' ) . '</p></div>';
 		if ( ! get_option( 'publishrank_seo_404_monitor', false ) ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The 404 monitor is turned off, so no new broken URLs are being recorded.', 'publishrank' ) . ' <a href="' . esc_url( Branding::page_url( 'publishrank' ) ) . '">' . esc_html__( 'Enable it in settings', 'publishrank' ) . '</a></p></div>';
 		}
-		if ( $total ) {
+			echo '<p><strong>' . esc_html( sprintf( /* translators: 1: number of paths, 2: number of hits. */ __( '%1$d paths · %2$d recorded hits', 'publishrank' ), $total, $total_hits ) ) . '</strong></p>';
+			echo '<form method="get" class="rhs-inline-form" style="margin:12px 0"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" /><label class="screen-reader-text" for="publishrank-404-search">' . esc_html__( 'Search paths', 'publishrank' ) . '</label><input id="publishrank-404-search" type="search" name="s" value="' . esc_attr( $search ) . '" placeholder="' . esc_attr__( 'Search URL paths', 'publishrank' ) . '" /> <select name="visitor"><option value="">' . esc_html__( 'All visitors', 'publishrank' ) . '</option><option value="browser" ' . selected( $visitor, 'browser', false ) . '>' . esc_html__( 'Browser', 'publishrank' ) . '</option><option value="mobile" ' . selected( $visitor, 'mobile', false ) . '>' . esc_html__( 'Mobile', 'publishrank' ) . '</option><option value="crawler" ' . selected( $visitor, 'crawler', false ) . '>' . esc_html__( 'Crawler', 'publishrank' ) . '</option></select> <select name="sort"><option value="hits" ' . selected( $sort, 'hits', false ) . '>' . esc_html__( 'Most hits', 'publishrank' ) . '</option><option value="recent" ' . selected( $sort, 'recent', false ) . '>' . esc_html__( 'Most recent', 'publishrank' ) . '</option></select> <button class="button" type="submit">' . esc_html__( 'Filter', 'publishrank' ) . '</button></form>';
+			if ( $total ) {
 			$clear = wp_nonce_url( add_query_arg( 'action', 'publishrank_seo_404_clear', admin_url( 'admin-post.php' ) ), 'publishrank_seo_404_clear' );
 			echo '<p class="rhs-actions"><a class="button" href="' . esc_url( $clear ) . '">' . esc_html__( 'Clear entire log', 'publishrank' ) . '</a></p>';
 		}
@@ -111,9 +131,6 @@ final class NotFoundPage {
 		<div class="rhs-table-wrap"><table class="widefat striped">
 			<thead><tr><th><?php esc_html_e( 'URL path', 'publishrank' ); ?></th><th><?php esc_html_e( 'Hits', 'publishrank' ); ?></th><th><?php esc_html_e( 'Visitor', 'publishrank' ); ?></th><th><?php esc_html_e( 'First seen', 'publishrank' ); ?></th><th><?php esc_html_e( 'Last seen', 'publishrank' ); ?></th><th><?php esc_html_e( 'Referrer', 'publishrank' ); ?></th><th><?php esc_html_e( 'Redirect to', 'publishrank' ); ?></th></tr></thead>
 			<tbody>
-			<?php if ( empty( $slice ) ) : ?>
-				<tr><td colspan="7"><?php esc_html_e( 'No 404 errors recorded.', 'publishrank' ); ?></td></tr>
-			<?php endif; ?>
 			<?php
 			foreach ( $slice as $entry ) :
 				$id         = self::entry_id( $entry );
@@ -174,10 +191,10 @@ final class NotFoundPage {
 		<?php
 		if ( $pages > 1 ) {
 			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post(
-				paginate_links(
-					array(
-						'base'    => add_query_arg( 'paged', '%#%' ),
-						'format'  => '',
+					paginate_links(
+						array(
+							'base'    => add_query_arg( array_filter( array( 'page' => self::SLUG, 's' => $search, 'visitor' => $visitor, 'sort' => $sort, 'paged' => '%#%' ) ), admin_url( 'admin.php' ) ),
+							'format'  => '',
 						'total'   => $pages,
 						'current' => $paged,
 					)

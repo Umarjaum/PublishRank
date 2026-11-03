@@ -4,14 +4,14 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.104
+Stable tag: 2.9.110
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
 
 Free SEO plugin for news publishers with News SEO, XML sitemaps, schema, metadata, redirects and technical SEO tools.
 
-Compatibility target: WordPress 7.1. This package includes a compatibility test plan in docs/WORDPRESS-7.1.3-COMPATIBILITY.md. The plugin remains installable on PHP 7.4+ and passed syntax checks on PHP 8.3.6; PHP 8.5 is the forward compatibility target. Complete staging checks before production use.
+Compatibility target: WordPress 7.1. This package includes a compatibility test plan in docs/maintenance/WORDPRESS-7.1.3-COMPATIBILITY.md. The plugin remains installable on PHP 7.4+ and passed syntax checks on PHP 8.3.6; PHP 8.5 is the forward compatibility target. Complete staging checks before production use.
 
 == Description ==
 
@@ -24,7 +24,7 @@ Features include:
 * SEO titles, descriptions, canonicals, robots directives, Open Graph and X/Twitter metadata.
 * Connected JSON-LD schema for organizations, people, webpages, articles, breadcrumbs and supported media/content types.
 * XML sitemaps for posts, pages, taxonomies, authors, images and videos, including a Google News sitemap.
-* Redirect management and a local 404 monitor with grouped URL hits, referrer paths, clearable logs, and redirect creation.
+* Redirect management and a privacy-conscious local 404 monitor with normalized paths, grouped browser/mobile/crawler hits, referrer paths without query strings, noise suppression for assets and infrastructure probes, throttled and locked bounded writes, 90-day retention, searchable/sortable review, clearable logs, and same-site redirect creation.
 * Per-article author schema overrides for author name, job title and image, plus selectable Article, NewsArticle and BlogPosting types.
 * Global and per-content robots directives, including index/noindex and follow/nofollow controls, plus configurable robots.txt rules.
 * Robots.txt controls, hreflang support and breadcrumbs.
@@ -48,6 +48,12 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 4. Review metadata ownership, schema, sitemap and robots settings before using the plugin on a production site.
 5. Submit the sitemap index in your search engine webmaster tools when ready.
 
+== Documentation ==
+
+* In WordPress: **PublishRank → Documentation & Help** explains titles, variables, output controls, breadcrumbs, sitemaps, schema, robots, redirects, the robust 404 Monitor, IndexNow, Baidu, diagnostics, the admin menu and toolbar, the sitemap browser view, versions and troubleshooting.
+* In the package: `docs/features/FEATURES.md` lists every dashboard feature and Technical Health check provided through version 2.9.110. The `docs/` folder also contains guides for sitemaps, branding, admin navigation, the 404 Monitor, troubleshooting, versioning and a WordPress 7.1.3 compatibility checklist.
+* Online: [publishrankseo.vercel.app](https://publishrankseo.vercel.app/).
+
 == Frequently Asked Questions ==
 
 = Does PublishRank add anything to my page source? =
@@ -66,7 +72,22 @@ The same fifteen variables work in global title templates, per-post SEO titles a
 Yes. Output controls (Settings) switch metadata, the JSON-LD graph, the Organization/WebSite entities, the visible breadcrumb trail and BreadcrumbList data independently. All are enabled on new installs; existing choices are kept on upgrade. PublishRank only changes its own output: a logo, title, breadcrumbs or meta tags hard-coded by your theme or another plugin are not rewritten. Choose "Structured data only" breadcrumb placement if your theme prints its own trail.
 
 = Known limitations =
-A classic theme that hard-codes a <title> tag and does not declare title-tag support can print two titles. Per-post templates that were saved by an older release with %%date%% or %%category%% were stored damaged and must be re-entered. Open Graph title/description overrides do not expand variables. Global meta-description templates are not a feature of this release.
+A classic theme that hard-codes a <title> tag and does not declare title-tag support can print two titles. Per-post templates that were saved by an older release with %%date%% or %%category%% were stored damaged and must be re-entered. Global meta-description templates are not available; use per-content SEO overrides and the configured description fallbacks instead. Open Graph and X/Twitter title and description overrides support the same registered template variables as SEO titles and descriptions.
+
+= What does the XML sitemap page in my browser show? =
+A readable view of the same sitemap search engines fetch as plain XML: totals, a content showcase bar with each type's share, one card per content type, and URL tables with filtering for child sitemaps. Use View raw XML to see exactly what crawlers receive. The view never changes the XML.
+
+= How does the 404 Monitor work? =
+Enable **Record a capped rolling 404 log** in **PublishRank → Settings**, then review entries at **PublishRank → 404 Monitor**. The monitor aggregates normalized paths by browser, mobile or crawler category, records hit counts and first/last seen times, and keeps only the latest useful referrer path without storing IP addresses, cookies, request bodies or full query strings. It ignores admin, AJAX, cron, REST, non-GET/HEAD, common static-asset and infrastructure-probe requests. The log is rate-limited, protected against concurrent write loss, retained for 90 days and capped at 500 entries. Administrators can search paths, filter visitor categories, sort by hits or recency, dismiss entries, clear the log, or create validated same-site redirects. It is a bounded diagnostic aid, not a complete access log, analytics system, WAF or DDoS defense.
+
+= Where is the complete feature list? =
+The package guide `docs/features/FEATURES.md` is the complete dashboard inventory through version 2.9.110. It includes every card under Search & discovery, Content & publishing, Measure & maintain, and Settings & help, plus every Technical Health check: Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt, Schema Aggregator, SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Internal links, Link intelligence, Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, WP Hide Login, Configuration history, Diagnostics, Setup wizard, Settings, Titles & Meta, Import / Export, Documentation & help, SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility.
+
+= Which logo does PublishRank use? =
+One file, `assets/images/publishrank-brand-mark.png`, shown in the admin sidebar, toolbar, screen headers, setup wizard and sitemap view. No SVG or alternate icon files are packaged.
+
+= Why does the PublishRank admin dropdown have no custom background? =
+It uses WordPress's native submenu colours so it matches every admin colour scheme.
 
 = Is PublishRank free? =
 Yes. PublishRank is released under the GPLv2-or-later license. The plugin does not require a paid AI API key for its core functionality. Optional integrations such as IndexNow require an administrator to enable them.
@@ -93,7 +114,7 @@ The plugin can detect several SEO plugins, but two plugins outputting titles, ca
 No. PublishRank adds no visible credit to your site footer. Technical source provenance is disclosed in PublishRank Settings and always remains enabled on public HTML pages.
 
 = Where can I find documentation and support? =
-Visit the [PublishRank website](https://publishrank.netlify.app/) for documentation and support information.
+Visit the [PublishRank website](https://publishrankseo.vercel.app/) for documentation and support information.
 
 == Privacy ==
 
@@ -119,18 +140,81 @@ Other website links in the administration interface (including the Schema.org vo
 
 == Changelog ==
 
+= 2.9.110 =
+* Added **Setup Wizard** directly under Dashboard in the PublishRank sidebar (also kept in the dashboard hero, workflow card, Plugins row and toolbar).
+* Added the animated PublishRank logo as a loader on every PublishRank admin screen, with a CSS-only failsafe and an opt-out (`data-pr-no-loader`) for forms.
+* Redesigned the Dashboard and screen headers to match the official website: white header bar, pink hero with a live preview of your site checks, pill buttons, feature strip and a three-step publishing workflow (`assets/css/website-theme.css`).
+* Added the official website, https://publishrankseo.vercel.app/, to the plugin header, Plugins screen (Official Website), dashboard, Documentation & Help, front-end credit and readme, replacing the old netlify address.
+* Made the version consistent: plugin header, `PUBLISHRANK_SEO_VERSION`, readme stable tag, Branding fallback, docs and in-dashboard documentation all read 2.9.110 (documentation previously still said 2.9.105 and 2.9.108).
+* Restructured `docs/` into getting-started, features, admin and maintenance folders with a new index, installation guide and setup-wizard guide.
+* Synchronised the reviewable `src/assets` copies with the shipped `assets` files.
+* Fixed the loader staying on screen after export/download actions; it now skips download links and forms and always hides after 12 seconds.
+* Newsroom attachments notice now only appears on PublishRank screens and explains the fix; added the optional `PUBLISHRANK_PRIVATE_DIR` constant (and `publishrank_private_storage_base` filter) for hosts that need a custom private folder outside the web root.
+* Uninstall now also removes Newsroom (`uj_newsroom_*`) options and the weekly-audit and sitemap-cursor scheduled tasks.
+* Added `tools/check-version.sh` and `VersionConsistencyTest` to keep versions consistent.
+
+= 2.9.109 =
+* Align the WordPress-loaded admin palette with the PublishRank website brand colors.
+* Replace the plugin menu mark with the supplied PublishRank menu icon and refresh asset cache keys.
+* Render a blank 404 log table body after the log is cleared.
+
+= 2.9.108 =
+* Improved dashboard tool-search feedback: the live result count shows matching tools out of the available total, with localized announcements for assistive technology.
+* Corrected the WordPress readme stable tag and outdated guidance about template variables in social metadata.
+* Organization/WebSite JSON-LD is now omitted until publication and publisher names are configured, avoiding empty identity nodes and broken graph references; the Schema screen links to the setup wizard when identity is incomplete.
+* Kept story-specific Web Story logos out of the site-wide Organization entity and preserved alt text and dimensions for attachment-backed default social images, including CDN URL rewriting.
+* Redirect cycle checks now include active regex rules and fail closed when the configured chain-analysis depth is exceeded. Foreign-host source URLs are rejected, and the supported 303 status is selectable in the form.
+* Added regression tests for publisher graph readiness and redirect source/cycle safety.
+* Added an opt-in SEO ownership handoff: when enabled, PublishRank suppresses its overlapping frontend metadata, hreflang and page JSON-LD only when a supported SEO plugin is detected. Warning-only behavior remains the default; external plugin settings, redirects, sitemaps and standalone schema feeds are not changed.
+* Added regression tests for handoff defaults, supported-plugin detection and the separation between saved preferences and effective frontend output.
+* Newsroom private attachments now use a writable directory outside DOCUMENT_ROOT, migrate existing uploads without changing stored file IDs, serve only through the authorized download handler, and fail closed for new uploads if private storage is unavailable.
+* Added sitewide wp-admin Newsroom pop-up alerts and a recent-notifications inbox for assignment, stage, overdue-reminder and discussion events, with per-user email, in-app and pop-up preferences. AJAX polling and read actions require Newsroom access and a nonce; notification records are scoped to stories the user can still access.
+* Added Newsroom export-filter and adjacent-stage regression coverage and stage-change success feedback.
+* Moved Newsroom notifications into a dedicated bell tab with server-rendered and live unread counts, clearer dashboard naming, and keyboard-friendly notification badges.
+* Restricted role-matrix changes to administrators, added a separately delegable setup-wizard capability, preserved administrator access, and hardened nested role input handling against malformed requests.
+* Fixed duplicate breadcrumb schema output by collapsing multiple BreadcrumbList nodes to one canonical list and removing repeated breadcrumb items with the same label and URL.
+* Extended the 404 monitor with request normalization, common probe suppression, GET/HEAD filtering, crawler classification, short-lived write locking, 90-day retention, safer referrer/path limits, and searchable/sortable admin summaries.
+* Added dedicated 404 Monitor documentation covering privacy, capture exclusions, throttling, retention, filters, redirect validation, dismissal, clearing and troubleshooting in the package, readme and in-dashboard help.
+* Added a complete versioned feature inventory for PublishRank 2.9.108, covering all dashboard cards and all Technical Health checks shown in the supplied dashboard reference image.
+
+= 2.9.105 =
+* New: Google Preferred Sources tool (PublishRank → Google Preferred Sources), shown with a "New" badge in the menu and on the dashboard until you open it.
+* Generates your Preferred Sources link (https://www.google.com/preferences/source?q=DOMAIN) from the site's home URL or an address you enter; paths, queries and fragments are removed, unsafe schemes are rejected and internationalized domains are preserved.
+* Shows Google's documented button code (div with google-add-preferred-source-btn plus the official publisher.js script) with Copy, a placeholder preview, optional documented data-theme and data-lang, and Reset to Default.
+* Custom Button Builder generates an accessible, independently styled link to your Preferred Sources URL, clearly labelled as a custom link and not Google's official button, because Google documents no custom styling for its own button.
+* Advanced HTML editor with warnings, strict allow-list validation, no code execution, and exact saving (code that fails validation is not saved or rewritten).
+* Optional automatic placement (off by default): top of page, above, middle or below the article, or footer, on the page types you choose. The button is printed in the normal page flow with its own spacing so it does not overlap theme content. Google's script is added only when Google's button is shown, never in wp-admin.
+* One simple panel: choose Default or Custom once, then choose where it appears.
+* Shortened the PublishRank sidebar to Dashboard, Newsroom, Settings and Documentation. Every other tool, including all Newsroom screens, is reached from a Dashboard card and remains registered, so direct links keep working.
+
 = 2.9.104 =
 * Corrected the default breadcrumb root to "Home" with the site's actual homepage URL. Publication identity remains unchanged in document titles, publisher/WebSite schema, Open Graph, and other SEO output.
 * Added an expandable PublishRank admin navigation with keyboard-accessible dropdown groups for Content & publishing, Newsroom, Search & discovery, Measure & maintain, and Settings & support.
-* Added distinct high-contrast Dashicons with colored backgrounds for PublishRank tools so icons remain visible against the WordPress admin menu background.
+* Added distinct Dashicons for PublishRank tools; they follow the menu text color with no custom tile or background.
 * Fixed the dashboard authorization regression by retaining all registered PublishRank submenu destinations in WordPress's submenu registry.
 * Fixed Schema Aggregator descriptions so SEO template variables such as `%%focus_keyword%%` and `%%excerpt%%` are resolved before public JSON-LD is generated.
 * Added the supplied PublishRank brand mark to the packaged assets and documented the navigation/accessibility changes.
+* Replaced every icon with the single official PublishRank mark (`assets/images/publishrank-brand-mark.png`) in the admin sidebar, toolbar and its dropdown, screen headers, setup wizard and sitemap view. The extra PNG icon sizes and `publishrank.svg` were removed from the package.
+* Removed the custom dark background and the coloured icon tiles from the PublishRank admin dropdown; it now uses WordPress's native submenu colours, so it follows every admin colour scheme. The Dashboard entry shows the PublishRank mark.
+* Redesigned the XML sitemap view in the bordeaux-to-pink brand palette: branded header, showcase hero with the PublishRank mark, summary tiles, a content showcase bar with per-type URL shares, colour-coded type cards with URL counts, light and dark modes, and a version footer.
+* Made the version consistent everywhere: the Branding fallback and the Newsroom module now follow `PUBLISHRANK_SEO_VERSION` (2.9.104); sitemap view and admin headers display the same number; the readme changelog headings were corrected.
+* Fixed the sidebar and dropdown icons not updating or not showing: the menu stylesheet and onboarding stylesheet are now cache-busted by file time (they were cached under the unchanged version number), and the brand mark is drawn as a plain background image instead of a CSS mask, which browsers refuse to paint for cross-origin assets.
+* Bumped the internal integrity build marker (not the plugin version) so the file-integrity baseline is rebuilt after this package replaces the earlier 2.9.104 files, which otherwise reported changed PHP files.
+* Expanded the documentation: new in-dashboard sections (menu and toolbar, sitemap view, live blogs and Newsroom, versions, troubleshooting) and a new `docs/` folder with guides for sitemaps, branding, navigation, troubleshooting, versioning and a compatibility checklist.
 
-= 2.9.76 =
-* Changed: visible PublishRank breadcrumbs are enabled after upgrading to 2.9.103, including sites that had the visibility option saved as off. Publishers can still switch them off later from PublishRank > Breadcrumbs.
+= 2.9.103 =
+* Updated the admin palette using a navy/teal analogous foundation with coral action accents and gold attention states.
+* Improved contrast and focus colors across dashboard, onboarding, status badges, and tool filters.
+
+= 2.9.102 =
+* Added a dashboard Tools Showcase search and category filter and reduced the native PublishRank submenu to essential destinations while preserving direct tool access from the dashboard.
+* Changed: visible PublishRank breadcrumbs are enabled after upgrading to 2.9.102, including sites that had the visibility option saved as off. Publishers can still switch them off later from PublishRank > Breadcrumbs.
 * Improved: the Breadcrumbs screen now shows a clear recommendation to disable the theme or page-builder's own visible breadcrumb renderer when using PublishRank, to avoid duplicate trails. PublishRank does not silently disable theme settings.
 * Added: regression coverage for the visibility checkbox and duplicate-breadcrumb recommendation.
+
+= 2.9.101 =
+* Fixed homepage SEO template variables appearing literally in wizard and dashboard configuration summaries.
+* Unified administrative homepage-title previews with the frontend template resolver and added a responsive dashboard identity/title summary.
 
 = 2.9.99 =
 * Added: PublishRank's publication title and description now override the WordPress Site Title and Tagline on the public website (on by default; Settings > Visible publication identity). Themes, block themes, Elementor widgets, feeds, the REST index and get_bloginfo() show the PublishRank values after a single setup. The values stored in Settings > General are never written or changed, wp-admin and the settings REST route still see the real WordPress values, and a PublishRank value that is empty leaves the WordPress value in place. A notice on Settings > General explains the override.
@@ -318,4 +402,4 @@ Other website links in the administration interface (including the Schema.org vo
 
 
 == PublishRank Newsroom ==
-PublishRank now includes a built-in editorial newsroom module for story pitches and assignments, configurable workflow stages, reporter/editor assignments, planning board, calendar, private notes and discussion, restricted attachments, audit history, CSV export, notifications, and publishing handoff to WordPress drafts. The module uses dedicated newsroom capabilities and retains newsroom records and settings when the plugin is updated. Review newsroom role permissions and private attachment protection before storing confidential material.
+PublishRank includes a built-in editorial newsroom for story pitches and assignments, configurable workflow stages, reporter/editor assignments, planning board, calendar, private notes and discussion, attachments, audit history, CSV export, notifications, and publishing handoff to WordPress drafts. The module uses dedicated newsroom capabilities and retains newsroom records and settings when updated. Attachments are stored outside the public document root when the server provides a writable private directory; legacy uploads are migrated on an authorized admin request. New uploads are blocked if private storage cannot be established. Assignment, stage, overdue-reminder, and discussion alerts appear in a dismissible wp-admin pop-up and the Newsroom notification inbox; users can manage email, in-app, and pop-up preferences under Newsroom → My Notifications. Alerts poll while logged into wp-admin and do not request browser notification permission.

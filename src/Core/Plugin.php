@@ -64,6 +64,7 @@ use PublishRankSEO\Admin\ExpertisePage;
 use PublishRankSEO\Admin\AnalyticsPage;
 use PublishRankSEO\Admin\SearchConsolePage;
 use PublishRankSEO\Admin\BaiduSubmissionPage;
+use PublishRankSEO\Admin\PreferredSourcesPage;
 use PublishRankSEO\Admin\SiteVerificationPage;
 use PublishRankSEO\AnalyticsCollector;
 use PublishRankSEO\Google\LiveSync;
@@ -91,6 +92,8 @@ final class Plugin {
 			$this->loader->register( FrontendVisibility::class, false );
 			$this->loader->register( IdentityOverride::class, false );
 		$this->registry = new OutputRegistry();
+		// Lets the automated tests (and Live Preview style tools) render several requests in one PHP process.
+		add_action( 'publishrank_seo_reset_output_registry', array( $this->registry, 'reset' ) );
 		$this->loader->register( HeadOutput::class, true, array( $this->registry ) );
 		$this->loader->register( FrontendOutputRecovery::class, true, array( $this->registry ) );
 		$this->loader->register( LanguageAlternates::class, false );
@@ -132,6 +135,8 @@ final class Plugin {
 		$this->loader->register( LLMSTxt::class, false );
 		$this->loader->register( \PublishRankSEO\Schema\LiveBlogSchema::class, false );
 		$this->register_cache_invalidation();
+		// Register this module on every request: its frontend hooks and shortcode must exist outside wp-admin.
+		$this->loader->register( PreferredSourcesPage::class, false );
 		if ( is_admin() ) {
 			$this->loader->register( DashboardPage::class, false, array( $this->registry, new JNewsAdapter() ) );
 			$this->loader->register( SettingsPage::class, false );
@@ -175,7 +180,7 @@ final class Plugin {
 	 */
 	private function register_output_cache_invalidation() {
 		$prefixes = array( 'publishrank_identity_', 'publishrank_schema_', 'publishrank_social_', 'publishrank_breadcrumb', 'publishrank_org_website_', 'publishrank_seo_publication_', 'publishrank_seo_publisher_', 'publishrank_seo_title_', 'publishrank_home_', 'publishrank_local_seo_' );
-		$exact    = array( 'publishrank_meta_enabled', 'publishrank_primary_url', 'publishrank_publication_short_name', 'publishrank_default_locale', 'publishrank_country', 'publishrank_copyright', 'publishrank_contact' );
+		$exact    = array( 'publishrank_meta_enabled', 'publishrank_external_seo_handoff', 'publishrank_primary_url', 'publishrank_publication_short_name', 'publishrank_default_locale', 'publishrank_country', 'publishrank_copyright', 'publishrank_contact' );
 		$skip     = array( 'publishrank_schema_index_generation', 'publishrank_seo_cache_epoch', 'publishrank_seo_last_invalidation' );
 		$refresh  = static function ( $option ) use ( $prefixes, $exact, $skip ) {
 			static $running = false;

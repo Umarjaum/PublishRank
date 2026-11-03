@@ -86,8 +86,8 @@ final class FrontendOutputRecovery {
 		// wp_head() is missing in some themes; in that case TraceIntegrity's wp_head
 		// callback never runs. Keep provenance independent of metadata/schema recovery.
 		$this->trace_payload = TraceIntegrity::markup();
-		$needs_head          = OutputSettings::meta() && ! $this->registry->has( 'canonical' );
-		$needs_graph         = OutputSettings::schema() && ! $this->registry->has( 'jsonld' );
+		$needs_head          = OutputSettings::metadata_output() && ! $this->registry->has( 'canonical' );
+		$needs_graph         = OutputSettings::schema_graph_output() && ! $this->registry->has( 'jsonld' );
 		if ( ! $needs_head && ! $needs_graph ) {
 			return; }
 		$rendered = '';

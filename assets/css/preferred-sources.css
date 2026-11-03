@@ -1,0 +1,37 @@
+/* PublishRank Google Preferred Sources. Uses existing rhs-card / palette tokens; all classes are prefixed. */
+.publishrank-preferred-sources .pr-ps-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;margin-right:20px}
+.publishrank-preferred-sources .pr-ps-card h2{margin-top:0}
+.publishrank-preferred-sources .pr-ps-sub{margin:0 0 10px;font-size:14px;color:#50575e}
+.publishrank-preferred-sources .pr-ps-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.publishrank-preferred-sources .pr-ps-pre{margin:0;padding:12px 14px;overflow:auto;max-width:100%;background:#f6f7f7;border:1px solid #dcdcde;border-radius:6px;font-size:13px;line-height:1.5;white-space:pre}
+.publishrank-preferred-sources .pr-ps-pre code{background:none;padding:0;white-space:inherit}
+.publishrank-preferred-sources .pr-ps-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.publishrank-preferred-sources .pr-ps-tag--google{background:#e6f1fb;color:#0b4f8a}
+.publishrank-preferred-sources .pr-ps-tag--custom{background:#fff4d8;color:#765713}
+.publishrank-preferred-sources .pr-ps-new-pill{display:inline-block;padding:1px 7px;border-radius:999px;background:#16803c;color:#fff;font-size:10px;font-weight:700;line-height:1.5;letter-spacing:.06em;text-transform:uppercase;vertical-align:middle}
+.publishrank-preferred-sources .pr-ps-preview-box{margin:12px 0;padding:12px 14px;border:1px dashed #8c8f94;border-radius:6px;background:#fcfcfc}
+.publishrank-preferred-sources .pr-ps-placeholder{display:inline-block;padding:8px 14px;border:1px dashed #a7aaad;border-radius:999px;color:#646970;font-size:13px}
+.publishrank-preferred-sources .pr-ps-error{color:#b32d2e;margin:0 0 8px}
+.publishrank-preferred-sources .pr-ps-builder{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+.publishrank-preferred-sources .pr-ps-row{display:flex;flex-wrap:wrap;gap:6px 16px}
+.publishrank-preferred-sources .pr-ps-row p{margin:6px 0}
+.publishrank-preferred-sources .pr-ps-preview-stage{display:flex;align-items:center;justify-content:center;min-height:90px;padding:16px;border:1px solid #dcdcde;border-radius:6px;background:#fff}
+.publishrank-preferred-sources .pr-ps-preview-stage a{cursor:default}
+.publishrank-preferred-sources .pr-ps-steps{margin:10px 0 10px 20px;list-style:decimal}
+.publishrank-preferred-sources .pr-ps-fields{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.publishrank-preferred-sources textarea.code{font-family:Consolas,Monaco,monospace;font-size:13px}
+@media (max-width:960px){.publishrank-preferred-sources .pr-ps-builder{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:782px){.publishrank-preferred-sources .pr-ps-grid{margin-right:10px}.publishrank-preferred-sources .pr-ps-actions .button{flex:1 1 auto;text-align:center}.publishrank-preferred-sources input.large-text,.publishrank-preferred-sources .regular-text{max-width:100%;box-sizing:border-box}}
+
+.publishrank-preferred-sources .pr-ps-modes{margin:0 0 12px;padding:0;border:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.publishrank-preferred-sources .pr-ps-mode{display:block;padding:12px 14px;border:1px solid #c3c4c7;border-radius:8px;background:#fff;cursor:pointer}
+.publishrank-preferred-sources .pr-ps-mode span{display:block;margin:4px 0 0 24px;color:#50575e;font-size:13px}
+.publishrank-preferred-sources .pr-ps-mode:has(input:checked){border-color:#2271b1;box-shadow:0 0 0 1px #2271b1}
+.publishrank-preferred-sources .pr-ps-panel[hidden]{display:none}
+.publishrank-preferred-sources .pr-ps-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.publishrank-preferred-sources .pr-ps-cols fieldset{margin:0;padding:0;border:0}
+.publishrank-preferred-sources .pr-ps-check{display:block;margin:6px 0}
+.publishrank-preferred-sources .pr-ps-adv{margin-top:14px;padding-top:10px;border-top:1px solid #dcdcde}
+.publishrank-preferred-sources .pr-ps-adv summary{cursor:pointer;font-weight:600}
+.publishrank-preferred-sources .pr-ps-savebar{margin:0 20px 16px 0}
+@media (max-width:782px){.publishrank-preferred-sources .pr-ps-modes,.publishrank-preferred-sources .pr-ps-cols{grid-template-columns:minmax(0,1fr)}}

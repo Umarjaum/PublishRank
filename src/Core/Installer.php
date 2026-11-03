@@ -41,11 +41,13 @@ final class Installer {
 				'publishrank_schema_aggregator_custom' => '',
 				'publishrank_schema_enabled'              => 1,
 				'publishrank_org_website_schema_enabled'  => 1,
+				'publishrank_external_seo_handoff'        => 0,
 				'publishrank_schema_default_page_type'    => 'WebPage',
 				'publishrank_twitter_card'                => 'summary_large_image',
 				'publishrank_facebook_app_id'             => '',
 				'publishrank_home_title'                  => '',
 				'publishrank_home_description'            => '',
+				'publishrank_seo_description_fallback'     => 'page_type',
 				'publishrank_noindex_author_archives'     => 0,
 				'publishrank_noindex_date_archives'       => 0,
 				'publishrank_seo_default_robots'          => 'index,follow',
@@ -208,16 +210,11 @@ final class Installer {
 			\PublishRankSEO\Sitemap\Engine\SitemapCursorStore::bump_many( array( 'news', 'image', 'video' ) );
 		}
 		// 2.9.91: output-switch normalisation and repair of template tokens damaged by older sanitizers. Safe to rerun.
-		if ( version_compare( $previous_version, '2.9.91', '<' ) ) {
-			self::migrate_2_9_91();
-		}
-			// 2.9.102: make PublishRank's visible breadcrumb trail the default after upgrade, as requested.
-			// This is a one-time migration; administrators can turn it off again in the Breadcrumbs screen.
-			if ( version_compare( $previous_version, '2.9.102', '<' ) ) {
-			update_option( 'publishrank_breadcrumbs_enabled', 1 );
-		}
-		update_option( 'publishrank_seo_cache_epoch', time(), false );
-		update_option( self::VERSION_OPTION, PUBLISHRANK_SEO_VERSION, true );
+			if ( version_compare( $previous_version, '2.9.91', '<' ) ) {
+				self::migrate_2_9_91();
+			}
+			update_option( 'publishrank_seo_cache_epoch', time(), false );
+			update_option( self::VERSION_OPTION, PUBLISHRANK_SEO_VERSION, true );
 		flush_rewrite_rules( false );
 	}
 

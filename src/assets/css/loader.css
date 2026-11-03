@@ -1,0 +1,12 @@
+/* PublishRank animated logo loader (shown on PublishRank admin screens while a page loads or saves). */
+.pr-loader{position:fixed;inset:0;z-index:100050;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(circle at 78% 12%,rgba(244,167,194,.35),transparent 34%),rgba(255,250,252,.94);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:1;visibility:visible;transition:opacity .28s ease,visibility .28s ease}
+.pr-loader[hidden]{display:none!important}
+.pr-loader.is-done{opacity:0;visibility:hidden;pointer-events:none}
+.pr-loader__logo{display:block;width:132px;height:132px;border-radius:30px;object-fit:cover;box-shadow:0 22px 48px rgba(101,10,36,.28),0 0 0 8px rgba(155,18,69,.08)}
+.pr-loader__label{margin:0;color:#650A24;font:600 13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;letter-spacing:.02em}
+/* CSS-only failsafe: if the script never runs, the loader still gets out of the way. */
+.pr-loader:not(.is-done):not(.is-navigating){animation:pr-loader-failsafe 0s linear 7s forwards}
+@keyframes pr-loader-failsafe{to{opacity:0;visibility:hidden;pointer-events:none}}
+.pr-loader.is-navigating{animation:none}
+@media(max-width:782px){.pr-loader__logo{width:104px;height:104px;border-radius:24px}}
+@media print{.pr-loader{display:none!important}}

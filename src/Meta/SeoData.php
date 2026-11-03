@@ -22,6 +22,7 @@ final class SeoData {
 			unset( self::$cache[ (int) $post_id ] );
 		} else {
 			self::$cache = array(); }
+		DescriptionResolver::flush( $post_id );
 	}
 
 	/**
@@ -41,18 +42,16 @@ final class SeoData {
 		$meta = new MetaGenerator();
 
 		$title_override = (string) PostMeta::get( $id, PostMeta::TITLE, '' );
-		$desc_override  = (string) PostMeta::get( $id, PostMeta::DESCRIPTION, '' );
 		$canon_override = (string) PostMeta::get( $id, PostMeta::CANONICAL, '' );
 		$ogt_override   = (string) PostMeta::get( $id, PostMeta::OG_TITLE, '' );
 		$ogd_override   = (string) PostMeta::get( $id, PostMeta::OG_DESCRIPTION, '' );
 		$robots_set     = (string) PostMeta::get( $id, PostMeta::ROBOTS, '' );
 
 		$title       = $meta->title_for_post( $id );
-		// The override is a template: resolve %%variables%% exactly as the front-end meta description does.
-		$description = '' !== $desc_override ? self::clean( $meta->resolve_template( $desc_override, $id, 'description' ), 320 ) : self::auto_description( $post );
-		if ( '' === $description ) {
-			$description = self::auto_description( $post );
-		}
+		// One shared resolver decides the description and reports its source (override, excerpt, content, builder,
+		// page_type or global), so this panel always matches what the <head> prints.
+		$resolved    = DescriptionResolver::for_post( $post );
+		$description = $resolved['text'];
 		// Social overrides are templates too: resolve %%variables%% so raw tokens never reach og:/twitter: tags.
 		$og_title       = '' !== $ogt_override ? self::clean( $meta->resolve_template( $ogt_override, $id, 'title' ), 255 ) : '';
 		$og_title       = '' !== $og_title ? $og_title : $title;
@@ -72,7 +71,7 @@ final class SeoData {
 			'image'          => $image,
 			'sources'        => array(
 				'title'       => '' !== $title_override ? 'override' : 'auto',
-				'description' => '' !== $desc_override ? 'override' : 'auto',
+				'description' => $resolved['source'],
 				'canonical'   => '' !== $canon_override && self::same_host( $canon_override ) ? 'override' : 'auto',
 				'robots'      => '' !== $robots_set ? 'override' : 'auto',
 				'image'       => isset( $image['source'] ) ? $image['source'] : 'none',
@@ -90,18 +89,13 @@ final class SeoData {
 		return $data;
 	}
 
-	/** Automatic meta description: excerpt, else the start of the content. Never leaks protected content. */
+	/**
+	 * Automatic meta description: excerpt, else text extracted from the content, else page-builder text.
+	 * Returns '' when the page has no usable text of its own (callers decide on a fallback). Never leaks protected content.
+	 */
 	public static function auto_description( $post, $length = self::DESCRIPTION_LENGTH ) {
-		$post = get_post( $post );
-		if ( ! $post instanceof \WP_Post || post_password_required( $post ) ) {
-			return ''; }
-		$source = '' !== trim( (string) $post->post_excerpt ) ? (string) $post->post_excerpt : (string) $post->post_content;
-		if ( '' === trim( $source ) ) {
-			return ''; }
-		if ( function_exists( 'excerpt_remove_blocks' ) && '' === trim( (string) $post->post_excerpt ) ) {
-			$source = excerpt_remove_blocks( $source );
-		}
-		return self::truncate( self::clean( $source ), $length );
+		$result = DescriptionResolver::automatic( $post, $length );
+		return $result['text'];
 	}
 
 	/**

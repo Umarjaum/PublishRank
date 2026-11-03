@@ -49,7 +49,7 @@ final class SitemapStylesheet {
 	 */
 	public static function url( $type = 'index', $part = 1 ) {
 		// One comma-separated argument (type,part,version): an XML processing instruction does not reliably decode '&'.
-		$arg = sanitize_key( $type ) . ',' . max( 1, absint( $part ) ) . ',' . ( defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '1' );
+		$arg = sanitize_key( $type ) . ',' . max( 1, absint( $part ) ) . ',' . ( defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '1' ) . ( defined( 'PUBLISHRANK_SEO_PATH' ) ? '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/sitemap.css' ) : '' );
 		return wp_make_link_relative( home_url( '/publishrank-sitemap.xsl' ) ) . '?pr=' . $arg;
 	}
 
@@ -161,7 +161,8 @@ final class SitemapStylesheet {
 			// This XSLT document is served as text/xsl, not an HTML page, so the bundled stylesheet and script are embedded inline from the plugin's own local files.
 			'%%CSSLINK%%'  => self::inline_asset( 'css/sitemap.css', 'style' ),
 			'%%JSLINK%%'   => self::inline_asset( 'js/sitemap.js', 'script' ),
-			'%%LOGO%%'     => esc_url( Branding::image( 'publishrank-header-icon-v2.png' ) ),
+			'%%LOGO%%'     => esc_url( Branding::image( Branding::LOGO_FILE ) ),
+			'%%VERSION%%'  => esc_html( Branding::version() ),
 			'%%SITE%%'     => esc_html( wp_strip_all_tags( (string) \PublishRankSEO\Core\PublicationProfile::publication_name() ) ),
 			'%%HOME%%'     => esc_url( ! empty( wp_make_link_relative( $home ) ) ? wp_make_link_relative( $home ) : '/' ),
 			'%%INDEX%%'    => esc_url( wp_make_link_relative( SitemapUrls::index_url() ) ),
@@ -253,7 +254,7 @@ final class SitemapStylesheet {
 </head>
 <body>
 <header class="top"><div class="wrap top__in">
-	<a class="brand" href="%%HOME%%"><img src="%%LOGO%%" alt=""/><span><strong>%%SITE%%</strong><small>XML sitemap &#183; PublishRank</small></span></a>
+	<a class="brand" href="%%HOME%%"><img src="%%LOGO%%" alt=""/><span><strong>%%SITE%%</strong><small>XML sitemap &#183; PublishRank v%%VERSION%%</small></span></a>
 	<span class="live"><i></i>Live &#183; auto-generated</span>
 </div></header>
 <main class="wrap">
@@ -265,7 +266,9 @@ final class SitemapStylesheet {
 	<xsl:variable name="nfiles" select="count($files)"/>
 	<xsl:variable name="groups" select="$files[generate-id()=generate-id(key('by-type',substring-before(substring-after(sm:loc,'%%PREFIX%%'),'-sitemap'))[1])]"/>
 	<xsl:variable name="counting" select="$nfiles &lt;= %%LIMIT%%"/>
+	<xsl:variable name="totalurls"><xsl:choose><xsl:when test="$counting"><xsl:value-of select="count(document($files/sm:loc)/sm:urlset/sm:url)"/></xsl:when><xsl:otherwise>0</xsl:otherwise></xsl:choose></xsl:variable>
 	<div class="hero">
+		<img class="hero__mark" src="%%LOGO%%" alt=""/>
 		<div class="hero__main"><span class="badge badge--lg">XML</span><div><p class="eyebrow">Publication discovery</p><h1>Sitemap index</h1><p>The master list search engines start from. Each card below is one type of content, and each row inside it is a sitemap file you can open.</p></div></div>
 		<div class="actions"><button type="button" class="btn btn--primary" data-copy="self">Copy sitemap URL</button><a class="btn" href="?raw=1">View raw XML</a></div>
 	</div>
@@ -275,15 +278,34 @@ final class SitemapStylesheet {
 		<div class="stat"><span class="stat__label">URLs listed</span><strong><xsl:choose><xsl:when test="$counting"><xsl:value-of select="format-number(count(document($files/sm:loc)/sm:urlset/sm:url),'#,##0')"/></xsl:when><xsl:otherwise>&#8212;</xsl:otherwise></xsl:choose></strong><small><xsl:choose><xsl:when test="$counting">across all files</xsl:when><xsl:otherwise>too many files to count here</xsl:otherwise></xsl:choose></small></div>
 		<div class="stat"><span class="stat__label">Last update</span><strong style="font-size:18px;line-height:2"><xsl:for-each select="$files/sm:lastmod"><xsl:sort select="." order="descending"/><xsl:if test="position()=1"><xsl:call-template name="when"><xsl:with-param name="v" select="."/></xsl:call-template></xsl:if></xsl:for-each><xsl:if test="not($files/sm:lastmod)">&#8212;</xsl:if></strong><small>newest change in any file</small></div>
 	</section>
+	<section class="card mix" aria-label="Content mix">
+		<div class="mix__head"><h2>Content showcase</h2><p><xsl:choose><xsl:when test="$counting and $totalurls &gt; 0">Share of listed URLs by content type</xsl:when><xsl:otherwise>Share of sitemap files by content type</xsl:otherwise></xsl:choose></p></div>
+		<div class="mix__bar">
+		<xsl:for-each select="$groups">
+			<xsl:variable name="t" select="substring-before(substring-after(sm:loc,'%%PREFIX%%'),'-sitemap')"/>
+			<xsl:variable name="members" select="key('by-type',$t)"/>
+			<xsl:variable name="urls"><xsl:choose><xsl:when test="$counting"><xsl:value-of select="count(document($members/sm:loc)/sm:urlset/sm:url)"/></xsl:when><xsl:otherwise>0</xsl:otherwise></xsl:choose></xsl:variable>
+			<xsl:variable name="w"><xsl:choose><xsl:when test="$counting and $totalurls &gt; 0"><xsl:value-of select="round($urls div $totalurls * 1000) div 10"/></xsl:when><xsl:otherwise><xsl:value-of select="round(count($members) div $nfiles * 1000) div 10"/></xsl:otherwise></xsl:choose></xsl:variable>
+			<a class="t-{$t}" href="#type-{$t}" style="flex:{$w} 1 0%"><xsl:attribute name="title"><xsl:call-template name="label"><xsl:with-param name="t" select="$t"/></xsl:call-template></xsl:attribute><span class="sr"></span></a>
+		</xsl:for-each>
+		</div>
+		<ul class="mix__legend">
+		<xsl:for-each select="$groups">
+			<xsl:variable name="t" select="substring-before(substring-after(sm:loc,'%%PREFIX%%'),'-sitemap')"/>
+			<xsl:variable name="members" select="key('by-type',$t)"/>
+			<li><a class="t-{$t}" href="#type-{$t}"><i></i><xsl:call-template name="label"><xsl:with-param name="t" select="$t"/></xsl:call-template><small><xsl:choose><xsl:when test="$counting"><xsl:value-of select="format-number(count(document($members/sm:loc)/sm:urlset/sm:url),'#,##0')"/> URLs</xsl:when><xsl:otherwise><xsl:value-of select="count($members)"/><xsl:choose><xsl:when test="count($members)=1"> file</xsl:when><xsl:otherwise> files</xsl:otherwise></xsl:choose></xsl:otherwise></xsl:choose></small></a></li>
+		</xsl:for-each>
+		</ul>
+	</section>
 	<div class="grid">
 	<xsl:for-each select="$groups">
 		<xsl:variable name="t" select="substring-before(substring-after(sm:loc,'%%PREFIX%%'),'-sitemap')"/>
 		<xsl:variable name="members" select="key('by-type',$t)"/>
-		<article class="card type">
+		<article class="card type t-{$t}" id="type-{$t}">
 			<div class="type__head">
-				<span class="badge t-{$t}"><xsl:call-template name="abbr"><xsl:with-param name="t" select="$t"/></xsl:call-template></span>
+				<span class="badge"><xsl:call-template name="abbr"><xsl:with-param name="t" select="$t"/></xsl:call-template></span>
 				<div><h3><xsl:call-template name="label"><xsl:with-param name="t" select="$t"/></xsl:call-template></h3><p><xsl:call-template name="desc"><xsl:with-param name="t" select="$t"/></xsl:call-template></p></div>
-				<span class="chip"><xsl:value-of select="count($members)"/><xsl:choose><xsl:when test="count($members)=1"> file</xsl:when><xsl:otherwise> files</xsl:otherwise></xsl:choose></span>
+				<span class="chips"><span class="chip"><xsl:value-of select="count($members)"/><xsl:choose><xsl:when test="count($members)=1"> file</xsl:when><xsl:otherwise> files</xsl:otherwise></xsl:choose></span><xsl:if test="$counting"><span class="chip chip--soft"><xsl:value-of select="format-number(count(document($members/sm:loc)/sm:urlset/sm:url),'#,##0')"/> URLs</span></xsl:if></span>
 			</div>
 			<xsl:if test="$t='news'"><p class="note">Only articles from the last %%WINDOW%% hours are listed here, as Google News requires.</p></xsl:if>
 			<ul class="files">
@@ -317,6 +339,7 @@ final class SitemapStylesheet {
 	<xsl:variable name="nolm" select="count($urls[not(sm:lastmod)])"/>
 	<xsl:variable name="nohttps" select="count($urls[not(starts-with(sm:loc,'https://'))])"/>
 	<div class="hero">
+		<img class="hero__mark" src="%%LOGO%%" alt=""/>
 		<div class="hero__main"><span class="badge badge--lg t-%%TYPE%%">%%TABBR%%</span><div>
 			<p class="crumbs"><a href="%%INDEX%%">All sitemaps</a> &#8250; %%TLABEL%%<xsl:if test="%%PART%% &gt; 1"> &#8250; Part %%PART%%</xsl:if></p>
 			<h1>%%TLABEL%% sitemap<xsl:if test="%%PART%% &gt; 1"><xsl:text> &#183; part %%PART%%</xsl:text></xsl:if></h1>
@@ -370,7 +393,7 @@ final class SitemapStylesheet {
 <xsl:otherwise><section class="card"><div class="empty"><b>Sitemap data unavailable</b>The XML document did not contain a recognised sitemap index or URL set.</div></section></xsl:otherwise>
 </xsl:choose>
 </main>
-<p class="foot">Generated by PublishRank &#183; search engines read the raw XML, this readable view is for people.</p>
+<p class="foot">Generated by PublishRank v%%VERSION%% &#183; search engines read the raw XML, this readable view is for people.</p>
 %%JSLINK%%
 </body>
 </html>

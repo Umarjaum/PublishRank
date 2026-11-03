@@ -12,12 +12,18 @@ function sanitize_key( $k ) { return strtolower( preg_replace( '/[^A-Za-z0-9_\-]
 function wp_strip_all_tags( $s ) { return strip_tags( (string) $s ); }
 function wp_timezone() { return new DateTimeZone( 'UTC' ); }
 function get_permalink( $p ) { return 'https://example.test/live-1/'; } function trailingslashit( $s ) { return rtrim( $s, '/' ) . '/'; }
+function home_url( $path = '/' ) { return 'https://example.test/' . ltrim( (string) $path, '/' ); }
+function wp_parse_url( $url, $component = -1 ) { return parse_url( $url, $component ); }
+function esc_url_raw( $url ) { return (string) $url; }
+function is_singular() { return false; } function is_home() { return false; } function is_front_page() { return false; }
 function get_the_category( $id ) { return array(); }
 function wp_json_encode( $v, $f = 0 ) { return json_encode( $v, $f ); }
 function is_admin() { return $GLOBALS['ctx']['admin'] ?? false; } function wp_doing_ajax() { return $GLOBALS['ctx']['ajax'] ?? false; }
 function is_feed() { return $GLOBALS['ctx']['feed'] ?? false; } function is_robots() { return false; } function is_embed() { return false; }
 function get_query_var( $v ) { return $GLOBALS['ctx']['sitemap'] ?? ''; }
 require_once __DIR__ . '/../src/Meta/PostMeta.php';
+require_once __DIR__ . '/../src/Core/PublicationProfile.php';
+require_once __DIR__ . '/../src/Meta/MetaGenerator.php';
 require_once __DIR__ . '/../src/Schema/SchemaTypes.php';
 require_once __DIR__ . '/../src/Schema/LiveBlogSchema.php';
 require_once __DIR__ . '/../src/Schema/GraphOutput.php';

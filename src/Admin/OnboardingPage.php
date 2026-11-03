@@ -576,7 +576,7 @@ final class OnboardingPage {
 
 	public function menu() {
 		$label = $this->is_setup_complete() ? __( 'Setup Wizard', 'publishrank' ) : __( 'Complete Setup →', 'publishrank' );
-		add_submenu_page( Branding::MENU_SLUG, __( 'PublishRank Setup', 'publishrank' ), $label, 'manage_options', self::SLUG, array( $this, 'page' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'PublishRank Setup', 'publishrank' ), $label, \PublishRank_Newsroom::CAP_SETUP, self::SLUG, array( $this, 'page' ) );
 	}
 
 	/** Require the completion marker introduced with the verified setup flow. */
@@ -626,7 +626,7 @@ final class OnboardingPage {
 			return;
 		}
 		delete_transient( 'publishrank_seo_activation_redirect' );
-		if ( wp_doing_ajax() || is_network_admin() || ! current_user_can( 'manage_options' ) ) {
+		if ( wp_doing_ajax() || is_network_admin() || ! current_user_can( \PublishRank_Newsroom::CAP_SETUP ) ) {
 			return;
 		}
 		if ( isset( $_GET['activate-multi'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -641,7 +641,7 @@ final class OnboardingPage {
 
 	/** On a fresh install, any PublishRank screen other than the wizard opens the wizard until setup is done. */
 	public function maybe_lock_plugin_screens() {
-		if ( wp_doing_ajax() || is_network_admin() || ! current_user_can( 'manage_options' ) || ! $this->is_locked() ) {
+		if ( wp_doing_ajax() || is_network_admin() || ! current_user_can( \PublishRank_Newsroom::CAP_SETUP ) || ! $this->is_locked() ) {
 			return;
 		}
 		global $pagenow;
@@ -658,7 +658,7 @@ final class OnboardingPage {
 
 	/** A persistent first-run card on other admin screens; it remains until setup is completed. */
 	public function setup_reminder_notice() {
-		if ( $this->is_setup_complete() || ! current_user_can( 'manage_options' ) ) {
+		if ( $this->is_setup_complete() || ! current_user_can( \PublishRank_Newsroom::CAP_SETUP ) ) {
 			return;
 		}
 		$screen    = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
@@ -666,10 +666,10 @@ final class OnboardingPage {
 		if ( $is_wizard ) {
 			return;
 		}
-		$icon       = add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank.svg' ) );
+		$icon       = Branding::logo_url();
 		$wizard_url = Branding::page_url( self::SLUG );
 		echo '<div class="notice notice-info prw-setup-notice" style="border-left-color:#5a4be2;padding:14px 16px;max-width:1000px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
-		echo '<img src="' . esc_url( $icon ) . '" alt="" width="48" height="48" style="width:48px;height:48px;object-fit:contain;flex:0 0 48px" />';
+		echo '<img src="' . esc_url( $icon ) . '" alt="" width="48" height="48" style="width:48px;height:48px;padding:7px;box-sizing:border-box;border-radius:12px;background:#590d22;object-fit:contain;flex:0 0 48px" />';
 		echo '<div style="flex:1;min-width:220px"><strong style="font-size:14px;color:#1b2340">' . esc_html__( 'First-time SEO configuration', 'publishrank' ) . '</strong><p style="margin:5px 0 0">' . esc_html__( 'Set up your publisher identity, social profiles, search appearance and content scope once in the setup wizard. PublishRank outputs your publisher details only after setup is completed.', 'publishrank' ) . '</p></div>';
 		echo '<a href="' . esc_url( $wizard_url ) . '" class="button button-primary prw-notice-button">' . esc_html__( 'Start onboarding', 'publishrank' ) . '</a>';
 		echo '</div></div>';
@@ -681,14 +681,14 @@ final class OnboardingPage {
 			return;
 		}
 		wp_enqueue_media();
-		wp_enqueue_style( 'publishrank-seo-onboarding', Branding::asset_url( 'css/onboarding.css' ), array( 'dashicons', 'publishrank-seo-admin' ), Branding::version() );
+		wp_enqueue_style( 'publishrank-seo-onboarding', Branding::asset_url( 'css/onboarding.css' ), array( 'dashicons', 'publishrank-seo-admin' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/onboarding.css' ) );
 		wp_enqueue_script( 'publishrank-seo-onboarding', Branding::asset_url( 'js/onboarding.js' ), array( 'jquery' ), Branding::version(), true );
 		\PublishRankSEO\Admin\VariablePicker::enqueue( '' );
 	}
 
 	/** Leave the wizard without completing it. Not available while the wizard is locked. */
 	public function exit_wizard() {
-		AdminAssets::guard( 'publishrank_onboarding_exit' );
+		AdminAssets::guard( 'publishrank_onboarding_exit', \PublishRank_Newsroom::CAP_SETUP );
 		if ( $this->is_locked() ) {
 			wp_safe_redirect( Branding::page_url( self::SLUG ) );
 			exit;
@@ -751,7 +751,7 @@ final class OnboardingPage {
 
 	/** Restore conservative recommended defaults and reopen the wizard. */
 	public function restore_defaults() {
-		AdminAssets::guard( 'publishrank_onboarding_defaults' );
+		AdminAssets::guard( 'publishrank_onboarding_defaults', \PublishRank_Newsroom::CAP_SETUP );
 		$defaults = array(
 			'publishrank_identity_type'           => 'organization',
 			'publishrank_identity_name'           => '',
@@ -839,7 +839,7 @@ final class OnboardingPage {
 	}
 
 	public function save() {
-		AdminAssets::guard( 'publishrank_onboarding_save' );
+		AdminAssets::guard( 'publishrank_onboarding_save', \PublishRank_Newsroom::CAP_SETUP );
 		check_admin_referer( 'publishrank_onboarding_save' ); // Explicit nonce verification for the request data read below.
 		$step     = isset( $_POST['step'] ) ? absint( $_POST['step'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$step     = max( 1, min( self::TOTAL_STEPS, $step ) );
@@ -914,7 +914,12 @@ final class OnboardingPage {
 		$key   = $field['key'];
 		$value = $this->value( $field );
 		$id    = 'prw_' . $key;
-		$req   = $field['required'] ? ' required aria-required="true"' : '';
+		$show_validation_error = isset( $_GET['error'] ) && ! is_array( $_GET['error'] ) && 'required' === sanitize_key( wp_unslash( $_GET['error'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$invalid = $show_validation_error && $field['required'] && '' === trim( (string) $value );
+		$req     = $field['required'] ? ' required aria-required="true"' : '';
+		if ( $invalid ) {
+			$req .= ' aria-invalid="true" aria-describedby="' . esc_attr( 'prw_error_' . $key ) . '"';
+		}
 		$class = 'prw-field' . ( $field['wide'] ? ' prw-field--wide' : '' ) . ( 'toggle' === $field['type'] ? ' prw-field--toggle' : '' );
 		echo '<div class="' . esc_attr( $class ) . '">';
 		if ( 'identity' === $field['type'] ) {
@@ -978,6 +983,9 @@ final class OnboardingPage {
 			}
 			if ( $field['help'] ) {
 				echo '<small class="prw-help">' . esc_html( $field['help'] ) . '</small>';
+			}
+			if ( $invalid ) {
+				echo '<small class="prw-field-error" id="' . esc_attr( 'prw_error_' . $key ) . '">' . esc_html__( 'This field is required.', 'publishrank' ) . '</small>';
 			}
 		}
 		echo '</div>';
@@ -1077,7 +1085,7 @@ final class OnboardingPage {
 	}
 
 	public function page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( \PublishRank_Newsroom::CAP_SETUP ) ) {
 			return; }
 		$steps    = self::steps();
 		$step     = isset( $_GET['step'] ) ? max( 1, min( self::TOTAL_STEPS, absint( $_GET['step'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -1101,7 +1109,7 @@ final class OnboardingPage {
 			<div class="prw-modal-backdrop" id="prw-modal">
 				<div class="prw-modal" role="dialog" aria-modal="true" aria-labelledby="prw-modal-title">
 					<header class="prw-modal__head">
-						<img src="<?php echo esc_url( Branding::image( 'publishrank.svg' ) ); ?>" alt="" width="40" height="40" />
+						<img src="<?php echo esc_url( Branding::logo_url() ); ?>" alt="" width="40" height="40" />
 						<div class="prw-modal__title">
 							<span class="rhs-eyebrow"><?php echo esc_html( $complete ? __( 'Edit setup', 'publishrank' ) : __( 'First-time setup', 'publishrank' ) ); ?> · <?php echo esc_html( sprintf( /* translators: 1: step, 2: total. */ __( 'Step %1$d of %2$d', 'publishrank' ), $step, self::TOTAL_STEPS ) ); ?></span>
 							<h1 id="prw-modal-title"><?php echo esc_html( $steps[ $step ]['label'] ); ?></h1>
@@ -1131,7 +1139,7 @@ final class OnboardingPage {
 						<?php wp_nonce_field( 'publishrank_onboarding_save' ); ?>
 						<div class="prw-modal__body">
 							<?php if ( isset( $_GET['error'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-								<div class="notice notice-error inline"><p><?php echo esc_html( sprintf( /* translators: %s: field list. */ __( 'Please complete the required fields (*): %s', 'publishrank' ), ! empty( $this->missing_required() ) ? implode( ', ', $this->missing_required() ) : __( 'see highlighted fields', 'publishrank' ) ) ); ?></p></div>
+								<div class="notice notice-error inline prw-validation-summary" id="prw-validation-summary" role="alert" tabindex="-1"><p><?php echo esc_html( sprintf( /* translators: %s: field list. */ __( 'Please complete the required fields (*): %s', 'publishrank' ), ! empty( $this->missing_required() ) ? implode( ', ', $this->missing_required() ) : __( 'see highlighted fields', 'publishrank' ) ) ); ?></p></div>
 							<?php elseif ( isset( $_GET['saved'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 								<div class="notice notice-success inline"><p><?php esc_html_e( 'Saved.', 'publishrank' ); ?></p></div>
 							<?php endif; ?>

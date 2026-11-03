@@ -26,18 +26,195 @@ trait PublishRank_Newsroom_Advanced {
     public function save_advanced_meta($id) {
         $kind=sanitize_key($_POST['kind']??'assignment');update_post_meta($id,'_uj_kind',in_array($kind,['pitch','assignment'],true)?$kind:'assignment');update_post_meta($id,'_uj_desk',sanitize_text_field(wp_unslash($_POST['desk']??'')));update_post_meta($id,'_uj_word_count',absint($_POST['word_count']??0));update_post_meta($id,'_uj_embargo',sanitize_text_field(wp_unslash($_POST['embargo']??'')));update_post_meta($id,'_uj_source_url',esc_url_raw(wp_unslash($_POST['source_url']??'')));
     }
+    /** Resolve a private directory outside the configured public document root. */
+    private function private_attachment_dir($create=false) {
+        $document_root = isset($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : false;
+        if (!$document_root) return false;
+        $document_root = untrailingslashit(wp_normalize_path($document_root));
+        $wordpress_root = untrailingslashit(ABSPATH);
+        // Optional host-specific private folder: define( 'PUBLISHRANK_PRIVATE_DIR', '/home/youraccount/private' ); in wp-config.php.
+        $custom_base = apply_filters('publishrank_private_storage_base', defined('PUBLISHRANK_PRIVATE_DIR') ? (string) PUBLISHRANK_PRIVATE_DIR : '');
+        $bases = array_unique(array_filter([
+            is_string($custom_base) ? $custom_base : '',
+            defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : '',
+            dirname($wordpress_root),
+            dirname(dirname($wordpress_root)),
+        ]));
+        foreach ($bases as $candidate) {
+            $base = realpath($candidate);
+            if (!$base) continue;
+            $base = untrailingslashit(wp_normalize_path($base));
+            if ($base === $document_root || strpos($base, trailingslashit($document_root)) === 0) continue;
+            $directory = $base . '/publishrank-private/uj-newsroom';
+            if ($create && !is_dir($directory) && !wp_mkdir_p($directory)) continue;
+            if (!is_dir($directory)) continue;
+            $resolved = realpath($directory);
+            if (!$resolved) continue;
+            $resolved = untrailingslashit(wp_normalize_path($resolved));
+            if ($resolved === $document_root || strpos($resolved, trailingslashit($document_root)) === 0) continue;
+            if ($create && !is_writable($resolved)) continue;
+            if ($create) {
+                if (!@chmod($resolved, 0700)) continue;
+                clearstatcache(true, $resolved);
+                $permissions = @fileperms($resolved);
+                if (false === $permissions || ($permissions & 0077) !== 0) continue;
+            }
+            return $resolved;
+        }
+        return false;
+    }
+
+    private function legacy_attachment_dir() {
+        return WP_CONTENT_DIR . '/uploads/uj-newsroom-private';
+    }
+
+    private function private_attachment_path($filename) {
+        $filename = sanitize_file_name($filename);
+        if (!$filename) return false;
+        $secure = $this->private_attachment_dir();
+        if ($secure && is_file($secure . '/' . $filename)) return $secure . '/' . $filename;
+        $legacy = $this->legacy_attachment_dir() . '/' . $filename;
+        return is_file($legacy) ? $legacy : false;
+    }
+
+    /** Move the old uploads-based files out of the public web root without changing attachment names. */
+    public function migrate_legacy_attachment_storage() {
+        if ((!current_user_can(self::CAP_ACCESS) && !current_user_can('manage_options')) || get_option('uj_newsroom_private_storage_migrated')) return;
+        $legacy = $this->legacy_attachment_dir();
+        if (!is_dir($legacy)) {
+            update_option('uj_newsroom_private_storage_migrated', 1);
+            return;
+        }
+        $secure = $this->private_attachment_dir(true);
+        if (!$secure) return;
+        $complete = true;
+        foreach ((array)@scandir($legacy) as $entry) {
+            if ($entry === '.' || $entry === '..' || $entry === '.htaccess' || $entry === 'index.php') continue;
+            $source = $legacy . '/' . $entry;
+            if (is_link($source)) {
+                if (!@unlink($source)) $complete = false;
+                continue;
+            }
+            if (!is_file($source) || sanitize_file_name($entry) !== $entry) {
+                $complete = false;
+                continue;
+            }
+            $destination = $secure . '/' . $entry;
+            if (is_file($destination)) {
+                if (filesize($source) !== filesize($destination) || hash_file('sha256', $source) !== hash_file('sha256', $destination)) {
+                    $complete = false;
+                    continue;
+                }
+                if (!@unlink($source)) $complete = false;
+                continue;
+            }
+            if (!@rename($source, $destination)) {
+                $temporary = $destination . '.migration-' . wp_generate_password(12, false, false);
+                if (!@copy($source, $temporary) || filesize($source) !== filesize($temporary) || hash_file('sha256', $source) !== hash_file('sha256', $temporary)) {
+                    if (is_file($temporary)) @unlink($temporary);
+                    $complete = false;
+                    continue;
+                }
+                @chmod($temporary, 0600);
+                if (!@rename($temporary, $destination)) {
+                    @unlink($temporary);
+                    $complete = false;
+                    continue;
+                }
+                if (!@unlink($source)) {
+                    $complete = false;
+                    continue;
+                }
+            }
+            @chmod($destination, 0600);
+            clearstatcache(true, $destination);
+        }
+        if ($complete) {
+            @unlink($legacy . '/.htaccess');
+            @unlink($legacy . '/index.php');
+            @rmdir($legacy);
+            if (!is_dir($legacy)) update_option('uj_newsroom_private_storage_migrated', 1);
+        }
+    }
+
+    public function private_attachment_admin_notice() {
+        if (!current_user_can(self::CAP_ACCESS) && !current_user_can('manage_options')) return;
+        // Only interrupt PublishRank and Newsroom screens, not every admin page on the site.
+        if (!\PublishRankSEO\Core\Branding::is_plugin_screen()) return;
+        $legacy = $this->legacy_attachment_dir();
+        $secure = $this->private_attachment_dir(true);
+        if (!$secure) {
+            echo '<div class="notice notice-error"><p><strong>Newsroom attachments are disabled:</strong> this server has no writable storage directory outside its public web root. Existing legacy files may be publicly reachable. Ask your host to configure a private directory outside DOCUMENT_ROOT before uploading confidential material.</p>';
+            echo '<p><strong>How to fix:</strong> create a folder your host does not serve over the web (for example <code>/home/youraccount/private</code>), then add <code>define( \'PUBLISHRANK_PRIVATE_DIR\', \'/home/youraccount/private\' );</code> to <code>wp-config.php</code> above the line that says &#8220;That&#8217;s all, stop editing&#8221;. The folder must be writable by PHP and outside DOCUMENT_ROOT.</p></div>';
+            return;
+        }
+        if (is_dir($legacy) && !get_option('uj_newsroom_private_storage_migrated')) {
+            echo '<div class="notice notice-warning"><p>Newsroom is moving existing attachments into private storage. Do not share confidential files until this migration notice disappears; contact your host if it remains after an administrator loads a WordPress admin page.</p></div>';
+        }
+    }
+
     public function render_collaboration($id) {
         if(!$this->can_edit_story($id))return;$discussion=get_post_meta($id,'_uj_discussion',true);if(!is_array($discussion))$discussion=[];$files=get_post_meta($id,'_uj_files',true);if(!is_array($files))$files=[];
         echo '<div class="uj-collab"><h3>Internal discussion</h3>';foreach(array_reverse($discussion) as $m)echo '<div class="uj-note"><strong>'.esc_html($m['author']).'</strong> <time>'.esc_html($m['date']).'</time><p>'.nl2br(esc_html($m['text'])).'</p></div>';if(!$discussion)echo '<p>No discussion messages.</p>';echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_discuss_'.$id);echo '<input type="hidden" name="action" value="uj_discuss"><input type="hidden" name="story_id" value="'.(int)$id.'"><textarea required name="message" rows="3" maxlength="5000" class="large-text"></textarea><p><button class="button">Post internal message</button></p></form><h3>Attachments</h3><ul>';foreach($files as $f){$download=wp_nonce_url(add_query_arg(['action'=>'uj_download_attachment','story_id'=>$id,'file'=>$f['file']],admin_url('admin-post.php')),'uj_download_'.$id.'_'.$f['file']);echo '<li><a href="'.esc_url($download).'">'.esc_html($f['name']).'</a> <small>('.esc_html($f['by']).' · '.esc_html($f['date']).')</small></li>'; }if(!$files)echo '<li>No attachments.</li>';echo '</ul><form method="post" enctype="multipart/form-data" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_upload_'.$id);echo '<input type="hidden" name="action" value="uj_upload_attachment"><input type="hidden" name="story_id" value="'.(int)$id.'"><input type="file" name="attachment" required><button class="button">Attach file</button></form></div>';
     }
     public function handle_discussion() { $id=absint($_POST['story_id']??0);check_admin_referer('uj_discuss_'.$id);if(!$this->can_edit_story($id))wp_die('Permission denied.');$text=sanitize_textarea_field(wp_unslash($_POST['message']??''));if(!$text)wp_die('Message is required.');$a=get_post_meta($id,'_uj_discussion',true);if(!is_array($a))$a=[];$a[]=['author'=>wp_get_current_user()->display_name,'date'=>current_time('mysql'),'text'=>$text];update_post_meta($id,'_uj_discussion',$a);$this->log_event($id,'Discussion message added','');$this->notify_story_users($id,'New newsroom discussion: '.get_the_title($id),$text);wp_safe_redirect($this->url('uj-newsroom',['edit'=>$id,'uj_msg'=>'Message added']));exit; }
-    public function handle_attachment() { $id=absint($_POST['story_id']??0);check_admin_referer('uj_upload_'.$id);if(!$this->can_edit_story($id))wp_die('Permission denied.');if(empty($_FILES['attachment']['name'])||!empty($_FILES['attachment']['error']))wp_die('Choose a valid file.');$file=$_FILES['attachment'];if((int)$file['size']>20*1024*1024)wp_die('Maximum file size is 20 MB.');$original=sanitize_file_name($file['name']);$extension=strtolower(pathinfo($original,PATHINFO_EXTENSION));$allowed=['pdf','txt','csv','jpg','jpeg','png','gif','doc','docx','xls','xlsx','ppt','pptx','zip'];if(!in_array($extension,$allowed,true))wp_die('This file type is not allowed.');$dir=WP_CONTENT_DIR.'/uploads/uj-newsroom-private';if(!wp_mkdir_p($dir))wp_die('Private upload directory could not be created.');if(!file_exists($dir.'/.htaccess'))file_put_contents($dir.'/.htaccess',"Options -Indexes\nRequire all denied\nDeny from all\n");if(!file_exists($dir.'/index.php'))file_put_contents($dir.'/index.php','<?php http_response_code(404); exit;');$name=wp_generate_password(36,false,false).'.'.$extension;$path=$dir.'/'.$name;if(!is_uploaded_file($file['tmp_name'])||!move_uploaded_file($file['tmp_name'],$path))wp_die('Upload failed.');$files=get_post_meta($id,'_uj_files',true);if(!is_array($files))$files=[];$files[]=['file'=>$name,'name'=>$original,'by'=>wp_get_current_user()->display_name,'date'=>current_time('mysql'),'size'=>(int)$file['size']];update_post_meta($id,'_uj_files',$files);$this->log_event($id,'Attachment uploaded',$original);wp_safe_redirect($this->url('uj-newsroom',['edit'=>$id,'uj_msg'=>'Attachment uploaded']));exit; }
-    public function download_attachment() { $id=absint($_GET['story_id']??0);$file=sanitize_file_name(wp_unslash($_GET['file']??''));check_admin_referer('uj_download_'.$id.'_'.$file);if(!$this->can_edit_story($id))wp_die('Permission denied.');$files=get_post_meta($id,'_uj_files',true);if(!is_array($files))$files=[];$entry=null;foreach($files as $f)if(hash_equals((string)($f['file']??''),$file)){$entry=$f;break;}if(!$entry)wp_die('Attachment not found.');$path=WP_CONTENT_DIR.'/uploads/uj-newsroom-private/'.$file;if(!is_file($path))wp_die('Attachment is unavailable.');$ext=strtolower(pathinfo($file,PATHINFO_EXTENSION));$types=['pdf'=>'application/pdf','txt'=>'text/plain','csv'=>'text/csv','jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','doc'=>'application/msword','docx'=>'application/vnd.openxmlformats-officedocument.wordprocessingml.document','xls'=>'application/vnd.ms-excel','xlsx'=>'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','ppt'=>'application/vnd.ms-powerpoint','pptx'=>'application/vnd.openxmlformats-officedocument.presentationml.presentation','zip'=>'application/zip'];nocache_headers();header('Content-Type: '.($types[$ext]??'application/octet-stream'));header('Content-Disposition: attachment; filename="'.rawurlencode($entry['name']).'"');header('Content-Length: '.filesize($path));readfile($path);exit; }
-    private function notify_story_users($id,$subject,$body) { $emails=[];foreach([(int)$this->meta($id,'reporter',0),(int)$this->meta($id,'editor',0)] as $uid){$u=$uid?get_user_by('id',$uid):false;if($u&&is_email($u->user_email)&&get_user_meta($uid,'uj_newsroom_email_notifications',true)!=='0')$emails[]=$u->user_email;}if($emails)wp_mail(array_unique($emails),$subject,$body); }
-    public function render_personal_settings() {
-        echo '<div class="wrap uj-wrap"><h1>My newsroom notifications</h1><form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_personal_settings');echo '<input type="hidden" name="action" value="uj_personal_settings"><p><label><input type="checkbox" name="email_notifications" value="1" '.checked(get_user_meta(get_current_user_id(),'uj_newsroom_email_notifications',true)!=='0',true,false).'> Email me about assignment changes and discussion messages</label></p><p><label><input type="checkbox" name="daily_digest" value="1" '.checked(get_user_meta(get_current_user_id(),'uj_newsroom_daily_digest',true)==='1',true,false).'> Send me a daily digest of my active stories due in the next seven days</label></p><p><button class="button button-primary">Save preferences</button></p></form></div>';
+    public function handle_attachment() {
+        $id=absint($_POST['story_id']??0);check_admin_referer('uj_upload_'.$id);if(!$this->can_edit_story($id))wp_die('Permission denied.');
+        if(empty($_FILES['attachment']['name'])||!empty($_FILES['attachment']['error']))wp_die('Choose a valid file.');
+        $file=$_FILES['attachment'];if((int)$file['size']>20*1024*1024)wp_die('Maximum file size is 20 MB.');
+        $original=sanitize_file_name($file['name']);$extension=strtolower(pathinfo($original,PATHINFO_EXTENSION));$allowed=['pdf','txt','csv','jpg','jpeg','png','gif','doc','docx','xls','xlsx','ppt','pptx','zip'];
+        if(!in_array($extension,$allowed,true))wp_die('This file type is not allowed.');
+        $dir=$this->private_attachment_dir(true);if(!$dir)wp_die('Secure attachment storage outside the public web root is unavailable. Ask your host to configure a writable private directory before uploading confidential files.');
+        $name=wp_generate_password(36,false,false).'.'.$extension;$path=$dir.'/'.$name;
+        if(!is_uploaded_file($file['tmp_name'])||!move_uploaded_file($file['tmp_name'],$path))wp_die('Upload failed.');$permissions=false;if(!@chmod($path,0600)){@unlink($path);wp_die('The uploaded file could not be given private filesystem permissions.');}clearstatcache(true,$path);$permissions=@fileperms($path);if(false===$permissions||($permissions&0077)!==0){@unlink($path);wp_die('The uploaded file could not be given private filesystem permissions.');}
+        $files=get_post_meta($id,'_uj_files',true);if(!is_array($files))$files=[];$files[]=['file'=>$name,'name'=>$original,'by'=>wp_get_current_user()->display_name,'date'=>current_time('mysql'),'size'=>(int)$file['size']];update_post_meta($id,'_uj_files',$files);
+        $this->log_event($id,'Attachment uploaded',$original);wp_safe_redirect($this->url('uj-newsroom',['edit'=>$id,'uj_msg'=>'Attachment uploaded']));exit;
     }
-    public function save_personal_settings() { if(!current_user_can(self::CAP_ACCESS))wp_die('Permission denied.');check_admin_referer('uj_personal_settings');update_user_meta(get_current_user_id(),'uj_newsroom_email_notifications',!empty($_POST['email_notifications'])?'1':'0');update_user_meta(get_current_user_id(),'uj_newsroom_daily_digest',!empty($_POST['daily_digest'])?'1':'0');wp_safe_redirect($this->url('uj-newsroom-notifications',['uj_msg'=>'Notification preferences saved']));exit; }
+    public function download_attachment() { $id=absint($_GET['story_id']??0);$file=sanitize_file_name(wp_unslash($_GET['file']??''));check_admin_referer('uj_download_'.$id.'_'.$file);if(!$this->can_edit_story($id))wp_die('Permission denied.');$files=get_post_meta($id,'_uj_files',true);if(!is_array($files))$files=[];$entry=null;foreach($files as $f)if(hash_equals((string)($f['file']??''),$file)){$entry=$f;break;}if(!$entry)wp_die('Attachment not found.');$path=$this->private_attachment_path($file);if(!$path)wp_die('Attachment is unavailable.');$ext=strtolower(pathinfo($file,PATHINFO_EXTENSION));$types=['pdf'=>'application/pdf','txt'=>'text/plain','csv'=>'text/csv','jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','doc'=>'application/msword','docx'=>'application/vnd.openxmlformats-officedocument.wordprocessingml.document','xls'=>'application/vnd.ms-excel','xlsx'=>'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','ppt'=>'application/vnd.ms-powerpoint','pptx'=>'application/vnd.openxmlformats-officedocument.presentationml.presentation','zip'=>'application/zip'];nocache_headers();header('Content-Type: '.($types[$ext]??'application/octet-stream'));header('Content-Disposition: attachment; filename="'.rawurlencode($entry['name']).'"');header('Content-Length: '.filesize($path));readfile($path);exit; }
+    private function notify_story_users($id,$subject,$body) {
+        $emails=[];$actor=get_current_user_id();
+        foreach(array_unique([(int)$this->meta($id,'reporter',0),(int)$this->meta($id,'editor',0)]) as $uid) {
+            $u=$uid?get_user_by('id',$uid):false;
+            if(!$u) continue;
+            if($uid!==$actor)$this->create_in_app_notification($uid,$id,'New newsroom discussion',get_the_title($id).' has a new internal discussion message.');
+            if(is_email($u->user_email)&&get_user_meta($uid,'uj_newsroom_email_notifications',true)!=='0')$emails[]=$u->user_email;
+        }
+        if($emails)wp_mail(array_unique($emails),$subject,$body);
+    }
+    public function render_personal_settings() {
+        $user_id=get_current_user_id();
+        echo '<div class="wrap uj-wrap"><h1><span class="dashicons dashicons-bell" aria-hidden="true"></span> Newsroom notifications</h1>'; $this->notice();
+        echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_personal_settings');
+        echo '<input type="hidden" name="action" value="uj_personal_settings"><h2>Delivery preferences</h2>';
+        echo '<p><label><input type="checkbox" name="email_notifications" value="1" '.checked(get_user_meta($user_id,'uj_newsroom_email_notifications',true)!=='0',true,false).'> Email me about assignment changes and discussion messages</label></p>';
+        echo '<p><label><input type="checkbox" name="inapp_enabled" value="1" '.checked(get_user_meta($user_id,'uj_newsroom_inapp_enabled',true)!=='0',true,false).'> Keep in-app Newsroom notifications and the inbox</label></p>';
+        echo '<p><label><input type="checkbox" name="popup_enabled" value="1" '.checked(get_user_meta($user_id,'uj_newsroom_popup_enabled',true)!=='0',true,false).'> Show pop-up alerts while I work elsewhere in WordPress admin</label></p>';
+        echo '<p class="description">Alerts refresh about every 45 seconds while you are signed in to wp-admin. Pop-ups stay inside WordPress; no browser or operating-system permission is requested.</p>';
+        echo '<p><label><input type="checkbox" name="daily_digest" value="1" '.checked(get_user_meta($user_id,'uj_newsroom_daily_digest',true)==='1',true,false).'> Send me a daily digest of my active stories due in the next seven days</label></p><p><button class="button button-primary">Save preferences</button></p></form>';
+        $notifications=$this->notification_records();
+        echo '<section class="uj-notification-inbox"><h2>Recent notifications</h2>';
+        if(!$notifications) echo '<p>No recent notifications. New assignment, stage, and discussion updates will appear here.</p>';
+        else {
+            echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_newsroom_mark_all_notifications');echo '<input type="hidden" name="action" value="uj_newsroom_mark_all_notifications"><button class="button">Mark all as read</button></form><ul class="uj-notification-list">';
+            foreach(array_slice($notifications,0,20) as $item) {
+                $when=$item['created']?wp_date(get_option('date_format').' '.get_option('time_format'),$item['created']):'';
+                echo '<li class="'.(empty($item['read'])?'is-unread':'').'" data-notification-id="'.esc_attr($item['id']).'">';
+                echo '<a href="'.esc_url($this->url('uj-newsroom',['edit'=>$item['story_id']])).'"><strong>'.esc_html($item['title']).'</strong></a>';
+                echo '<p>'.esc_html($item['message']).'</p><small>'.esc_html($when).'</small></li>';
+            }
+            echo '</ul>';
+        }
+        echo '</section></div>';
+    }
+    public function save_personal_settings() {
+        if(!current_user_can(self::CAP_ACCESS))wp_die('Permission denied.');
+        check_admin_referer('uj_personal_settings');$user_id=get_current_user_id();
+        update_user_meta($user_id,'uj_newsroom_email_notifications',!empty($_POST['email_notifications'])?'1':'0');
+        update_user_meta($user_id,'uj_newsroom_inapp_enabled',!empty($_POST['inapp_enabled'])?'1':'0');
+        update_user_meta($user_id,'uj_newsroom_popup_enabled',!empty($_POST['popup_enabled'])?'1':'0');
+        update_user_meta($user_id,'uj_newsroom_daily_digest',!empty($_POST['daily_digest'])?'1':'0');
+        wp_safe_redirect($this->url('uj-newsroom-notifications',['uj_msg'=>'Notification preferences saved']));exit;
+    }
     public function save_view() { if(!current_user_can(self::CAP_ACCESS))wp_die('Permission denied.');check_admin_referer('uj_save_view');$name=sanitize_text_field(wp_unslash($_POST['view_name']??''));if(!$name)wp_die('View name required.');$views=get_user_meta(get_current_user_id(),'uj_newsroom_views',true);if(!is_array($views))$views=[];$views[sanitize_key($name)]=['name'=>$name,'stage'=>sanitize_key($_POST['stage']??''),'priority'=>sanitize_key($_POST['priority']??''),'desk'=>sanitize_text_field(wp_unslash($_POST['desk']??'')),'q'=>sanitize_text_field(wp_unslash($_POST['q']??''))];update_user_meta(get_current_user_id(),'uj_newsroom_views',$views);wp_safe_redirect($this->url('uj-newsroom',['uj_msg'=>'Saved view created']));exit; }
     /** Delete one saved newsroom view. Only newsroom managers/admins may do this. */
     public function delete_view() { $this->require_manage(); check_admin_referer('uj_delete_view'); $key=sanitize_key(wp_unslash($_POST['view_key']??'')); if(!$key)wp_die('Saved view not found.'); $views=get_user_meta(get_current_user_id(),'uj_newsroom_views',true); if(!is_array($views))$views=[]; if(!array_key_exists($key,$views))wp_die('Saved view not found.'); unset($views[$key]); update_user_meta(get_current_user_id(),'uj_newsroom_views',$views); wp_safe_redirect($this->url('uj-newsroom',['uj_msg'=>'Saved view deleted'])); exit; }
@@ -66,7 +243,7 @@ trait PublishRank_Newsroom_Advanced {
         echo '<input type="hidden" name="q" value="'.esc_attr($_GET['q']??'').'">';
         echo '<input type="text" name="view_name" placeholder="Name this filtered view" required><button class="button">Save current filter as view</button></form>';
     }
-    public function export_csv() { if(!current_user_can(self::CAP_ACCESS))wp_die('Permission denied.');check_admin_referer('uj_export_csv');$rows=$this->story_query();nocache_headers();header('Content-Type: text/csv; charset=utf-8');header('Content-Disposition: attachment; filename=umarjaum-newsroom-'.gmdate('Ymd').'.csv');$o=fopen('php://output','w');fputcsv($o,['Headline','Type','Stage','Priority','Desk','Reporter','Editor','Deadline','Embargo','Brief']);foreach($rows as $s)fputcsv($o,[$s->post_title,$this->meta($s->ID,'kind','assignment'),$this->stage_names()[$this->meta($s->ID,'stage','pitch')]??'', $this->meta($s->ID,'priority','normal'),$this->meta($s->ID,'desk'),$this->user_name($this->meta($s->ID,'reporter',0)),$this->user_name($this->meta($s->ID,'editor',0)),$this->meta($s->ID,'deadline'),$this->meta($s->ID,'embargo'),wp_strip_all_tags($s->post_content)]);fclose($o);exit; }
+    public function export_csv() { if(!current_user_can(self::CAP_ACCESS))wp_die('Permission denied.');check_admin_referer('uj_export_csv');$filters=$this->story_filters($_POST);$rows=$this->filter_stories($this->story_query(),$filters);nocache_headers();header('Content-Type: text/csv; charset=utf-8');header('Content-Disposition: attachment; filename=umarjaum-newsroom-'.gmdate('Ymd').'.csv');$o=fopen('php://output','w');fputcsv($o,['Headline','Type','Stage','Priority','Desk','Reporter','Editor','Deadline','Embargo','Brief']);foreach($rows as $s)fputcsv($o,[$s->post_title,$this->meta($s->ID,'kind','assignment'),$this->stage_names()[$this->meta($s->ID,'stage','pitch')]??'', $this->meta($s->ID,'priority','normal'),$this->meta($s->ID,'desk'),$this->user_name($this->meta($s->ID,'reporter',0)),$this->user_name($this->meta($s->ID,'editor',0)),$this->meta($s->ID,'deadline'),$this->meta($s->ID,'embargo'),wp_strip_all_tags($s->post_content)]);fclose($o);exit; }
     public function calendar_feed() { $token=sanitize_text_field(wp_unslash($_GET['token']??''));if(!$token||!hash_equals((string)get_option('uj_newsroom_ics_token'),$token)){status_header(403);exit('Forbidden');}$rows=get_posts(['post_type'=>self::POST_TYPE,'post_status'=>'publish','posts_per_page'=>-1]);header('Content-Type: text/calendar; charset=utf-8');header('Content-Disposition: inline; filename=newsroom.ics');echo "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Umarjaum//Newsroom//EN\r\n";foreach($rows as $s){$d=$this->meta($s->ID,'deadline');if(!$d)continue;$local=new DateTimeImmutable(str_replace('T',' ',$d),wp_timezone());$stamp=$local->setTimezone(new DateTimeZone('UTC'))->format('Ymd\THis\Z');echo "BEGIN:VEVENT\r\nUID:uj-".$s->ID.'@'.parse_url(home_url(),PHP_URL_HOST)."\r\nDTSTAMP:".gmdate('Ymd\THis\Z')."\r\nDTSTART:".$stamp."\r\nSUMMARY:".str_replace(["\\",";",",","\n"],["\\\\","\\;","\\,","\\n"],$s->post_title)."\r\nEND:VEVENT\r\n";}echo "END:VCALENDAR\r\n";exit; }
     public function publishing_handoff() { $id=absint($_POST['story_id']??0);check_admin_referer('uj_handoff_'.$id);if(!current_user_can(self::CAP_MANAGE))wp_die('Only newsroom managers may create a publishing draft.');$s=get_post($id);if(!$s||$s->post_type!==self::POST_TYPE)wp_die('Story not found.');$embargo=$this->meta($id,'embargo');if($this->meta($id,'stage')!=='approved')wp_die('Move the story to Approved before creating a publishing draft.');if($embargo&&str_replace('T',' ',$embargo)>current_time('mysql'))wp_die('The embargo has not expired.');$existing=absint($this->meta($id,'wp_post_id',0));if($existing&&get_post($existing)){$post_id=$existing;}else{$post_id=wp_insert_post(['post_type'=>'post','post_status'=>'draft','post_title'=>$s->post_title,'post_content'=>$s->post_content,'post_author'=>get_current_user_id()],true);if(is_wp_error($post_id))wp_die(esc_html($post_id->get_error_message()));update_post_meta($id,'_uj_wp_post_id',$post_id);$this->log_event($id,'Publishing draft created','WordPress post #'.$post_id);}$edit=get_edit_post_link($post_id,'');wp_safe_redirect($edit?:$this->url('uj-newsroom',['edit'=>$id]));exit; }
     public function render_revisions($id) { $revisions=wp_get_post_revisions($id,['posts_per_page'=>20]);echo '<div class="uj-revisions"><h3>Revision history</h3>';if(!$revisions){echo '<p>No revisions recorded yet.</p></div>';return;}echo '<table class="widefat striped"><thead><tr><th>Saved</th><th>By</th><th>Preview</th><th>Compare</th></tr></thead><tbody>';foreach($revisions as $revision){$author=get_user_by('id',$revision->post_author);$url=wp_nonce_url(add_query_arg(['revision'=>$revision->ID],admin_url('revision.php')),'restore-post_'.$id);echo '<tr><td>'.esc_html(get_date_from_gmt($revision->post_modified_gmt,get_option('date_format').' '.get_option('time_format'))).'</td><td>'.esc_html($author?$author->display_name:'—').'</td><td>'.esc_html(wp_trim_words(wp_strip_all_tags($revision->post_content),14)).'</td><td>'.(current_user_can(self::CAP_MANAGE)?'<a href="'.esc_url($url).'">Compare</a>':'Manager access required').'</td></tr>';}echo '</tbody></table></div>'; }

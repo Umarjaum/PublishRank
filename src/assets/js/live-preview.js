@@ -23,7 +23,6 @@
 	var titleFields = ['#publishrank_seo_title', '#publishrank_title', '[name="publishrank_seo_title"]', '#_publishrank_seo_title', '[name="_publishrank_seo_title"]'];
 	var descriptionFields = ['#publishrank_meta_description', '#publishrank_description', '[name="publishrank_seo_description"]', '#_publishrank_seo_description', '[name="_publishrank_seo_description"]'];
 	function setEditorField(selectors, value) { var n = field(selectors); if (!n) { return; } n.value = value; n.dispatchEvent(new Event('input', { bubbles: true })); n.dispatchEvent(new Event('change', { bubbles: true })); }
-	function insertToken(input, token) { var start = input.selectionStart == null ? input.value.length : input.selectionStart, end = input.selectionEnd == null ? input.value.length : input.selectionEnd; input.value = input.value.slice(0, start) + token + input.value.slice(end); input.focus(); input.selectionStart = input.selectionEnd = start + token.length; input.dispatchEvent(new Event('input', { bubbles: true })); }
 
 	/* ---------- collect unsaved state ---------- */
 	function editorStore() { try { return window.wp && wp.data && wp.data.select && wp.data.select('core/editor'); } catch (e) { return null; } }
@@ -113,19 +112,19 @@
 		var p = panel('search'), mobile = state.device === 'mobile'; p.replaceChildren();
 		var editor = el('div', 'pr-pv-snippet-editor');
 		editor.appendChild(el('strong', 'pr-pv-snippet-editor__heading', t.editSnippet));
-		var hint = el('span', 'pr-pv-snippet-editor__hint', t.focusTokenHelp); hint.id = 'pr-pv-token-help'; editor.appendChild(hint);
+		var hint = el('span', 'pr-pv-snippet-editor__hint', t.variableHelp); hint.id = 'pr-pv-token-help'; editor.appendChild(hint);
 		var titleField = el('div', 'pr-pv-snippet-editor__field');
 		var titleLabel = el('label', '', t.searchTitle); titleLabel.htmlFor = 'pr-pv-snippet-title'; titleField.appendChild(titleLabel);
 		var titleInput = el('input'); titleInput.type = 'text'; titleInput.id = 'pr-pv-snippet-title'; titleInput.maxLength = 255; titleInput.setAttribute('aria-describedby', hint.id); titleInput.value = state.snippetTitle !== null ? state.snippetTitle : ((field(titleFields) || {}).value || d.title || ''); titleField.appendChild(titleInput);
-		var titleToken = el('button', 'button button-small pr-pv-token', t.insertToken); titleToken.type = 'button'; titleToken.setAttribute('aria-describedby', hint.id); titleField.appendChild(titleToken); editor.appendChild(titleField);
+		var titleSlot = el('span', 'pr-var-slot'); titleField.appendChild(titleSlot); editor.appendChild(titleField);
 		var descField = el('div', 'pr-pv-snippet-editor__field');
 		var descLabel = el('label', '', t.metaDescription); descLabel.htmlFor = 'pr-pv-snippet-description'; descField.appendChild(descLabel);
 		var descInput = el('textarea'); descInput.id = 'pr-pv-snippet-description'; descInput.rows = 3; descInput.maxLength = 320; descInput.setAttribute('aria-describedby', hint.id); descInput.value = state.snippetDescription !== null ? state.snippetDescription : ((field(descriptionFields) || {}).value || d.description || ''); descField.appendChild(descInput);
-		var descToken = el('button', 'button button-small pr-pv-token', t.insertToken); descToken.type = 'button'; descToken.setAttribute('aria-describedby', hint.id); descField.appendChild(descToken); editor.appendChild(descField);
+		var descSlot = el('span', 'pr-var-slot'); descField.appendChild(descSlot); editor.appendChild(descField);
 		p.appendChild(editor);
 		function changed(input, kind, selectors) { state[kind] = input.value; setEditorField(selectors, input.value); schedule(250); }
 		titleInput.addEventListener('input', function () { changed(titleInput, 'snippetTitle', titleFields); }); descInput.addEventListener('input', function () { changed(descInput, 'snippetDescription', descriptionFields); });
-		titleToken.addEventListener('click', function () { insertToken(titleInput, '%focus_keyword%'); }); descToken.addEventListener('click', function () { insertToken(descInput, '%focus_keyword%'); });
+		if (window.PublishRankVariables) { PublishRankVariables.mount(titleSlot, titleInput, 'title', 'post'); PublishRankVariables.mount(descSlot, descInput, 'description', 'post'); }
 		var sw = el('div', 'pr-pv-switch');
 		sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', t.previewDevice);
 		['desktop', 'mobile'].forEach(function (k) { var b = el('button', 'pr-pv-switch__btn' + (state.device === k ? ' is-active' : ''), t[k]); b.type = 'button'; b.setAttribute('aria-pressed', state.device === k ? 'true' : 'false'); b.addEventListener('click', function () { state.device = k; renderSearch(state.last); }); sw.appendChild(b); });

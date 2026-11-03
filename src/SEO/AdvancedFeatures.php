@@ -2,6 +2,7 @@
 /** Premium-style technical SEO features implemented without third-party dependencies. */
 namespace PublishRankSEO\SEO;
 
+use PublishRankSEO\Meta\DescriptionResolver;
 use PublishRankSEO\Meta\PostMeta;
 use PublishRankSEO\Meta\SeoData;
 
@@ -68,7 +69,9 @@ final class AdvancedFeatures {
 		echo '<table class="widefat striped" style="margin-bottom:10px"><caption class="screen-reader-text">' . esc_html__( 'SEO values that will be published and their source', 'publishrank' ) . '</caption><thead><tr><th scope="col">' . esc_html__( 'Field', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'Published value', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'Value source', 'publishrank' ) . '</th></tr></thead><tbody>';
 		foreach ( $labels as $key => $label ) {
 			$source = isset( $seo['sources'][ $key ] ) ? $seo['sources'][ $key ] : 'auto';
-			echo '<tr><th scope="row" style="width:140px">' . esc_html( $label ) . '</th><td>' . ( '' !== (string) $values[ $key ] ? esc_html( (string) $values[ $key ] ) : '<em>' . esc_html__( 'empty', 'publishrank' ) . '</em>' ) . '</td><td style="width:170px"><span class="description">' . esc_html( isset( $names[ $source ] ) ? $names[ $source ] : $source ) . '</span></td></tr>';
+			// The description has its own, more detailed set of sources (excerpt, extracted content, page builder, fallbacks).
+			$field_names = 'description' === $key ? DescriptionResolver::source_labels() : $names;
+			echo '<tr><th scope="row" style="width:140px">' . esc_html( $label ) . '</th><td>' . ( '' !== (string) $values[ $key ] ? esc_html( (string) $values[ $key ] ) : '<em>' . esc_html__( 'empty', 'publishrank' ) . '</em>' ) . '</td><td style="width:170px"><span class="description">' . esc_html( isset( $field_names[ $source ] ) ? $field_names[ $source ] : $source ) . '</span></td></tr>';
 		}
 		echo '</tbody></table>';
 		if ( isset( $image['alt_source'] ) && 'none' === $image['alt_source'] && ! empty( $image['url'] ) ) {

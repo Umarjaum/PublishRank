@@ -3,10 +3,15 @@ jQuery(function ($) {
 	var $modal = $('#prw-modal');
 	if (!$modal.length) { return; }
 	$('body').addClass('prw-modal-open');
-	// Focus the first empty required field, otherwise the first field, so keyboard users start inside the dialog.
-	var $first = $modal.find('input[required]').filter(function () { return !this.value; }).first();
-	if (!$first.length) { $first = $modal.find('input:visible,select:visible,textarea:visible,a.button-primary,button.button-primary').first(); }
-	$first.trigger('focus');
+	// Announce and focus the validation summary after a failed save; otherwise start at the first required field.
+	var $errorSummary = $modal.find('.prw-validation-summary').first();
+	if ($errorSummary.length) {
+		$errorSummary.trigger('focus');
+	} else {
+		var $first = $modal.find('input[required],select[required],textarea[required]').filter(function () { return !this.value; }).first();
+		if (!$first.length) { $first = $modal.find('input:visible,select:visible,textarea:visible,a.button-primary,button.button-primary').first(); }
+		$first.trigger('focus');
+	}
 	// Keep Tab inside the dialog.
 	$modal.on('keydown', function (e) {
 		if (e.key !== 'Tab') { return; }

@@ -61,29 +61,74 @@ final class MetaGenerator {
 
 	/** @return string */
 	public function description() {
+		$details = $this->description_details();
+		return $details['text'];
+	}
+
+	/** Where the current request's description came from (override, excerpt, content, builder, page_type, archive, homepage, global, none). */
+	public function description_source() {
+		$details = $this->description_details();
+		return $details['source'];
+	}
+
+	/**
+	 * Description for the current request together with its source.
+	 *
+	 * Order: homepage setting, then (single posts and pages) override, excerpt, extracted content,
+	 * page-builder text; (archives) the term, author or post-type description; then a page-type fallback
+	 * built from the page's own name; and only then the publication-wide description.
+	 *
+	 * @return array{text:string,source:string}
+	 */
+	public function description_details() {
+		$limit   = SeoData::DESCRIPTION_LENGTH;
 		$post_id = is_singular() ? get_queried_object_id() : 0;
-		if ( is_front_page() || is_home() ) {
+		$is_home = is_front_page() || is_home();
+		if ( $is_home ) {
 			$home_description = SeoData::clean( $this->resolve_template( TemplateResolver::sanitize_template( (string) get_option( 'publishrank_home_description', '' ) ), $post_id, 'description' ) );
 			if ( '' !== $home_description ) {
-				return function_exists( 'mb_substr' ) ? mb_substr( $home_description, 0, 160 ) : substr( $home_description, 0, 160 ); }
-		}
-		$override = $post_id ? PostMeta::get( $post_id, PostMeta::DESCRIPTION, '' ) : '';
-		// A manually written SEO description always wins over anything fetched automatically. A manually written SEO description must win over the generated excerpt.
-		if ( '' !== (string) $override ) {
-			$resolved = SeoData::clean( $this->resolve_template( (string) $override, $post_id, 'description' ) );
-			if ( '' !== $resolved ) {
-				return SeoData::truncate( $resolved, 160 );
-			}
+				return array( 'text' => SeoData::truncate( $home_description, $limit ), 'source' => 'homepage' ); }
 		}
 		if ( $post_id ) {
-			$auto = SeoData::auto_description( $post_id );
-			if ( '' !== $auto ) {
-				return $auto; }
+			$resolved = DescriptionResolver::for_post( $post_id, $limit );
+			// The front page is the publication itself: its fallback is the publication description, not a page-type sentence.
+			if ( ! ( $is_home && in_array( $resolved['source'], array( 'page_type', 'global' ), true ) ) && '' !== $resolved['text'] ) {
+				return $resolved;
+			}
+			return DescriptionResolver::global_result( $limit );
 		}
 		$text = $this->archive_description();
-		if ( '' === $text ) {
-			$text = SeoData::clean( \PublishRankSEO\Core\PublicationProfile::publication_description() ); }
-		return SeoData::truncate( $text, 160 );
+		if ( '' !== $text ) {
+			return array( 'text' => SeoData::truncate( $text, $limit ), 'source' => 'archive' );
+		}
+		if ( ! $is_home && ! is_search() && ! is_404() && DescriptionResolver::MODE_PAGE_TYPE === DescriptionResolver::fallback_mode() ) {
+			$fallback = DescriptionResolver::page_type_text( $this->archive_subject() );
+			if ( '' !== $fallback ) {
+				return array( 'text' => SeoData::truncate( $fallback, $limit ), 'source' => 'page_type' );
+			}
+		}
+		return DescriptionResolver::global_result( $limit );
+	}
+
+	/** Name of the current non-singular request: the term, author, post type, posts page or date archive. */
+	private function archive_subject() {
+		$object = get_queried_object();
+		if ( $object instanceof \WP_Term ) {
+			return (string) $object->name;
+		}
+		if ( $object instanceof \WP_User ) {
+			return (string) $object->display_name;
+		}
+		if ( $object instanceof \WP_Post_Type ) {
+			return (string) ( isset( $object->labels->name ) ? $object->labels->name : $object->label );
+		}
+		if ( $object instanceof \WP_Post ) {
+			return (string) $object->post_title; // The static "posts page".
+		}
+		if ( function_exists( 'get_the_archive_title' ) && is_archive() ) {
+			return wp_strip_all_tags( (string) get_the_archive_title() );
+		}
+		return '';
 	}
 
 	/**

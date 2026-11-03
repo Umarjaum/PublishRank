@@ -85,6 +85,11 @@ final class RedirectStore {
 				return new \WP_Error( 'publishrank_redirect_regex', __( 'The regular expression is not valid.', 'publishrank' ) );
 			}
 		} else {
+			$source_host = wp_parse_url( $source, PHP_URL_HOST );
+			$home_host   = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+			if ( $source_host && ( ! $home_host || strtolower( $source_host ) !== strtolower( $home_host ) ) ) {
+				return new \WP_Error( 'publishrank_redirect_source_host', __( 'The old URL must use this site’s host. Enter a path such as /old-page or a full URL on your own domain.', 'publishrank' ) );
+			}
 			$source = self::normalise_path( $source );
 			if ( '' === $source ) {
 				return new \WP_Error( 'publishrank_redirect_home', __( 'The homepage cannot be redirected.', 'publishrank' ) );

@@ -2,6 +2,8 @@
 /** Emits safe international language and regional alternates. */
 namespace PublishRankSEO\Meta;
 
+use PublishRankSEO\Core\OutputSettings;
+
 defined( 'ABSPATH' ) || exit;
 
 final class LanguageAlternates {
@@ -140,7 +142,7 @@ final class LanguageAlternates {
 	}
 
 	public function render() {
-		if ( is_admin() || wp_doing_ajax() || ! get_option( 'publishrank_seo_multilingual_enabled', true ) ) {
+		if ( is_admin() || wp_doing_ajax() || ! get_option( 'publishrank_seo_multilingual_enabled', true ) || OutputSettings::external_seo_handoff() ) {
 			return;
 		}
 			$alternates = self::alternates();

@@ -2,6 +2,7 @@
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 // Static checks on the wizard source. Behaviour is covered by tests/onboarding_wizard.php.
 $source   = file_get_contents( __DIR__ . '/../src/Admin/OnboardingPage.php' );
+$assets   = file_get_contents( __DIR__ . '/../src/Admin/AdminAssets.php' );
 $settings = file_get_contents( __DIR__ . '/../src/Admin/SettingsPage.php' );
 $install  = file_get_contents( __DIR__ . '/../src/Core/Installer.php' );
 $checks = array(
@@ -14,10 +15,10 @@ $checks = array(
     'exit is refused while locked' => strpos( $source, 'if ( $this->is_locked() )' ) !== false,
     'completed setup has configuration summary' => strpos( $source, 'Your PublishRank configuration' ) !== false,
     'edit action is available' => strpos( $source, 'Edit setup' ) !== false && strpos( $source, 'edit_mode' ) !== false,
-    'defaults restore is nonce guarded' => strpos( $source, "AdminAssets::guard( 'publishrank_onboarding_defaults' )" ) !== false,
-    'save is nonce and capability guarded' => strpos( $source, "AdminAssets::guard( 'publishrank_onboarding_save' )" ) !== false,
+    'defaults restore is nonce and capability guarded' => strpos( $source, "AdminAssets::guard( 'publishrank_onboarding_defaults', \\PublishRank_Newsroom::CAP_SETUP )" ) !== false && strpos( $assets, 'check_admin_referer( $action )' ) !== false,
+    'save is nonce and capability guarded' => strpos( $source, "AdminAssets::guard( 'publishrank_onboarding_save', \\PublishRank_Newsroom::CAP_SETUP )" ) !== false && strpos( $source, "check_admin_referer( 'publishrank_onboarding_save' )" ) !== false,
     'completed setup suppresses reminder' => strpos( $source, 'publishrank_onboarding_completed_at' ) !== false && strpos( $source, 'is_setup_complete()' ) !== false,
-    'persistent first-run notice has a button and icon' => strpos( $source, 'Start onboarding' ) !== false && strpos( $source, 'publishrank-header-icon-v2.png' ) !== false && strpos( $source, 'notice-info prw-setup-notice' ) !== false,
+    'persistent first-run notice has a button and official logo' => strpos( $source, 'Start onboarding' ) !== false && strpos( $source, 'Branding::logo_url()' ) !== false && strpos( $source, 'notice-info prw-setup-notice' ) !== false,
     'completion is only recorded at final step' => strpos( $source, "if ( 8 === \$step )" ) !== false && strpos( $source, "update_option( 'publishrank_onboarding_completed_at', gmdate( 'c' ) );" ) !== false,
     'defaults do not falsely complete onboarding' => strpos( $source, "delete_option( 'publishrank_onboarding_complete' );" ) !== false,
     'settings page keeps wizard options out of its option group' => strpos( $settings, 'publishrank_seo_unmanaged' ) !== false && strpos( $settings, 'OnboardingPage::setup_keys()' ) !== false,

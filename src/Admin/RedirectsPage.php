@@ -92,7 +92,7 @@ final class RedirectsPage {
 		$paged = min( $paged, $pages );
 		$slice = array_slice( $rules, ( $paged - 1 ) * self::PER_PAGE, self::PER_PAGE );
 		echo '<div class="wrap">';
-		AdminAssets::header( __( 'Redirects', 'publishrank' ), __( 'Send old URLs to the right place with loop-safe 301, 302, 307, 308 and 410 rules.', 'publishrank' ) );
+			AdminAssets::header( __( 'Redirects', 'publishrank' ), __( 'Send old URLs to the right place with loop-safe 301, 302, 303, 307, 308, 410 and 451 rules.', 'publishrank' ) );
 		AdminAssets::render_flash();
 		?>
 		<div class="rhs-grid">
@@ -101,12 +101,13 @@ final class RedirectsPage {
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="publishrank_seo_redirect_add" />
 					<?php wp_nonce_field( 'publishrank_seo_redirect_add' ); ?>
-					<p><label for="rhs-source"><strong><?php esc_html_e( 'Old path or URL', 'publishrank' ); ?></strong></label><br /><input id="rhs-source" name="source" type="text" class="large-text" placeholder="/old-article" required /></p>
+					<p><label for="rhs-source"><strong><?php esc_html_e( 'Old path or URL on this site', 'publishrank' ); ?></strong></label><br /><input id="rhs-source" name="source" type="text" class="large-text" placeholder="/old-article" required /><br /><span class="description"><?php esc_html_e( 'Use a path or a full URL on this site. External source URLs are rejected because rules match this site’s paths only.', 'publishrank' ); ?></span></p>
 					<p><label for="rhs-target"><strong><?php esc_html_e( 'New path or URL', 'publishrank' ); ?></strong></label><br /><input id="rhs-target" name="target" type="text" class="large-text" placeholder="/new-article" /></p>
 					<p><label for="rhs-status"><strong><?php esc_html_e( 'Type', 'publishrank' ); ?></strong></label><br />
 						<select id="rhs-status" name="status">
 							<option value="301"><?php esc_html_e( '301 — Moved permanently', 'publishrank' ); ?></option>
 							<option value="302"><?php esc_html_e( '302 — Found (temporary)', 'publishrank' ); ?></option>
+							<option value="303"><?php esc_html_e( '303 — See other (temporary)', 'publishrank' ); ?></option>
 							<option value="307"><?php esc_html_e( '307 — Temporary redirect', 'publishrank' ); ?></option>
 							<option value="308"><?php esc_html_e( '308 — Permanent redirect', 'publishrank' ); ?></option>
 							<option value="410"><?php esc_html_e( '410 — Content deleted (no target)', 'publishrank' ); ?></option>

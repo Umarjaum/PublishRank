@@ -159,6 +159,19 @@ final class PublicationProfile {
 	public static function identity_is_person() {
 		return 'person' === self::identity_type(); }
 
+	/** Whether the connected identity and WebSite nodes have real names to publish. */
+	public static function identity_schema_ready() {
+		if ( '' === self::publication_name() ) {
+			return false;
+		}
+		if ( self::identity_is_person() ) {
+			$person = self::person_identity();
+			return '' !== trim( (string) $person['name'] ) || '' !== self::publisher_name();
+		}
+		$organization = self::organization_identity();
+		return '' !== trim( (string) $organization['name'] ) || '' !== self::publisher_name();
+	}
+
 	/**
 	 * Organization identity fields.
 	 * Falls back to the legacy flat options so existing sites keep their identity.

@@ -20,35 +20,33 @@
 #wpadminbar #wp-admin-bar-publishrank-seo-toolbar:hover>.ab-sub-wrapper,#wpadminbar #wp-admin-bar-publishrank-seo-toolbar:focus-within>.ab-sub-wrapper{display:block!important;visibility:visible!important;opacity:1!important}
 
 
-/* WordPress renders menu_icon URLs as backgrounds, so an img-only filter is not enough. */
+/* Top-level icon: the real <img> at a fixed 20px, centred, so it is never enlarged or clipped. */
 #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image {
-  position: relative !important;
-  background-image: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  background: none !important;
   filter: none !important;
   opacity: 1 !important;
 }
-#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img { display: none !important; }
-#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image::before {
-  position: absolute !important;
-  inset: 0 !important;
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image::before { display: none !important; content: none !important; }
+#adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img {
   display: block !important;
   width: 20px !important;
   height: 20px !important;
-  margin: auto !important;
-  background-color: #fff !important;
-  background-image: none !important;
-  color: transparent !important;
-  content: "" !important;
-  font-size: 0 !important;
-  -webkit-mask-image: url("../images/publishrank.svg");
-  mask-image: url("../images/publishrank.svg");
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-size: contain;
-  mask-size: contain;
+  min-width: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  filter: brightness(0) invert(1);
 }
+/* Light admin colour scheme: darken the white mark so it stays visible on the light menu. */
+.admin-color-light #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img { filter: brightness(0) opacity(.6); }
+.admin-color-light #adminmenu .pr-submenu-icon--brand::before { filter: brightness(0) opacity(.6); }
 
 /* Task groups are labels on real destinations, not extra links or menu pages. */
 #adminmenu .pr-submenu-group-start > a { padding-top: 7px; }
@@ -72,25 +70,15 @@
   #adminmenu .pr-submenu-group { margin-top: 4px; padding-top: 6px; }
 }
 
-/* PublishRank 2.9.104 navigation refresh: expandable groups and visible tool icons. */
-#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu {
-  padding: 6px 0 8px !important;
-  background: #172033 !important;
-}
+/* PublishRank 2.9.104 navigation: expandable groups, native WordPress dropdown background, brand-mark icon. */
+#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu { padding: 6px 0 8px; }
 #adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li > a {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
   min-height: 34px !important;
   padding: 6px 10px 6px 12px !important;
-  color: #dce7f5 !important;
   line-height: 1.25 !important;
-}
-#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li > a:hover,
-#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li > a:focus,
-#adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li.current > a {
-  background: #263653 !important;
-  color: #ffffff !important;
 }
 #adminmenu .pr-submenu-group-toggle {
   display: flex;
@@ -100,9 +88,10 @@
   margin: 5px 0 1px;
   padding: 8px 10px 6px 12px;
   border: 0;
-  border-top: 1px solid rgba(220, 231, 245, .18);
+  border-top: 1px solid rgba(240, 246, 252, .16);
   background: transparent;
-  color: #9fb4ce;
+  color: inherit;
+  opacity: .72;
   font: 700 10px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   letter-spacing: .08em;
   text-align: left;
@@ -110,49 +99,51 @@
   cursor: pointer;
 }
 #adminmenu .pr-submenu-group-toggle:hover,
-#adminmenu .pr-submenu-group-toggle:focus-visible {
-  color: #ffffff;
-  background: #22304a;
-  outline: none;
-}
+#adminmenu .pr-submenu-group-toggle:focus-visible { opacity: 1; outline: none; }
+#adminmenu .pr-submenu-group-toggle:focus-visible { box-shadow: inset 0 0 0 1px currentColor; }
 #adminmenu .pr-submenu-group-toggle__chevron {
-  color: #79a9df;
+  color: inherit;
   font-size: 16px;
   line-height: 10px;
   transition: transform .16s ease;
 }
-#adminmenu .pr-submenu-group-toggle[aria-expanded="false"] .pr-submenu-group-toggle__chevron {
-  transform: rotate(-90deg);
-}
+#adminmenu .pr-submenu-group-toggle[aria-expanded="false"] .pr-submenu-group-toggle__chevron { transform: rotate(-90deg); }
+/* Tool icons: no tile or background colour, they simply follow the menu text colour. */
 #adminmenu .pr-submenu-icon {
   display: inline-grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
-  border-radius: 7px;
-  color: #ffffff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, .18);
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  opacity: .85;
 }
 #adminmenu .pr-submenu-icon .dashicons {
-  width: 14px;
-  height: 14px;
-  font-size: 14px;
-  line-height: 14px;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 16px;
 }
-#adminmenu .pr-submenu-icon--blue { background: #2563eb; }
-#adminmenu .pr-submenu-icon--violet { background: #7c3aed; }
-#adminmenu .pr-submenu-icon--teal { background: #0f766e; }
-#adminmenu .pr-submenu-icon--orange { background: #c2410c; }
-#adminmenu .pr-submenu-icon--pink { background: #be185d; }
-#adminmenu .pr-submenu-icon--green { background: #15803d; }
-#adminmenu .pr-submenu-icon--cyan { background: #0e7490; }
-#adminmenu .pr-submenu-icon--red { background: #b91c1c; }
-#adminmenu .pr-submenu-icon--purple { background: #9333ea; }
-#adminmenu .pr-submenu-icon--indigo { background: #4338ca; }
-#adminmenu .pr-submenu-icon--yellow { background: #a16207; }
-#adminmenu .pr-submenu-icon--slate { background: #475569; }
+/* The Dashboard entry carries the official PublishRank mark. */
+#adminmenu .pr-submenu-icon--brand::before {
+  content: "";
+  display: block;
+  width: 18px;
+  height: 18px;
+  background: url("../images/publishrank-brand-mark.png") center center / 18px 18px no-repeat;
+}
+#adminmenu li.current .pr-submenu-icon,
+#adminmenu a:hover .pr-submenu-icon,
+#adminmenu a:focus .pr-submenu-icon { opacity: 1; }
 #adminmenu .pr-submenu-item-label { min-width: 0; }
 @media (prefers-reduced-motion: reduce) {
   #adminmenu .pr-submenu-group-toggle__chevron { transition: none; }
 }
+
+/* "New" badge for recently added tools. */
+#adminmenu .pr-menu-new{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:#16803c;color:#fff;font-size:10px;font-weight:700;line-height:1.5;letter-spacing:.06em;text-transform:uppercase;vertical-align:middle}
+
+/* Short sidebar: non-essential tools are reached from the Dashboard cards. */
+#adminmenu .wp-submenu li.pr-submenu-hidden{display:none!important}

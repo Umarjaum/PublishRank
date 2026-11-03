@@ -23,7 +23,7 @@ $header  = array();
 $stable  = array();
 $assert( 1 === preg_match( '/^\s*\*\s*Version:\s*([0-9.]+)/m', $main, $header ) && 1 === preg_match( '/^Stable tag:\s*([0-9.]+)/m', $readme, $stable ) && $header[1] === $stable[1], 'plugin header and stable tag are not synchronized' );
 $assert( strpos( $js, "tinymce.get('content')" ) !== false && strpos( $js, 'getEditedPostContent' ) !== false, 'editor analyzer content sources are incomplete' );
-$assert( strpos( $js, '#publishrank-editor-score-refresh' ) !== false && strpos( $js, 'window.setTimeout(analyze, 600)' ) !== false, 'score-card analyzer refresh/debounce wiring is missing' );
+$assert( strpos( $drag_js, "'#publishrank-editor-score-refresh'" ) !== false && strpos( $drag_js, 'refresh();' ) !== false && strpos( $js, 'window.setTimeout(analyze, 600)' ) !== false && strpos( $js, "$(document).on('input.prIntel change.prIntel'" ) !== false, 'score-card refresh and debounced live-analyzer wiring is missing' );
 $assert( strpos( $score, "wp_enqueue_script( 'publishrank-editor-score-card'" ) !== false && strpos( $score, 'assets/js/editor-score-card.js' ) !== false && strpos( $drag_js, "'pointerdown'" ) !== false && strpos( $drag_js, "'pointermove'" ) !== false && strpos( $drag_css, 'touch-action:none' ) !== false, 'editor score card enqueues pointer/touch drag support' );
 $assert( strpos( $toolbar, 'inline-flex' ) !== false && strpos( $toolbar, 'gap:4px' ) !== false, 'toolbar icon and label alignment is not explicit' );
 foreach ( array( 'NewsArticle', 'Article', 'LiveBlogPosting', 'VideoObject', 'ImageGallery' ) as $type ) {

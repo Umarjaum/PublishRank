@@ -2,6 +2,8 @@
 /** Detect other SEO plugins that would duplicate PublishRank output. */
 namespace PublishRankSEO\Compatibility;
 
+use PublishRankSEO\Core\OutputSettings;
+
 defined( 'ABSPATH' ) || exit;
 
 final class ConflictDetector {
@@ -23,7 +25,9 @@ final class ConflictDetector {
 		if ( defined( 'THE_SEO_FRAMEWORK_VERSION' ) ) {
 			$found[] = 'The SEO Framework';
 		}
-		return $found;
+		$found = apply_filters( 'publishrank_detected_seo_plugins', $found );
+		$found = array_map( 'sanitize_text_field', (array) $found );
+		return array_values( array_unique( array_filter( $found ) ) );
 	}
 
 	/** @return array<string,string> status + message */
@@ -35,11 +39,18 @@ final class ConflictDetector {
 				'message' => __( 'No other SEO plugin was detected.', 'publishrank' ),
 			);
 		}
+		if ( OutputSettings::external_seo_handoff() ) {
+			/* translators: %s: plugin names. */
+			return array(
+				'status'  => 'PASS',
+				'message' => sprintf( __( '%s is active. Ownership handoff is enabled: PublishRank suppresses its overlapping frontend metadata and page schema; other settings are unchanged.', 'publishrank' ), implode( ', ', $active ) ),
+			);
+		}
 		/* translators: %s: plugin names. */
 		return array(
 			'status'  => 'WARNING',
 			/* translators: %s: comma-separated names of active SEO plugins. */
-			'message' => sprintf( __( '%s is active and may print duplicate titles, canonicals or schema. Keep only one SEO plugin active.', 'publishrank' ), implode( ', ', $active ) ),
+			'message' => sprintf( __( '%s is active and may print duplicate titles, canonicals or schema. Keep one plugin responsible for SEO output, or enable the opt-in ownership handoff in PublishRank Settings.', 'publishrank' ), implode( ', ', $active ) ),
 		);
 	}
 }

@@ -5,18 +5,27 @@ require_once __DIR__ . '/advanced.php';
 
 final class PublishRank_Newsroom {
     use PublishRank_Newsroom_Advanced;
-    const VERSION = '2.9.87';
+    const VERSION = PUBLISHRANK_SEO_VERSION; // Always follows the plugin header version.
     const POST_TYPE = 'uj_news_story';
     const CAP_ACCESS = 'uj_newsroom_access';
     const CAP_MANAGE = 'uj_newsroom_manage';
     const CAP_CREATE = 'uj_newsroom_create_story';
+    const CAP_SETUP = 'uj_publishrank_setup_wizard';
     const OPTION = 'uj_newsroom_role_caps';
     private static $instance;
     public static function instance() { return self::$instance ?: (self::$instance = new self()); }
     private function __construct() {
+        $role_config = get_option(self::OPTION, false);
+        if (is_array($role_config)) self::apply_role_caps($role_config);
         add_action('init', [$this, 'register_post_type']);
         add_action('admin_menu', [$this, 'admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'assets']);
+        add_action('admin_init', [$this, 'migrate_legacy_attachment_storage'], 1);
+        add_action('admin_notices', [$this, 'private_attachment_admin_notice']);
+        add_action('admin_enqueue_scripts', [$this, 'notification_assets'], 20);
+        add_action('wp_ajax_uj_newsroom_poll_notifications', [$this, 'ajax_poll_notifications']);
+        add_action('wp_ajax_uj_newsroom_mark_notification', [$this, 'ajax_mark_notification']);
+        add_action('admin_post_uj_newsroom_mark_all_notifications', [$this, 'mark_all_notifications_read']);
         add_action('admin_post_uj_save_story', [$this, 'save_story']);
         add_action('admin_post_uj_advanced_settings', [$this, 'save_advanced_settings']);
         add_action('admin_post_uj_discuss', [$this, 'handle_discussion']);
@@ -39,7 +48,7 @@ final class PublishRank_Newsroom {
         add_filter('post_row_actions', [$this, 'hide_row_actions'], 10, 2);
     }
     public static function activate() {
-        $defaults = ['administrator'=>['access'=>1,'manage'=>1,'create'=>1], 'editor'=>['access'=>1,'manage'=>1,'create'=>1], 'author'=>['access'=>1,'manage'=>0,'create'=>1], 'contributor'=>['access'=>1,'manage'=>0,'create'=>1]];
+        $defaults = ['administrator'=>['access'=>1,'manage'=>1,'create'=>1,'setup'=>1], 'editor'=>['access'=>1,'manage'=>1,'create'=>1,'setup'=>0], 'author'=>['access'=>1,'manage'=>0,'create'=>1,'setup'=>0], 'contributor'=>['access'=>1,'manage'=>0,'create'=>1,'setup'=>0]];
         if (!get_option(self::OPTION)) add_option(self::OPTION, $defaults);
         self::apply_role_caps(get_option(self::OPTION, $defaults));
         self::instance()->register_post_type(); if (!wp_next_scheduled('uj_newsroom_daily_reminders')) wp_schedule_event(time()+3600, 'daily', 'uj_newsroom_daily_reminders'); flush_rewrite_rules();
@@ -49,7 +58,8 @@ final class PublishRank_Newsroom {
         foreach (wp_roles()->roles as $slug=>$role_data) {
             $role = get_role($slug); if (!$role) continue;
             $settings = isset($config[$slug]) ? $config[$slug] : [];
-            foreach ([self::CAP_ACCESS=>'access', self::CAP_MANAGE=>'manage', self::CAP_CREATE=>'create'] as $cap=>$key) {
+            foreach ([self::CAP_ACCESS=>'access', self::CAP_MANAGE=>'manage', self::CAP_CREATE=>'create', self::CAP_SETUP=>'setup'] as $cap=>$key) {
+                if ('administrator' === $slug) { $role->add_cap($cap); continue; }
                 if (!empty($settings[$key])) $role->add_cap($cap); else $role->remove_cap($cap);
             }
         }
@@ -72,9 +82,11 @@ final class PublishRank_Newsroom {
         add_submenu_page($parent,'Editorial Board','Planning Board',self::CAP_ACCESS,'uj-newsroom-board',[$this,'render_board']);
         add_submenu_page($parent,'Newsroom Calendar','Calendar',self::CAP_ACCESS,'uj-newsroom-calendar',[$this,'render_calendar']);
         add_submenu_page($parent,'Activity History','Activity',self::CAP_ACCESS,'uj-newsroom-activity',[$this,'render_activity']);
-        add_submenu_page($parent,'My Notifications','My Notifications',self::CAP_ACCESS,'uj-newsroom-notifications',[$this,'render_personal_settings']);
+        $unread = $this->unread_notification_count();
+        $notification_label = $unread ? sprintf(__('Notifications (%d)', 'publishrank'), $unread) : __('Notifications', 'publishrank');
+        add_submenu_page($parent,'Notifications',$notification_label,self::CAP_ACCESS,'uj-newsroom-notifications',[$this,'render_personal_settings']);
         if (current_user_can(self::CAP_MANAGE)) add_submenu_page($parent,'Configuration','Newsroom Configuration',self::CAP_MANAGE,'uj-newsroom-settings',[$this,'render_advanced_settings']);
-        if (current_user_can(self::CAP_MANAGE)) add_submenu_page($parent,'Newsroom Roles','Newsroom Roles',self::CAP_MANAGE,'uj-newsroom-roles',[$this,'render_roles']);
+        if (current_user_can('manage_options')) add_submenu_page($parent,'Newsroom Roles','Newsroom Roles','manage_options','uj-newsroom-roles',[$this,'render_roles']);
     }
     public function assets($hook) {
         if (strpos($hook, 'uj-newsroom') === false) return;
@@ -90,6 +102,117 @@ final class PublishRank_Newsroom {
         foreach ($this->users() as $u) $html.='<option value="'.(int)$u->ID.'" '.selected((int)$selected,(int)$u->ID,false).'>'.esc_html($u->display_name).'</option>';
         return $html.'</select>';
     }
+    private function notification_records() {
+        if (!current_user_can(self::CAP_ACCESS)) return [];
+        $records=get_user_meta(get_current_user_id(),'uj_newsroom_notifications',true);
+        if(!is_array($records)) return [];
+        $visible=[];
+        foreach(array_slice($records,0,50) as $record) {
+            if(!is_array($record)||empty($record['id'])||!is_scalar($record['id'])||!isset($record['story_id'])||!is_scalar($record['story_id'])) continue;
+            $story_id=absint($record['story_id']);$story=$story_id?get_post($story_id):false;
+            if(!$story||$story->post_type!==self::POST_TYPE||!$this->can_edit_story($story_id)) continue;
+            $raw_title=is_scalar($record['title']??null)?$record['title']:'Newsroom update';
+            $raw_message=is_scalar($record['message']??null)?$record['message']:'';
+            $visible[]=[
+                'id'=>sanitize_text_field((string)$record['id']),
+                'story_id'=>$story_id,
+                'title'=>sanitize_text_field((string)$raw_title),
+                'message'=>sanitize_text_field((string)$raw_message),
+                'created'=>absint($record['created']??0),
+                'read'=>!empty($record['read']),
+                'story_title'=>sanitize_text_field($story->post_title),
+            ];
+        }
+        return $visible;
+    }
+    private function unread_notification_count() {
+        return count(array_filter($this->notification_records(),static function($record){return empty($record['read']);}));
+    }
+    private function create_in_app_notification($user_id,$story_id,$title,$message) {
+        $user_id=absint($user_id);$story_id=absint($story_id);
+        if(!$user_id||!$story_id||get_user_meta($user_id,'uj_newsroom_inapp_enabled',true)==='0') return false;
+        if(!user_can($user_id,self::CAP_ACCESS)&&!user_can($user_id,self::CAP_MANAGE)) return false;
+        $records=get_user_meta($user_id,'uj_newsroom_notifications',true);if(!is_array($records))$records=[];
+        array_unshift($records,[
+            'id'=>wp_generate_uuid4(),
+            'story_id'=>$story_id,
+            'title'=>sanitize_text_field($title),
+            'message'=>sanitize_text_field($message),
+            'created'=>time(),
+            'read'=>0,
+        ]);
+        update_user_meta($user_id,'uj_newsroom_notifications',array_slice($records,0,50));
+        return true;
+    }
+    private function notify_story_assignees($story_id,$title,$message,$exclude_user=0) {
+        $sent=0;
+        foreach(array_unique([absint($this->meta($story_id,'reporter',0)),absint($this->meta($story_id,'editor',0))]) as $user_id) {
+            if($user_id&&$user_id!==absint($exclude_user)&&$this->create_in_app_notification($user_id,$story_id,$title,get_the_title($story_id).': '.$message))$sent++;
+        }
+        return $sent;
+    }
+    public function notification_assets($hook="") {
+        if(!current_user_can(self::CAP_ACCESS)) return;
+        wp_enqueue_style('uj-newsroom-notifications',PUBLISHRANK_SEO_URL.'assets/newsroom/notifications.css',[],self::VERSION);
+        wp_enqueue_script('uj-newsroom-notifications',PUBLISHRANK_SEO_URL.'assets/newsroom/notifications.js',['jquery'],self::VERSION,true);
+        wp_localize_script('uj-newsroom-notifications','PublishRankNewsroomNotifications',[
+            'ajaxUrl'=>admin_url('admin-ajax.php'),
+            'nonce'=>wp_create_nonce('uj_newsroom_notifications'),
+            'userId'=>get_current_user_id(),
+            'interval'=>45000,
+            'popupsEnabled'=>get_user_meta(get_current_user_id(),'uj_newsroom_popup_enabled',true)!=='0',
+            'labels'=>[
+                'open'=>__('Open story','publishrank'),
+                'dismiss'=>__('Dismiss','publishrank'),
+                'bar'=>__('Newsroom notifications','publishrank'),
+                'error'=>__('Newsroom notifications could not be refreshed.','publishrank'),
+            ],
+        ]);
+    }
+    public function notification_admin_bar($admin_bar) {
+        if(!is_admin()||!current_user_can(self::CAP_ACCESS)||!is_object($admin_bar)) return;
+        $count=$this->unread_notification_count();
+        $admin_bar->add_node([
+            'id'=>'uj-newsroom-notifications',
+            'title'=>sprintf(__('Newsroom notifications (%d)','publishrank'),$count),
+            'href'=>$this->url('uj-newsroom-notifications'),
+            'meta'=>['class'=>'uj-newsroom-notification-link'],
+        ]);
+    }
+    public function ajax_poll_notifications() {
+        if(!current_user_can(self::CAP_ACCESS)) wp_send_json_error(['message'=>__('Permission denied.','publishrank')],403);
+        check_ajax_referer('uj_newsroom_notifications','nonce');
+        $items=[];
+        foreach($this->notification_records() as $record) {
+            if(!empty($record['read'])) continue;
+            $items[]=[
+                'id'=>$record['id'],
+                'title'=>$record['title'],
+                'message'=>$record['message'],
+                'created'=>$record['created'],
+                'url'=>$this->url('uj-newsroom',['edit'=>$record['story_id']]),
+            ];
+        }
+        wp_send_json_success(['unread'=>count($items),'items'=>array_slice($items,0,20)]);
+    }
+    public function ajax_mark_notification() {
+        if(!current_user_can(self::CAP_ACCESS)) wp_send_json_error(['message'=>__('Permission denied.','publishrank')],403);
+        check_ajax_referer('uj_newsroom_notifications','nonce');
+        $id=isset($_POST['notification_id'])&&!is_array($_POST['notification_id'])?sanitize_text_field(wp_unslash($_POST['notification_id'])):'';
+        $user_id=get_current_user_id();$records=get_user_meta($user_id,'uj_newsroom_notifications',true);if(!is_array($records))$records=[];$found=false;
+        foreach($records as &$record) if(is_array($record)&&isset($record['id'])&&hash_equals((string)$record['id'],$id)){$record['read']=1;$found=true;break;}
+        unset($record);
+        if($found) update_user_meta($user_id,'uj_newsroom_notifications',$records);
+        wp_send_json_success(['unread'=>$this->unread_notification_count()]);
+    }
+    public function mark_all_notifications_read() {
+        if(!current_user_can(self::CAP_ACCESS)) wp_die('Permission denied.');
+        check_admin_referer('uj_newsroom_mark_all_notifications');
+        $user_id=get_current_user_id();$records=get_user_meta($user_id,'uj_newsroom_notifications',true);if(!is_array($records))$records=[];
+        foreach($records as &$record) if(is_array($record))$record['read']=1;
+        unset($record);update_user_meta($user_id,'uj_newsroom_notifications',$records);
+        wp_safe_redirect($this->url('uj-newsroom-notifications',['uj_msg'=>'Notifications marked as read']));exit;
+    }
     private function story_query($args=[]) {
         $defaults=['post_type'=>self::POST_TYPE,'post_status'=>'publish','posts_per_page'=>-1,'orderby'=>'meta_value','meta_key'=>'_uj_deadline','order'=>'ASC'];
         $stories=get_posts(array_merge($defaults,$args));
@@ -97,15 +220,51 @@ final class PublishRank_Newsroom {
         $uid=get_current_user_id();
         return array_values(array_filter($stories,function($s)use($uid){return (int)$s->post_author===$uid||(int)$this->meta($s->ID,'reporter',0)===$uid||(int)$this->meta($s->ID,'editor',0)===$uid;}));
     }
+    private function story_filters($source=[]) {
+        $source = is_array($source) ? $source : [];
+        $value = static function($key) use ($source) {
+            if (!isset($source[$key]) || is_array($source[$key]) || is_object($source[$key])) return '';
+            return wp_unslash($source[$key]);
+        };
+        return [
+            'stage' => sanitize_key($value('stage')),
+            'priority' => sanitize_key($value('priority')),
+            'desk' => sanitize_text_field($value('desk')),
+            'q' => sanitize_text_field($value('q')),
+        ];
+    }
+    private function filter_stories($stories, array $filters) {
+        $query = strtolower($filters['q']);
+        return array_values(array_filter($stories, function($story) use ($filters, $query) {
+            $text = strtolower($story->post_title.' '.wp_strip_all_tags($story->post_content));
+            return (!$filters['stage'] || $this->meta($story->ID,'stage','pitch') === $filters['stage'])
+                && (!$filters['priority'] || $this->meta($story->ID,'priority','normal') === $filters['priority'])
+                && (!$filters['desk'] || $this->meta($story->ID,'desk') === $filters['desk'])
+                && (!$query || strpos($text,$query) !== false);
+        }));
+    }
+    private function allowed_stages($current, $is_new=false) {
+        $stages = $this->stage_names();
+        if (current_user_can(self::CAP_MANAGE)) return $stages;
+        if ($is_new) {
+            $first = array_key_first($stages);
+            return $first === null ? [] : [$first => $stages[$first]];
+        }
+        $keys = array_keys($stages);
+        $index = array_search($current, $keys, true);
+        if ($index === false) return [];
+        $allowed = array_slice($keys, max(0, $index - 1), 3);
+        return array_intersect_key($stages, array_fill_keys($allowed, true));
+    }
     private function story_form($story=null) {
         if (!current_user_can(self::CAP_CREATE) && !current_user_can(self::CAP_MANAGE)) return;
         $id=$story ? $story->ID : 0; $editable=current_user_can(self::CAP_MANAGE) || !$id || $this->can_edit_story($id);
         if (!$editable) return;
-        $deadline=$id ? $this->meta($id,'deadline') : ''; $stage=$id ? $this->meta($id,'stage',array_key_first($this->stage_names())) : array_key_first($this->stage_names());
+        $deadline=$id ? $this->meta($id,'deadline') : ''; $stage=$id ? $this->meta($id,'stage',array_key_first($this->stage_names())) : array_key_first($this->stage_names()); $allowed_stages=$this->allowed_stages($stage,!$id);
         echo '<details class="uj-create" '.($id?'open':'').'><summary>'.($id?'Edit assignment':'＋ New editorial assignment').'</summary><form method="post" action="'.esc_url(admin_url('admin-post.php')).'" class="uj-form">';
         wp_nonce_field('uj_save_story'); echo '<input type="hidden" name="action" value="uj_save_story"><input type="hidden" name="story_id" value="'.(int)$id.'">';
         echo '<label>Headline<input required name="title" value="'.esc_attr($id?$story->post_title:'').'" maxlength="200"></label><label>Brief / assignment details<textarea name="content" rows="4">'.esc_textarea($id?$story->post_content:'').'</textarea></label><div class="uj-form-grid"><label>Reporter'.$this->user_select('reporter',$id?$this->meta($id,'reporter',0):0).'</label><label>Editor'.$this->user_select('editor',$id?$this->meta($id,'editor',0):0).'</label><label>Deadline<input type="datetime-local" name="deadline" value="'.esc_attr($deadline).'" required></label><label>Stage<select name="stage">';
-        foreach ($this->stage_names() as $k=>$v) echo '<option value="'.esc_attr($k).'" '.selected($stage,$k,false).'>'.esc_html($v).'</option>';
+        foreach ($allowed_stages as $k=>$v) echo '<option value="'.esc_attr($k).'" '.selected($stage,$k,false).'>'.esc_html($v).'</option>';
         echo '</select></label>'.$this->add_advanced_fields('', $id).'<label>Priority<select name="priority">'; foreach(['low'=>'Low','normal'=>'Normal','high'=>'High','urgent'=>'Urgent'] as $pk=>$pv) echo '<option value="'.esc_attr($pk).'" '.selected($id?$this->meta($id,'priority','normal'):'normal',$pk,false).'>'.esc_html($pv).'</option>'; echo '</select></label></div><button class="button button-primary">'.($id?'Save changes':'Create assignment').'</button></form></details>';
         echo '<p class="description">Assignments are visible only to newsroom managers, their creator, and users assigned as reporter or editor.</p>';
     }
@@ -118,19 +277,19 @@ final class PublishRank_Newsroom {
         if (!$compact && $s->post_content) echo '<p class="uj-summary">'.esc_html(wp_trim_words(wp_strip_all_tags($s->post_content),24)).'</p>';
         echo '<div class="uj-meta"><span class="uj-priority uj-priority-'.esc_attr($this->meta($id,'priority','normal')).'">'.esc_html(strtoupper($this->meta($id,'priority','normal'))).'</span><span>Desk: '.esc_html($this->meta($id,'desk',$this->meta($id,'section','—'))).'</span><span>Reporter: '.esc_html($this->user_name($this->meta($id,'reporter',0))).'</span><span>Editor: '.esc_html($this->user_name($this->meta($id,'editor',0))).'</span><span class="'.($overdue?'uj-overdue':'').'">Due: '.esc_html($deadline ? mysql2date(get_option('date_format').' '.get_option('time_format'),str_replace('T',' ',$deadline)) : '—').($overdue?' · OVERDUE':'').'</span></div>';
         if ($this->can_edit_story($id)) {
-            echo '<div class="uj-card-actions"><form method="post" action="'.esc_url(admin_url('admin-post.php')).'">'; wp_nonce_field('uj_update_stage_'.$id); echo '<input type="hidden" name="action" value="uj_update_stage"><input type="hidden" name="story_id" value="'.(int)$id.'"><select name="stage" aria-label="Change stage">'; foreach ($this->stage_names() as $k=>$v) echo '<option value="'.esc_attr($k).'" '.selected($stage,$k,false).'>'.esc_html($v).'</option>'; echo '</select><button class="button">Update stage</button></form><a class="button" href="'.esc_url($this->url('uj-newsroom',['edit'=>$id])).'">Notes / Edit</a></div>';
+            echo '<div class="uj-card-actions"><form method="post" action="'.esc_url(admin_url('admin-post.php')).'">'; wp_nonce_field('uj_update_stage_'.$id); echo '<input type="hidden" name="action" value="uj_update_stage"><input type="hidden" name="story_id" value="'.(int)$id.'"><select name="stage" aria-label="Change stage">'; foreach ($this->allowed_stages($stage) as $k=>$v) echo '<option value="'.esc_attr($k).'" '.selected($stage,$k,false).'>'.esc_html($v).'</option>'; echo '</select><button class="button">Update stage</button></form><a class="button" href="'.esc_url($this->url('uj-newsroom',['edit'=>$id])).'">Notes / Edit</a></div>';
         }
         echo '</article>';
     }
     public function render_dashboard() {
-        echo '<div class="wrap uj-wrap"><h1>PublishRank Newsroom</h1>'; $this->notice();
+        echo '<div class="wrap uj-wrap"><h1>PublishRank Newsroom</h1>'; $this->notice(); $filters=$this->story_filters($_GET);
         $all=$this->story_query(); $counts=array_fill_keys(array_keys($this->stage_names()),0); $overdue=0;
         foreach($all as $s){$k=$this->meta($s->ID,'stage','pitch');if(isset($counts[$k]))$counts[$k]++;if($this->is_overdue($s))$overdue++;}
         echo '<div class="uj-stats">'; foreach($counts as $k=>$n) echo '<div class="uj-stat"><span>'.esc_html($this->stage_names()[$k]).'</span><strong>'.(int)$n.'</strong></div>'; echo '<div class="uj-stat uj-stat-alert"><span>Overdue</span><strong>'.(int)$overdue.'</strong></div></div>';
         if(isset($_GET['edit'])){$story=get_post((int)$_GET['edit']);if($story&&$story->post_type===self::POST_TYPE&&$this->can_edit_story($story->ID))$this->story_form($story);else echo '<div class="notice notice-error"><p>Story not found or access denied.</p></div>';}
         else $this->story_form();
-        echo '<h2>All stories</h2><div class="uj-toolbar"><form method="get"><input type="hidden" name="page" value="uj-newsroom"><input type="search" name="q" placeholder="Search headlines and briefs" value="'.esc_attr(sanitize_text_field(wp_unslash($_GET['q']??''))).'"><select name="stage"><option value="">All stages</option>'; foreach($this->stage_names() as $k=>$v)echo '<option value="'.esc_attr($k).'" '.selected($_GET['stage']??'',$k,false).'>'.esc_html($v).'</option>'; echo '</select><select name="desk"><option value="">All desks</option>';foreach($this->desks() as $desk)echo '<option value="'.esc_attr($desk).'" '.selected($_GET['desk']??'',$desk,false).'>'.esc_html($desk).'</option>';echo '</select><select name="priority"><option value="">All priorities</option>'; foreach(['low'=>'Low','normal'=>'Normal','high'=>'High','urgent'=>'Urgent'] as $pk=>$pv)echo '<option value="'.esc_attr($pk).'" '.selected($_GET['priority']??'',$pk,false).'>'.esc_html($pv).'</option>';echo '</select><button class="button">Filter</button></form></div>';$this->render_saved_views();echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_export_csv');echo '<input type="hidden" name="action" value="uj_export_csv"><button class="button">Export CSV</button></form>';if(current_user_can(self::CAP_MANAGE)){echo '<form id="ujbulk" method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_bulk_update');echo '<input type="hidden" name="action" value="uj_bulk_update"><label>Bulk change stage <select name="bulk_stage">';foreach($this->stage_names() as $bk=>$bv)echo '<option value="'.esc_attr($bk).'">'.esc_html($bv).'</option>';echo '</select></label> <button class="button">Apply to selected</button></form>';}echo '<div class="uj-story-list">';
-        $stage_filter=sanitize_key($_GET['stage']??'');$query=sanitize_text_field(wp_unslash($_GET['q']??''));$priority_filter=sanitize_key($_GET['priority']??'');$desk_filter=sanitize_text_field(wp_unslash($_GET['desk']??''));$shown=0;foreach($all as $s) { $text=strtolower($s->post_title.' '.wp_strip_all_tags($s->post_content)); if(($stage_filter&&$this->meta($s->ID,'stage','pitch')!==$stage_filter)||($priority_filter&&$this->meta($s->ID,'priority','normal')!==$priority_filter)||($desk_filter&&$this->meta($s->ID,'desk')!==$desk_filter)||($query&&strpos($text,strtolower($query))===false))continue;$this->story_card($s);$shown++; } if(!$shown)echo '<div class="uj-empty">No matching stories.</div>';
+        echo '<h2>All stories</h2><div class="uj-toolbar"><form method="get"><input type="hidden" name="page" value="uj-newsroom"><input type="search" name="q" placeholder="Search headlines and briefs" value="'.esc_attr($filters['q']).'"><select name="stage"><option value="">All stages</option>'; foreach($this->stage_names() as $k=>$v)echo '<option value="'.esc_attr($k).'" '.selected($filters['stage'],$k,false).'>'.esc_html($v).'</option>'; echo '</select><select name="desk"><option value="">All desks</option>';foreach($this->desks() as $desk)echo '<option value="'.esc_attr($desk).'" '.selected($filters['desk'],$desk,false).'>'.esc_html($desk).'</option>';echo '</select><select name="priority"><option value="">All priorities</option>'; foreach(['low'=>'Low','normal'=>'Normal','high'=>'High','urgent'=>'Urgent'] as $pk=>$pv)echo '<option value="'.esc_attr($pk).'" '.selected($filters['priority'],$pk,false).'>'.esc_html($pv).'</option>';echo '</select><button class="button">Filter</button></form></div>';$this->render_saved_views();echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_export_csv');echo '<input type="hidden" name="action" value="uj_export_csv"><input type="hidden" name="q" value="'.esc_attr($filters['q']).'"><input type="hidden" name="stage" value="'.esc_attr($filters['stage']).'"><input type="hidden" name="priority" value="'.esc_attr($filters['priority']).'"><input type="hidden" name="desk" value="'.esc_attr($filters['desk']).'"><button class="button">Export filtered CSV</button></form>';if(current_user_can(self::CAP_MANAGE)){echo '<form id="ujbulk" method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_bulk_update');echo '<input type="hidden" name="action" value="uj_bulk_update"><label>Bulk change stage <select name="bulk_stage">';foreach($this->stage_names() as $bk=>$bv)echo '<option value="'.esc_attr($bk).'">'.esc_html($bv).'</option>';echo '</select></label> <button class="button">Apply to selected</button></form>';}echo '<div class="uj-story-list">';
+        $shown=0;foreach($this->filter_stories($all,$filters) as $s) {$this->story_card($s);$shown++; } if(!$shown)echo '<div class="uj-empty">No matching stories.</div>';
         if(!$all)echo '<div class="uj-empty">No stories yet. Create the newsroom’s first assignment above.</div>'; echo '</div></div>';
         if(isset($_GET['edit'])) $this->render_story_detail((int)$_GET['edit']);
     }
@@ -161,22 +320,22 @@ final class PublishRank_Newsroom {
         foreach($rows as $e)echo '<tr><td>'.esc_html($e['time']).'</td><td><a href="'.esc_url($this->url('uj-newsroom',['edit'=>$e['id']])).'">'.esc_html($e['title']).'</a></td><td>'.esc_html($e['event']).'</td><td>'.esc_html($e['by']).'</td><td>'.esc_html($e['details']).'</td></tr>';if(!$rows)echo '<tr><td colspan="5">No newsroom activity yet.</td></tr>';echo '</tbody></table><p class="description">Showing up to the latest 200 recorded events.</p></div>';
     }
     public function render_roles() {
-        if(!current_user_can(self::CAP_MANAGE))return; $caps=get_option(self::OPTION,[]);echo '<div class="wrap uj-wrap"><h1>Newsroom roles & permissions</h1>'; $this->notice(); echo '<p>Choose which existing WordPress roles can access the newsroom, manage all assignments and configuration, or create assignments. Administrators retain their normal WordPress privileges; avoid granting access to roles that should not see private editorial material.</p><form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_save_roles');echo '<input type="hidden" name="action" value="uj_save_roles"><table class="widefat striped"><thead><tr><th>WordPress role</th><th>Access newsroom</th><th>Manage all stories & roles</th><th>Create assignments</th></tr></thead><tbody>';foreach(wp_roles()->roles as $slug=>$rd){$label=translate_user_role($rd['name']);$c=$caps[$slug]??[];echo '<tr><td>'.esc_html($label).'</td>';foreach(['access','manage','create'] as $key)echo '<td><label><input type="checkbox" name="caps['.esc_attr($slug).']['.$key.']" value="1" '.checked(!empty($c[$key]),true,false).'> '.esc_html(ucfirst($key)).'</label></td>';echo '</tr>';}echo '</tbody></table><p><button class="button button-primary">Save permissions</button></p></form><p><strong>Suggested setup:</strong> assign newsroom access and create permission to reporters; reserve manage permission for editors and managing editors. Story ownership/assignment permissions allow assigned reporters and editors to update stages and add private notes.</p></div>';
+        if(!current_user_can('manage_options'))return; $caps=get_option(self::OPTION,[]);echo '<div class="wrap uj-wrap"><h1>Newsroom roles & permissions</h1>'; $this->notice(); echo '<p>Only administrators can change this matrix. Grant newsroom access, story management, assignment creation, and—when needed—the PublishRank setup wizard to existing WordPress roles. Administrator access is always retained.</p><form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('uj_save_roles');echo '<input type="hidden" name="action" value="uj_save_roles"><table class="widefat striped"><thead><tr><th>WordPress role</th><th>Access newsroom</th><th>Manage newsroom</th><th>Create assignments</th><th>Setup wizard</th></tr></thead><tbody>';foreach(wp_roles()->roles as $slug=>$rd){$label=translate_user_role($rd['name']);$c=$caps[$slug]??[];echo '<tr><td>'.esc_html($label).'</td>';foreach(['access','manage','create','setup'] as $key){$disabled='administrator'===$slug?' disabled':'';echo '<td><label><input type="checkbox" name="caps['.esc_attr($slug).']['.$key.']" value="1" '.checked('administrator'===$slug||!empty($c[$key]),true,false).$disabled.'> '.esc_html(ucfirst($key)).'</label></td>';}echo '</tr>';}echo '</tbody></table><p><button class="button button-primary">Save permissions</button></p></form><p><strong>Suggested setup:</strong> grant newsroom access and create permission to reporters, reserve newsroom management for editors, and grant the setup wizard only to trusted editors. Administrators can revoke any delegated capability at any time.</p></div>';
     }
     private function log_event($id,$event,$details='') { $a=get_post_meta($id,'_uj_activity',true);if(!is_array($a))$a=[];$a[]=['time'=>current_time('mysql'),'event'=>$event,'by'=>wp_get_current_user()->display_name,'details'=>$details];update_post_meta($id,'_uj_activity',$a); }
     public function save_story() {
         if(!current_user_can(self::CAP_CREATE)&&!current_user_can(self::CAP_MANAGE))wp_die('Permission denied.');check_admin_referer('uj_save_story');$id=absint($_POST['story_id']??0);$oldReporter=$id?(int)$this->meta($id,'reporter',0):0;$oldEditor=$id?(int)$this->meta($id,'editor',0):0;$oldDeadline=$id?$this->meta($id,'deadline'):'';$oldPriority=$id?$this->meta($id,'priority','normal'):'normal';$oldDesk=$id?$this->meta($id,'desk'):'';$title=sanitize_text_field(wp_unslash($_POST['title']??''));$content=wp_kses_post(wp_unslash($_POST['content']??''));$deadline=sanitize_text_field(wp_unslash($_POST['deadline']??''));$stage=sanitize_key($_POST['stage']??'pitch');if(!$title||!in_array($stage,array_keys($this->stage_names()),true)||!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/',$deadline))wp_die('Please provide a headline, valid stage, and deadline.');
         if(!$id&&!current_user_can(self::CAP_MANAGE)&&$stage!==array_key_first($this->stage_names()))wp_die('New stories must start at the first workflow stage.');if($id){$old=get_post($id);if(!$old||$old->post_type!==self::POST_TYPE||!$this->can_edit_story($id))wp_die('Permission denied.');$priorStage=$this->meta($id,'stage',array_key_first($this->stage_names()));if(!current_user_can(self::CAP_MANAGE)&&$priorStage!==$stage){$keys=array_keys($this->stage_names());if(abs(array_search($stage,$keys,true)-array_search($priorStage,$keys,true))>1)wp_die('Stage transition requires the next or previous workflow stage.');}wp_update_post(['ID'=>$id,'post_title'=>$title,'post_content'=>$content]);}else{$id=wp_insert_post(['post_type'=>self::POST_TYPE,'post_status'=>'publish','post_title'=>$title,'post_content'=>$content,'post_author'=>get_current_user_id()],true);if(is_wp_error($id))wp_die(esc_html($id->get_error_message()));}
         $reporter=absint($_POST['reporter']??0);$editor=absint($_POST['editor']??0);if(!current_user_can(self::CAP_MANAGE)){if(!$id||!$this->meta($id,'reporter'))$reporter=get_current_user_id();$editor=$oldEditor;}
-        update_post_meta($id,'_uj_reporter',$reporter);update_post_meta($id,'_uj_editor',$editor);update_post_meta($id,'_uj_deadline',$deadline);$priority=sanitize_key($_POST['priority']??'normal');if(!in_array($priority,['low','normal','high','urgent'],true))$priority='normal';update_post_meta($id,'_uj_priority',$priority);update_post_meta($id,'_uj_section',sanitize_text_field(wp_unslash($_POST['section']??'')));$source=esc_url_raw(wp_unslash($_POST['source_url']??''));update_post_meta($id,'_uj_source_url',$source);$this->save_advanced_meta($id);if($oldReporter!==$reporter)$this->log_event($id,'Reporter changed',$this->user_name($oldReporter).' → '.$this->user_name($reporter));if($oldEditor!==$editor)$this->log_event($id,'Editor changed',$this->user_name($oldEditor).' → '.$this->user_name($editor));if($oldDeadline!==$deadline)$this->log_event($id,'Deadline changed',$oldDeadline.' → '.$deadline);if($oldPriority!==$priority)$this->log_event($id,'Priority changed',$oldPriority.' → '.$priority);$newDesk=$this->meta($id,'desk');if($oldDesk!==$newDesk)$this->log_event($id,'Desk changed',$oldDesk.' → '.$newDesk);$previous=$this->meta($id,'stage');update_post_meta($id,'_uj_stage',$stage);$this->log_event($id,$previous?'Assignment updated':'Story created',($previous?'Details updated':'') );if($previous&&$previous!==$stage)$this->log_event($id,'Stage changed',$this->stage_names()[$previous].' → '.$this->stage_names()[$stage]);if(!$previous||$oldReporter!==$reporter||$oldEditor!==$editor)$this->notify_assignment($id,$reporter,$editor);wp_safe_redirect($this->url('uj-newsroom',['uj_msg'=>'Assignment saved']));exit;
+        update_post_meta($id,'_uj_reporter',$reporter);update_post_meta($id,'_uj_editor',$editor);update_post_meta($id,'_uj_deadline',$deadline);$priority=sanitize_key($_POST['priority']??'normal');if(!in_array($priority,['low','normal','high','urgent'],true))$priority='normal';update_post_meta($id,'_uj_priority',$priority);update_post_meta($id,'_uj_section',sanitize_text_field(wp_unslash($_POST['section']??'')));$source=esc_url_raw(wp_unslash($_POST['source_url']??''));update_post_meta($id,'_uj_source_url',$source);$this->save_advanced_meta($id);if($oldReporter!==$reporter)$this->log_event($id,'Reporter changed',$this->user_name($oldReporter).' → '.$this->user_name($reporter));if($oldEditor!==$editor)$this->log_event($id,'Editor changed',$this->user_name($oldEditor).' → '.$this->user_name($editor));if($oldDeadline!==$deadline)$this->log_event($id,'Deadline changed',$oldDeadline.' → '.$deadline);if($oldPriority!==$priority)$this->log_event($id,'Priority changed',$oldPriority.' → '.$priority);$newDesk=$this->meta($id,'desk');if($oldDesk!==$newDesk)$this->log_event($id,'Desk changed',$oldDesk.' → '.$newDesk);$previous=$this->meta($id,'stage');update_post_meta($id,'_uj_stage',$stage);$this->log_event($id,$previous?'Assignment updated':'Story created',($previous?'Details updated':'') );if($previous&&$previous!==$stage){$this->log_event($id,'Stage changed',$this->stage_names()[$previous].' → '.$this->stage_names()[$stage]);$this->notify_story_assignees($id,'Newsroom stage changed',$this->stage_names()[$previous].' → '.$this->stage_names()[$stage],get_current_user_id());}if(!$previous||$oldReporter!==$reporter||$oldEditor!==$editor)$this->notify_assignment($id,$reporter,$editor);wp_safe_redirect($this->url('uj-newsroom',['uj_msg'=>'Assignment saved']));exit;
     }
-    public function update_stage() { $id=absint($_POST['story_id']??0);check_admin_referer('uj_update_stage_'.$id);$stage=sanitize_key($_POST['stage']??'');$s=get_post($id);if(!$s||$s->post_type!==self::POST_TYPE||!$this->can_edit_story($id)||!isset($this->stage_names()[$stage]))wp_die('Permission denied or invalid stage.');$old=$this->meta($id,'stage','pitch');if(!current_user_can(self::CAP_MANAGE)){$keys=array_keys($this->stage_names());$oldIndex=array_search($old,$keys,true);$newIndex=array_search($stage,$keys,true);if($oldIndex===false||$newIndex===false||abs($newIndex-$oldIndex)>1)wp_die('Stage transition requires the next or previous workflow stage.');}update_post_meta($id,'_uj_stage',$stage);if($old!==$stage)$this->log_event($id,'Stage changed',$this->stage_names()[$old].' → '.$this->stage_names()[$stage]);wp_safe_redirect(wp_get_referer()?:$this->url('uj-newsroom'));exit; }
+    public function update_stage() { $id=absint($_POST['story_id']??0);check_admin_referer('uj_update_stage_'.$id);$stage=sanitize_key($_POST['stage']??'');$s=get_post($id);if(!$s||$s->post_type!==self::POST_TYPE||!$this->can_edit_story($id)||!isset($this->stage_names()[$stage]))wp_die('Permission denied or invalid stage.');$old=$this->meta($id,'stage','pitch');if(!current_user_can(self::CAP_MANAGE)){$keys=array_keys($this->stage_names());$oldIndex=array_search($old,$keys,true);$newIndex=array_search($stage,$keys,true);if($oldIndex===false||$newIndex===false||abs($newIndex-$oldIndex)>1)wp_die('Stage transition requires the next or previous workflow stage.');}update_post_meta($id,'_uj_stage',$stage);if($old!==$stage){$this->log_event($id,'Stage changed',$this->stage_names()[$old].' → '.$this->stage_names()[$stage]);$this->notify_story_assignees($id,'Newsroom stage changed',$this->stage_names()[$old].' → '.$this->stage_names()[$stage],get_current_user_id());}$target=wp_get_referer()?:$this->url('uj-newsroom');wp_safe_redirect(add_query_arg('uj_msg','Stage updated',$target));exit; }
     public function add_note() { $id=absint($_POST['story_id']??0);check_admin_referer('uj_add_note_'.$id);if(!$this->can_edit_story($id))wp_die('Permission denied.');$text=sanitize_textarea_field(wp_unslash($_POST['note']??''));if(!$text)wp_die('Note cannot be empty.');$notes=get_post_meta($id,'_uj_notes',true);if(!is_array($notes))$notes=[];$notes[]=['author'=>wp_get_current_user()->display_name,'date'=>current_time('mysql'),'text'=>$text];update_post_meta($id,'_uj_notes',$notes);$this->log_event($id,'Private note added','');wp_safe_redirect($this->url('uj-newsroom',['edit'=>$id,'uj_msg'=>'Private note added']));exit; }
-    public function save_roles() { if(!current_user_can(self::CAP_MANAGE))wp_die('Permission denied.');check_admin_referer('uj_save_roles');$raw=isset($_POST['caps'])?(array)wp_unslash($_POST['caps']):[];$new=[];foreach(wp_roles()->roles as $slug=>$rd){$new[$slug]=[];foreach(['access','manage','create'] as $key)$new[$slug][$key]=!empty($raw[$slug][$key])?1:0;}update_option(self::OPTION,$new);self::apply_role_caps($new);wp_safe_redirect($this->url('uj-newsroom-roles',['uj_msg'=>'Permissions saved']));exit; }
-    public function delete_story() { $id=absint($_POST['story_id']??0);check_admin_referer('uj_delete_story_'.$id);if(!current_user_can(self::CAP_MANAGE))wp_die('Permission denied.');$s=get_post($id);if(!$s||$s->post_type!==self::POST_TYPE)wp_die('Story not found.');$files=get_post_meta($id,'_uj_files',true);if(is_array($files))foreach($files as $f){$name=sanitize_file_name($f['file']??'');$path=WP_CONTENT_DIR.'/uploads/uj-newsroom-private/'.$name;if($name&&is_file($path))@unlink($path);}wp_delete_post($id,true);wp_safe_redirect($this->url('uj-newsroom',['uj_msg'=>'Story deleted']));exit; }
+    public function save_roles() { if(!current_user_can('manage_options'))wp_die('Only administrators may manage role permissions.');check_admin_referer('uj_save_roles');$raw=isset($_POST['caps'])&&is_array($_POST['caps'])?wp_unslash($_POST['caps']):[];$new=[];foreach(wp_roles()->roles as $slug=>$rd){$submitted=isset($raw[$slug])&&is_array($raw[$slug])?$raw[$slug]:[];$new[$slug]=[];foreach(['access','manage','create','setup'] as $key)$new[$slug][$key]='administrator'===$slug||!empty($submitted[$key])?1:0;}update_option(self::OPTION,$new);self::apply_role_caps($new);wp_safe_redirect($this->url('uj-newsroom-roles',['uj_msg'=>'Permissions saved']));exit; }
+    public function delete_story() { $id=absint($_POST['story_id']??0);check_admin_referer('uj_delete_story_'.$id);if(!current_user_can(self::CAP_MANAGE))wp_die('Permission denied.');$s=get_post($id);if(!$s||$s->post_type!==self::POST_TYPE)wp_die('Story not found.');$files=get_post_meta($id,'_uj_files',true);if(is_array($files))foreach($files as $f){$name=sanitize_file_name($f['file']??'');$path=$name?$this->private_attachment_path($name):false;if($path&&is_file($path))@unlink($path);}wp_delete_post($id,true);wp_safe_redirect($this->url('uj-newsroom',['uj_msg'=>'Story deleted']));exit; }
     private function notify_assignment($id,$reporter,$editor) {
         $story=get_post($id); if(!$story)return;
-        $emails=[]; foreach(array_unique([absint($reporter),absint($editor)]) as $uid){$u=$uid?get_user_by('id',$uid):false;if($u&&is_email($u->user_email)&&get_user_meta($uid,'uj_newsroom_email_notifications',true)!=='0')$emails[]=$u->user_email;}
+        $emails=[]; foreach(array_unique([absint($reporter),absint($editor)]) as $uid){$u=$uid?get_user_by('id',$uid):false;if($u){$this->create_in_app_notification($uid,$id,'Newsroom assignment updated',$story->post_title.' was assigned or updated.');if(is_email($u->user_email)&&get_user_meta($uid,'uj_newsroom_email_notifications',true)!=='0')$emails[]=$u->user_email;}}
         if(!$emails)return;
         $subject='Newsroom assignment: '.$story->post_title;
         $message="You have been assigned to an editorial story.\n\nHeadline: ".$story->post_title."\nStage: ".$this->stage_names()[$this->meta($id,'stage','pitch')]."\nDeadline: ".$this->meta($id,'deadline')."\n\nSign in to WordPress and open PublishRank Newsroom to view the assignment.";
@@ -186,12 +345,14 @@ final class PublishRank_Newsroom {
         if (get_option('uj_newsroom_reminders_enabled','1')!=='1') return;
         $today=current_time('Y-m-d'); foreach(get_posts(['post_type'=>self::POST_TYPE,'post_status'=>'publish','posts_per_page'=>-1]) as $s){$d=$this->meta($s->ID,'deadline');$stage=$this->meta($s->ID,'stage','pitch');if(!$d||$stage==='published'||substr($d,0,10)>$today)continue;$last=$this->meta($s->ID,'reminder_date');if($last===$today)continue;
             $emails=[];foreach([absint($this->meta($s->ID,'reporter',0)),absint($this->meta($s->ID,'editor',0))] as $uid){$u=$uid?get_user_by('id',$uid):false;if($u&&is_email($u->user_email)&&get_user_meta($uid,'uj_newsroom_email_notifications',true)!=='0')$emails[]=$u->user_email;}
-            if($emails){wp_mail(array_unique($emails),'Overdue newsroom assignment: '.$s->post_title,"This assignment is overdue.\n\nDeadline: ".$d."\nCurrent stage: ".$this->stage_names()[$stage]."\n\nPlease update the story in PublishRank Newsroom.");update_post_meta($s->ID,'_uj_reminder_date',$today);$this->log_event($s->ID,'Overdue reminder sent',$today);}
+            $in_app=$this->notify_story_assignees($s->ID,'Overdue newsroom assignment','This newsroom assignment is overdue.');
+            if($emails)wp_mail(array_unique($emails),'Overdue newsroom assignment: '.$s->post_title,"This assignment is overdue.\n\nDeadline: ".$d."\nCurrent stage: ".$this->stage_names()[$stage]."\n\nPlease update the story in PublishRank Newsroom.");
+            if($emails||$in_app){update_post_meta($s->ID,'_uj_reminder_date',$today);$this->log_event($s->ID,'Overdue reminder sent',$today);}
         }
     }
     public function bulk_update() {
         if(!current_user_can(self::CAP_MANAGE)) wp_die('Permission denied.');check_admin_referer('uj_bulk_update');$ids=array_map('absint',(array)($_POST['story_ids']??[]));$stage=sanitize_key($_POST['bulk_stage']??'');if(!$ids||!isset($this->stage_names()[$stage])){wp_safe_redirect($this->url('uj-newsroom',['uj_msg'=>'Select stories and a valid stage']));exit;}
-        foreach($ids as $id){$s=get_post($id);if(!$s||$s->post_type!==self::POST_TYPE)continue;$old=$this->meta($id,'stage','pitch');if(!current_user_can(self::CAP_MANAGE)){$keys=array_keys($this->stage_names());$oldIndex=array_search($old,$keys,true);$newIndex=array_search($stage,$keys,true);if($oldIndex===false||$newIndex===false||abs($newIndex-$oldIndex)>1)wp_die('Stage transition requires the next or previous workflow stage.');}update_post_meta($id,'_uj_stage',$stage);if($old!==$stage)$this->log_event($id,'Stage changed',$this->stage_names()[$old].' → '.$this->stage_names()[$stage].' (bulk update)');}
+        foreach($ids as $id){$s=get_post($id);if(!$s||$s->post_type!==self::POST_TYPE)continue;$old=$this->meta($id,'stage','pitch');if(!current_user_can(self::CAP_MANAGE)){$keys=array_keys($this->stage_names());$oldIndex=array_search($old,$keys,true);$newIndex=array_search($stage,$keys,true);if($oldIndex===false||$newIndex===false||abs($newIndex-$oldIndex)>1)wp_die('Stage transition requires the next or previous workflow stage.');}update_post_meta($id,'_uj_stage',$stage);if($old!==$stage){$this->log_event($id,'Stage changed',$this->stage_names()[$old].' → '.$this->stage_names()[$stage].' (bulk update)');$this->notify_story_assignees($id,'Newsroom stage changed',$this->stage_names()[$old].' → '.$this->stage_names()[$stage],get_current_user_id());}}
         wp_safe_redirect($this->url('uj-newsroom',['uj_msg'=>'Bulk stage update completed']));exit;
     }
     public function hide_row_actions($actions,$post) { if($post->post_type===self::POST_TYPE)return [];return $actions; }

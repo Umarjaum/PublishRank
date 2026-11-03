@@ -219,7 +219,15 @@ final class SettingsPage {
 					'sanitize_callback' => 'rest_sanitize_boolean',
 					'default'           => true,
 				)
-			); }
+				); }
+					$this->reg(
+						\PublishRankSEO\Core\OutputSettings::EXTERNAL_SEO_HANDOFF,
+						array(
+							'type'              => 'boolean',
+							'sanitize_callback' => 'rest_sanitize_boolean',
+							'default'           => false,
+						)
+					);
 					$this->reg(
 						'publishrank_admin_access_mode',
 						array(
@@ -260,6 +268,14 @@ final class SettingsPage {
 					'default'           => 'index,follow',
 				)
 			);
+		$this->reg(
+			'publishrank_seo_description_fallback',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_description_fallback' ),
+				'default'           => 'page_type',
+			)
+		);
 		foreach ( array( 'publishrank_noindex_author_archives', 'publishrank_noindex_date_archives' ) as $field ) {
 			$this->reg(
 				$field,
@@ -820,6 +836,11 @@ final class SettingsPage {
 	}
 
 		/** @param mixed $value @return string */
+	/** @param mixed $value @return string page_type|global */
+	public function sanitize_description_fallback( $value ) {
+		return 'global' === sanitize_key( (string) $value ) ? 'global' : 'page_type';
+	}
+
 	public function sanitize_robots( $value ) {
 		$value = sanitize_text_field( (string) $value );
 		return ( new \PublishRankSEO\Meta\MetaGenerator() )->normalize_robots( $value );
@@ -972,6 +993,39 @@ final class SettingsPage {
 			<table class="form-table" role="presentation"><tbody><tr><th scope="row"><label for="publishrank_identity_alternate_names"><?php esc_html_e( 'Organization name variants', 'publishrank' ); ?></label></th><td><textarea id="publishrank_identity_alternate_names" name="publishrank_identity_alternate_names" class="large-text" rows="4" placeholder="One variant per line"><?php echo esc_textarea( $val( 'publishrank_identity_alternate_names', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'Optional. Add recognized names, abbreviations, or spelling variants. Each line becomes an Organization alternateName value.', 'publishrank' ); ?></p></td></tr></tbody></table>
 		<h2 class="pr-settings-section" id="pr-settings-output"><?php esc_html_e( 'Output and indexing', 'publishrank' ); ?></h2>
 			<table class="form-table" role="presentation"><tbody>
+				<tr><th scope="row"><?php esc_html_e( 'SEO plugin ownership handoff', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_external_seo_handoff" value="0" /><label><input name="publishrank_external_seo_handoff" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::external_seo_handoff_preference() ); ?> /> <?php esc_html_e( 'Let a supported active SEO plugin own overlapping page metadata and JSON-LD', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Off by default. When enabled, PublishRank suppresses its titles, descriptions, canonical and robots tags, social metadata, hreflang and page JSON-LD only while Yoast SEO, Rank Math, All in One SEO, SEOPress or The SEO Framework is detected. Confirm the other plugin is configured to provide the output you need. This does not change its settings or your saved PublishRank output switches; redirects, sitemaps and standalone schema feeds are unaffected.', 'publishrank' ); ?></p>
+					<?php
+					$active_seo_plugins = ( new \PublishRankSEO\Compatibility\ConflictDetector() )->active();
+					$handoff_preference = \PublishRankSEO\Core\OutputSettings::external_seo_handoff_preference();
+					$handoff_active     = $handoff_preference && ! empty( $active_seo_plugins );
+					$handoff_notice     = $handoff_active ? 'notice-success' : ( ! empty( $active_seo_plugins ) ? 'notice-warning' : 'notice-info' );
+					?>
+					<p class="description"><?php esc_html_e( 'Status reflects saved settings and currently active plugins; save this form to apply changes.', 'publishrank' ); ?></p>
+					<div class="notice <?php echo esc_attr( $handoff_notice ); ?> inline" role="status">
+						<p><strong><?php
+						if ( $handoff_active ) {
+							esc_html_e( 'Saved status: handoff active', 'publishrank' );
+						} elseif ( ! empty( $active_seo_plugins ) ) {
+							esc_html_e( 'Saved status: handoff off', 'publishrank' );
+						} elseif ( $handoff_preference ) {
+							esc_html_e( 'Saved status: waiting for a supported plugin', 'publishrank' );
+						} else {
+							esc_html_e( 'Saved status: PublishRank provides its own output', 'publishrank' );
+						}
+						?></strong><br /><?php
+						if ( $handoff_active ) {
+							/* translators: %s: comma-separated names of active SEO plugins. */
+							echo esc_html( sprintf( __( 'Detected: %s. PublishRank is suppressing its overlapping frontend metadata, hreflang and page JSON-LD. Check that the other plugin supplies the output you need.', 'publishrank' ), implode( ', ', $active_seo_plugins ) ) );
+						} elseif ( ! empty( $active_seo_plugins ) ) {
+							/* translators: %s: comma-separated names of active SEO plugins. */
+							echo esc_html( sprintf( __( 'Detected: %s. PublishRank is still outputting its own SEO data. Review both plugins for duplicate output, or enable handoff above.', 'publishrank' ), implode( ', ', $active_seo_plugins ) ) );
+						} elseif ( $handoff_preference ) {
+							esc_html_e( 'No supported SEO plugin detected. PublishRank continues its own output; the saved handoff preference will apply automatically if a supported plugin is activated.', 'publishrank' );
+						} else {
+							esc_html_e( 'No supported SEO plugin detected. PublishRank continues to provide its metadata and page schema.', 'publishrank' );
+						}
+						?></p>
+					</div></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'External link policy', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_links_enabled" value="0" /><label><input name="publishrank_links_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_links_enabled', true ) ); ?> /> <?php esc_html_e( 'Automatically add nofollow to external links', 'publishrank' ); ?></label><br /><label for="publishrank_links_follow_domains"><?php esc_html_e( 'Approved external domains (follow)', 'publishrank' ); ?></label><textarea id="publishrank_links_follow_domains" name="publishrank_links_follow_domains" class="large-text" rows="2" placeholder="example.org, partner.example"><?php echo esc_textarea( $val( 'publishrank_links_follow_domains', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'One domain per line or comma-separated. Your main domain and all subdomains remain index/follow.', 'publishrank' ); ?></p><input type="hidden" name="publishrank_links_sponsored" value="0" /><label><input name="publishrank_links_sponsored" type="checkbox" value="1" <?php checked( $val( 'publishrank_links_sponsored', false ) ); ?> /> <?php esc_html_e( 'Mark external links as sponsored', 'publishrank' ); ?></label></td></tr>
 					<tr><th scope="row"><?php esc_html_e( 'Output controls', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_meta_enabled" value="0" /><label><input name="publishrank_meta_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::meta() ); ?> /> <?php esc_html_e( 'Output PublishRank title, description, canonical, robots, Open Graph and X/Twitter metadata', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_schema_enabled" value="0" /><label><input name="publishrank_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::schema() ); ?> /> <?php esc_html_e( 'Output the connected JSON-LD schema graph (structured data)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_org_website_schema_enabled" value="0" /><label><input name="publishrank_org_website_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::org_website_schema() ); ?> /> <?php esc_html_e( 'Include Organization (or Person) and WebSite entities in the schema graph', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'All of these are enabled by default and each one controls only its own output: turning off structured data does not affect the SEO metadata above, and turning off Organization/WebSite keeps the page and article entities. Your Organization, logo and website details are read from the Setup Wizard on every page view, so a change appears on the whole site without editing individual posts. Disable an option only if another SEO plugin owns that output.', 'publishrank' ); ?></p><p class="description"><?php esc_html_e( 'What PublishRank can and cannot change: it controls its own head metadata, JSON-LD and breadcrumb trail. A logo, site title, breadcrumb trail or metadata that your theme or another plugin hard-codes is theme output and is not rewritten. If the theme prints its own breadcrumbs, choose "Structured data only" under Breadcrumb placement; if a theme prints a second title or description tag, switch that off in the theme.', 'publishrank' ); ?></p></td></tr>
 						<tr class="publishrank-new-security-feature"><th scope="row"><label for="publishrank_admin_access_mode"><?php esc_html_e( 'Custom login URL', 'publishrank' ); ?></label></th><td><select id="publishrank_admin_access_mode" name="publishrank_admin_access_mode"><option value="custom" <?php selected( $val( 'publishrank_admin_access_mode', 'custom' ), 'custom' ); ?>><?php esc_html_e( 'Enable custom login URL and hide standard login', 'publishrank' ); ?></option><option value="disabled" <?php selected( $val( 'publishrank_admin_access_mode', 'custom' ), 'disabled' ); ?>><?php esc_html_e( 'Disabled — use standard WordPress access URLs', 'publishrank' ); ?></option></select><p><label for="publishrank_admin_access_slug"><strong><?php esc_html_e( 'Private link key', 'publishrank' ); ?></strong></label><br /><code><?php echo esc_html( home_url( '/?publishrank_access=' ) ); ?></code><input id="publishrank_admin_access_slug" name="publishrank_admin_access_slug" type="text" value="<?php echo esc_attr( $val( 'publishrank_admin_access_slug' ) ); ?>" class="regular-text code" placeholder="newsroom-control" pattern="[a-z][a-z0-9_-]{5,63}" /></p><?php $admin_access_url = \PublishRankSEO\Security\AdminAccess::url(); ?>
@@ -979,6 +1033,7 @@ final class SettingsPage {
 						if ( '' !== $admin_access_url ) :
 							?>
 							<p><strong><?php esc_html_e( 'Your custom login link:', 'publishrank' ); ?></strong> <a href="<?php echo esc_url( $admin_access_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $admin_access_url ); ?></a></p><?php endif; ?><p class="description"><strong><?php esc_html_e( 'How it works:', 'publishrank' ); ?></strong> <?php esc_html_e( 'Save a private key to use a query-based custom login link. Direct wp-login.php login requests are hidden, while password recovery, registration and logout remain available. Unauthenticated requests to /wp-admin/ are sent to the custom login link; after sign-in, WordPress returns the publisher to the requested administration page. PublishRank does not rename wp-admin or take over a public page slug. If needed, visiting /wp-admin/ while logged out will reveal the currently configured entry link.', 'publishrank' ); ?></p><p class="description"><strong><?php esc_html_e( 'Important:', 'publishrank' ); ?></strong> <?php esc_html_e( 'Hiding the login URL is only an extra obscurity measure, not a substitute for WordPress authentication or protection against vulnerabilities. Use HTTPS, strong unique passwords, multi-factor authentication, current software, backups and suitable server-side protections. Exclude the custom link from full-page caching; plugins or themes that hard-code wp-login.php may need compatibility changes. Disable this setting to restore the standard login route.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="publishrank_seo_description_fallback"><?php esc_html_e( 'Pages with no description text', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_description_fallback" name="publishrank_seo_description_fallback"><option value="page_type" <?php selected( $val( 'publishrank_seo_description_fallback', 'page_type' ), 'page_type' ); ?>><?php esc_html_e( 'Describe the page by its title and publication (recommended)', 'publishrank' ); ?></option><option value="global" <?php selected( $val( 'publishrank_seo_description_fallback', 'page_type' ), 'global' ); ?>><?php esc_html_e( 'Use the publication-wide description', 'publishrank' ); ?></option></select><p class="description"><?php esc_html_e( 'Order used for every page: your own description, the excerpt, text extracted from the page or its page builder, then this fallback. Pages that only contain a form or a builder layout with no text use this setting, so each page can still get its own description.', 'publishrank' ); ?></p></td></tr>
 				<tr><th scope="row"><label for="publishrank_seo_canonical_category_mode"><?php esc_html_e( 'Canonical category path', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_canonical_category_mode" name="publishrank_seo_canonical_category_mode"><option value="permalink" <?php selected( $val( 'publishrank_seo_canonical_category_mode', 'permalink' ), 'permalink' ); ?>><?php esc_html_e( 'Use the normal post permalink', 'publishrank' ); ?></option><option value="primary_category" <?php selected( $val( 'publishrank_seo_canonical_category_mode', 'permalink' ), 'primary_category' ); ?>><?php esc_html_e( 'Use the primary category when supported', 'publishrank' ); ?></option></select><p class="description"><?php /* translators: %category% is a literal WordPress permalink token and should remain unchanged. */ esc_html_e( 'Category mode follows the selected primary category only when WordPress uses a %category% permalink structure; otherwise it safely uses the normal permalink.', 'publishrank' ); ?></p></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'Archive indexing', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_noindex_author_archives" value="0" /><label><input name="publishrank_noindex_author_archives" type="checkbox" value="1" <?php checked( $val( 'publishrank_noindex_author_archives', false ) ); ?> /> <?php esc_html_e( 'Noindex author archives', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_noindex_date_archives" value="0" /><label><input name="publishrank_noindex_date_archives" type="checkbox" value="1" <?php checked( $val( 'publishrank_noindex_date_archives', false ) ); ?> /> <?php esc_html_e( 'Noindex date archives', 'publishrank' ); ?></label></td></tr>
 					<tr><th scope="row"><label for="publishrank_seo_default_robots"><?php esc_html_e( 'Default robots directives', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_default_robots" name="publishrank_seo_default_robots" type="text" class="large-text" value="<?php echo esc_attr( $val( 'publishrank_seo_default_robots', 'index,follow' ) ); ?>" placeholder="index,follow,max-image-preview:large" /><p class="description"><?php esc_html_e( 'Comma-separated defaults for pages without a specific override. Supported directives include index, noindex, follow, nofollow, noarchive, nosnippet, noimageindex, notranslate, max-snippet, max-image-preview and max-video-preview. A post-level robots setting takes precedence. Be careful: setting noindex globally can remove your public pages from search results.', 'publishrank' ); ?></p></td></tr>

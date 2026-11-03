@@ -20,7 +20,7 @@ final class HeadOutput {
 	}
 
 	public function register() {
-		if ( ! \PublishRankSEO\Core\OutputSettings::meta() ) {
+		if ( ! \PublishRankSEO\Core\OutputSettings::metadata_output() ) {
 			return;
 		}
 		add_action( 'after_setup_theme', array( $this, 'ensure_title_support' ), 1 );
@@ -41,7 +41,7 @@ final class HeadOutput {
 	public function title( $title ) {
 		// The saved switch is honoured at run time as well, so turning metadata off takes effect on the next request
 		// even for hooks registered earlier in the same request.
-		if ( is_admin() || wp_doing_ajax() || ! \PublishRankSEO\Core\OutputSettings::meta() ) {
+		if ( is_admin() || wp_doing_ajax() || ! \PublishRankSEO\Core\OutputSettings::metadata_output() ) {
 			return $title;
 		}
 
@@ -68,7 +68,7 @@ final class HeadOutput {
 	}
 
 	private function render_output() {
-		if ( is_admin() || wp_doing_ajax() || ! \PublishRankSEO\Core\OutputSettings::meta() ) {
+		if ( is_admin() || wp_doing_ajax() || ! \PublishRankSEO\Core\OutputSettings::metadata_output() ) {
 			return;
 		}
 		// Always disclose technical provenance in the public source. This is separate from the optional visible footer credit.
@@ -228,8 +228,18 @@ final class HeadOutput {
 			}
 		}
 			$default = (string) get_option( 'publishrank_seo_default_social_image', '' );
-			$default = $default ? PublicationProfile::asset_url( $default ) : '';
-			return $default ? SocialWatermark::url( $default ) : '';
+			if ( '' === $default ) {
+				return '';
+			}
+			$attachment_id = function_exists( 'attachment_url_to_postid' ) ? absint( attachment_url_to_postid( $default ) ) : 0;
+			if ( $attachment_id ) {
+				$this->image_info = SeoData::attachment_info( $attachment_id );
+			}
+			$default = PublicationProfile::asset_url( $default );
+			$processed = SocialWatermark::url( $default, $this->image_info );
+			$this->image_info['original_url'] = $default;
+			$this->image_info['url']          = $processed;
+			return $processed;
 	}
 
 	/** @param string $url @return string Override, then attachment alt text, caption or post title. */

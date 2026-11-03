@@ -49,7 +49,7 @@ final class DashboardPage {
 			'manage_options',
 			Branding::MENU_SLUG,
 			array( $this, 'render' ),
-			add_query_arg( 'ver', rawurlencode( Branding::version() ), Branding::image( 'publishrank.svg' ) ),
+			Branding::logo_url(),
 			58
 		);
 		add_submenu_page( Branding::MENU_SLUG, __( 'Dashboard', 'publishrank' ), __( 'Dashboard', 'publishrank' ), 'manage_options', Branding::MENU_SLUG, array( $this, 'render' ) );
@@ -82,7 +82,7 @@ final class DashboardPage {
 		$groups = array(
 			array(
 				'label' => '',
-				'items' => array( Branding::MENU_SLUG ),
+				'items' => array( Branding::MENU_SLUG, 'publishrank-onboarding' ),
 			),
 			array(
 				'label' => __( 'Content & publishing', 'publishrank' ),
@@ -94,7 +94,7 @@ final class DashboardPage {
 			),
 			array(
 				'label' => __( 'Search & discovery', 'publishrank' ),
-				'items' => array( 'publishrank-search-console', 'publishrank-sitemap-health', 'publishrank-indexnow', 'publishrank-baidu', 'publishrank-verification', 'publishrank-schema', 'publishrank-breadcrumbs', 'publishrank-seo-robots', 'publishrank-crawl-optimization', 'publishrank-llms-txt' ),
+				'items' => array( 'publishrank-search-console', 'publishrank-sitemap-health', 'publishrank-indexnow', 'publishrank-baidu', 'publishrank-google-preferred-sources', 'publishrank-verification', 'publishrank-schema', 'publishrank-breadcrumbs', 'publishrank-seo-robots', 'publishrank-crawl-optimization', 'publishrank-llms-txt' ),
 			),
 			array(
 				'label' => __( 'Measure & maintain', 'publishrank' ),
@@ -106,13 +106,13 @@ final class DashboardPage {
 					'publishrank',
 					array( __( 'Titles & Meta', 'publishrank' ), 'manage_options', 'admin.php?page=publishrank#pr-settings-titles', __( 'PublishRank Title Settings', 'publishrank' ) ),
 					array( __( 'Import / Export', 'publishrank' ), 'manage_options', 'admin.php?page=publishrank#pr-settings-portability', __( 'PublishRank Settings Portability', 'publishrank' ) ),
-					'publishrank-onboarding',
 					'publishrank-documentation',
 				),
 			),
 		);
 
-		$ordered = array();
+		$essential = apply_filters( 'publishrank_seo_sidebar_essential_pages', array( Branding::MENU_SLUG, 'publishrank-onboarding', 'uj-newsroom', 'publishrank', 'publishrank-documentation' ) );
+		$ordered   = array();
 		foreach ( $groups as $group ) {
 			$items = array();
 			foreach ( $group['items'] as $entry ) {
@@ -125,16 +125,24 @@ final class DashboardPage {
 					unset( $registered[ $entry ] );
 				}
 			}
-			if ( empty( $items ) ) {
-				continue;
-			}
-			if ( '' !== $group['label'] ) {
-				$items[0][0] = '<span class="pr-submenu-group" aria-hidden="true">' . esc_html( $group['label'] ) . '</span><span class="pr-submenu-item-label">' . $items[0][0] . '</span>';
-				$items[0][4] = trim( ( isset( $items[0][4] ) ? $items[0][4] . ' ' : '' ) . 'pr-submenu-group-start' );
-			}
-			foreach ( $items as $item ) {
-				$ordered[] = $item;
-			}
+					if ( empty( $items ) ) {
+						continue;
+					}
+					// Keep the sidebar short: only essential destinations stay visible. Every other registered
+					// screen remains registered (so direct links and dashboard cards authorize correctly) and is
+					// reached from the Dashboard tool cards.
+					$first_in_group = true;
+					foreach ( $items as $item ) {
+						if ( '' !== $group['label'] && $first_in_group ) {
+							$item[0] = '<span class="pr-submenu-group" aria-hidden="true">' . esc_html( $group['label'] ) . '</span><span class="pr-submenu-item-label">' . $item[0] . '</span>';
+							$item[4] = trim( ( isset( $item[4] ) ? $item[4] . ' ' : '' ) . 'pr-submenu-group-start' );
+						}
+						if ( ! in_array( (string) $item[2], $essential, true ) ) {
+							$item[4] = trim( ( isset( $item[4] ) ? $item[4] . ' ' : '' ) . 'pr-submenu-hidden' );
+						}
+						$ordered[] = $item;
+						$first_in_group = false;
+					}
 		}
 
 		// Preserve screens added by other modules or third-party extensions.
@@ -201,23 +209,60 @@ final class DashboardPage {
 				AdminAssets::header( __( 'PublishRank', 'publishrank' ), __( 'Advanced Sitemap & SEO Plugin — built for news sites.', 'publishrank' ) );
 				AdminAssets::render_flash();
 		?>
-					<section class="rhs-welcome-banner" aria-labelledby="rhs-welcome-title">
-						<div class="rhs-welcome-banner__copy">
-							<p class="rhs-welcome-banner__eyebrow"><span aria-hidden="true"></span><?php esc_html_e( 'Publisher-first SEO workspace', 'publishrank' ); ?></p>
-							<h2 id="rhs-welcome-title"><?php esc_html_e( 'Welcome to PublishRank.', 'publishrank' ); ?></h2>
-							<p><?php esc_html_e( 'Your newsroom’s tools for technical SEO, search discovery, structured data, and redirects are together in one place. Start with a setup review, then keep every story discoverable.', 'publishrank' ); ?></p>
-							<a class="button button-primary" href="<?php echo esc_url( Branding::page_url( 'publishrank-onboarding' ) ); ?>"><?php esc_html_e( 'Review your setup', 'publishrank' ); ?><span aria-hidden="true">→</span></a>
-						</div>
-						<div class="rhs-welcome-banner__visual" aria-hidden="true">
-							<span class="rhs-welcome-banner__orbit rhs-welcome-banner__orbit--outer"></span>
-							<span class="rhs-welcome-banner__orbit rhs-welcome-banner__orbit--inner"></span>
-							<span class="rhs-welcome-banner__spark rhs-welcome-banner__spark--one"></span>
-							<span class="rhs-welcome-banner__spark rhs-welcome-banner__spark--two"></span>
-							<div class="rhs-welcome-banner__tile">
-								<span class="rhs-welcome-banner__tile-kicker"><?php esc_html_e( 'PUBLISHER SEO', 'publishrank' ); ?></span>
-								<strong><?php esc_html_e( 'Publish.', 'publishrank' ); ?><br /><?php esc_html_e( 'Discover.', 'publishrank' ); ?><br /><?php esc_html_e( 'Grow.', 'publishrank' ); ?></strong>
-								<span class="rhs-welcome-banner__tile-signals"><i></i><i></i><i></i></span>
+					<section class="pr-hero" aria-labelledby="rhs-welcome-title">
+						<div class="pr-hero__copy">
+							<p class="pr-hero__eyebrow"><?php esc_html_e( 'Publisher-first SEO workspace', 'publishrank' ); ?></p>
+							<h2 id="rhs-welcome-title"><?php esc_html_e( 'Every Story.', 'publishrank' ); ?> <span><?php esc_html_e( 'A Stronger Publishing Workflow.', 'publishrank' ); ?></span></h2>
+							<p class="pr-hero__lead"><?php esc_html_e( 'PublishRank is a powerful WordPress SEO plugin built for news publishers, online newspapers and bloggers — to help your stories be found, understood and read by more people.', 'publishrank' ); ?></p>
+							<div class="pr-hero__actions">
+								<a class="pr-btn pr-btn--primary" href="<?php echo esc_url( Branding::page_url( 'publishrank-onboarding' ) ); ?>"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Setup Wizard', 'publishrank' ); ?></strong><small><?php esc_html_e( 'Free & Open Source', 'publishrank' ); ?></small></span></a>
+								<a class="pr-btn pr-btn--ghost" href="#pr-dashboard-workspace-title"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Explore Features', 'publishrank' ); ?></strong></span></a>
+								<a class="pr-btn pr-btn--ghost" href="<?php echo esc_url( Branding::website_url() ); ?>" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-globe" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Official Website', 'publishrank' ); ?></strong></span></a>
 							</div>
+							<ul class="pr-hero__chips">
+								<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i><?php esc_html_e( 'News SEO', 'publishrank' ); ?></li>
+								<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i><?php esc_html_e( 'Structured Data', 'publishrank' ); ?></li>
+								<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i><?php esc_html_e( 'Advanced SEO Tools', 'publishrank' ); ?></li>
+							</ul>
+						</div>
+						<div class="pr-hero__visual" aria-hidden="true">
+							<div class="pr-mock">
+								<div class="pr-mock__dots"><i></i><i></i><i></i></div>
+								<div class="pr-mock__body">
+									<div class="pr-mock__side"><i></i><i></i><i></i><i></i><i></i></div>
+									<div class="pr-mock__main">
+										<strong><?php esc_html_e( 'PublishRank Dashboard', 'publishrank' ); ?></strong>
+										<div class="pr-mock__row">
+											<div class="pr-mock__ring" style="--pr-score:<?php echo (int) $score; ?>"><span><?php echo esc_html( (string) $score ); ?><small>/100</small></span></div>
+											<ul>
+												<?php foreach ( array_slice( $checks, 0, 5 ) as $mock_check ) : ?>
+													<li class="<?php echo 'PASS' === $mock_check['status'] ? 'is-pass' : 'is-warn'; ?>"><?php echo esc_html( $mock_check['label'] ); ?></li>
+												<?php endforeach; ?>
+											</ul>
+										</div>
+										<svg class="pr-mock__chart" viewBox="0 0 300 80" preserveAspectRatio="none" focusable="false"><polyline points="0,70 50,62 100,55 150,50 200,42 250,28 300,10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+									</div>
+								</div>
+							</div>
+							<span class="pr-hero__badge"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i><?php esc_html_e( 'Built for Publishers', 'publishrank' ); ?></span>
+						</div>
+					</section>
+					<ul class="pr-strip">
+						<li><i class="fa-solid fa-chart-column" aria-hidden="true"></i><?php esc_html_e( 'Built-in SEO Tools', 'publishrank' ); ?></li>
+						<li><i class="fa-solid fa-newspaper" aria-hidden="true"></i><?php esc_html_e( 'News Sitemap & Article SEO', 'publishrank' ); ?></li>
+						<li><i class="fa-solid fa-share-nodes" aria-hidden="true"></i><?php esc_html_e( 'Structured Data & Schema', 'publishrank' ); ?></li>
+						<li><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><?php esc_html_e( 'Discover Best Practices', 'publishrank' ); ?></li>
+						<li><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><?php esc_html_e( 'Lightweight & Fast', 'publishrank' ); ?></li>
+						<li><i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i><?php esc_html_e( 'Seamless WordPress Integration', 'publishrank' ); ?></li>
+					</ul>
+					<section class="pr-workflow" aria-labelledby="pr-workflow-title">
+						<p class="pr-workflow__kicker"><?php esc_html_e( 'A practical workflow', 'publishrank' ); ?></p>
+						<h2 id="pr-workflow-title"><?php esc_html_e( 'From publication setup to a healthier archive', 'publishrank' ); ?></h2>
+						<p class="pr-workflow__lead"><?php esc_html_e( 'Put the essentials in a repeatable order: define your publication, review each story before it goes live, then maintain the technical paths readers and search engines rely on.', 'publishrank' ); ?></p>
+						<div class="pr-workflow__grid">
+							<article class="pr-step"><span class="pr-step__no">01</span><i class="fa-solid fa-newspaper" aria-hidden="true"></i><h3><?php esc_html_e( 'Set your publication foundation', 'publishrank' ); ?></h3><p><?php esc_html_e( 'Confirm the publication identity, author details, defaults and sitemap coverage before assigning SEO output to one plugin.', 'publishrank' ); ?></p><a href="<?php echo esc_url( Branding::page_url( 'publishrank-onboarding' ) ); ?>"><?php esc_html_e( 'Open the Setup Wizard', 'publishrank' ); ?> <span aria-hidden="true">→</span></a></article>
+							<article class="pr-step"><span class="pr-step__no">02</span><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><h3><?php esc_html_e( 'Review stories with context', 'publishrank' ); ?></h3><p><?php esc_html_e( 'Check the headline, summary, byline, dates, images, internal links and article schema against the story readers will see.', 'publishrank' ); ?></p><a href="<?php echo esc_url( Branding::page_url( 'publishrank-seo-score' ) ); ?>"><?php esc_html_e( 'Explore publishing features', 'publishrank' ); ?> <span aria-hidden="true">→</span></a></article>
+							<article class="pr-step"><span class="pr-step__no">03</span><i class="fa-solid fa-gear" aria-hidden="true"></i><h3><?php esc_html_e( 'Maintain discovery over time', 'publishrank' ); ?></h3><p><?php esc_html_e( 'Watch sitemaps, redirects, broken URLs and diagnostics so the archive stays healthy as your site grows.', 'publishrank' ); ?></p><a href="<?php echo esc_url( Branding::page_url( 'publishrank-seo-diagnostics' ) ); ?>"><?php esc_html_e( 'Run diagnostics', 'publishrank' ); ?> <span aria-hidden="true">→</span></a></article>
 						</div>
 					</section>
 				<div class="rhs-grid">
@@ -270,7 +315,7 @@ final class DashboardPage {
 						<input id="pr-tools-search" type="search" class="regular-text" placeholder="<?php esc_attr_e( 'Search tools…', 'publishrank' ); ?>" autocomplete="off" />
 						<label class="screen-reader-text" for="pr-tools-category"><?php esc_html_e( 'Filter by category', 'publishrank' ); ?></label>
 						<select id="pr-tools-category"><option value="all"><?php esc_html_e( 'All categories', 'publishrank' ); ?></option><option value="discovery"><?php esc_html_e( 'Search & discovery', 'publishrank' ); ?></option><option value="publishing"><?php esc_html_e( 'Content & publishing', 'publishrank' ); ?></option><option value="operations"><?php esc_html_e( 'Measure & maintain', 'publishrank' ); ?></option><option value="setup"><?php esc_html_e( 'Settings & help', 'publishrank' ); ?></option></select>
-						<button type="button" class="button" id="pr-tools-clear"><?php esc_html_e( 'Clear', 'publishrank' ); ?></button><span id="pr-tools-count" class="description" role="status" aria-live="polite"></span>
+						<button type="button" class="button" id="pr-tools-clear"><?php esc_html_e( 'Clear', 'publishrank' ); ?></button><span id="pr-tools-count" class="description" role="status" aria-live="polite" data-count-singular="<?php echo esc_attr__( 'Showing %1$d of %2$d tool', 'publishrank' ); ?>" data-count-plural="<?php echo esc_attr__( 'Showing %1$d of %2$d tools', 'publishrank' ); ?>"></span>
 					</div>
 					<p id="pr-tools-empty" class="pr-tools-empty" hidden><?php esc_html_e( 'No tools match those filters. Try a different search or clear the filters.', 'publishrank' ); ?></p>
 						<?php
@@ -284,6 +329,7 @@ final class DashboardPage {
 									array( 'slug' => 'publishrank-indexnow', 'icon' => 'fa-bolt', 'tone' => 'sage', 'kicker' => __( 'Fast discovery', 'publishrank' ), 'title' => __( 'IndexNow', 'publishrank' ), 'description' => __( 'Configure supported search-engine notifications when content changes.', 'publishrank' ), 'button' => __( 'Configure IndexNow', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-search-console', 'icon' => 'fa-magnifying-glass-chart', 'tone' => 'plum', 'kicker' => __( 'Search visibility', 'publishrank' ), 'title' => __( 'Search Console', 'publishrank' ), 'description' => __( 'Review connected property status and available search performance data.', 'publishrank' ), 'button' => __( 'Open Search Console', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-baidu', 'icon' => 'fa-earth-asia', 'tone' => 'ink', 'kicker' => __( 'Search engines', 'publishrank' ), 'title' => __( 'Search engines', 'publishrank' ), 'description' => __( 'Review additional search-engine submission and discovery options.', 'publishrank' ), 'button' => __( 'View search engines', 'publishrank' ) ),
+									array( 'slug' => 'publishrank-google-preferred-sources', 'icon' => 'fa-star', 'tone' => 'sage', 'kicker' => __( 'New · Google Search', 'publishrank' ), 'title' => __( 'Google Preferred Sources', 'publishrank' ), 'description' => __( 'Generate your Preferred Sources link and the code for Google’s “Add to preferred sources” button.', 'publishrank' ), 'button' => __( 'Open Preferred Sources', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-robots', 'icon' => 'fa-robot', 'tone' => 'ink', 'kicker' => __( 'Crawler access', 'publishrank' ), 'title' => __( 'Robots.txt', 'publishrank' ), 'description' => __( 'Review crawl directives and the sitemap reference exposed to crawlers.', 'publishrank' ), 'button' => __( 'Review robots rules', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-crawl-optimization', 'icon' => 'fa-filter', 'tone' => 'brass', 'kicker' => __( 'Crawl hygiene', 'publishrank' ), 'title' => __( 'Crawl optimization', 'publishrank' ), 'description' => __( 'Manage optional discovery-link, feed, search, and URL cleanup controls.', 'publishrank' ), 'button' => __( 'Review crawl controls', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-breadcrumbs', 'icon' => 'fa-chevron-right', 'tone' => 'brass', 'kicker' => __( 'Navigation trail', 'publishrank' ), 'title' => __( 'Breadcrumbs', 'publishrank' ), 'description' => __( 'Set where the visible trail prints, its separator and the frontend override, control BreadcrumbList structured data, and run a site check that shows why a trail is or is not visible.', 'publishrank' ), 'button' => __( 'Configure breadcrumbs', 'publishrank' ) ),
@@ -304,6 +350,12 @@ final class DashboardPage {
 									array( 'slug' => 'publishrank-image-optimizer', 'icon' => 'fa-images', 'tone' => 'sage', 'kicker' => __( 'Media workflow', 'publishrank' ), 'title' => __( 'Image optimizer', 'publishrank' ), 'description' => __( 'Review media optimization tools and image delivery settings.', 'publishrank' ), 'button' => __( 'Open image tools', 'publishrank' ), 'capability' => 'upload_files' ),
 									array( 'slug' => 'publishrank-publisher-toolkit', 'icon' => 'fa-toolbox', 'tone' => 'ink', 'kicker' => __( 'Publisher tools', 'publishrank' ), 'title' => __( 'Publisher toolkit', 'publishrank' ), 'description' => __( 'Access focused utilities for newsroom publishing and site maintenance.', 'publishrank' ), 'button' => __( 'Open toolkit', 'publishrank' ) ),
 									array( 'slug' => 'uj-newsroom', 'icon' => 'fa-newspaper', 'tone' => 'plum', 'kicker' => __( 'Editorial workflow', 'publishrank' ), 'title' => __( 'Newsroom', 'publishrank' ), 'description' => __( 'Open the existing newsroom workspace for assignments, planning, calendar, activity, and notifications.', 'publishrank' ), 'button' => __( 'Open Newsroom', 'publishrank' ), 'capability' => 'uj_newsroom_access' ),
+									array( 'slug' => 'uj-newsroom-board', 'icon' => 'fa-table-columns', 'tone' => 'plum', 'kicker' => __( 'Newsroom', 'publishrank' ), 'title' => __( 'Planning board', 'publishrank' ), 'description' => __( 'Plan and move stories across the editorial board.', 'publishrank' ), 'button' => __( 'Open board', 'publishrank' ) ),
+									array( 'slug' => 'uj-newsroom-calendar', 'icon' => 'fa-calendar-days', 'tone' => 'plum', 'kicker' => __( 'Newsroom', 'publishrank' ), 'title' => __( 'Newsroom calendar', 'publishrank' ), 'description' => __( 'See scheduled and planned stories by date.', 'publishrank' ), 'button' => __( 'Open calendar', 'publishrank' ) ),
+									array( 'slug' => 'uj-newsroom-activity', 'icon' => 'fa-clock-rotate-left', 'tone' => 'plum', 'kicker' => __( 'Newsroom', 'publishrank' ), 'title' => __( 'Newsroom activity', 'publishrank' ), 'description' => __( 'Review the editorial activity history.', 'publishrank' ), 'button' => __( 'View activity', 'publishrank' ) ),
+									array( 'slug' => 'uj-newsroom-notifications', 'icon' => 'fa-bell', 'tone' => 'plum', 'kicker' => __( 'Newsroom', 'publishrank' ), 'title' => __( 'Notifications', 'publishrank' ), 'description' => __( 'Check your newsroom notifications.', 'publishrank' ), 'button' => __( 'Open notifications', 'publishrank' ) ),
+									array( 'slug' => 'uj-newsroom-settings', 'icon' => 'fa-sliders', 'tone' => 'plum', 'kicker' => __( 'Newsroom', 'publishrank' ), 'title' => __( 'Newsroom configuration', 'publishrank' ), 'description' => __( 'Configure newsroom workflow settings.', 'publishrank' ), 'button' => __( 'Configure newsroom', 'publishrank' ) ),
+									array( 'slug' => 'uj-newsroom-roles', 'icon' => 'fa-user-shield', 'tone' => 'plum', 'kicker' => __( 'Newsroom', 'publishrank' ), 'title' => __( 'Newsroom roles', 'publishrank' ), 'description' => __( 'Manage newsroom roles and access.', 'publishrank' ), 'button' => __( 'Manage roles', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-internal-links', 'icon' => 'fa-link', 'tone' => 'plum', 'kicker' => __( 'Content connections', 'publishrank' ), 'title' => __( 'Internal links', 'publishrank' ), 'description' => __( 'Review internal-link opportunities and strengthen related content paths.', 'publishrank' ), 'button' => __( 'Review internal links', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-link-intelligence', 'icon' => 'fa-diagram-project', 'tone' => 'brass', 'kicker' => __( 'Link strategy', 'publishrank' ), 'title' => __( 'Link intelligence', 'publishrank' ), 'description' => __( 'Explore publisher-focused link recommendations and relationship insights.', 'publishrank' ), 'button' => __( 'Open link intelligence', 'publishrank' ) ),
 								),

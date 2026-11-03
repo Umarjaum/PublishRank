@@ -12,6 +12,18 @@ final class AdminAssets {
 		add_action( 'admin_enqueue_scripts', array( $this, 'menu_alignment_css' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'menu_alignment_css' ) );
 		add_action( 'admin_bar_menu', array( $this, 'welcome_admin_bar' ), 90 );
+		add_action( 'in_admin_header', array( $this, 'render_loader' ), 1 );
+	}
+
+	/** Print the animated-logo loader at the top of every PublishRank screen. */
+	public function render_loader() {
+		if ( ! Branding::is_plugin_screen() ) {
+			return;
+		}
+		echo '<div id="publishrank-loader" class="pr-loader" role="status" aria-live="polite">';
+		echo '<img class="pr-loader__logo" src="' . esc_url( Branding::loader_url() ) . '" width="132" height="132" alt="" />';
+		echo '<p class="pr-loader__label">' . esc_html__( 'Loading PublishRank…', 'publishrank' ) . '</p>';
+		echo '</div>';
 	}
 
 	/** Add a compact, branded welcome link to the admin toolbar. */
@@ -38,7 +50,7 @@ final class AdminAssets {
 			$menu_script = PUBLISHRANK_SEO_PATH . 'assets/js/admin-menu.js';
 			wp_enqueue_script( 'publishrank-seo-menu', Branding::asset_url( 'js/admin-menu.js' ), array(), Branding::version() . '.' . ( file_exists( $menu_script ) ? (string) filemtime( $menu_script ) : '0' ), true );
 		}
-		wp_enqueue_style( 'publishrank-seo-menu', Branding::asset_url( 'css/admin-menu.css' ), array(), Branding::version() );
+		wp_enqueue_style( 'publishrank-seo-menu', Branding::asset_url( 'css/admin-menu.css' ), array(), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/admin-menu.css' ) );
 	}
 
 	public function enqueue() {
@@ -53,6 +65,11 @@ final class AdminAssets {
 			wp_enqueue_style( 'publishrank-fa-brands', Branding::asset_url( 'vendor/fontawesome-free-7.3.1/css/brands.css' ), array( 'publishrank-fa-core' ), '7.3.1' );
 			wp_enqueue_style( 'publishrank-seo-admin', Branding::asset_url( 'css/admin.css' ), array( 'dashicons', 'publishrank-fa-solid', 'publishrank-fa-brands' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/admin.css' ) );
 			wp_enqueue_style( 'publishrank-seo-palette', Branding::asset_url( 'css/palette.css' ), array( 'publishrank-seo-admin' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/palette.css' ) );
+			wp_enqueue_style( 'publishrank-seo-website', Branding::asset_url( 'css/website-theme.css' ), array( 'publishrank-seo-palette' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/website-theme.css' ) );
+			wp_enqueue_style( 'publishrank-seo-loader', Branding::asset_url( 'css/loader.css' ), array(), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/loader.css' ) );
+			if ( Branding::is_plugin_screen() ) {
+				wp_enqueue_script( 'publishrank-seo-loader', Branding::asset_url( 'js/loader.js' ), array(), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/js/loader.js' ), true );
+			}
 			wp_enqueue_media();
 		$admin_script  = PUBLISHRANK_SEO_PATH . 'assets/js/admin.js';
 		$admin_version = Branding::version() . '.' . ( file_exists( $admin_script ) ? (string) filemtime( $admin_script ) : '0' );
@@ -118,6 +135,7 @@ final class AdminAssets {
 			'publishrank-analytics'          => 'fa-solid fa-chart-line',
 			'publishrank-search-console'     => 'fa-solid fa-magnifying-glass',
 			'publishrank-baidu'              => 'fa-solid fa-globe',
+			'publishrank-google-preferred-sources' => 'fa-solid fa-star',
 			'publishrank-traffic-guard'      => 'fa-solid fa-shield-halved',
 			'publishrank-seo-config-history' => 'fa-solid fa-clock-rotate-left',
 			'publishrank-llms-txt'           => 'fa-solid fa-code',
@@ -128,7 +146,7 @@ final class AdminAssets {
 		}
 		echo '<div class="rhs-header">';
 		echo '<div class="rhs-header__icon" aria-hidden="true"><i class="' . esc_attr( $icon ) . '"></i></div>';
-		echo '<img class="rhs-header__logo" src="' . esc_url( Branding::image( 'publishrank.svg' ) ) . '" width="40" height="40" alt="" />';
+		echo '<img class="rhs-header__logo" src="' . esc_url( Branding::logo_url() ) . '" width="40" height="40" alt="" />';
 		echo '<div class="rhs-header__text"><h1 class="rhs-header__title">' . esc_html( $title ) . '</h1>';
 		if ( '' !== (string) $subtitle ) {
 			echo '<p class="rhs-header__sub">' . esc_html( $subtitle ) . '</p>';
@@ -161,8 +179,8 @@ final class AdminAssets {
 	}
 
 	/** Verify capability and nonce for an admin-post handler. */
-	public static function guard( $action ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		public static function guard( $action, $capability = 'manage_options' ) {
+			if ( ! current_user_can( $capability ) ) {
 			wp_die( esc_html__( 'You do not have permission to do this.', 'publishrank' ), '', array( 'response' => 403 ) );
 		}
 		check_admin_referer( $action );

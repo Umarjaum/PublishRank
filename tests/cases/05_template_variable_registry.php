@@ -30,6 +30,8 @@ return array(
 		}
 	},
 	'every registered variable resolves for a complete post and is in the dropdown payload' => function () {
+		update_option( 'publishrank_seo_publication_name', 'Test Site' );
+		update_option( 'publishrank_identity_description', 'Just a tagline' );
 		$news = (int) wp_insert_term( 'News', 'category' )['term_id'];
 		$id   = pr_make_post( array( 'post_title' => 'Hello World', 'post_excerpt' => 'An excerpt.', 'post_category' => array( $news ) ) );
 		update_post_meta( $id, PostMeta::FOCUS_KEYWORD, 'seo plugin' );

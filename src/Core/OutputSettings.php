@@ -9,8 +9,11 @@
  *  - publishrank_breadcrumbs_enabled          the visible breadcrumb trail printed by PublishRank
  *  - publishrank_breadcrumb_schema_enabled    BreadcrumbList node inside the JSON-LD graph
  *
- * A switch is ON when it was never saved (fresh installs and upgrades from releases that lack the option) and OFF
- * only when an administrator saved a false-like value, so explicit choices always win over defaults.
+ * The separate publishrank_external_seo_handoff preference defaults OFF. When enabled, it suppresses overlapping frontend
+ * output only while a supported SEO plugin is detected, without changing any saved output-switch preference.
+ *
+ * Output switches are ON when never saved and OFF only when an administrator saved a false-like value. The optional
+ * external SEO handoff is the exception: it defaults OFF and never changes the saved output-switch preferences.
  *
  * @package PublishRankSEO
  */
@@ -22,6 +25,7 @@ final class OutputSettings {
 	const META        = 'publishrank_meta_enabled';
 	const SCHEMA      = 'publishrank_schema_enabled';
 	const ORG_WEBSITE = 'publishrank_org_website_schema_enabled';
+	const EXTERNAL_SEO_HANDOFF = 'publishrank_external_seo_handoff';
 	const BREADCRUMBS = 'publishrank_breadcrumbs_enabled';
 	const BREADCRUMB_SCHEMA = 'publishrank_breadcrumb_schema_enabled';
 	/** Not an output switch (not in keys()): lets PublishRank's separator replace the separator of other breadcrumb renderers. Default on. */
@@ -61,8 +65,32 @@ final class OutputSettings {
 		return self::is_on( self::META );
 	}
 
+	/** Whether a supported active SEO plugin should own overlapping frontend output. */
+	public static function external_seo_handoff_preference() {
+		return self::is_on( self::EXTERNAL_SEO_HANDOFF, false );
+	}
+
+	/** Handoff is active only when explicitly requested and a supported SEO plugin is detected. */
+	public static function external_seo_handoff() {
+		if ( ! self::external_seo_handoff_preference() ) {
+			return false;
+		}
+		$detector = new \PublishRankSEO\Compatibility\ConflictDetector();
+		return ! empty( $detector->active() );
+	}
+
+	/** Whether PublishRank may print its primary title/meta/social metadata on the current request. */
+	public static function metadata_output() {
+		return self::meta() && ! self::external_seo_handoff();
+	}
+
 	public static function schema() {
 		return self::is_on( self::SCHEMA );
+	}
+
+	/** Whether PublishRank may print the page JSON-LD graph on the current request. */
+	public static function schema_graph_output() {
+		return self::schema() && ! self::external_seo_handoff();
 	}
 
 	public static function org_website_schema() {

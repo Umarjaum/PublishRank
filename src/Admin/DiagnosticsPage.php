@@ -90,6 +90,8 @@ final class DiagnosticsPage {
 			$this->row( __( 'Generated sitemap XML audit', 'publishrank' ), $audit['status'], sprintf( /* translators: 1: providers, 2: shards, 3: URLs. */ __( '%1$d active providers, %2$d shard(s), %3$d URL(s), %4$d generated XML issue(s).', 'publishrank' ), $enabled, $shards, $audit['urls'], count( $audit['errors'] ) ) );
 		$this->row( __( 'Sitemap cache', 'publishrank' ), get_option( 'publishrank_seo_cache_epoch', false ) ? 'PASS' : 'WARNING', sprintf( /* translators: 1: cache epoch, 2: last invalidation. */ __( 'Cache epoch %1$s; last invalidation %2$s.', 'publishrank' ), (string) get_option( 'publishrank_seo_cache_epoch', 'not initialized' ), (string) get_option( 'publishrank_seo_last_invalidation', 'not recorded' ) ) );
 
+		$this->render_description_audit();
+
 		echo '<h2>' . esc_html__( 'Live frontend scan', 'publishrank' ) . '</h2>';
 			echo '<p class="description">' . esc_html__( 'Requests your homepage and latest article from this server, parses actual JSON-LD, and checks the live sitemap index plus up to ten same-host child sitemap endpoints. Network failures are marked Not Tested; malformed XML, duplicate or incomplete output is reported with a recommendation.', 'publishrank' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="publishrank_seo_scan" />';
@@ -116,6 +118,35 @@ final class DiagnosticsPage {
 			}
 		}
 		echo '</div>';
+	}
+
+
+	/** Where meta descriptions come from, and which pages only have a fallback. */
+	private function render_description_audit() {
+		$audit  = \PublishRankSEO\Meta\DescriptionResolver::audit( 100 );
+		$labels = \PublishRankSEO\Meta\DescriptionResolver::source_labels();
+		echo '<h2>' . esc_html__( 'Meta description sources', 'publishrank' ) . '</h2>';
+		echo '<p class="description">' . esc_html( sprintf( /* translators: %d: number of posts and pages inspected. */ __( 'Checked the %d most recently updated public posts and pages. Each page uses the first source that has usable text: your override, the excerpt, extracted page text, page-builder text, then a fallback.', 'publishrank' ), (int) $audit['inspected'] ) ) . '</p>';
+		if ( empty( $audit['counts'] ) ) {
+			$this->row( __( 'Meta description sources', 'publishrank' ), 'NOT TESTED', __( 'There are no published posts or pages to inspect yet.', 'publishrank' ) );
+			return;
+		}
+		echo '<ul style="list-style:disc;margin-left:20px">';
+		foreach ( $audit['counts'] as $source => $count ) {
+			echo '<li>' . esc_html( isset( $labels[ $source ] ) ? $labels[ $source ] : $source ) . ': <strong>' . (int) $count . '</strong></li>';
+		}
+		echo '</ul>';
+		if ( empty( $audit['weak'] ) ) {
+			$this->row( __( 'Pages relying on a fallback description', 'publishrank' ), 'PASS', __( 'Every inspected page has a description from its own content.', 'publishrank' ) );
+			return;
+		}
+		$this->row( __( 'Pages relying on a fallback description', 'publishrank' ), 'WARNING', sprintf( /* translators: %d: number of pages. */ __( '%d page(s) have no usable text of their own. Add an SEO description or some page text so each page is described individually.', 'publishrank' ), count( $audit['weak'] ) ) );
+		echo '<table class="widefat striped" style="max-width:900px"><thead><tr><th scope="col">' . esc_html__( 'Page', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'Type', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'Using', 'publishrank' ) . '</th></tr></thead><tbody>';
+		foreach ( array_slice( $audit['weak'], 0, 50 ) as $item ) {
+			$edit = get_edit_post_link( $item['id'], 'raw' );
+			echo '<tr><td>' . ( $edit ? '<a href="' . esc_url( $edit ) . '">' . esc_html( $item['title'] ) . '</a>' : esc_html( $item['title'] ) ) . '</td><td>' . esc_html( $item['type'] ) . '</td><td>' . esc_html( isset( $labels[ $item['source'] ] ) ? $labels[ $item['source'] ] : $item['source'] ) . '</td></tr>';
+		}
+		echo '</tbody></table>';
 	}
 
 	private function row( $label, $status, $message ) {

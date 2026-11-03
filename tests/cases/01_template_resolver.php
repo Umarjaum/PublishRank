@@ -5,8 +5,14 @@ use PublishRankSEO\Meta\MetaGenerator;
 use PublishRankSEO\Meta\PostMeta;
 use PublishRankSEO\Meta\TemplateResolver;
 
+function pr_template_identity() {
+	update_option( 'publishrank_seo_publication_name', 'Test Site' );
+	update_option( 'publishrank_identity_description', 'Just a tagline' );
+}
+
 /** A post with known values for every variable. */
 function pr_fixture_post() {
+	pr_template_identity();
 	$news    = (int) wp_insert_term( 'News', 'category' )['term_id'];
 	$primary = (int) wp_insert_term( 'Primary Cat', 'category' )['term_id'];
 	wp_update_user( array( 'ID' => 1, 'display_name' => 'Jane Editor' ) );
@@ -122,6 +128,7 @@ return array(
 	},
 
 	'empty templates and missing context never produce notices or raw tokens' => function () {
+		pr_template_identity();
 		pr_same( '', TemplateResolver::resolve( '', array() ) );
 		pr_same( '', TemplateResolver::resolve( '   ', array() ) );
 		pr_same( '', TemplateResolver::resolve( null, array() ) );
@@ -136,6 +143,7 @@ return array(
 	},
 
 	'unknown tokens are removed safely, near-miss text is untouched' => function () {
+		pr_template_identity();
 		pr_same( 'A B', TemplateResolver::resolve( 'A %%nope%% B', array() ) );
 		pr_same( 'A B', TemplateResolver::resolve( 'A %%unknown_token_123%% B', array() ) );
 		pr_same( '100% sure', TemplateResolver::resolve( '100% sure', array() ), 'single percent is plain text' );
@@ -160,7 +168,7 @@ return array(
 	},
 
 	'excerpt falls back to the content summary and never leaks protected content' => function () {
-		$id = pr_make_post( array( 'post_excerpt' => '', 'post_content' => '<p>Plain <strong>content</strong> [gallery] here.</p>' ) );
+		$id = pr_make_post( array( 'post_excerpt' => '', 'post_content' => '<p>Plain <strong>content</strong> [gallery] here with enough meaningful words for a useful summary.</p>' ) );
 		$ex = TemplateResolver::resolve( '%%excerpt%%', array( 'post_id' => $id ) );
 		pr_assert( false !== strpos( $ex, 'Plain content' ), 'content summary used: ' . $ex );
 		pr_not_contains( '<', $ex );
@@ -170,6 +178,7 @@ return array(
 	},
 
 	'unicode survives resolution and storage' => function () {
+		pr_template_identity();
 		$title = 'مرحبا بالعالم — Привет 🌍 日本語 Ünïcödé';
 		$id    = pr_make_post( array( 'post_title' => $title, 'post_name' => 'unicode' ) );
 		pr_same( $title . ' | Test Site', TemplateResolver::resolve( '%%title%% %%sep%% %%sitename%%', array( 'post_id' => $id ) ) );
@@ -178,7 +187,7 @@ return array(
 		pr_same( '日本語 %%title%% ✓ %%date%%', $stored, 'tokens and Unicode survive the meta sanitizer' );
 		pr_contains( '日本語 ' . $title . ' ✓ ', ( new MetaGenerator() )->title_for_post( $id ) );
 		update_option( 'blogname', 'موقع الاختبار' );
-		pr_same( 'موقع الاختبار', TemplateResolver::resolve( '%%sitename%%', array() ) );
+		pr_same( 'Test Site', TemplateResolver::resolve( '%%sitename%%', array() ), 'changing the WordPress Site Title does not replace the PublishRank publication name' );
 	},
 
 	'html-sensitive characters are plain text in the resolver and escaped once at output' => function () {
@@ -205,11 +214,12 @@ return array(
 		pr_same( '', TemplateResolver::resolve( '%%x%% %%x%% %%x%%', array() ), 'repeated unknown tokens terminate' );
 		$long = str_repeat( '%%title%%', 5000 );
 		pr_assert( strlen( TemplateResolver::resolve( $long, array( 'title' => 'x' ) ) ) <= 1000, 'template length is capped' );
-		update_option( 'blogname', '%%sitename%%' );
+		update_option( 'publishrank_seo_publication_name', '%%sitename%%' );
 		pr_same( '%%sitename%%', TemplateResolver::resolve( '%%sitename%%', array() ), 'a site name that looks like a token is not recursed into' );
 	},
 
 	'pagination suffix: only on pages 2+ of the main request' => function () {
+		pr_template_identity();
 		$id = pr_make_post( array( 'post_title' => 'Paged', 'post_name' => 'paged', 'post_content' => "Page one<!--nextpage-->Page two" ) );
 		update_option( 'publishrank_seo_title_template_post', '%%title%% %%page%%' );
 		pr_go_to( get_permalink( $id ) );

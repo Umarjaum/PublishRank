@@ -9,10 +9,17 @@ $readme = $read( 'readme.txt' );
 $changelog = $read( 'changelog.txt' );
 $stylesheet = $read( 'src/Sitemap/SitemapStylesheet.php' );
 $admin_assets = $read( 'src/Admin/AdminAssets.php' );
+$header_match = array();
+$runtime_match = array();
+$stable_match = array();
+preg_match( '/^\s*\*\s*Version:\s*([0-9.]+)/m', $plugin, $header_match );
+preg_match( "/define\( 'PUBLISHRANK_SEO_VERSION', '([0-9.]+)' \);/", $plugin, $runtime_match );
+preg_match( '/^Stable tag:\s*([0-9.]+)/m', $readme, $stable_match );
+$version = isset( $header_match[1] ) ? $header_match[1] : '';
 $tests = array(
-	'plugin header and runtime version agree at 2.9.76' => false !== strpos( $plugin, '* Version: 2.9.76' ) && false !== strpos( $plugin, "define( 'PUBLISHRANK_SEO_VERSION', '2.9.76' );" ),
-	'WordPress.org stable tag matches plugin version' => false !== strpos( $readme, 'Stable tag: 2.9.76' ),
-	'changelog starts with the current release' => 1 === preg_match( '/^= 2\.9\.76 =/m', $changelog ),
+	'plugin header and runtime version agree' => '' !== $version && isset( $runtime_match[1] ) && $version === $runtime_match[1],
+	'WordPress.org stable tag matches plugin version' => '' !== $version && isset( $stable_match[1] ) && $version === $stable_match[1],
+	'changelog starts with the current release' => '' !== $version && 1 === preg_match( '/^= ' . preg_quote( $version, '/' ) . ' =/m', $changelog ),
 	'directory icon GIFs are excluded from plugin runtime assets' => ! is_file( $root . '/assets/icon-128x128.gif' ) && ! is_file( $root . '/assets/icon-256x256.gif' ),
 	'sitemap stylesheet embeds both assets from local plugin files' => false !== strpos( $stylesheet, "self::inline_asset( 'css/sitemap.css', 'style' )" ) && false !== strpos( $stylesheet, "self::inline_asset( 'js/sitemap.js', 'script' )" ) && false !== strpos( $stylesheet, 'PUBLISHRANK_SEO_PATH . \'assets/\' . $relative' ),
 	'sitemap XSL template has no remote CSS or JavaScript source links' => false === strpos( $stylesheet, 'href="https://' ) && false === strpos( $stylesheet, '<script src=' ),
