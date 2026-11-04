@@ -1,4 +1,5 @@
 = 2.9.110 =
+* Added a read-only Pre-publication Preflight queue in Publisher Toolkit for editable drafts, pending stories and scheduled posts, with local SEO checklist scores, concise suggestions and site-timezone schedule display; it never blocks or changes publication.
 * Added **Setup Wizard** directly under Dashboard in the PublishRank sidebar (also kept in the dashboard hero, workflow card, Plugins row and toolbar).
 * Added the animated PublishRank logo as a loader on every PublishRank admin screen, with a CSS-only failsafe and an opt-out (`data-pr-no-loader`) for forms.
 * Redesigned the Dashboard and screen headers to match the official website: white header bar, pink hero with a live preview of your site checks, pill buttons, feature strip and a three-step publishing workflow (`assets/css/website-theme.css`).

@@ -18,6 +18,11 @@ $checks = array(
     'existing saved alt text is preserved' => false !== strpos( $page, "metadata_exists( 'post'" ),
     'media batch only targets missing metadata' => false !== strpos( $page, "'compare' => 'NOT EXISTS'" ),
     'media batch is bounded to 100' => false !== strpos( $page, "'posts_per_page' => 100" ),
+    'preflight tab reuses the local editorial audit' => false !== strpos( $page, "'preflight' => __( 'Pre-publication Preflight'" ) && false !== strpos( $page, 'new EditorialAudit()' ),
+    'preflight queries only editable editorial draft, pending and scheduled states' => false !== strpos( $page, "'post_status'    => array( 'draft', 'pending', 'future' )" ) && false !== strpos( $page, "current_user_can( 'edit_post', " . '$post->ID' . " )" ),
+    'preflight result set is bounded and paginated' => false !== strpos( $page, "'posts_per_page' => 20" ) && false !== strpos( $page, "'paged'          => $page_num" ),
+    'preflight is explicitly advisory and read-only' => false !== strpos( $page, 'never blocks publication or changes your content' ),
+    'preflight schedule uses WordPress local date formatting' => false !== strpos( $page, 'wp_date(' ),
     'no Rank Math namespace or code copied' => false === strpos( $page, 'RankMath' ) && false === strpos( $page, 'rank_math' ),
     'release notes document custom implementation' => false !== strpos( $changelog, 'No Rank Math source code' ),
 );

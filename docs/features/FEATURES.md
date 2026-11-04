@@ -29,7 +29,7 @@ This inventory documents every feature card and Technical Health check shown in 
 | **Author expertise** | Manage author credentials and publication expertise information used by supported author and publisher workflows. |
 | **Local SEO** | Configure local business identity and location-oriented search signals. |
 | **Image optimizer** | Review supported media optimization tools and image-delivery settings. |
-| **Publisher toolkit** | Access focused publisher utilities for newsroom publishing and site maintenance, including permission-aware bulk SEO tools where enabled. |
+| **Publisher toolkit** | Access focused publisher utilities for newsroom publishing and site maintenance, including a read-only SEO preflight queue for editable drafts, pending stories and scheduled posts, plus permission-aware bulk SEO tools where enabled. The preflight is advisory and never blocks or changes publication. |
 | **Newsroom** | Open the newsroom workspace for assignments, planning, calendar, activity and notifications. |
 | **Planning board** | Plan and move stories across the editorial board. |
 | **Newsroom calendar** | See scheduled and planned stories by date. |

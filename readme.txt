@@ -31,7 +31,7 @@ Features include:
 * IndexNow notifications and manual URL submission (optional; sends eligible public URLs to the IndexNow service when enabled).
 * Configurable llms.txt and optional llms-full.txt resources, with a public paginated schema-discovery endpoint linked from llms.txt.
 * Editorial SEO analysis, internal-link recommendations, sitemap diagnostics and WP-CLI commands.
-* Publisher Toolkit with permission-aware bulk SEO metadata editing, role-based access for the toolkit, and optional image alt-text assistance that preserves existing descriptions.
+* Publisher Toolkit with a read-only pre-publication checklist for drafts, pending and scheduled stories; permission-aware bulk SEO metadata editing; role-based access; and optional image alt-text assistance that preserves existing descriptions.
 * Optional built-in WP Hide Login module with a custom login endpoint, configurable slug, administration URL rewriting where Apache rules are available, and 404 protection for direct default paths.
 * Always-on technical source provenance markers in page source; they do not add a promotional link or visible footer credit.
 
