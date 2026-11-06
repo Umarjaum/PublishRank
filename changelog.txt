@@ -1,3 +1,7 @@
+= 2.9.111 =
+* Added a complete Urdu translation catalog for the PublishRank interface, including plural forms and the Gutenberg breadcrumbs block.
+* Added local text-domain loading and documented how to select Urdu in WordPress.
+
 = 2.9.110 =
 * Added a read-only Pre-publication Preflight queue in Publisher Toolkit for editable drafts, pending stories and scheduled posts, with local SEO checklist scores, concise suggestions and site-timezone schedule display; it never blocks or changes publication.
 * Added **Setup Wizard** directly under Dashboard in the PublishRank sidebar (also kept in the dashboard hero, workflow card, Plugins row and toolbar).

@@ -254,6 +254,26 @@ final class BreadcrumbEngine {
 		if ( ! function_exists( 'register_block_type' ) ) {
 			return; }
 		wp_register_script( 'publishrank-breadcrumbs-block', \PublishRankSEO\Core\Branding::asset_url( 'js/breadcrumbs-block.js' ), array( 'wp-blocks', 'wp-element', 'wp-i18n' ), \PublishRankSEO\Core\Branding::version(), true );
+		$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+		if ( 0 === strpos( $locale, 'ur' ) ) {
+			$locale_data = array(
+				''                                    => array(
+					'domain'       => 'publishrank',
+					'lang'         => $locale,
+					'plural-forms' => 'nplurals=2; plural=(n != 1);',
+				),
+				'PublishRank Breadcrumbs'             => array( null, __( 'PublishRank Breadcrumbs', 'publishrank' ) ),
+				'Shows the breadcrumb trail for this page. It uses the same trail as the BreadcrumbList structured data.' => array( null, __( 'Shows the breadcrumb trail for this page. It uses the same trail as the BreadcrumbList structured data.', 'publishrank' ) ),
+				'Breadcrumbs'                        => array( null, __( 'Breadcrumbs', 'publishrank' ) ),
+				'Home → Category → This page'         => array( null, __( 'Home → Category → This page', 'publishrank' ) ),
+				'Preview — the real trail is generated on the live page.' => array( null, __( 'Preview — the real trail is generated on the live page.', 'publishrank' ) ),
+			);
+			wp_add_inline_script(
+				'publishrank-breadcrumbs-block',
+				'wp.i18n.setLocaleData(' . wp_json_encode( $locale_data ) . ', "publishrank");',
+				'before'
+			);
+		}
 		register_block_type(
 			self::BLOCK_NAME,
 			array(

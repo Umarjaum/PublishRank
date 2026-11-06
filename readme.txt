@@ -4,12 +4,16 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.110
+Stable tag: 2.9.111
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
 
 Free SEO plugin for news publishers with News SEO, XML sitemaps, schema, metadata, redirects and technical SEO tools.
+
+== Languages ==
+
+An Urdu translation of the PublishRank interface is included. Set the WordPress site language to Urdu under **Settings → General**, or choose Urdu as your preferred language in your WordPress user profile for the administration screens.
 
 Compatibility target: WordPress 7.1. This package includes a compatibility test plan in docs/maintenance/WORDPRESS-7.1.3-COMPATIBILITY.md. The plugin remains installable on PHP 7.4+ and passed syntax checks on PHP 8.3.6; PHP 8.5 is the forward compatibility target. Complete staging checks before production use.
 
@@ -139,6 +143,10 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. PublishRank's source-provenance markers are technical metadata only; the plugin does not insert a visible footer credit or promotional link.
 
 == Changelog ==
+
+= 2.9.111 =
+* Added a complete Urdu translation catalog for the PublishRank interface, including plural forms and the Gutenberg breadcrumbs block.
+* Added local text-domain loading and documented how to select Urdu in WordPress.
 
 = 2.9.110 =
 * Added **Setup Wizard** directly under Dashboard in the PublishRank sidebar (also kept in the dashboard hero, workflow card, Plugins row and toolbar).

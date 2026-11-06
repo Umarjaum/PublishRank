@@ -1,6 +1,6 @@
-# Features provided through PublishRank 2.9.110
+# Features provided through PublishRank 2.9.111
 
-This inventory documents every feature card and Technical Health check shown in the supplied PublishRank dashboard screenshot for the 2.9.110 package. Names follow the dashboard labels. A feature may be optional, permission-gated, dependent on WordPress/theme configuration, or dependent on an external service; those conditions are noted where relevant.
+This inventory documents every feature card and Technical Health check shown in the supplied PublishRank dashboard screenshot for the 2.9.111 package. Names follow the dashboard labels. A feature may be optional, permission-gated, dependent on WordPress/theme configuration, or dependent on an external service; those conditions are noted where relevant.
 
 ## Search & discovery
 
