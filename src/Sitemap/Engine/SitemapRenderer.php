@@ -15,8 +15,42 @@ final class SitemapRenderer {
 			$attributes .= ' xmlns:' . sanitize_key( $prefix ) . '="' . self::text( esc_url_raw( $uri ) ) . '"'; }
 		return '<urlset ' . $attributes . '>' . implode( '', $entries ) . '</urlset>';
 	}
+	/** Last-modified time of a post as W3C UTC, falling back to its publish date when the modified date is missing or invalid (empty string only when the post has no usable date at all). */
+	public static function post_lastmod( $post_id ) {
+		foreach ( array( array( 'modified', true ), array( 'modified', false ), array( 'time', true ), array( 'time', false ) ) as $try ) {
+			$value = 'modified' === $try[0] ? get_post_modified_time( DATE_W3C, $try[1], (int) $post_id ) : get_post_time( DATE_W3C, $try[1], (int) $post_id );
+			if ( is_string( $value ) && '' !== $value ) {
+				return $value; }
+		}
+		return '';
+	}
+	/** Newest modification time of any published post: a last-resort lastmod for archives (authors, terms, community pages) whose own date is unknown, because they change when site content does. */
+	public static function site_lastmod() {
+		static $value = null;
+		if ( null === $value ) {
+			$value = '';
+			if ( apply_filters( 'publishrank_sitemap_fallback_lastmod', true ) ) {
+				$ids = get_posts(
+					array(
+						'post_type'        => 'any',
+						'post_status'      => 'publish',
+						'posts_per_page'   => 1,
+						'orderby'          => 'modified',
+						'order'            => 'DESC',
+						'fields'           => 'ids',
+						'no_found_rows'    => true,
+						'suppress_filters' => true,
+					)
+				);
+				$value = ! empty( $ids ) ? self::post_lastmod( (int) $ids[0] ) : '';
+			}
+		}
+		return $value;
+	}
 	public static function url( $loc, $lastmod = '', $children = '' ) {
 		$xml = '<url><loc>' . self::text( esc_url_raw( $loc ) ) . '</loc>';
+		if ( ! $lastmod ) {
+			$lastmod = self::site_lastmod(); }
 		if ( $lastmod ) {
 			$xml .= '<lastmod>' . self::text( $lastmod ) . '</lastmod>'; }
 		return $xml . $children . '</url>';

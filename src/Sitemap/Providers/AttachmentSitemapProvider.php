@@ -29,7 +29,7 @@ final class AttachmentSitemapProvider implements SitemapProviderInterface {
 		foreach ( $ids as $id ) {
 			$url = wp_get_attachment_url( $id );
 			if ( $url ) {
-				$entries[] = SitemapRenderer::url( $url, get_post_modified_time( DATE_W3C, true, $id ) ); }
+				$entries[] = SitemapRenderer::url( $url, SitemapRenderer::post_lastmod( $id ) ); }
 		}
 		return SitemapRenderer::urlset( $entries );
 	}

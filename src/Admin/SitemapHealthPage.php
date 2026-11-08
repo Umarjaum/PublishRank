@@ -347,7 +347,8 @@ final class SitemapHealthPage {
 		$url      = SitemapUrls::shard_url( 'news', 1 );
 		$index    = (string) $engine->index();
 		$in_index = false !== strpos( $index, esc_url_raw( $url ) ) || false !== strpos( $index, str_replace( '&', '&amp;', esc_url_raw( $url ) ) );
-		$xml      = $d['enabled'] ? $engine->render( 'news', 1 ) : '';
+		$xml      = $d['enabled'] ? $engine->render_public( 'news', 1 ) : '';
+		$is_empty = $d['enabled'] && 0 === (int) $d['eligible'];
 		$valid    = false;
 		if ( is_string( $xml ) && '' !== $xml && function_exists( 'simplexml_load_string' ) ) {
 			$prev  = libxml_use_internal_errors( true );
@@ -371,9 +372,11 @@ final class SitemapHealthPage {
 		$no   = __( 'No', 'publishrank' );
 		$rows = array(
 			array( __( 'Provider enabled', 'publishrank' ), $d['enabled'] ? $yes : __( 'No. Switch on Google News above.', 'publishrank' ), $d['enabled'] ? 'good' : 'warn' ),
+			array( __( 'Sitemap status', 'publishrank' ), ! $d['enabled'] ? __( 'Off', 'publishrank' ) : ( $is_empty ? __( 'Empty: no new or updated articles in the time window', 'publishrank' ) : sprintf( /* translators: 1: total articles, 2: new articles, 3: updated articles. */ __( 'Has %1$d articles (%2$d new, %3$d updated)', 'publishrank' ), (int) $d['eligible'], (int) $d['new'], (int) $d['updated'] ) ), ! $d['enabled'] ? '' : ( $is_empty ? 'warn' : 'good' ) ),
 			array( __( 'Listed in sitemap index', 'publishrank' ), $in_index ? $yes : $no, $in_index ? 'good' : ( $d['enabled'] ? 'bad' : '' ) ),
 			array( __( 'Returns valid XML', 'publishrank' ), $valid ? $yes : $no, $valid ? 'good' : ( $d['enabled'] ? 'bad' : '' ) ),
 			array( __( 'Publication window', 'publishrank' ), sprintf( /* translators: %d: hours */ __( '%d hours', 'publishrank' ), (int) $d['window_hours'] ), '' ),
+			array( __( 'Updated articles', 'publishrank' ), $d['include_modified'] ? sprintf( /* translators: %d: hours */ __( 'Included for %d hours after an edit', 'publishrank' ), (int) $d['modified_window_hours'] ) : __( 'Not included. Enable under Settings → News SEO and sitemaps.', 'publishrank' ), '' ),
 			array( __( 'Eligible articles now', 'publishrank' ), (int) $d['eligible'] . ' (' . sprintf( /* translators: %d: files */ _n( '%d file', '%d files', (int) $d['shards'], 'publishrank' ), (int) $d['shards'] ) . ')', '' ),
 			array( __( 'Publication name / language', 'publishrank' ), ( '' !== (string) $d['publication'] ? $d['publication'] : '—' ) . ' / ' . $d['language'], '' === (string) $d['publication'] ? 'warn' : '' ),
 			array( __( 'Last generated', 'publishrank' ), $d['generated_at'] ? gmdate( 'Y-m-d H:i', (int) $d['generated_at'] ) . ' UTC' : __( 'Not yet', 'publishrank' ), '' ),
@@ -386,7 +389,7 @@ final class SitemapHealthPage {
 		echo '</dl>';
 		echo '<p class="pr-hub-card__foot"><a href="' . esc_url( $url ) . '" target="_blank" rel="noopener"><code>' . esc_html( $url ) . '</code></a></p>';
 		if ( $d['enabled'] && 0 === (int) $d['eligible'] ) {
-			echo '<p class="pr-hub-note is-warn">' . esc_html( sprintf( /* translators: %d: hours */ __( 'No eligible articles were published in the last %d hours, so the News sitemap is valid but empty. This is expected if nothing new has been published. If you expect entries, check that the article is published (not scheduled or private), is not noindex, is not excluded in its News setting, and uses a post type listed under News post types.', 'publishrank' ), (int) $d['window_hours'] ) ) . '</p>';
+			echo '<p class="pr-hub-note is-warn">' . esc_html( sprintf( /* translators: %d: hours */ __( 'No eligible articles were published or updated in the time window (publication window: %d hours), so the News sitemap is empty. This is expected if nothing new has been published or edited. If you expect entries, check that the article is published (not scheduled or private), is not noindex, is not excluded in its News setting, and uses a post type listed under News post types.', 'publishrank' ), (int) $d['window_hours'] ) ) . '</p>';
 		}
 		if ( ! empty( $d['truncated'] ) ) {
 			echo '<p class="pr-hub-note is-warn">' . esc_html__( 'The scan hit its safety limit. Reduce the publication window so every recent article is considered.', 'publishrank' ) . '</p>';

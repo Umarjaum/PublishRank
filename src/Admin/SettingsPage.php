@@ -209,6 +209,22 @@ final class SettingsPage {
 				'default'           => 48,
 			)
 		);
+		$this->reg(
+			'publishrank_seo_news_include_modified',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => true,
+			)
+		);
+		$this->reg(
+			'publishrank_seo_news_modified_window',
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => array( $this, 'sanitize_window' ),
+				'default'           => 48,
+			)
+		);
 			$this->reg(
 				'publishrank_seo_publisher_type',
 				array(
@@ -1180,6 +1196,8 @@ $pr_bc_is_preset = \PublishRankSEO\SEO\BreadcrumbSeparators::is_preset( $pr_bc_s
 <tr><th scope="row"><label for="publishrank_seo_news_post_types"><?php esc_html_e( 'News post types', 'publishrank' ); ?></label></th><td><textarea id="publishrank_seo_news_post_types" name="publishrank_seo_news_post_types" rows="2" class="large-text" placeholder="post
 news"><?php echo esc_textarea( $val( 'publishrank_seo_news_post_types', 'post' ) ); ?></textarea><p class="description"><?php esc_html_e( 'One public post type per line or comma-separated. Invalid or non-public types are ignored.', 'publishrank' ); ?></p></td></tr>
 				<tr><th scope="row"><label for="publishrank_seo_news_window"><?php esc_html_e( 'News freshness window (hours)', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_window" name="publishrank_seo_news_window" type="number" min="1" max="168" value="<?php echo esc_attr( $val( 'publishrank_seo_news_window', 48 ) ); ?>" class="small-text" /><p class="description"><?php esc_html_e( 'Default is 48 hours. You can extend this to 72 hours or up to 7 days when your newsroom publishes fewer articles.', 'publishrank' ); ?></p></td></tr>
+<tr><th scope="row"><?php esc_html_e( 'Updated articles', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_include_modified" value="0" /><label><input name="publishrank_seo_news_include_modified" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_include_modified', true ) ); ?> /> <?php esc_html_e( 'Also list articles that were edited recently', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'An older article that you update appears in the News sitemap for the time set below. Its publication date stays the original one and its last-modified time shows the edit.', 'publishrank' ); ?></p></td></tr>
+<tr><th scope="row"><label for="publishrank_seo_news_modified_window"><?php esc_html_e( 'Updated articles window (hours)', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_modified_window" name="publishrank_seo_news_modified_window" type="number" min="1" max="168" value="<?php echo esc_attr( $val( 'publishrank_seo_news_modified_window', 48 ) ); ?>" class="small-text" /><p class="description"><?php esc_html_e( 'How long an edited article stays in the News sitemap after its last update. Default is 48 hours.', 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><label for="publishrank_seo_news_max_urls"><?php esc_html_e( 'Maximum News URLs', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_max_urls" name="publishrank_seo_news_max_urls" type="number" min="1" max="1000" value="<?php echo esc_attr( $val( 'publishrank_seo_news_max_urls', 1000 ) ); ?>" class="small-text" /></td></tr>
 <tr><th scope="row"><label for="publishrank_seo_news_exclude_ids"><?php esc_html_e( 'Exclude post IDs', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_exclude_ids" name="publishrank_seo_news_exclude_ids" type="text" value="<?php echo esc_attr( $val( 'publishrank_seo_news_exclude_ids' ) ); ?>" class="large-text" placeholder="12, 45, 89" /></td></tr>
 <tr><th scope="row"><label for="publishrank_seo_news_exclude_categories"><?php esc_html_e( 'Exclude category IDs', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_exclude_categories" name="publishrank_seo_news_exclude_categories" type="text" value="<?php echo esc_attr( $val( 'publishrank_seo_news_exclude_categories' ) ); ?>" class="large-text" placeholder="3, 7" /></td></tr>

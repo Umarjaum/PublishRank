@@ -99,13 +99,25 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 			set_transient( $key, $rows, self::CANDIDATE_TTL );
 		}
 		// Cached rows are re-checked against the clock so entries leave the window exactly on time.
+		$mod_cutoff = $this->include_modified() ? $now - ( $this->modified_window_hours() * HOUR_IN_SECONDS ) : PHP_INT_MAX;
 		$rows       = array_values(
 			array_filter(
 				$rows,
-				static function ( $row ) use ( $cutoff, $now ) {
-					return (int) $row['published'] >= $cutoff && (int) $row['published'] <= $now + 60;
+				static function ( $row ) use ( $cutoff, $now, $mod_cutoff ) {
+					if ( (int) $row['published'] > $now + 60 ) {
+						return false; }
+					return (int) $row['published'] >= $cutoff || (int) $row['modified'] >= $mod_cutoff;
 				}
 			)
+		);
+		// Newest activity first: a freshly updated article ranks by its update time.
+		usort(
+			$rows,
+			static function ( $a, $b ) {
+				$ta = max( (int) $a['published'], (int) $a['modified'] );
+				$tb = max( (int) $b['published'], (int) $b['modified'] );
+				return $tb <=> $ta ? $tb <=> $ta : (int) $b['id'] <=> (int) $a['id'];
+			}
 		);
 		$this->memo = array( 'rows' => $rows );
 		return $rows;
@@ -116,9 +128,15 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 		$skipped = array();
 		$from    = gmdate( 'Y-m-d H:i:s', $cutoff );
 		$to      = gmdate( 'Y-m-d H:i:s', $now + 60 );
-		$where   = static function ( $sql ) use ( $from, $to ) {
+		// Updated articles: published earlier than the window but modified inside the "updated articles" window.
+		$mod_from = $this->include_modified() ? gmdate( 'Y-m-d H:i:s', $now - ( $this->modified_window_hours() * HOUR_IN_SECONDS ) ) : '';
+		$where    = static function ( $sql ) use ( $from, $to, $mod_from ) {
 			global $wpdb;
-			return $sql . $wpdb->prepare( " AND {$wpdb->posts}.post_date_gmt >= %s AND {$wpdb->posts}.post_date_gmt <= %s AND {$wpdb->posts}.post_date_gmt > '1000-01-01 00:00:00'", $from, $to );
+			$fresh = $wpdb->prepare( "( {$wpdb->posts}.post_date_gmt >= %s AND {$wpdb->posts}.post_date_gmt <= %s )", $from, $to );
+			if ( '' !== $mod_from ) {
+				$fresh = '( ' . $fresh . ' OR ' . $wpdb->prepare( "( {$wpdb->posts}.post_modified_gmt >= %s AND {$wpdb->posts}.post_date_gmt <= %s )", $mod_from, $to ) . ' )';
+			}
+			return $sql . ' AND ' . $fresh . " AND {$wpdb->posts}.post_date_gmt > '1000-01-01 00:00:00'";
 		};
 		add_filter( 'posts_where', $where, 10, 1 );
 		$args          = array(
@@ -259,6 +277,12 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 
 	public function window_hours() {
 		return max( 1, min( 168, (int) get_option( 'publishrank_seo_news_window', 48 ) ) ); }
+	/** Whether articles published earlier but modified recently are listed too (default on). */
+	public function include_modified() {
+		return (bool) get_option( 'publishrank_seo_news_include_modified', true ); }
+	/** Hours an edited article stays listed after its last modification. */
+	public function modified_window_hours() {
+		return max( 1, min( 168, (int) get_option( 'publishrank_seo_news_modified_window', 48 ) ) ); }
 	private function limit() {
 		return max( 1, min( self::SHARD_SIZE, (int) get_option( 'publishrank_seo_news_max_urls', 1000 ) ) ); }
 	private function now() {
@@ -324,9 +348,19 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 		$stored = get_option( self::DIAGNOSTICS_OPTION, array() );
 		$stored = is_array( $stored ) ? $stored : array();
 		$rows   = $this->eligible();
+		$cutoff = $this->now() - ( $this->window_hours() * HOUR_IN_SECONDS );
+		$new    = 0;
+		foreach ( $rows as $row ) {
+			if ( (int) $row['published'] >= $cutoff ) {
+				++$new; }
+		}
 		return array(
 			'enabled'      => $this->is_enabled(),
 			'window_hours' => $this->window_hours(),
+			'include_modified'      => $this->include_modified(),
+			'modified_window_hours' => $this->modified_window_hours(),
+			'new'          => $new,
+			'updated'      => count( $rows ) - $new,
 			'eligible'     => count( $rows ),
 			'shards'       => $this->get_shard_count(),
 			'generated_at' => (int) ( $stored['generated_at'] ?? 0 ),

@@ -43,6 +43,8 @@ final class SnapshotStore {
 			'publishrank_sitemap_aliases',
 			'publishrank_seo_news_enabled',
 			'publishrank_seo_news_window',
+			'publishrank_seo_news_include_modified',
+			'publishrank_seo_news_modified_window',
 			'publishrank_seo_news_post_types',
 			'publishrank_seo_news_max_urls',
 			'publishrank_seo_news_exclude_ids',

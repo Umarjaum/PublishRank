@@ -25,6 +25,8 @@ final class Installer {
 				'publishrank_indexnow_key_location'       => home_url( '/publishrank-indexnow-key.txt' ),
 				'publishrank_seo_news_enabled'            => 1,
 				'publishrank_seo_news_window'             => 48,
+				'publishrank_seo_news_include_modified'   => 1,
+				'publishrank_seo_news_modified_window'    => 48,
 				'publishrank_seo_news_post_types'         => 'post',
 				'publishrank_seo_news_max_urls'           => 1000,
 				'publishrank_seo_news_exclude_ids'        => '',

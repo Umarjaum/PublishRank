@@ -93,6 +93,6 @@ final class TaxonomySitemapProvider implements SitemapProviderInterface {
 				),
 			)
 		);
-		return ! empty( $query->posts ) ? get_post_modified_time( DATE_W3C, true, (int) $query->posts[0] ) : '';
+		return ! empty( $query->posts ) ? SitemapRenderer::post_lastmod( (int) $query->posts[0] ) : '';
 	}
 }

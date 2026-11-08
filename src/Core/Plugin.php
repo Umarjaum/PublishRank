@@ -303,7 +303,7 @@ final class Plugin {
 			};
 			add_action( 'update_option_publishrank_sitemap_endpoint', $refresh_sitemap_routes, 20 );
 			add_action( 'update_option_publishrank_sitemap_aliases', $refresh_sitemap_routes, 20 );
-		foreach ( array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_window', 'publishrank_seo_news_post_types', 'publishrank_seo_news_max_urls', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_exclude_categories', 'publishrank_seo_news_keywords', 'publishrank_seo_news_genre' ) as $setting ) {
+		foreach ( array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_window', 'publishrank_seo_news_include_modified', 'publishrank_seo_news_modified_window', 'publishrank_seo_news_post_types', 'publishrank_seo_news_max_urls', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_exclude_categories', 'publishrank_seo_news_keywords', 'publishrank_seo_news_genre' ) as $setting ) {
 			add_action( 'update_option_' . $setting, $invalidate_news, 20 ); }
 			add_action( 'update_option_publishrank_seo_image_sitemap', $invalidate_image, 20 );
 			add_action( 'update_option_publishrank_seo_media_post_types', $invalidate, 20 );

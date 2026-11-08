@@ -23,7 +23,8 @@ final class SitemapAudit {
 			$report['status']   = 'NOT TESTED';
 			$report['errors'][] = __( 'PHP SimpleXML is unavailable, so sitemap XML validity cannot be confirmed.', 'publishrank' );
 			return $report; }
-		$seen_urls = array();
+		$seen_urls  = array();
+		$missing_by = array();
 		$index     = $engine->index();
 		if ( ! self::valid_xml( $index ) || false === strpos( $index, '<sitemapindex' ) ) {
 			$report['errors'][] = __( 'Sitemap index is not valid XML.', 'publishrank' ); }
@@ -64,7 +65,7 @@ final class SitemapAudit {
 			++$report['providers'];
 			foreach ( $engine->listed_shards( $provider ) as $shard ) {
 				++$report['shards'];
-				$xml = $engine->render( $provider->get_slug(), $shard );
+				$xml = $engine->render_public( $provider->get_slug(), $shard );
 				/* translators: %1$s: sitemap provider name; %2$d: 1-based sitemap shard number. */
 				if ( ! $xml || ! self::valid_xml( $xml ) || false === strpos( $xml, '<urlset' ) ) {
 					/* translators: 1: sitemap provider name, 2: shard number. */
@@ -73,6 +74,9 @@ final class SitemapAudit {
 								$urls = self::url_values( $xml );
 				$report['urls']      += count( $urls );
 				$report['lastmod']   += substr_count( $xml, '<lastmod>' );
+				$without              = count( $urls ) - substr_count( $xml, '<lastmod>' );
+				if ( $without > 0 ) {
+					$missing_by[ $provider->get_name() ] = ( $missing_by[ $provider->get_name() ] ?? 0 ) + $without; }
 				$shard_seen           = array();
 				foreach ( $urls as $url ) {
 					$key = self::url_key( $url );
@@ -98,7 +102,11 @@ final class SitemapAudit {
 		if ( $report['errors'] ) {
 			$report['status'] = 'ERROR'; } elseif ( $report['urls'] && $report['lastmod'] < $report['urls'] ) {
 			$report['status']   = 'WARNING';
-			$report['errors'][] = __( 'Some sitemap URLs do not include lastmod values.', 'publishrank' ); }
+			$parts = array();
+			foreach ( $missing_by as $name => $count ) {
+				$parts[] = $name . ' (' . (int) $count . ')'; }
+			/* translators: %s: list of sitemap names with the number of URLs missing a last-updated date, e.g. "Authors (3)". */
+			$report['errors'][] = $parts ? sprintf( __( 'Some sitemap URLs do not include lastmod values: %s. Open that sitemap and check that those items have a published or modified date.', 'publishrank' ), implode( ', ', $parts ) ) : __( 'Some sitemap URLs do not include lastmod values.', 'publishrank' ); }
 			return $report;
 	}
 

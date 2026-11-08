@@ -78,7 +78,7 @@ final class SitemapController {
 			return; }
 		// WordPress' canonical redirect must never rewrite a sitemap URL.
 		remove_action( 'template_redirect', 'redirect_canonical' );
-		$xml = 'index' === $slug ? $this->engine->index() : $this->engine->render( $slug, max( 1, absint( get_query_var( 'publishrank_sitemap_shard', 1 ) ) ) );
+		$xml = 'index' === $slug ? $this->engine->index() : $this->engine->render_public( $slug, max( 1, absint( get_query_var( 'publishrank_sitemap_shard', 1 ) ) ) );
 		// null: a cursor-backed provider is still preparing its checkpoints (large catalogues only).
 		if ( null === $xml ) {
 			$this->discard_output();
@@ -94,7 +94,7 @@ final class SitemapController {
 			header( 'X-Robots-Tag: noindex' );
 			echo 'Sitemap generation failed. See PublishRank > Sitemap Hub for details.';
 			exit; }
-		// '': unknown provider, disabled provider or shard number out of range: a genuine 404.
+		// '': unknown provider, disabled provider or shard number out of range: a genuine 404. (An enabled but empty sitemap returns an empty urlset, not '').
 		if ( '' === $xml ) {
 			global $wp_query;
 			if ( is_object( $wp_query ) ) {

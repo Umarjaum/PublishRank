@@ -75,6 +75,8 @@ final class ImportExport {
 			'publishrank_seo_x_default_url',
 			'publishrank_seo_news_enabled',
 			'publishrank_seo_news_window',
+			'publishrank_seo_news_include_modified',
+			'publishrank_seo_news_modified_window',
 			'publishrank_seo_news_post_types',
 			'publishrank_seo_news_max_urls',
 			'publishrank_seo_news_exclude_ids',
@@ -184,13 +186,13 @@ final class ImportExport {
 			if ( in_array( $key, array( 'publishrank_org_website_schema_enabled', 'publishrank_breadcrumbs_enabled', 'publishrank_breadcrumb_schema_enabled', 'publishrank_breadcrumb_frontend_override' ), true ) ) {
 				return \PublishRankSEO\Core\OutputSettings::is_on_value( $value ) ? 1 : 0;
 			}
-			if ( 'publishrank_seo_multilingual_enabled' === $key || 'publishrank_seo_news_enabled' === $key || 'publishrank_seo_news_keywords' === $key ) {
+			if ( 'publishrank_seo_multilingual_enabled' === $key || 'publishrank_seo_news_enabled' === $key || 'publishrank_seo_news_keywords' === $key || 'publishrank_seo_news_include_modified' === $key ) {
 				return (bool) $value;
 			}
 			if ( 'publishrank_seo_news_max_urls' === $key ) {
 				return max( 1, min( 1000, absint( $value ) ) );
 			}
-			if ( 'publishrank_seo_news_window' === $key ) {
+			if ( 'publishrank_seo_news_window' === $key || 'publishrank_seo_news_modified_window' === $key ) {
 				return max( 1, min( 168, absint( $value ) ) );
 			}
 			if ( in_array( $key, array( 'publishrank_seo_404_monitor', 'publishrank_sitemap_stylesheet', 'publishrank_robots_enabled', 'publishrank_robots_sitemaps', 'publishrank_robots_block_ai' ), true ) ) {

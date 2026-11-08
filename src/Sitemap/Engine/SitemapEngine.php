@@ -61,7 +61,7 @@ final class SitemapEngine {
 		return is_string( $xml ) && false !== strpos( $xml, '<url>' ); }
 	/**
 	 * Shard numbers worth publishing for a provider. A sitemap file with no URLs is invalid, so an empty provider
-	 * (no forums yet, no web stories, no recent news) is left out of the index. Only the first file can be empty:
+	 * (no forums yet, no web stories) is left out of the index. The News sitemap is the exception: it is always listed. Only the first file can be empty:
 	 * a provider with several files has more than one file of URLs by definition.
 	 *
 	 * @return int[]
@@ -70,7 +70,8 @@ final class SitemapEngine {
 		$count = max( 0, (int) $provider->get_shard_count() );
 		if ( $count > 1 ) {
 			return range( 1, $count ); }
-		if ( 1 === $count && '' !== $this->render( $provider->get_slug(), 1 ) ) {
+		// The News sitemap is always listed, even with no recent articles.
+		if ( 1 === $count && ( 'news' === $provider->get_slug() || '' !== $this->render( $provider->get_slug(), 1 ) ) ) {
 			return array( 1 ); }
 		return array();
 	}
@@ -78,6 +79,28 @@ final class SitemapEngine {
 	public function render( $slug, $shard = 1 ) {
 		$xml = $this->render_raw( $slug, $shard );
 		return ( is_string( $xml ) && '' !== $xml && ! self::has_urls( $xml ) ) ? '' : $xml;
+	}
+	/**
+	 * Response for the public sitemap URL itself. An enabled provider that has no URLs yet never answers 404 and never
+	 * serves an empty <urlset> (Search Console rejects that as "Missing XML tag: url"): it serves a valid sitemap holding
+	 * the home page as its single entry. Empty files stay out of the sitemap index (see listed_shards), so the
+	 * placeholder is only ever seen when the file is opened or submitted directly.
+	 * Unknown or disabled providers and shard numbers beyond the last file are still a genuine 404 ('').
+	 * The News sitemap is the exception: Google News requires news tags on every entry, so a placeholder would be
+	 * invalid there; it answers with an empty <urlset> and a 200.
+	 *
+	 * @return string|false|null XML, '' for 404, false on failure, null while a cursor is preparing.
+	 */
+	public function render_public( $slug, $shard = 1 ) {
+		$xml = $this->render( $slug, $shard );
+		if ( '' !== $xml ) {
+			return $xml; }
+		$provider = $this->provider( $slug );
+		if ( ! $provider || ! $provider->is_enabled() || 1 !== absint( $shard ) ) {
+			return ''; }
+		if ( 'news' === $slug ) {
+			return '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><!-- No recent news articles. --></urlset>'; }
+		return SitemapRenderer::urlset( array( SitemapRenderer::url( home_url( '/' ) ) ) );
 	}
 	private function render_raw( $slug, $shard = 1 ) {
 		$provider = $this->provider( $slug );

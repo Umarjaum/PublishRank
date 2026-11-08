@@ -46,6 +46,7 @@ final class AuthorSitemapProvider implements SitemapProviderInterface {
 			$latest    = new \WP_Query(
 				array(
 					'author'         => $user->ID,
+					'post_type'      => get_post_types( array( 'public' => true ) ),
 					'post_status'    => 'publish',
 					'posts_per_page' => 1,
 					'orderby'        => 'modified',
@@ -54,7 +55,7 @@ final class AuthorSitemapProvider implements SitemapProviderInterface {
 					'fields'         => 'ids',
 				)
 			);
-			$lastmod   = ! empty( $latest->posts ) ? get_post_modified_time( DATE_W3C, true, (int) $latest->posts[0] ) : '';
+			$lastmod   = ! empty( $latest->posts ) ? SitemapRenderer::post_lastmod( (int) $latest->posts[0] ) : '';
 			$entries[] = SitemapRenderer::url( $url, $lastmod );
 		}
 		return SitemapRenderer::urlset( $entries );

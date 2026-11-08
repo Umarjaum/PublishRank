@@ -67,8 +67,7 @@ abstract class AbstractPostProvider implements SitemapProviderInterface {
 				continue; }
 			if ( ! $this->requires_extra() ) {
 				$extra .= \PublishRankSEO\Meta\LanguageAlternates::sitemap_links( $post_id ); }
-			$modified = get_post_modified_time( DATE_W3C, true, $post_id );
-				$lastmod  = ! empty( $modified ) ? $modified : get_post_time( DATE_W3C, true, $post_id );
+			$lastmod  = SitemapRenderer::post_lastmod( $post_id );
 			$entries[] = SitemapRenderer::url( $url, $lastmod, $extra );
 		}
 		return SitemapRenderer::urlset( $entries, $this->all_namespaces() );

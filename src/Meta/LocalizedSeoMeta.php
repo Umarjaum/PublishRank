@@ -30,6 +30,19 @@ final class LocalizedSeoMeta {
 		return array_values( $out );
 	}
 
+	/** Languages an editor can opt in to per article. The site default language is never listed: it always uses the normal PublishRank fields. */
+	public static function optional_locales() {
+		$default = strtolower( (string) LanguageAlternates::default_locale() );
+		return array_values(
+			array_filter(
+				self::locales(),
+				static function ( $locale ) use ( $default ) {
+					return strtolower( (string) $locale ) !== $default;
+				}
+			)
+		);
+	}
+
 	/** Common language catalog; configured WPML/Polylang/hreflang locales are merged at runtime. */
 	public static function catalog() {
 		return array(
@@ -60,7 +73,11 @@ final class LocalizedSeoMeta {
 		$locale = LanguageAlternates::current_locale();
 		$data = get_post_meta( (int) $post_id, self::META_KEY, true );
 		if ( ! is_array( $data ) || ! $locale ) { return ''; }
+		$default = strtolower( (string) LanguageAlternates::default_locale() );
 		foreach ( array( $locale, preg_replace( '/-.*/', '', $locale ) ) as $candidate ) {
+			// The default language (English on most sites) always uses the normal PublishRank fields, so it can never clash with an override.
+			if ( strtolower( (string) $candidate ) === $default ) {
+				continue; }
 			if ( ! empty( $data[ $candidate ][ $field ] ) && is_scalar( $data[ $candidate ][ $field ] ) ) { return (string) $data[ $candidate ][ $field ]; }
 		}
 		return '';
@@ -80,12 +97,29 @@ final class LocalizedSeoMeta {
 		$data = get_post_meta( $post->ID, self::META_KEY, true );
 		$data = is_array( $data ) ? $data : array();
 		wp_nonce_field( 'publishrank_localized_seo', 'publishrank_localized_seo_nonce' );
-		echo '<p>' . esc_html__( 'Add language-specific SEO overrides. Urdu is included by default. The current language wins on the frontend; the normal PublishRank value remains the fallback.', 'publishrank' ) . '</p>';
 		$catalog = self::catalog();
-		foreach ( self::locales() as $locale ) {
+		$default = (string) LanguageAlternates::default_locale();
+		$default_label = isset( $catalog[ $default ] ) ? $catalog[ $default ] : $default;
+		echo '<p>' . esc_html(
+			sprintf(
+				/* translators: %s: default language name. */
+				__( 'The default language (%s) always uses the normal PublishRank fields. Tick a language below only if this article has its own version in it; each ticked language gets its own SEO fields and overrides the normal ones on that language only.', 'publishrank' ),
+				$default_label
+			)
+		) . '</p>';
+		$optional = self::optional_locales();
+		echo '<div class="publishrank-lang-picker" style="display:flex;flex-wrap:wrap;gap:6px 16px;margin:8px 0 4px">';
+		foreach ( $optional as $locale ) {
 			$label = isset( $catalog[ $locale ] ) ? $catalog[ $locale ] : $locale;
-			$row = isset( $data[ $locale ] ) && is_array( $data[ $locale ] ) ? $data[ $locale ] : array();
-			echo '<fieldset dir="' . esc_attr( self::is_rtl( $locale ) ? 'rtl' : 'ltr' ) . '" style="border:1px solid #dcdcde;padding:12px;margin:12px 0"><legend><strong>' . esc_html( $locale . ' — ' . $label ) . '</strong></legend>';
+			$on    = ! empty( $data[ $locale ] ) && is_array( $data[ $locale ] );
+			echo '<label><input type="checkbox" class="publishrank-lang-toggle" data-lang="' . esc_attr( $locale ) . '" name="publishrank_seo_localized_on[' . esc_attr( $locale ) . ']" value="1"' . checked( $on, true, false ) . ' /> ' . esc_html( $locale . ' — ' . $label ) . '</label>';
+		}
+		echo '</div><p class="description">' . esc_html__( 'Unticking a language and updating the article removes that language\'s overrides.', 'publishrank' ) . '</p>';
+		foreach ( $optional as $locale ) {
+			$label = isset( $catalog[ $locale ] ) ? $catalog[ $locale ] : $locale;
+			$row   = isset( $data[ $locale ] ) && is_array( $data[ $locale ] ) ? $data[ $locale ] : array();
+			$on    = ! empty( $row );
+			echo '<fieldset class="publishrank-lang-box" data-lang="' . esc_attr( $locale ) . '"' . ( $on ? '' : ' hidden' ) . ' dir="' . esc_attr( self::is_rtl( $locale ) ? 'rtl' : 'ltr' ) . '" style="border:1px solid #dcdcde;padding:12px;margin:12px 0"><legend><strong>' . esc_html( $locale . ' — ' . $label ) . '</strong></legend>';
 			foreach ( array( 'title' => __( 'SEO title', 'publishrank' ), 'description' => __( 'Meta description', 'publishrank' ), 'focus_keyword' => __( 'Focus keyword', 'publishrank' ), 'og_title' => __( 'Open Graph title', 'publishrank' ), 'og_description' => __( 'Open Graph description', 'publishrank' ), 'og_image' => __( 'Open Graph image URL', 'publishrank' ), 'robots' => __( 'Robots directives', 'publishrank' ) ) as $field => $field_label ) {
 				$input = 'description' === $field || 'og_description' === $field ? 'textarea' : 'input';
 				$value = isset( $row[ $field ] ) ? (string) $row[ $field ] : '';
@@ -95,13 +129,25 @@ final class LocalizedSeoMeta {
 			}
 			echo '</fieldset>';
 		}
+		// Show or hide a language's fields as it is ticked or unticked.
+		echo '<script>document.querySelectorAll(".publishrank-lang-toggle").forEach(function(t){t.addEventListener("change",function(){var b=document.querySelector(".publishrank-lang-box[data-lang=\""+t.getAttribute("data-lang")+"\"]");if(b){b.hidden=!t.checked;}});});</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static script.
 	}
 
 	public function save( $post_id, $post ) {
 		if ( ! isset( $_POST['publishrank_localized_seo_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['publishrank_localized_seo_nonce'] ) ), 'publishrank_localized_seo' ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) { return; }
 		$posted = isset( $_POST['publishrank_seo_localized'] ) && is_array( $_POST['publishrank_seo_localized'] ) ? wp_unslash( $_POST['publishrank_seo_localized'] ) : array();
-		$clean = array();
-		foreach ( self::locales() as $locale ) {
+		$optional = self::optional_locales();
+		$opted_in = isset( $_POST['publishrank_seo_localized_on'] ) && is_array( $_POST['publishrank_seo_localized_on'] ) ? array_keys( wp_unslash( $_POST['publishrank_seo_localized_on'] ) ) : array();
+		$existing = get_post_meta( $post_id, self::META_KEY, true );
+		$clean    = array();
+		// Rows for locales the panel no longer shows (for example the default language) are carried over untouched.
+		if ( is_array( $existing ) ) {
+			foreach ( $existing as $locale => $row ) {
+				if ( ! in_array( $locale, $optional, true ) && is_array( $row ) ) { $clean[ $locale ] = $row; }
+			}
+		}
+		foreach ( $optional as $locale ) {
+			if ( ! in_array( $locale, $opted_in, true ) ) { continue; }
 			$row = isset( $posted[ $locale ] ) && is_array( $posted[ $locale ] ) ? $posted[ $locale ] : array();
 			foreach ( array( 'title' => 255, 'description' => 320, 'focus_keyword' => 120, 'og_title' => 255, 'og_description' => 320, 'og_image' => 2048, 'robots' => 120 ) as $field => $length ) {
 				$value = isset( $row[ $field ] ) ? ( 'og_image' === $field ? PostMeta::sanitize_public_url( (string) $row[ $field ] ) : ( 'robots' === $field ? sanitize_text_field( (string) $row[ $field ] ) : TemplateResolver::sanitize_template( (string) $row[ $field ], $length ) ) ) : '';
