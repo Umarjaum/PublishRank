@@ -8,6 +8,8 @@
  */
 namespace PublishRankSEO\Admin;
 
+use PublishRankSEO\Core\Branding;
+use PublishRankSEO\Meta\LanguageAlternates;
 use PublishRankSEO\Meta\PostMeta;
 
 defined( 'ABSPATH' ) || exit;
@@ -34,6 +36,7 @@ final class SeoPortability {
 					'og_title' => '_yoast_wpseo_opengraph-title', 'og_description' => '_yoast_wpseo_opengraph-description',
 					'og_image' => '_yoast_wpseo_opengraph-image', 'twitter_title' => '_yoast_wpseo_twitter-title',
 					'twitter_description' => '_yoast_wpseo_twitter-description', 'robots' => '_yoast_wpseo_meta-robots-noindex',
+					'robots_nofollow' => '_yoast_wpseo_meta-robots-nofollow', 'primary_category' => '_yoast_wpseo_primary_category', 'cornerstone' => '_yoast_wpseo_is_cornerstone',
 				),
 			),
 			'rank_math' => array(
@@ -44,6 +47,7 @@ final class SeoPortability {
 					'og_title' => 'rank_math_facebook_title', 'og_description' => 'rank_math_facebook_description',
 					'og_image' => 'rank_math_facebook_image', 'twitter_title' => 'rank_math_twitter_title',
 					'twitter_description' => 'rank_math_twitter_description', 'robots' => 'rank_math_robots',
+					'primary_category' => 'rank_math_primary_category', 'cornerstone' => 'rank_math_pillar_content',
 				),
 			),
 			'aioseo' => array(
@@ -62,17 +66,21 @@ final class SeoPortability {
 					'focus_keyword' => '_seopress_analysis_target_kw', 'canonical' => '_seopress_robots_canonical',
 					'og_title' => '_seopress_social_fb_title', 'og_description' => '_seopress_social_fb_desc',
 					'og_image' => '_seopress_social_fb_img', 'twitter_title' => '_seopress_social_twitter_title',
-					'twitter_description' => '_seopress_social_twitter_desc',
+					'twitter_description' => '_seopress_social_twitter_desc', 'robots' => '_seopress_robots_index', 'robots_nofollow' => '_seopress_robots_follow',
+					'primary_category' => '_seopress_robots_primary_cat',
 				),
 			),
 			'tsf' => array(
 				'label' => 'The SEO Framework', 'plugin' => 'autodescription/autodescription.php',
 				'keys' => array(
 					'title' => '_genesis_title', 'description' => '_genesis_description',
-					'canonical' => '_genesis_canonical_uri', 'robots' => '_genesis_noindex',
+					'canonical' => '_genesis_canonical_uri', 'robots' => '_genesis_noindex', 'robots_nofollow' => '_genesis_nofollow',
+					'og_title' => '_open_graph_title', 'og_description' => '_open_graph_description', 'og_image' => '_social_image_url',
+					'twitter_title' => '_twitter_title', 'twitter_description' => '_twitter_description',
 				),
 			),
 		);
+		foreach ( $this->adapters as $id => $adapter ) { $this->adapters[ $id ]['id'] = $id; }
 	}
 
 	/** Register actions and the compatibility admin page. */
@@ -206,40 +214,118 @@ final class SeoPortability {
 		$page = 1;
 		do {
 			$query = new \WP_Query( array( 'post_type' => $types, 'post_status' => 'any', 'posts_per_page' => 250, 'paged' => $page, 'fields' => 'ids', 'no_found_rows' => true, 'update_post_meta_cache' => true ) );
-		foreach ( (array) $query->posts as $post_id ) { $row = $this->read_row( (int) $post_id, null ); $localized = get_post_meta( (int) $post_id, \PublishRankSEO\Meta\LocalizedSeoMeta::META_KEY, true ); if ( $this->has_values( $row ) || is_array( $localized ) ) { $rows[] = array( 'post_id' => (int) $post_id, 'post_type' => get_post_type( $post_id ), 'post_url' => get_permalink( $post_id ), 'fields' => $row, 'localized' => is_array( $localized ) ? $localized : array(), 'target' => $this->target_fields( $row, $target ) ); } }
+		foreach ( (array) $query->posts as $post_id ) { $row = $this->read_row( (int) $post_id, null ); $localized = get_post_meta( (int) $post_id, \PublishRankSEO\Meta\LocalizedSeoMeta::META_KEY, true ); if ( $this->has_values( $row ) || is_array( $localized ) ) { $rows[] = array( 'post_id' => (int) $post_id, 'post_type' => get_post_type( $post_id ), 'post_url' => get_permalink( $post_id ), 'locale' => LanguageAlternates::post_locale( (int) $post_id ), 'translations' => $this->translation_urls( (int) $post_id ), 'fields' => $row, 'localized' => is_array( $localized ) ? $localized : array(), 'target' => $this->target_fields( $row, $target ) ); } }
 			$page++;
 		} while ( ! empty( $query->posts ) );
 		wp_reset_postdata();
-			$payload = array( '_schema' => 'publishrank/seo-portability/v1', 'generated_at' => gmdate( 'c' ), 'source' => 'PublishRank ' . ( defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '' ), 'target' => $target, 'global_settings' => $this->global_export(), 'records' => $rows );
+			$payload = array( '_schema' => 'publishrank/seo-portability/v1', 'schema_revision' => 2, 'generated_at' => gmdate( 'c' ), 'source' => 'PublishRank ' . ( defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '' ), 'target' => $target, 'global_settings' => $this->global_export(), 'records' => $rows );
 		nocache_headers(); header( 'Content-Type: application/json; charset=' . get_bloginfo( 'charset' ) ); header( 'Content-Disposition: attachment; filename=publishrank-seo-portability-' . gmdate( 'Ymd-His' ) . '.json' ); echo wp_json_encode( $payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ); exit;
+	}
+
+	/** Canonical PublishRank field => post meta key. @return array<string,string> */
+	private function meta_map() {
+		return array( 'title' => PostMeta::TITLE, 'description' => PostMeta::DESCRIPTION, 'focus_keyword' => PostMeta::FOCUS_KEYWORD, 'canonical' => PostMeta::CANONICAL, 'og_title' => PostMeta::OG_TITLE, 'og_description' => PostMeta::OG_DESCRIPTION, 'og_image' => PostMeta::OG_IMAGE, 'robots' => PostMeta::ROBOTS, 'primary_category' => PostMeta::PRIMARY_CATEGORY, 'cornerstone' => PostMeta::CORNERSTONE );
 	}
 
 	/** @param array<string,mixed>|null $adapter @return array<string,string> */
 	private function read_row( $post_id, $adapter ) {
-		$fields = array( 'title' => '', 'description' => '', 'focus_keyword' => '', 'canonical' => '', 'og_title' => '', 'og_description' => '', 'og_image' => '', 'twitter_title' => '', 'twitter_description' => '', 'robots' => '' );
+		$fields = array( 'title' => '', 'description' => '', 'focus_keyword' => '', 'canonical' => '', 'og_title' => '', 'og_description' => '', 'og_image' => '', 'twitter_title' => '', 'twitter_description' => '', 'robots' => '', 'primary_category' => '', 'cornerstone' => '' );
 		if ( null === $adapter ) {
-			$map = array( 'title' => PostMeta::TITLE, 'description' => PostMeta::DESCRIPTION, 'focus_keyword' => PostMeta::FOCUS_KEYWORD, 'canonical' => PostMeta::CANONICAL, 'og_title' => PostMeta::OG_TITLE, 'og_description' => PostMeta::OG_DESCRIPTION, 'og_image' => PostMeta::OG_IMAGE, 'robots' => PostMeta::ROBOTS );
-			foreach ( $map as $field => $key ) { $fields[ $field ] = (string) get_post_meta( $post_id, $key, true ); }
+			foreach ( $this->meta_map() as $field => $key ) { $fields[ $field ] = (string) get_post_meta( $post_id, $key, true ); }
+			if ( '0' === $fields['cornerstone'] ) { $fields['cornerstone'] = ''; }
 			return $fields;
 		}
-		foreach ( $adapter['keys'] as $field => $key ) { $value = get_post_meta( $post_id, $key, true ); if ( is_array( $value ) ) { $value = implode( ',', array_filter( array_map( 'sanitize_key', $value ) ) ); } if ( is_scalar( $value ) ) { $fields[ $field ] = $this->normalize_source_value( $field, trim( (string) $value ) ); } }
+		$raw = array();
+		foreach ( $adapter['keys'] as $field => $key ) { $raw[ $field ] = get_post_meta( $post_id, $key, true ); }
+		if ( isset( $adapter['id'] ) && 'aioseo' === $adapter['id'] ) { $raw = array_merge( $raw, array_filter( $this->read_aioseo_table( $post_id ), static function ( $v ) { return '' !== $v && null !== $v; } ) ); }
+		return self::normalize_row( isset( $adapter['id'] ) ? $adapter['id'] : '', $raw, $fields );
+	}
+
+	/**
+	 * Normalize one source plugin's raw values into PublishRank fields. Pure: no WordPress state, so it is unit-testable.
+	 *
+	 * @param string              $source Adapter id.
+	 * @param array<string,mixed> $raw    Field => raw source value.
+	 * @param array<string,string> $fields Defaults.
+	 * @return array<string,string>
+	 */
+	public static function normalize_row( $source, array $raw, array $fields = array() ) {
+		foreach ( $raw as $field => $value ) {
+			if ( in_array( $field, array( 'robots', 'robots_nofollow' ), true ) ) { continue; }
+			if ( is_array( $value ) ) { $value = implode( ',', array_filter( array_map( 'strval', $value ) ) ); }
+			if ( ! is_scalar( $value ) ) { continue; }
+			$value = trim( (string) $value );
+			if ( in_array( $field, array( 'title', 'description', 'og_title', 'og_description', 'twitter_title', 'twitter_description' ), true ) ) { $value = self::convert_template( $source, $value ); }
+			if ( 'primary_category' === $field ) { $value = absint( $value ) ? (string) absint( $value ) : ''; }
+			if ( 'cornerstone' === $field ) { $value = in_array( strtolower( $value ), array( '1', 'on', 'yes', 'true' ), true ) ? '1' : ''; }
+			$fields[ $field ] = $value;
+		}
+		$fields['robots'] = self::normalize_robots( $source, isset( $raw['robots'] ) ? $raw['robots'] : '', isset( $raw['robots_nofollow'] ) ? $raw['robots_nofollow'] : '' );
 		return $fields;
 	}
 
-	private function normalize_source_value( $field, $value ) {
-		if ( 'robots' !== $field ) { return $value; }
-		$value = strtolower( trim( (string) $value ) );
-		if ( in_array( $value, array( '1', 'true', 'noindex' ), true ) ) { return 'noindex'; }
-		if ( in_array( $value, array( '-1', '0', 'false', 'index', 'follow' ), true ) ) { return ''; }
-		return str_replace( array( '|', ';' ), ',', $value );
+	/** Convert robots flags from any supported source into a PublishRank directive list ('' = default index,follow). */
+	public static function normalize_robots( $source, $noindex, $nofollow = '' ) {
+		$directives = array();
+		if ( is_array( $noindex ) ) {
+			$directives = array_map( 'strtolower', array_map( 'strval', $noindex ) );
+		} else {
+			$value = strtolower( trim( (string) $noindex ) );
+			if ( 'seopress' === $source ) { $value = 'yes' === $value ? 'noindex' : ''; }
+			if ( in_array( $value, array( '1', 'true', 'yes', 'on', 'noindex' ), true ) ) { $directives[] = 'noindex'; }
+			elseif ( ! in_array( $value, array( '', '0', '-1', '2', 'false', 'no', 'off', 'index', 'follow', 'index,follow' ), true ) ) { $directives = array_map( 'trim', preg_split( '/[,|;\s]+/', $value ) ); }
+		}
+		$follow = strtolower( trim( is_scalar( $nofollow ) ? (string) $nofollow : '' ) );
+		if ( in_array( $follow, array( '1', 'true', 'yes', 'on', 'nofollow' ), true ) ) { $directives[] = 'nofollow'; }
+		$allowed = array( 'noindex', 'nofollow', 'noarchive', 'nosnippet', 'noimageindex', 'notranslate' );
+		$directives = array_values( array_unique( array_intersect( $directives, $allowed ) ) );
+		return implode( ',', $directives );
 	}
 
-	private function field_labels() { return array( 'title' => __( 'Title', 'publishrank' ), 'description' => __( 'Description', 'publishrank' ), 'focus_keyword' => __( 'Focus keyword', 'publishrank' ), 'canonical' => __( 'Canonical', 'publishrank' ), 'og_title' => __( 'Open Graph title', 'publishrank' ), 'og_description' => __( 'Open Graph description', 'publishrank' ), 'og_image' => __( 'Open Graph image', 'publishrank' ), 'robots' => __( 'Robots', 'publishrank' ) ); }
+	/** Translate another plugin's title/description variables into PublishRank %%tokens%%; unknown variables are kept verbatim. */
+	public static function convert_template( $source, $value ) {
+		$value = (string) $value;
+		if ( '' === $value ) { return ''; }
+		$common = array( 'sitename' => 'sitename', 'sitetitle' => 'sitename', 'site_title' => 'sitename', 'blog_title' => 'sitename', 'sitedesc' => 'site_description', 'tagline' => 'site_description', 'site_description' => 'site_description', 'sep' => 'sep', 'separator' => 'sep', 'separator_sa' => 'sep', 'title' => 'title', 'post_title' => 'title', 'excerpt' => 'excerpt', 'excerpt_only' => 'excerpt', 'post_excerpt' => 'excerpt', 'seo_excerpt' => 'excerpt', 'url' => 'permalink', 'permalink' => 'permalink', 'post_url' => 'permalink', 'id' => 'id', 'post_id' => 'id', 'page' => 'page', 'pagenumber' => 'page', 'page_number' => 'page', 'name' => 'author', 'author' => 'author', 'author_name' => 'author', 'post_author' => 'author', 'category' => 'category', 'categories' => 'category', 'post_category' => 'category', 'primary_category' => 'primary_category', 'date' => 'date', 'post_date' => 'date', 'publish_date' => 'date', 'modified' => 'modified', 'post_modified_date' => 'modified', 'focuskw' => 'focus_keyword', 'focus_keyword' => 'focus_keyword', 'keyphrase' => 'focus_keyword', 'target_keyword' => 'focus_keyword' );
+		$swap = static function ( $match ) use ( $common ) {
+			$key = strtolower( $match[1] );
+			return isset( $common[ $key ] ) ? '%%' . $common[ $key ] . '%%' : $match[0];
+		};
+		if ( 'rank_math' === $source ) { return (string) preg_replace_callback( '/(?<!%)%([a-z_]+)%(?!%)/i', $swap, $value ); }
+		if ( 'aioseo' === $source ) { return (string) preg_replace_callback( '/#([a-z_]+)/i', $swap, $value ); }
+		if ( 'tsf' === $source ) { return $value; }
+		return (string) preg_replace_callback( '/%%([a-z_]+)%%/i', $swap, $value ); // Yoast, SEOPress, JSON.
+	}
+
+	/** AIOSEO 4+ stores post SEO in its own table, not post meta. @return array<string,mixed> */
+	private function read_aioseo_table( $post_id ) {
+		global $wpdb;
+		if ( ! isset( $wpdb ) || ! $this->aioseo_table_exists() ) { return array(); }
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . $wpdb->prefix . 'aioseo_posts WHERE post_id = %d', (int) $post_id ), ARRAY_A );
+		if ( ! is_array( $row ) ) { return array(); }
+		$keyphrase = '';
+		if ( ! empty( $row['keyphrases'] ) ) { $decoded = json_decode( (string) $row['keyphrases'], true ); $keyphrase = isset( $decoded['focus']['keyphrase'] ) ? (string) $decoded['focus']['keyphrase'] : ''; }
+		return array(
+			'title' => $row['title'] ?? '', 'description' => $row['description'] ?? '', 'focus_keyword' => $keyphrase,
+			'canonical' => $row['canonical_url'] ?? '', 'og_title' => $row['og_title'] ?? '', 'og_description' => $row['og_description'] ?? '',
+			'og_image' => $row['og_image_custom_url'] ?? '', 'twitter_title' => $row['twitter_title'] ?? '', 'twitter_description' => $row['twitter_description'] ?? '',
+			'robots' => ! empty( $row['robots_noindex'] ) ? '1' : '', 'robots_nofollow' => ! empty( $row['robots_nofollow'] ) ? '1' : '',
+			'cornerstone' => ! empty( $row['pillar_content'] ) ? '1' : '',
+		);
+	}
+
+	private function aioseo_table_exists() {
+		static $exists = null;
+		if ( null === $exists ) { global $wpdb; $table = $wpdb->prefix . 'aioseo_posts'; $exists = ( $table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) ); }
+		return $exists;
+	}
+
+	private function field_labels() { return array( 'title' => __( 'Title', 'publishrank' ), 'description' => __( 'Description', 'publishrank' ), 'focus_keyword' => __( 'Focus keyword', 'publishrank' ), 'canonical' => __( 'Canonical', 'publishrank' ), 'og_title' => __( 'Open Graph title', 'publishrank' ), 'og_description' => __( 'Open Graph description', 'publishrank' ), 'og_image' => __( 'Open Graph image', 'publishrank' ), 'robots' => __( 'Robots', 'publishrank' ), 'primary_category' => __( 'Primary category', 'publishrank' ), 'cornerstone' => __( 'Cornerstone', 'publishrank' ) ); }
 	private function selected_fields() { $fields = isset( $_POST['fields'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['fields'] ) ) : array_keys( $this->field_labels() ); return array_values( array_intersect( array_keys( $this->field_labels() ), $fields ) ); }
-	private function field_meta_key( $field ) { $map = array( 'title' => PostMeta::TITLE, 'description' => PostMeta::DESCRIPTION, 'focus_keyword' => PostMeta::FOCUS_KEYWORD, 'canonical' => PostMeta::CANONICAL, 'og_title' => PostMeta::OG_TITLE, 'og_description' => PostMeta::OG_DESCRIPTION, 'og_image' => PostMeta::OG_IMAGE, 'robots' => PostMeta::ROBOTS ); return isset( $map[ $field ] ) ? $map[ $field ] : ''; }
+	private function field_meta_key( $field ) { $map = $this->meta_map(); return isset( $map[ $field ] ) ? $map[ $field ] : ''; }
 	private function count_changes( $post_id, $row, $mode, $fields, $include_empty ) { $count = 0; foreach ( $fields as $field ) { $value = isset( $row[ $field ] ) ? trim( (string) $row[ $field ] ) : ''; if ( '' === $value && ! $include_empty ) { continue; } if ( 'merge' === $mode && '' !== (string) get_post_meta( $post_id, $this->field_meta_key( $field ), true ) ) { continue; } $count++; } return $count; }
 	private function write_row( $post_id, $row, $mode, $include_empty, $fields = null ) {
-		$map = array( 'title' => PostMeta::TITLE, 'description' => PostMeta::DESCRIPTION, 'focus_keyword' => PostMeta::FOCUS_KEYWORD, 'canonical' => PostMeta::CANONICAL, 'og_title' => PostMeta::OG_TITLE, 'og_description' => PostMeta::OG_DESCRIPTION, 'og_image' => PostMeta::OG_IMAGE, 'robots' => PostMeta::ROBOTS );
+		$map = $this->meta_map();
 		if ( null === $fields ) { $fields = array_keys( $map ); }
 		$changed = 0;
 		foreach ( $map as $field => $key ) { if ( ! in_array( $field, $fields, true ) ) { continue; } $value = isset( $row[ $field ] ) ? trim( (string) $row[ $field ] ) : ''; if ( '' === $value && ! $include_empty ) { continue; } if ( 'merge' === $mode && '' !== (string) get_post_meta( $post_id, $key, true ) ) { continue; } $value = $this->sanitize_field( $field, $value ); if ( '' === $value ) { delete_post_meta( $post_id, $key ); } else { update_post_meta( $post_id, $key, $value ); } $changed++; }
@@ -256,16 +342,26 @@ final class SeoPortability {
 		if ( ! is_array( $record ) ) { return 0; }
 		$id = ! empty( $record['post_id'] ) ? absint( $record['post_id'] ) : 0;
 		if ( $id && get_post( $id ) ) { return $id; }
-		$url = ! empty( $record['post_url'] ) ? esc_url_raw( $record['post_url'] ) : '';
-		if ( $url ) { $path = wp_parse_url( $url, PHP_URL_PATH ); $slug = basename( trim( (string) $path, '/' ) ); if ( $slug ) { $posts = get_posts( array( 'name' => sanitize_title( $slug ), 'post_type' => 'any', 'post_status' => 'any', 'numberposts' => 2 ) ); if ( 1 === count( $posts ) ) { return (int) $posts[0]->ID; } } }
-		return 0;
+		$url    = ! empty( $record['post_url'] ) ? esc_url_raw( $record['post_url'] ) : '';
+		$locale = ! empty( $record['locale'] ) ? LanguageAlternates::locale( $record['locale'] ) : '';
+		if ( ! $url ) { return 0; }
+		$path = trim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' );
+		// Same path on this site (handles /fr/… language folders and hierarchical pages).
+		if ( function_exists( 'url_to_postid' ) ) { $by_url = url_to_postid( home_url( '/' . $path . '/' ) ); if ( $by_url && ( ! $locale || LanguageAlternates::post_locale( $by_url ) === $locale ) ) { return (int) $by_url; } }
+		$slug = basename( $path );
+		if ( ! $slug ) { return 0; }
+		$posts = get_posts( array( 'name' => sanitize_title( $slug ), 'post_type' => 'any', 'post_status' => 'any', 'numberposts' => 20, 'suppress_filters' => true, 'lang' => '' ) );
+		if ( $locale && count( $posts ) > 1 ) { $posts = array_values( array_filter( $posts, static function ( $post ) use ( $locale ) { return LanguageAlternates::post_locale( $post->ID ) === $locale; } ) ); }
+		return 1 === count( $posts ) ? (int) $posts[0]->ID : 0;
 	}
 	private function backups() { $items = (array) get_option( self::BACKUP_OPTION, array() ); return array_slice( array_reverse( $items ), 0, 5 ); }
 	private function save_backup( $backup ) { $items = (array) get_option( self::BACKUP_OPTION, array() ); $items[] = $backup; update_option( self::BACKUP_OPTION, array_slice( $items, -5 ), false ); }
 
 	private function sanitize_field( $field, $value ) {
 		if ( in_array( $field, array( 'canonical', 'og_image' ), true ) ) { return esc_url_raw( $value ); }
-		if ( 'robots' === $field ) { return sanitize_text_field( $value ); }
+		if ( 'robots' === $field ) { return self::normalize_robots( '', $value ); }
+		if ( 'primary_category' === $field ) { $id = absint( $value ); return ( $id && term_exists( $id, 'category' ) ) ? (string) $id : ''; }
+		if ( 'cornerstone' === $field ) { return '1' === $value ? '1' : ''; }
 		return sanitize_textarea_field( $value );
 	}
 	private function sanitize_localized( $data ) {
@@ -286,9 +382,11 @@ final class SeoPortability {
 		return $out;
 	}
 
+	/** @return array<string,string> locale => permalink of each published translation. */
+	private function translation_urls( $post_id ) { $out = array(); foreach ( LanguageAlternates::post_translations( $post_id ) as $locale => $id ) { if ( (int) $id !== (int) $post_id ) { $out[ $locale ] = (string) get_permalink( $id ); } } return $out; }
 	private function has_values( $row ) { foreach ( $row as $value ) { if ( '' !== trim( (string) $value ) ) { return true; } } return false; }
 	private function post_types( $raw ) { $types = array_filter( array_map( 'sanitize_key', preg_split( '/[,\\s]+/', (string) $raw ) ) ); if ( empty( $types ) ) { $types = PostMeta::post_types(); } return array_values( array_intersect( $types, PostMeta::post_types() ) ); }
-	private function count_source_records( $adapter ) { $keys = array_values( $adapter['keys'] ); if ( empty( $keys ) ) { return 0; } global $wpdb; $like = array(); $args = array(); foreach ( $keys as $key ) { $like[] = 'pm.meta_key = %s'; $args[] = $key; } $sql = 'SELECT COUNT(DISTINCT pm.post_id) FROM ' . $wpdb->postmeta . ' pm INNER JOIN ' . $wpdb->posts . ' p ON p.ID = pm.post_id WHERE (' . implode( ' OR ', $like ) . ') AND pm.meta_value <> %s AND p.post_status <> %s'; $args[] = ''; $args[] = 'trash'; return (int) $wpdb->get_var( $wpdb->prepare( $sql, $args ) ); }
+	private function count_source_records( $adapter ) { $keys = array_values( $adapter['keys'] ); if ( empty( $keys ) ) { return 0; } global $wpdb; $like = array(); $args = array(); foreach ( $keys as $key ) { $like[] = 'pm.meta_key = %s'; $args[] = $key; } $sql = 'SELECT COUNT(DISTINCT pm.post_id) FROM ' . $wpdb->postmeta . ' pm INNER JOIN ' . $wpdb->posts . ' p ON p.ID = pm.post_id WHERE (' . implode( ' OR ', $like ) . ') AND pm.meta_value <> %s AND p.post_status <> %s'; $args[] = ''; $args[] = 'trash'; $count = (int) $wpdb->get_var( $wpdb->prepare( $sql, $args ) ); if ( isset( $adapter['id'] ) && 'aioseo' === $adapter['id'] && $this->aioseo_table_exists() ) { $count = max( $count, (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $wpdb->prefix . "aioseo_posts WHERE title <> '' OR description <> ''" ) ); } return $count; }
 	private function guard( $action ) { if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'You are not allowed to use SEO portability.', 'publishrank' ), 403 ); } check_admin_referer( $action ); }
 	private function finish( $message, $error = false ) { set_transient( self::RESULT_KEY . '_' . get_current_user_id(), array( 'message' => $message, 'error' => $error ), 120 ); wp_safe_redirect( Branding::page_url( 'publishrank-seo-portability' ) ); exit; }
 }

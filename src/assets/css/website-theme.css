@@ -124,3 +124,36 @@ body .wrap .pr-hero__badge,body .wrap .pr-hero__badge i{color:#fff!important}
   .pr-hero__visual{max-width:none}
   .pr-hero__badge{top:-14px}
 }
+
+/* Dashboard "At a glance" — same card language as the workflow steps above. */
+.wrap .pr-dash-metrics .rhs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:0 0 16px}
+.wrap .pr-dash-metrics .rhs-card{position:relative;overflow:hidden;margin:0;padding:22px;border:1px solid var(--pw-line);border-radius:var(--pw-radius);background:#fff;box-shadow:0 6px 20px rgba(101,10,36,.05);transition:transform .16s ease,box-shadow .16s ease}
+.wrap .pr-dash-metrics .rhs-card:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(101,10,36,.1)}
+.wrap .pr-dash-metrics .rhs-card:before,.wrap .pr-dash-metrics .rhs-grid>.rhs-card:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--pw-bordeaux),var(--pw-pink-3))}
+.wrap .pr-dash-metrics .rhs-card h2{margin:6px 0 8px;padding:0;color:var(--pw-ink);font-size:16px;font-weight:700;letter-spacing:0}
+.wrap .pr-dash-metrics .rhs-card p{margin:0 0 10px;color:var(--pw-muted);font-size:13px;line-height:1.55}
+.wrap .pr-dash-metrics .rhs-label{display:inline-block;margin:0 0 6px;padding:3px 10px;border:1px solid var(--pw-pink-2);border-radius:var(--pw-pill);background:var(--pw-pink);color:var(--pw-bordeaux-deep);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.wrap .pr-dash-metrics .rhs-stat{margin:8px 0 6px;color:var(--pw-bordeaux-deep);font-size:32px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.wrap .pr-dash-metrics .rhs-stat small{color:var(--pw-muted);font-size:13px;font-weight:600}
+.wrap .pr-dash-metrics .rhs-card a:not(.button){color:var(--pw-bordeaux);font-weight:700;text-decoration:none}
+.wrap .pr-dash-metrics .rhs-card a:not(.button):hover{color:var(--pw-bordeaux-deep);text-decoration:underline}
+.wrap .pr-dash-metrics .rhs-url-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:12px 14px;border:1px solid var(--pw-line);border-left:4px solid var(--pw-bordeaux);border-radius:10px;background:var(--pw-pink)}
+.wrap .pr-dash-metrics .rhs-url-row code{background:transparent;color:var(--pw-ink);font-size:12px;overflow-wrap:anywhere}
+.wrap .pr-dash-metrics .button{border-color:var(--pw-bordeaux);border-radius:var(--pw-pill);color:var(--pw-bordeaux);background:#fff;font-weight:600}
+.wrap .pr-dash-metrics .button:hover{background:var(--pw-bordeaux);color:#fff}
+.wrap .pr-dash-metrics .pr-dashboard-config-summary__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:10px 0 14px}
+.wrap .pr-dash-metrics .pr-dashboard-config-summary__grid>div{padding:14px;border:1px solid var(--pw-line);border-radius:10px;background:#fff}
+.wrap .pr-dash-metrics .pr-dashboard-config-summary__grid strong{display:block;margin:2px 0 4px;color:var(--pw-ink);font-size:15px}
+@media(max-width:600px){.wrap .pr-dash-metrics .rhs-grid{grid-template-columns:1fr}.wrap .pr-dash-metrics .rhs-url-row{flex-direction:column;align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){.wrap .pr-dash-metrics .rhs-card{transition:none}.wrap .pr-dash-metrics .rhs-card:hover{transform:none}}
+
+/* Keyboard focus — dashboard cards, links and sitemap buttons (3px ring, ≥3:1 against white and pink). */
+.wrap .pr-dash-metrics a:focus-visible,
+.wrap .pr-dash-metrics .button:focus-visible,
+.wrap .pr-dash-metrics .rhs-copy:focus-visible,
+.wrap .pr-workflow .pr-step a:focus-visible{outline:3px solid var(--pw-bordeaux-deep);outline-offset:2px;box-shadow:0 0 0 2px #fff;border-radius:6px;text-decoration:underline}
+.wrap .pr-dash-metrics .button:focus-visible,.wrap .pr-dash-metrics .rhs-copy:focus-visible{border-radius:var(--pw-pill);background:var(--pw-bordeaux);border-color:var(--pw-bordeaux);color:#fff;text-decoration:none}
+.wrap .pr-dash-metrics .rhs-card:focus-within,.wrap .pr-workflow .pr-step:focus-within{border-color:var(--pw-bordeaux);box-shadow:0 0 0 1px var(--pw-bordeaux),0 14px 30px rgba(101,10,36,.1)}
+.wrap .pr-dash-metrics .rhs-url-row:focus-within{border-color:var(--pw-bordeaux)}
+.wrap .pr-dash-metrics a:focus:not(:focus-visible),.wrap .pr-dash-metrics .button:focus:not(:focus-visible){outline:none;box-shadow:none}
+@media(forced-colors:active){.wrap .pr-dash-metrics a:focus-visible,.wrap .pr-dash-metrics .button:focus-visible,.wrap .pr-workflow .pr-step a:focus-visible{outline:3px solid Highlight}}

@@ -260,6 +260,10 @@ final class DashboardPage {
 							<article class="pr-step"><span class="pr-step__no">03</span><i class="fa-solid fa-gear" aria-hidden="true"></i><h3><?php esc_html_e( 'Maintain discovery over time', 'publishrank' ); ?></h3><p><?php esc_html_e( 'Watch sitemaps, redirects, broken URLs and diagnostics so the archive stays healthy as your site grows.', 'publishrank' ); ?></p><a href="<?php echo esc_url( Branding::page_url( 'publishrank-seo-diagnostics' ) ); ?>"><?php esc_html_e( 'Run diagnostics', 'publishrank' ); ?> <span aria-hidden="true">→</span></a></article>
 						</div>
 					</section>
+				<section class="pr-workflow pr-dash-metrics" aria-labelledby="pr-dash-metrics-title">
+					<p class="pr-workflow__kicker"><?php esc_html_e( 'At a glance', 'publishrank' ); ?></p>
+					<h2 id="pr-dash-metrics-title"><?php esc_html_e( 'Your site today', 'publishrank' ); ?></h2>
+					<p class="pr-workflow__lead"><?php esc_html_e( 'Checks, coverage and the addresses search engines use to find your stories.', 'publishrank' ); ?></p>
 				<div class="rhs-grid">
 			<div class="rhs-card rhs-score rhs-score--<?php echo esc_attr( $score >= 90 ? 'good' : ( $score >= 70 ? 'ok' : 'bad' ) ); ?>" style="--rhs-score:<?php echo (int) $score; ?>">
 				<p class="rhs-label"><?php esc_html_e( 'Configuration checklist', 'publishrank' ); ?></p>
@@ -303,6 +307,7 @@ final class DashboardPage {
 				</div>
 				<p><a class="button button-secondary" href="<?php echo esc_url( Branding::page_url( OnboardingPage::SLUG ) . '&edit=1&step=2' ); ?>"><?php esc_html_e( 'Review setup', 'publishrank' ); ?></a> <a class="button button-secondary" href="<?php echo esc_url( Branding::page_url( 'publishrank' ) . '#pr-settings-titles' ); ?>"><?php esc_html_e( 'Edit Titles & Meta', 'publishrank' ); ?></a></p>
 			</section>
+				</section>
 				<section class="pr-dashboard-workspace" aria-labelledby="pr-dashboard-workspace-title">
 					<div class="pr-dashboard-workspace__heading"><div><p class="pr-dashboard-kicker"><?php esc_html_e( 'Publisher workspace', 'publishrank' ); ?></p><h2 id="pr-dashboard-workspace-title"><?php esc_html_e( 'Tools Showcase', 'publishrank' ); ?></h2><p><?php esc_html_e( 'Explore PublishRank tools from one dashboard. Search by name or description instead of opening a long submenu.', 'publishrank' ); ?></p></div></div>
 					<div class="pr-tools-toolbar" role="search" aria-label="<?php esc_attr_e( 'Filter PublishRank tools', 'publishrank' ); ?>">

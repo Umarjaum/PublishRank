@@ -26,6 +26,11 @@ final class LanguageAlternates {
 			if ( $code && self::locale( $code ) ) {
 				return self::locale( $code ); }
 		}
+		global $TRP_LANGUAGE; // TranslatePress.
+		if ( ! empty( $TRP_LANGUAGE ) && self::locale( $TRP_LANGUAGE ) ) {
+			return self::locale( $TRP_LANGUAGE ); }
+		if ( function_exists( 'weglot_get_current_language' ) && self::locale( (string) weglot_get_current_language() ) ) {
+			return self::locale( (string) weglot_get_current_language() ); }
 		return self::default_locale();
 	}
 
@@ -103,7 +108,9 @@ final class LanguageAlternates {
 		if ( $current && $canonical ) {
 			$alternates[ $current ] = $canonical;
 		}
-		return array_filter( $alternates );
+		$alternates = array_filter( $alternates, static function ( $url ) { return is_string( $url ) && preg_match( '#^https?://#i', $url ); } );
+		ksort( $alternates );
+		return (array) apply_filters( 'publishrank_hreflang_alternates', $alternates, $current );
 	}
 
 	/** x-default for the current document, or '' when none can be determined reliably. */
@@ -188,20 +195,33 @@ final class LanguageAlternates {
 			if ( $url ) {
 				$xml .= '<xhtml:link rel="alternate" hreflang="' . esc_attr( $locale ) . '" href="' . esc_url( $url ) . '"/>'; }
 		}
+		// x-default → the translation in the site's default language, when one exists.
+		$default = self::default_locale();
+		if ( $default && isset( $translations[ $default ] ) && get_permalink( $translations[ $default ] ) ) {
+			$xml .= '<xhtml:link rel="alternate" hreflang="x-default" href="' . esc_url( get_permalink( $translations[ $default ] ) ) . '"/>'; }
 		return $xml;
 	}
 
-	/** @param string $value @return string */
+	/**
+	 * Normalize a WordPress locale or language tag to BCP 47 hreflang form.
+	 * en_US → en-US, zh_hans_cn → zh-Hans-CN, es_419 → es-419, de_DE_formal → de-DE, pt → pt.
+	 *
+	 * @param string $value @return string
+	 */
 	public static function locale( $value ) {
 		$value = strtolower( preg_replace( '/[^a-zA-Z0-9_-]/', '', (string) $value ) );
-		$value = str_replace( '_', '-', $value );
-		$parts = array_values( array_filter( explode( '-', $value ) ) );
-		if ( empty( $parts ) || strlen( $parts[0] ) < 2 ) {
+		$parts = array_values( array_filter( explode( '-', str_replace( '_', '-', $value ) ), 'strlen' ) );
+		if ( empty( $parts ) || ! preg_match( '/^[a-z]{2,3}$/', $parts[0] ) ) {
 			return '';
 		}
-		$result = substr( $parts[0], 0, 8 );
-		if ( isset( $parts[1] ) && $parts[1] ) {
-			$result .= '-' . strtoupper( substr( $parts[1], 0, 8 ) );
+		$result = $parts[0];
+		$i      = 1;
+		if ( isset( $parts[ $i ] ) && preg_match( '/^[a-z]{4}$/', $parts[ $i ] ) ) {
+			$result .= '-' . ucfirst( $parts[ $i ] );
+			++$i;
+		}
+		if ( isset( $parts[ $i ] ) && preg_match( '/^([a-z]{2}|[0-9]{3})$/', $parts[ $i ] ) ) {
+			$result .= '-' . strtoupper( $parts[ $i ] );
 		}
 		return $result;
 	}
