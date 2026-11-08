@@ -9,9 +9,9 @@ PublishRank serves one **sitemap index** and one child sitemap per content type.
 | Articles | Published posts |
 | Pages | Static pages |
 | Custom content | Custom post types |
-| Topics | Categories, tags and other taxonomies |
+| Categories & tags | Categories, tags and other taxonomies |
 | Authors | Author archive pages |
-| Media files | Uploaded image attachments |
+| Attachment pages | Individual media attachment pages |
 | Google News | Recent eligible articles (48-hour window by default) |
 | Images / Videos | Media referenced by eligible content |
 
@@ -19,11 +19,11 @@ Large types are split into numbered parts (Part 1, Part 2, ...).
 
 ## The index view
 
-* **Hero** with the PublishRank mark, copy-URL and raw-XML buttons.
-* **Summary tiles**: sitemap files, content types, URLs listed and the newest change.
-* **Content showcase**: a coloured bar showing each type's share of listed URLs, with a legend that links to the matching card. Indexes with more than 40 files skip URL counting and show the share of files instead.
-* **Type cards**: one card per type with its files, URL counts and last-modified times. The Google News card notes the freshness window.
-* **Submit box**: the exact address to give search engines, plus a link to robots.txt.
+* **Intro**: what the sitemap is in plain language, plus the one address to submit with a Copy button, Google Search Console and Bing Webmaster Tools shortcuts and View raw XML.
+* **How it works**: a three-step strip (you publish, PublishRank updates the files, search engines read them).
+* **Totals**: addresses listed, types of content, sitemap files and the newest change, each with an icon.
+* **What's in your sitemap**: one row per content type with its own colour and icon, a short description, the number of addresses, its share of the total, the last change and an Open button. Empty rows explain that they fill up automatically; types split into several files list their parts in the row; the Google News row notes the freshness window. Indexes with more than 40 files skip address counting and show file counts instead.
+* **Good to know**: submit just one address, empty rows are normal, and this page is for people while search engines read the XML.
 
 The view follows the visitor's light or dark colour preference, prints cleanly and works on phones.
 
@@ -35,4 +35,4 @@ Shows a filterable, pageable URL table, quick checks (URL limit, last-modified d
 
 * An empty sitemap is valid.
 * A sitemap is a discovery hint, not an indexing guarantee.
-* Use **PublishRank → Sitemap Health** after changing permalinks, caching or sitemap settings.
+* Use **PublishRank → Sitemap Hub** after changing permalinks, caching or sitemap settings.

@@ -13,6 +13,11 @@ defined( 'ABSPATH' ) || exit;
 final class MetaGenerator {
 	/** @return string */
 	public function title() {
+		// Integrations (for example BuddyPress member and group screens) may supply the title of virtual pages.
+		$pre = apply_filters( 'publishrank_seo_title_pre', '' );
+		if ( is_string( $pre ) && '' !== trim( $pre ) ) {
+			return function_exists( 'mb_substr' ) ? mb_substr( $pre, 0, 180 ) : substr( $pre, 0, 180 );
+		}
 		$post_id = is_singular() ? get_queried_object_id() : 0;
 		if ( is_front_page() || is_home() ) {
 			$home_title = $this->resolve_template( TemplateResolver::sanitize_template( (string) get_option( 'publishrank_home_title', '' ) ), $post_id, 'title' );
@@ -82,6 +87,10 @@ final class MetaGenerator {
 	 */
 	public function description_details() {
 		$limit   = SeoData::DESCRIPTION_LENGTH;
+		$pre     = apply_filters( 'publishrank_seo_description_pre', '' );
+		if ( is_string( $pre ) && '' !== SeoData::clean( $pre ) ) {
+			return array( 'text' => SeoData::truncate( SeoData::clean( $pre ), $limit ), 'source' => 'archive' );
+		}
 		$post_id = is_singular() ? get_queried_object_id() : 0;
 		$is_home = is_front_page() || is_home();
 		if ( $is_home ) {

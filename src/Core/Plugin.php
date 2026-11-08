@@ -97,6 +97,7 @@ final class Plugin {
 		$this->loader->register( HeadOutput::class, true, array( $this->registry ) );
 		$this->loader->register( FrontendOutputRecovery::class, true, array( $this->registry ) );
 		$this->loader->register( LanguageAlternates::class, false );
+		$this->loader->register( \PublishRankSEO\Meta\MultilingualStrings::class, false );
 		$this->loader->register( GraphOutput::class, true, array( $this->registry ) );
 		$this->loader->register( SchemaIndexEndpoint::class, false );
 		$this->loader->register( SchemaAggregator::class, false );
@@ -108,6 +109,7 @@ final class Plugin {
 			$this->loader->register( SiteConnections::class, false );
 		$this->loader->register( LocalSEO::class, false );
 		add_action( 'init', array( Installer::class, 'maybe_upgrade' ), 99 );
+		add_action( 'init', array( ModuleSwitches::class, 'maybe_flush_rewrite_rules' ), 100 );
 				$this->loader->register( IndexNow::class, false );
 			$this->loader->register( BaiduSubmission::class, false );
 		$this->loader->register( AnalyticsCollector::class, false );
@@ -130,6 +132,11 @@ final class Plugin {
 			$this->loader->register( LinkManager::class, false );
 			$this->loader->register( ResourceHints::class, false );
 		$this->loader->register( RestFields::class, false );
+		// Third-party integrations detect their host plugin lazily, so load order does not matter.
+		$this->loader->register( \PublishRankSEO\Integrations\BbPressIntegration::class, false );
+		$this->loader->register( \PublishRankSEO\Integrations\BuddyPressIntegration::class, false );
+		$this->loader->register( \PublishRankSEO\Integrations\PodcastIntegration::class, false );
+		$this->loader->register( \PublishRankSEO\Integrations\WebStoriesIntegration::class, false );
 		$this->loader->register( ScheduledAudit::class, false );
 		$this->loader->register( ConfigHistory::class, false );
 		$this->loader->register( LLMSTxt::class, false );
@@ -140,6 +147,9 @@ final class Plugin {
 		if ( is_admin() ) {
 			$this->loader->register( DashboardPage::class, false, array( $this->registry, new JNewsAdapter() ) );
 			$this->loader->register( SettingsPage::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\ModulesPage::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\AdminShell::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\EditorScoreCard::class, false );
 			$this->loader->register( SiteVerificationPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\VariablePicker::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\BreadcrumbsPage::class, false );

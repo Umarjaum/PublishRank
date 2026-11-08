@@ -33,6 +33,7 @@ final class SchemaTypes {
 			'Profile Page'            => 'Profile Page',
 			'Search Results Page'     => 'Search Results Page',
 			'Event'                   => 'Event',
+			'Job Posting'             => 'Job Posting',
 			'Product'                 => 'Product',
 			'Recipe'                  => 'Recipe',
 			'Review'                  => 'Review',
@@ -137,6 +138,7 @@ final class SchemaTypes {
 			'Product' => self::label( 'Product' ),
 			'Recipe'  => self::label( 'Recipe' ),
 			'Review'  => self::label( 'Review' ),
+			'JobPosting' => self::label( 'Job Posting' ),
 		);
 	}
 	public static function all() {

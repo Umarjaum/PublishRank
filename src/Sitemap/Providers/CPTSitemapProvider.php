@@ -19,8 +19,11 @@ final class CPTSitemapProvider extends AbstractPostProvider {
 			'names'
 		);
 		$excluded         = array( 'post', 'page', 'attachment' );
+		// Integrations (bbPress, Web Stories, podcasts) list their own types in dedicated sitemaps.
+		$excluded         = array_merge( $excluded, (array) apply_filters( 'publishrank_sitemap_cpt_excluded', array() ) );
 		$this->post_types = array_values( array_diff( (array) $types, $excluded ) );
 	}
 	public function is_enabled() {
+		$this->discover();
 		return ! empty( $this->post_types ) && (bool) get_option( 'publishrank_sitemap_cpt_enabled', true ); }
 }

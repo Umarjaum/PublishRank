@@ -1,62 +1,83 @@
 <?php
 /**
- * Test runner: executes every tests/cases/*.php file in its own PHP process (so function definitions and hooks
- * from one file cannot leak into another) and prints a summary. Exit code is non-zero on any failure.
+ * Dependency-free test runner:  WP_PATH=/path/to/wordpress php tests/run.php [--filter=Text]
+ * Exit status is 0 when every test passes.
  *
- * Usage: PR_WP_PATH=/path/to/wordpress php tests/run.php [name-filter]
+ * @package PublishRankSEO
  */
-if ( isset( $argv[1] ) && '--case' === $argv[1] ) {
-	// Child process: run one file.
-	require __DIR__ . '/bootstrap.php';
-	$file   = $argv[2];
-	$filter = isset( $argv[3] ) ? $argv[3] : '';
-	$tests  = require $file;
-	$failed = 0;
-	$passed = 0;
-	foreach ( $tests as $pr_name => $pr_fn ) {
-		if ( '' !== $filter && false === stripos( $pr_name, $filter ) ) {
-			continue;
-		}
-		try {
-			pr_reset_state();
-			$pr_fn();
-			++$passed;
-			echo "  ok    {$pr_name}\n";
-		} catch ( \Throwable $e ) {
-			++$failed;
-			echo "  FAIL  {$pr_name}\n        " . str_replace( "\n", "\n        ", $e->getMessage() ) . ' (' . basename( $e->getFile() ) . ':' . $e->getLine() . ")\n";
-		}
+
+require __DIR__ . '/bootstrap.php';
+
+$filter = '';
+foreach ( $argv as $arg ) {
+	if ( 0 === strpos( $arg, '--filter=' ) ) {
+		$filter = substr( $arg, 9 );
 	}
-	echo "RESULT {$passed} {$failed}\n";
-	exit( $failed ? 1 : 0 );
 }
 
-$filter = isset( $argv[1] ) ? $argv[1] : '';
-$files  = glob( __DIR__ . '/cases/*.php' );
-sort( $files );
-$total_pass = 0;
-$total_fail = 0;
-foreach ( $files as $file ) {
-	echo basename( $file ) . "\n";
-	$cmd    = escapeshellarg( PHP_BINARY ) . ' ' . escapeshellarg( __FILE__ ) . ' --case ' . escapeshellarg( $file ) . ' ' . escapeshellarg( $filter ) . ' 2>&1';
-	$output = array();
-	exec( $cmd, $output, $code );
-	$text = implode( "\n", $output );
-	$lines = array();
-	foreach ( $output as $line ) {
-		if ( 0 === strpos( $line, 'RESULT ' ) ) {
-			list( , $p, $f ) = explode( ' ', $line );
-			$total_pass     += (int) $p;
-			$total_fail     += (int) $f;
-		} else {
-			$lines[] = $line;
+$before = get_declared_classes();
+foreach ( glob( __DIR__ . '/cases/*Test.php' ) as $file ) {
+	require_once $file;
+}
+$classes = array_filter(
+	array_diff( get_declared_classes(), $before ),
+	static function ( $class ) {
+		return is_subclass_of( $class, 'PublishRankTestCase' ) && ! ( new ReflectionClass( $class ) )->isAbstract();
+	}
+);
+
+$passed = $failed = $skipped = 0;
+$errors = array();
+$start  = microtime( true );
+set_error_handler(
+	static function ( $no, $str, $file, $line ) {
+		if ( ! ( error_reporting() & $no ) || E_DEPRECATED === $no || E_USER_DEPRECATED === $no ) {
+			return false;
+		}
+		throw new ErrorException( $str, 0, $no, $file, $line );
+	}
+);
+
+$invoke = static function ( $object, $method ) {
+	$ref = new ReflectionMethod( $object, $method );
+	$ref->setAccessible( true );
+	$ref->invoke( $object );
+};
+
+foreach ( $classes as $class ) {
+	foreach ( ( new ReflectionClass( $class ) )->getMethods( ReflectionMethod::IS_PUBLIC ) as $method ) {
+		if ( 0 !== strpos( $method->name, 'test' ) || $method->class !== $class ) {
+			continue;
+		}
+		$label = $class . '::' . $method->name;
+		if ( '' !== $filter && false === stripos( $label, $filter ) ) {
+			continue;
+		}
+		$object = new $class();
+		try {
+			$invoke( $object, 'setUp' );
+			$object->{$method->name}();
+			++$passed;
+			echo '.';
+		} catch ( \PHPUnit\Framework\SkippedTestError $e ) {
+			++$skipped;
+			echo 'S';
+		} catch ( \Throwable $e ) {
+			++$failed;
+			echo 'F';
+			$errors[] = $label . "\n    " . get_class( $e ) . ': ' . $e->getMessage() . "\n    at " . basename( $e->getFile() ) . ':' . $e->getLine();
+		} finally {
+			try {
+				$invoke( $object, 'tearDown' );
+			} catch ( \Throwable $e ) {
+				$errors[] = $label . " (tearDown)\n    " . $e->getMessage();
+			}
 		}
 	}
-	if ( false === strpos( $text, 'RESULT ' ) ) {
-		++$total_fail;
-		echo "  FAIL  (crashed before reporting)\n";
-	}
-	echo implode( "\n", $lines ) . "\n";
 }
-echo "\n{$total_pass} passed, {$total_fail} failed\n";
-exit( $total_fail ? 1 : 0 );
+echo "\n\n";
+foreach ( $errors as $i => $error ) {
+	echo ( $i + 1 ) . ') ' . $error . "\n\n";
+}
+printf( "%d passed, %d failed, %d skipped, %d assertions in %.1fs\n", $passed, $failed, $skipped, \PHPUnit\Framework\TestCase::$assertions, microtime( true ) - $start );
+exit( $failed ? 1 : 0 );

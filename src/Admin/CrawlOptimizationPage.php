@@ -17,6 +17,7 @@ final class CrawlOptimizationPage {
 		'remove_rsd_wlw' => 0,
 		'remove_oembed_links' => 0,
 		'remove_generator' => 0,
+		'hide_source_markers' => 0,
 		'remove_pingback' => 0,
 		'remove_powered_by' => 0,
 		'remove_feed_links' => 0,
@@ -48,7 +49,8 @@ final class CrawlOptimizationPage {
 		add_filter( 'robots_txt', array( $this, 'filter_robots' ), 40, 2 );
 		add_filter( 'request', array( $this, 'sanitize_search_request' ), 20 );
 		add_action( 'template_redirect', array( $this, 'cleanup_search_and_parameters' ), 1 );
-		add_action( 'wp_footer', array( $this, 'clean_utm_from_visible_url' ), 99 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'clean_utm_from_visible_url' ), 99 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'admin_styles' ) );
 	}
 
 	public static function defaults() {
@@ -197,7 +199,9 @@ final class CrawlOptimizationPage {
 	public function clean_utm_from_visible_url() {
 		$o = self::get_options();
 		if ( empty( $o['clean_utm_parameters'] ) || is_admin() || is_preview() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) { return; }
-		echo '<script id="publishrank-utm-url-cleanup">(function(){try{var u=new URL(window.location.href),p=new URLSearchParams(),found=[];u.searchParams.forEach(function(v,k){if(/^utm_[a-z0-9_]+$/i.test(k)){p.append(k,v);found.push(k);}});if(!found.length||!window.history||!window.history.replaceState)return;found.forEach(function(k){u.searchParams.delete(k);});var old=u.hash?u.hash.slice(1):"",tracking=p.toString();u.hash=old?(tracking?old+"&"+tracking:old):tracking;window.history.replaceState(window.history.state,"",u.pathname+(u.search?u.search:"")+u.hash);}catch(e){}})();</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed inline script; dynamic values are read and encoded in the browser.
+		wp_register_script( 'publishrank-utm-url-cleanup', false, array(), PUBLISHRANK_SEO_VERSION, true );
+		wp_enqueue_script( 'publishrank-utm-url-cleanup' );
+		wp_add_inline_script( 'publishrank-utm-url-cleanup', '(function(){try{var u=new URL(window.location.href),p=new URLSearchParams(),found=[];u.searchParams.forEach(function(v,k){if(/^utm_[a-z0-9_]+$/i.test(k)){p.append(k,v);found.push(k);}});if(!found.length||!window.history||!window.history.replaceState)return;found.forEach(function(k){u.searchParams.delete(k);});var old=u.hash?u.hash.slice(1):"",tracking=p.toString();u.hash=old?(tracking?old+"&"+tracking:old):tracking;window.history.replaceState(window.history.state,"",u.pathname+(u.search?u.search:"")+u.hash);}catch(e){}})();' );
 	}
 
 	public function cleanup_search_and_parameters() {
@@ -240,13 +244,21 @@ final class CrawlOptimizationPage {
 		echo '</div></section>';
 	}
 
+	/** Screen styles, attached the WordPress way instead of an inline <style> tag. */
+	public function admin_styles( $hook ) {
+		if ( false === strpos( (string) $hook, self::SLUG ) ) {
+			return; }
+		wp_register_style( 'publishrank-crawl-optimization', false, array(), PUBLISHRANK_SEO_VERSION );
+		wp_enqueue_style( 'publishrank-crawl-optimization' );
+		wp_add_inline_style( 'publishrank-crawl-optimization', '.publishrank-crawl-optimization{max-width:1100px}.pr-co-card{background:#fff;border:1px solid #dcdcde;border-radius:10px;padding:20px 24px;margin:18px 0}.pr-co-card h2{margin-top:0}.pr-co-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.pr-co-option{display:block;padding:12px;border:1px solid #e2e4e7;border-radius:7px}.pr-co-option .description{display:block;margin:7px 0 0 25px;line-height:1.5}.pr-co-warning{border-left:4px solid #dba617;background:#fff8e5;padding:12px 15px}' );
+	}
+
 	public function render() {
 		if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'You do not have permission to manage PublishRank settings.', 'publishrank' ) ); }
 		$o = self::get_options();
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 		if ( $screen ) { $screen->add_help_tab( array( 'id' => 'publishrank-crawl-help', 'title' => __( 'Safe use', 'publishrank' ), 'content' => '<p>' . esc_html__( 'All cleanup options are off by default. Change one group at a time and test the public site. robots.txt rules are crawler hints, not access controls.', 'publishrank' ) . '</p>' ) ); }
 		echo '<div class="wrap publishrank-crawl-optimization"><h1>' . esc_html__( 'Crawl Optimization', 'publishrank' ) . '</h1><p>' . esc_html__( 'Reduce unnecessary WordPress discovery markup and clean low-value crawl paths. Options are disabled until you choose them.', 'publishrank' ) . '</p>';
-		echo '<style>.publishrank-crawl-optimization{max-width:1100px}.pr-co-card{background:#fff;border:1px solid #dcdcde;border-radius:10px;padding:20px 24px;margin:18px 0}.pr-co-card h2{margin-top:0}.pr-co-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.pr-co-option{display:block;padding:12px;border:1px solid #e2e4e7;border-radius:7px}.pr-co-option .description{display:block;margin:7px 0 0 25px;line-height:1.5}.pr-co-warning{border-left:4px solid #dba617;background:#fff8e5;padding:12px 15px}</style>';
 		echo '<form method="post" action="options.php">';
 		settings_fields( 'publishrank_crawl_optimization' );
 		$this->section( __( 'Remove unwanted metadata', 'publishrank' ), __( 'Remove discovery links and software headers from public pages. This does not disable the underlying WordPress APIs.', 'publishrank' ), array(
@@ -255,6 +267,7 @@ final class CrawlOptimizationPage {
 			array( 'remove_rsd_wlw', __( 'Remove RSD / WLW links', 'publishrank' ) ),
 			array( 'remove_oembed_links', __( 'Remove oEmbed discovery links', 'publishrank' ) ),
 			array( 'remove_generator', __( 'Remove generator tag', 'publishrank' ) ),
+			array( 'hide_source_markers', __( 'Hide PublishRank credit comments and generator tag', 'publishrank' ) ),
 			array( 'remove_pingback', __( 'Remove X-Pingback header', 'publishrank' ) ),
 			array( 'remove_powered_by', __( 'Remove X-Powered-By header', 'publishrank' ), __( 'PHP or the web server may add this header after WordPress runs; host-level configuration may still be needed.', 'publishrank' ) ),
 		) );

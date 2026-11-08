@@ -207,7 +207,57 @@ final class PublicationProfile {
 			'founder'             => $get( 'publishrank_schema_founder' ),
 			'founding_location'   => $get( 'publishrank_schema_founding_location' ),
 			'knows_about'         => $get( 'publishrank_schema_knows_about' ),
+			'slogan'              => $get( 'publishrank_identity_slogan' ),
+			'vat_id'              => $get( 'publishrank_identity_vat_id' ),
+			'tax_id'              => $get( 'publishrank_identity_tax_id' ),
+			'duns'                => $get( 'publishrank_identity_duns' ),
+			'lei_code'            => $get( 'publishrank_identity_lei_code' ),
+			'iso6523'             => $get( 'publishrank_identity_iso6523' ),
+			'naics'               => $get( 'publishrank_identity_naics' ),
+			'employees'           => $get( 'publishrank_identity_employees' ),
+			'editorial_email'     => $get( 'publishrank_identity_editorial_email' ),
+			'advertising_email'   => $get( 'publishrank_identity_advertising_email' ),
+			'tips_email'          => $get( 'publishrank_identity_tips_email' ),
 		);
+	}
+
+	/**
+	 * Editorial policy pages, keyed by schema.org property. Option key suffix => property.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function policy_fields() {
+		return array(
+			'publishing_principles' => 'publishingPrinciples',
+			'ethics'                => 'ethicsPolicy',
+			'corrections'           => 'correctionsPolicy',
+			'masthead'              => 'masthead',
+			'fact_checking'         => 'verificationFactCheckingPolicy',
+			'unnamed_sources'       => 'unnamedSourcesPolicy',
+			'feedback'              => 'actionableFeedbackPolicy',
+			'diversity'             => 'diversityPolicy',
+			'diversity_report'      => 'diversityStaffingReport',
+			'ownership_funding'     => 'ownershipFundingInfo',
+			'no_bylines'            => 'noBylinesPolicy',
+			'mission_coverage'      => 'missionCoveragePrioritiesPolicy',
+		);
+	}
+
+	/**
+	 * Configured policy URLs as schema.org property => URL. Empty or invalid URLs are skipped.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function publishing_principles() {
+		$out = array();
+		foreach ( self::policy_fields() as $suffix => $prop ) {
+			$value = get_option( 'publishrank_identity_policy_' . $suffix, '' );
+			$value = is_string( $value ) ? esc_url_raw( trim( $value ) ) : '';
+			if ( '' !== $value && wp_http_validate_url( $value ) ) {
+				$out[ $prop ] = $value;
+			}
+		}
+		return $out;
 	}
 
 	/** @return array<string, string> */

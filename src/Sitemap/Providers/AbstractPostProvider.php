@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
 abstract class AbstractPostProvider implements SitemapProviderInterface {
 	const SHARD_SIZE      = 50000;
 	protected $post_types = array();
+	/** Post statuses listed in the sitemap (integrations may add public custom statuses such as bbPress "closed"). */
+	protected $post_statuses = array( 'publish' );
 	/** URLs per file. Sitemap protocol maximum is 50,000 URLs and 50 MB uncompressed; media providers use smaller files because each URL carries image/video blocks. */
 	protected function shard_size() {
 		return self::SHARD_SIZE; }
@@ -24,7 +26,7 @@ abstract class AbstractPostProvider implements SitemapProviderInterface {
 		$query = new \WP_Query(
 			array(
 				'post_type'      => $this->post_types,
-				'post_status'    => 'publish',
+				'post_status'    => $this->post_statuses,
 				'posts_per_page' => 1,
 				'no_found_rows'  => false,
 				'fields'         => 'ids',
@@ -37,7 +39,7 @@ abstract class AbstractPostProvider implements SitemapProviderInterface {
 		$query = new \WP_Query(
 			array(
 				'post_type'      => $this->post_types,
-				'post_status'    => 'publish',
+				'post_status'    => $this->post_statuses,
 				'posts_per_page' => 1,
 				'orderby'        => 'modified',
 				'order'          => 'DESC',
@@ -63,16 +65,18 @@ abstract class AbstractPostProvider implements SitemapProviderInterface {
 			$extra = $this->extra( $post_id );
 			if ( $this->requires_extra() && '' === trim( (string) $extra ) ) {
 				continue; }
+			if ( ! $this->requires_extra() ) {
+				$extra .= \PublishRankSEO\Meta\LanguageAlternates::sitemap_links( $post_id ); }
 			$modified = get_post_modified_time( DATE_W3C, true, $post_id );
 				$lastmod  = ! empty( $modified ) ? $modified : get_post_time( DATE_W3C, true, $post_id );
 			$entries[] = SitemapRenderer::url( $url, $lastmod, $extra );
 		}
-		return SitemapRenderer::urlset( $entries, $this->namespaces() );
+		return SitemapRenderer::urlset( $entries, $this->all_namespaces() );
 	}
 	protected function query_args() {
 		return array(
 			'post_type'           => $this->post_types,
-			'post_status'         => 'publish',
+			'post_status'         => $this->post_statuses,
 			'ignore_sticky_posts' => true,
 			'meta_query'          => $this->robots_query(),
 		); }
@@ -119,4 +123,11 @@ abstract class AbstractPostProvider implements SitemapProviderInterface {
 	}
 	protected function namespaces() {
 		return array(); }
+	/** Provider namespaces plus xhtml when translations may be listed. */
+	private function all_namespaces() {
+		$ns = $this->namespaces();
+		if ( ! $this->requires_extra() && \PublishRankSEO\Meta\LanguageAlternates::has_multilingual_plugin() ) {
+			$ns['xhtml'] = 'http://www.w3.org/1999/xhtml'; }
+		return $ns;
+	}
 }

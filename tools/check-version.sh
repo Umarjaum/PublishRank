@@ -13,7 +13,6 @@ check "readme.txt Stable tag" "$(grep -m1 '^Stable tag:' "$root/readme.txt" | se
 check "readme.txt top changelog" "$(grep -m1 -E '^= [0-9]' "$root/readme.txt" | sed -E 's/= ([^ ]+) =.*/\1/')"
 check "changelog.txt top entry" "$(grep -m1 -E '^= [0-9]' "$root/changelog.txt" | sed -E 's/= ([^ ]+) =.*/\1/')"
 check "Branding fallback" "$(grep -m1 -E "'[0-9]+\.[0-9]+\.[0-9]+';" "$root/src/Core/Branding.php" | sed -E "s/.*'([0-9.]+)';.*/\1/")"
-# Archived release notes and audit snapshots intentionally retain historical versions.
-stale=$(grep -rnE '\b2\.[0-9]+\.[0-9]+\b' "$root/docs" "$root/src/Admin/HelpDocumentationPage.php" 2>/dev/null | grep -vE '/(RELEASE-[^/:]+\.md|AUDIT-INVENTORY\.md):' | grep -vE "\b$header\b|changelog|Schema|WordPress|PHP" | grep -iE 'version|release|package|through' || true)
+stale=$(grep -rnE --exclude='RELEASE-*' --exclude='AUDIT-INVENTORY.md' '\b2\.[0-9]+\.[0-9]+\b' "$root/docs" "$root/src/Admin/HelpDocumentationPage.php" 2>/dev/null | grep -vE "\b$header\b|changelog|Schema|WordPress|PHP" | grep -iE 'version|release|package|through' || true)
 if [ -n "$stale" ]; then echo "FAIL  stale version text in docs:"; echo "$stale"; status=1; else echo "ok    docs and help page"; fi
 exit $status

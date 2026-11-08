@@ -4,16 +4,12 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.9.111
+Stable tag: 2.17.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
 
 Free SEO plugin for news publishers with News SEO, XML sitemaps, schema, metadata, redirects and technical SEO tools.
-
-== Languages ==
-
-An Urdu translation of the PublishRank interface is included. Set the WordPress site language to Urdu under **Settings → General**, or choose Urdu as your preferred language in your WordPress user profile for the administration screens.
 
 Compatibility target: WordPress 7.1. This package includes a compatibility test plan in docs/maintenance/WORDPRESS-7.1.3-COMPATIBILITY.md. The plugin remains installable on PHP 7.4+ and passed syntax checks on PHP 8.3.6; PHP 8.5 is the forward compatibility target. Complete staging checks before production use.
 
@@ -25,6 +21,8 @@ Copyright and project rights: Muhammad Umar Jabbar.
 
 Features include:
 
+* Features screen (formerly SEO Modules) with instant on/off toggle cards for sitemaps, schema, social metadata, the live SEO score, internal links, breadcrumbs, redirects, the 404 monitor, robots.txt, llms.txt and IndexNow.
+* Floating SEO Analysis panel in the editor with a live score ring out of 100, passed checks and items to improve, plus side-by-side Google, Facebook/LinkedIn and X previews.
 * SEO titles, descriptions, canonicals, robots directives, Open Graph and X/Twitter metadata.
 * Connected JSON-LD schema for organizations, people, webpages, articles, breadcrumbs and supported media/content types.
 * XML sitemaps for posts, pages, taxonomies, authors, images and videos, including a Google News sitemap.
@@ -35,7 +33,7 @@ Features include:
 * IndexNow notifications and manual URL submission (optional; sends eligible public URLs to the IndexNow service when enabled).
 * Configurable llms.txt and optional llms-full.txt resources, with a public paginated schema-discovery endpoint linked from llms.txt.
 * Editorial SEO analysis, internal-link recommendations, sitemap diagnostics and WP-CLI commands.
-* Publisher Toolkit with a read-only pre-publication checklist for drafts, pending and scheduled stories; permission-aware bulk SEO metadata editing; role-based access; and optional image alt-text assistance that preserves existing descriptions.
+* Publisher Toolkit with permission-aware bulk SEO metadata editing, role-based access for the toolkit, and optional image alt-text assistance that preserves existing descriptions.
 * Optional built-in WP Hide Login module with a custom login endpoint, configurable slug, administration URL rewriting where Apache rules are available, and 404 protection for direct default paths.
 * Always-on technical source provenance markers in page source; they do not add a promotional link or visible footer credit.
 
@@ -55,7 +53,7 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 == Documentation ==
 
 * In WordPress: **PublishRank → Documentation & Help** explains titles, variables, output controls, breadcrumbs, sitemaps, schema, robots, redirects, the robust 404 Monitor, IndexNow, Baidu, diagnostics, the admin menu and toolbar, the sitemap browser view, versions and troubleshooting.
-* In the package: `docs/features/FEATURES.md` lists every dashboard feature and Technical Health check provided through version 2.9.110. The `docs/` folder also contains guides for sitemaps, branding, admin navigation, the 404 Monitor, troubleshooting, versioning and a WordPress 7.1.3 compatibility checklist.
+* In the package: `docs/features/FEATURES.md` lists every dashboard feature and Technical Health check provided through version 2.10.1. The `docs/` folder also contains guides for sitemaps, branding, admin navigation, the 404 Monitor, troubleshooting, versioning and a WordPress 7.1.3 compatibility checklist.
 * Online: [publishrankseo.vercel.app](https://publishrankseo.vercel.app/).
 
 == Frequently Asked Questions ==
@@ -85,7 +83,7 @@ A readable view of the same sitemap search engines fetch as plain XML: totals, a
 Enable **Record a capped rolling 404 log** in **PublishRank → Settings**, then review entries at **PublishRank → 404 Monitor**. The monitor aggregates normalized paths by browser, mobile or crawler category, records hit counts and first/last seen times, and keeps only the latest useful referrer path without storing IP addresses, cookies, request bodies or full query strings. It ignores admin, AJAX, cron, REST, non-GET/HEAD, common static-asset and infrastructure-probe requests. The log is rate-limited, protected against concurrent write loss, retained for 90 days and capped at 500 entries. Administrators can search paths, filter visitor categories, sort by hits or recency, dismiss entries, clear the log, or create validated same-site redirects. It is a bounded diagnostic aid, not a complete access log, analytics system, WAF or DDoS defense.
 
 = Where is the complete feature list? =
-The package guide `docs/features/FEATURES.md` is the complete dashboard inventory through version 2.9.110. It includes every card under Search & discovery, Content & publishing, Measure & maintain, and Settings & help, plus every Technical Health check: Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt, Schema Aggregator, SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Internal links, Link intelligence, Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, WP Hide Login, Configuration history, Diagnostics, Setup wizard, Settings, Titles & Meta, Import / Export, Documentation & help, SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility.
+The package guide `docs/features/FEATURES.md` is the complete dashboard inventory through version 2.10.1. It includes every card under Search & discovery, Content & publishing, Measure & maintain, and Settings & help, plus every Technical Health check: Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt, Schema Aggregator, SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Internal links, Link intelligence, Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, WP Hide Login, Configuration history, Diagnostics, Setup wizard, Settings, Titles & Meta, Import / Export, Documentation & help, SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility.
 
 = Which logo does PublishRank use? =
 One file, `assets/images/publishrank-brand-mark.png`, shown in the admin sidebar, toolbar, screen headers, setup wizard and sitemap view. No SVG or alternate icon files are packaged.
@@ -126,7 +124,7 @@ PublishRank does not include visitor analytics or send publisher content to Publ
 
 == Terms and Conditions ==
 
-PublishRank is provided under the GPLv2-or-later license. The plugin does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. Technical provenance markers are always present in public HTML source.
+PublishRank is provided under the GPLv2-or-later license. The plugin does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. Technical provenance markers are present in public HTML source by default and can be hidden under Crawl Optimization.
 
 == External Services ==
 
@@ -144,9 +142,71 @@ Other website links in the administration interface (including the Schema.org vo
 
 == Changelog ==
 
-= 2.9.111 =
-* Added a complete Urdu translation catalog for the PublishRank interface, including plural forms and the Gutenberg breadcrumbs block.
-* Added local text-domain loading and documented how to select Urdu in WordPress.
+= 2.17.0 =
+* **SEO Analysis 3.0: focus-keyword scoring restored.** The live analysis now scores the focus keyword in the title, meta description, URL slug, opening paragraph, subheadings, image alt text, body density (0.5–3%) and distribution across the article. Plural/singular variants are matched.
+
+= 2.16.0 =
+* **Job Posting pages.** New "Job Posting" schema type with fields for hiring organization (name, website, logo), closing date, employment type, address or fully remote (with applicant country), salary range, currency and period, job reference and direct apply. The title is the job title and the post content the description. Markup is only output when the required details are complete, and stops automatically after the closing date.
+* **Automatic sitewide broken-link checker.** Link Intelligence can now check every published article daily or weekly in the background (optionally including external links), and re-checks an article's internal links as soon as it is published or updated. Shows when the last full check finished.
+* **Better multi-language support (Polylang and WPML).** Sitemaps list each article's translations (hreflang links); article schema uses the article's own language and links its translations (workTranslation); publication name, descriptions, title templates and separators can be translated in Polylang Strings / WPML String Translation.
+
+= 2.15.0 =
+* **Review articles: proper reviewed item.** Review and Review News Article now ask for the type of item (Product, Book, Movie, TV series, app, game, course, restaurant, hotel …), its page, image, brand or maker, author/director/artist, and pros and cons. itemReviewed is no longer a generic "Thing" (which Google ignores for review stars), and ReviewNewsArticle now carries itemReviewed, reviewRating, positiveNotes and negativeNotes.
+* **Live coverage now works end to end.** Live updates are shown on the article (newest first, each with its own anchor) so the LiveBlogPosting markup matches what readers see, or place them with the [publishrank_live_updates] shortcode. Each update always has a headline, plus publisher and image; the article's dateModified follows the latest update.
+* **Paywalled articles**: when "accessible for free" is unticked, the article gets the hasPart / cssSelector markup Google requires (new "Paywalled section CSS class" field, default .paywall).
+* **Fact-checks**: new ClaimReview fields (claim, who made it, where and when it appeared, verdict and 1–5 rating).
+* **Block editor sidebar**: "PublishRank SEO" sidebar with SEO title and meta description, live character counts, and Show SEO analysis / Add internal links buttons. The floating card also shows title and description lengths.
+* **Same focus keyword warning**: the analysis now warns when another published article already uses the same focus keyword.
+* **WordPress.org guidelines**: Newsroom form input is unslashed and sanitized everywhere; Crawl Optimization uses wp_add_inline_script / wp_add_inline_style instead of printed tags; new switch to hide the PublishRank credit comments and generator tag.
+
+= 2.14.0 =
+* **One SEO panel in the editor, with Fix buttons.** The floating SEO Analysis panel is now the single score summary; the full report box below the editor ("PublishRank Fix Assistant & Full Report") starts collapsed on first use instead of showing the same score twice, and remembers each editor's open/closed choice. Every item under "To improve" has a Fix button: SEO title, meta description and focus keyword are generated from the article and saved in one click; other fixes open the matching step in the full report.
+* **One-click internal links.** "Add internal links" in the floating panel, and "Insert" / "Insert all internal links" in the full report, place links to related published articles on a matching phrase in your text (block editor, classic editor or text mode). Suggestions with no matching phrase go into one short "Related coverage:" line at the end. Nothing is saved until you update the post.
+* **Reportage and other news articles**: new Dateline, Reported from, Story location, Backstory and Correction notice fields. NewsArticle-family schema now outputs dateline, locationCreated, contentLocation, backstory, a CorrectionComment, thumbnailUrl and publishingPrinciples, with contentLocation defaulting to the reporting location for ReportageNewsArticle.
+* **Advanced Organization schema**: top-level email and telephone, editorial / advertising / news-tips contact points with language and area served, VAT ID, tax ID, DUNS, LEI, ISO 6523, NAICS, slogan, number of employees and image. NewsMediaOrganization adds ethicsPolicy, correctionsPolicy, masthead, verificationFactCheckingPolicy, unnamedSourcesPolicy, actionableFeedbackPolicy, diversityPolicy, diversityStaffingReport, ownershipFundingInfo, noBylinesPolicy and missionCoveragePrioritiesPolicy (set them in the Setup Wizard, Details step). New `publishrank_schema_organization` filter.
+* **Podcast schema fixes**: PodcastEpisode is only output for real episodes (podcast post types, podcast plugin audio, feed enclosures, the Podcast Episode schema choice or the Podcast category) instead of every article with an audio clip; uses `duration` and `audio` instead of `timeRequired`; uses the SEO description; reads more episode-number fields; author has a URL; merges with the Schema Selection episode instead of printing two. New `publishrank_podcast_is_episode` filter.
+* **Web Stories schema fixes**: story posters, sections and publisher logo now apply to every Article subtype (NewsArticle, ReportageNewsArticle, BlogPosting …), not only three types; the fallback Article always has a publisher, an author URL, a description and isAccessibleForFree.
+* **Advanced meta tags**: robots adds max-snippet:-1 and max-video-preview:-1 next to max-image-preview:large (editor values are respected); articles get article:content_tier, meta author, X labels for author and reading time, and og:video when a video URL is set.
+
+= 2.12.1 =
+* **Every tool screen now matches Features, Help & documentation and the Setup Wizard.** Inside the shared frame, older screens (Schema, IndexNow, Search engines, Redirects, 404 monitor, Analytics, Insights, Newsroom, Traffic Guard and the rest) use the same white cards, borders, corner radius and shadow, the same light table headers, the same field height and focus ring, brand-coloured tick boxes and switches, and the Features-style segmented tabs. The warm beige backgrounds and red-to-green stripes on top of cards are gone. Settings, fields and saving are unchanged.
+* **Fixed: the Robots.txt screen stopped halfway.** A missing default value made the "Full robots.txt override" switch crash the page, so the Save button, the live preview, the checks, the crawlability matrix and the URL tester never appeared, and the screen was not shown inside the shared frame. It now loads completely, inside the same frame as every other tool, and stacks into one column on narrower screens.
+* General Settings and Sitemap Hub show the same small "Control center" label above their title as Features.
+* Settings rows on phones no longer show doubled divider lines.
+
+= 2.12.0 =
+* **The Setup Wizard now looks and works like Features**: the same branded header, the same side menu on the left and the wizard in the main column, instead of a separate pop-up window. On a fresh install the other menu entries are shown with a lock until the required publisher fields are saved, so you can see what unlocks next.
+* **Clearer step track**: one dot per step that fills exactly up to the step you are on and animates from the previous step. Finished steps are links, so you can jump back to any of them. On phones the track shows dots only, with "Step 2 of 8 · Publisher" above it.
+* **Back keeps what you typed**: Back now saves the current step before returning, and pressing Enter in a field always continues instead of going back. Optional steps (Details, Social, Search, Content, Local) have **Skip for now**.
+* **Unsaved-changes guard**, the same as General Settings: a sticky action bar says when a step has unsaved changes, and leaving through the menu, the step track, Skip or Exit asks first.
+* **Friendlier fields**: Organization / Person cards with icons that update the form instantly, a live thumbnail next to every image field, content types as tick chips, Features-style switches, required fields and errors announced to screen readers, and 16 px fields on phones so iOS no longer zooms in.
+* **Review and complete screens**: summary tiles with an icon, a clear "set / not set" look and an Edit button that jumps straight to the right step; a success banner with the completion date; shortcuts to Dashboard, General Settings and Features. The welcome step shows a three-step guide and a site readiness check with "Fix" links for permalinks and conflicting SEO plugins.
+* **Fixed: sticky bars did not stick.** The shared screen frame used overflow: hidden, which stopped the General Settings section bar and save bar from staying on screen while scrolling. It now uses overflow: clip, so they stick as intended.
+* **Faster screens**: the full-screen animated-logo loader is replaced with a slim brand-coloured progress bar under the toolbar. Screens are usable as soon as they are parsed instead of waiting for every image, and the animated GIF is no longer downloaded on each page.
+* All new animations use only transform and opacity and are switched off when the system asks for reduced motion. The "Finish setting up PublishRank" reminder no longer uses inline styles.
+
+= 2.11.0 =
+* **SEO Modules is now called Features**, a name every publisher understands. The menu entry, screen title, Dashboard control center, filters (All / On / Off), search box and switch labels were renamed. The page address and every saved switch are unchanged.
+* **Every PublishRank screen now shares one layout**, matching Features, General Settings and Sitemap Hub: the branded header on top, the same side menu on the left and the tool in the main column. The side menu lists Dashboard, Features, General Settings and Sitemap Hub, then groups every other tool under Search & discovery, Content & publishing, Newsroom, Measure & maintain and Help. The group you are in opens automatically and only screens you may open are listed. Each tool screen starts with a short title and a plain-language description. Tool settings, fields and saving are unchanged.
+* **Redesigned Help & documentation**: a three-step "start here" guide, topic filters and search, one card per topic with a short summary and the full explanation behind "Read more", a direct link to the matching screen, and a "Common problems & quick fixes" section.
+* **Clearer sitemap index page in the browser**: a plain-language explanation, the one address to submit with Copy and Google Search Console / Bing shortcuts, a three-step "how it works" strip, totals with icons, and a "What's in your sitemap" list with one row per content type showing its icon, description, number of addresses, share of the total, last change and an Open button. Each content type has its own colour, empty rows explain that they fill up automatically, files split into parts are listed in their row and singular/plural wording is correct. Child sitemap pages use the same look. Search engines still receive exactly the same XML.
+* Table headers on PublishRank screens are readable again (dark text on a light header).
+
+= 2.10.1 =
+* Redesigned **Settings** (now titled General Settings) to match the SEO Modules screen: shared side menu, one card per section with an icon and summary, a sticky section bar that highlights where you are, a "Find a setting" search, switch-style checkboxes and a sticky save bar that tells you when you have unsaved changes (and warns before you leave the page). Every field, option name and save behaviour is unchanged.
+* **Sitemap Health is now the Sitemap Hub**: XML sitemap master switch; your sitemap address with Copy and Open buttons; one-click links to submit it in Google Search Console and Bing Webmaster Tools; whether robots.txt lists it; headline numbers (unique URLs, sitemap files, content types included, last-updated coverage); and instant switches to include or exclude Pages, Custom post types, Categories & tags, Authors, Google News, Images, Videos and Attachment pages. URL preview, News sitemap diagnostics and error reporting are kept, in the same new style.
+* The Sitemap Hub only flags background sitemap preparation when it has stalled or WP-Cron is overdue, instead of listing routine progress for every sitemap.
+* Fixed the unreadable table header on the old Background preparation table (now part of the Sitemap Hub rows).
+
+= 2.10.0 =
+* Added the **SEO Modules** screen (PublishRank → SEO Modules): switch XML Sitemap, Google News Sitemap, Schema Markup, Meta & Social Previews, Live SEO Score, Internal Links, Breadcrumbs, Redirects, 404 Monitor, Robots.txt, AI & llms.txt and IndexNow on or off from toggle cards. Changes save instantly, with filter, search and a no-JavaScript fallback. Each switch uses the same option as the feature's own settings screen.
+* Added a compact SEO Modules control center to the Dashboard.
+* Added an XML sitemap master switch (`publishrank_sitemap_enabled`, default on). When off, PublishRank's sitemaps and robots.txt sitemap lines are removed and the WordPress built-in sitemap is used.
+* Redesigned the floating editor panel as **SEO Analysis**: a live score ring out of 100 with an Excellent / Good / Needs improvement / Needs work rating, word, image and link counts, the focus keyword, a "To improve" list and a "Passed checks" list. It can be minimized to a small score pill, dragged, and re-analyzed on demand.
+* The SEO score now updates live while writing in the block editor, not only in the classic editor.
+* Live analysis keeps the saved focus keyword when the editor screen has no keyword field, so the score no longer drops after the first refresh.
+* Live Preview → **Social previews** now shows Google, Facebook & LinkedIn, and X cards side by side, each with title and description length checks and a social-image tip.
+* Added `publishrank_module_switches` (filter) and `publishrank_module_toggled` (action) for developers.
 
 = 2.9.110 =
 * Added **Setup Wizard** directly under Dashboard in the PublishRank sidebar (also kept in the dashboard hero, workflow card, Plugins row and toolbar).

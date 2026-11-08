@@ -13,7 +13,7 @@ This is a staging checklist, not a statement of test results. Complete it on a c
 - [ ] Activate without notices; setup wizard opens
 - [ ] PublishRank sidebar menu, groups and Dashboard icon render in at least two admin colour schemes
 - [ ] Toolbar item and WordPress-logo dropdown entry show the PublishRank mark
-- [ ] Screen headers show the version `2.9.111`
+- [ ] Screen headers show the version `2.17.0`
 
 ## Output
 
@@ -26,7 +26,7 @@ This is a staging checklist, not a statement of test results. Complete it on a c
 - [ ] Index and every child sitemap return valid XML
 - [ ] Browser view loads styled in light and dark modes
 - [ ] News sitemap respects the freshness window
-- [ ] Sitemap Health reports no errors
+- [ ] Sitemap Hub reports no errors
 
 ## Redirects and robots
 

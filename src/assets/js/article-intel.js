@@ -350,6 +350,21 @@
     if (target) { target.value = target.defaultValue || ''; $(target).trigger('input'); }
   });
   $(document).on('click.prIntel', '.pr-studio__copy', function () { copyLink($(this)); });
+  /* One-click internal links: place the link on a matching phrase in the text. */
+  function linkItem($btn) { var d = $btn.data('link'); if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { d = null; } } return d; }
+  function insertLinks($btn, items) {
+    if (!window.PublishRankLinks) { feedback($btn, false, t('applyFail', 'Could not save the value. Please try again.')); return; }
+    var r = window.PublishRankLinks.insert(items);
+    var $f = $btn.closest('.pr-studio__link').find('.pr-studio__copy-feedback').first();
+    if ($f.length) { $f.text(r.message); window.setTimeout(function () { $f.text(''); }, 5000); } else { feedback($btn, r.ok, r.message); }
+    if (r.ok && (r.placed + r.related) > 0) { $btn.closest('.pr-studio__link').find('.pr-studio__link-insert').prop('disabled', true); schedule(); }
+  }
+  $(document).on('click.prIntel', '.pr-studio__link-insert', function () { var it = linkItem($(this)); if (it) { insertLinks($(this), [it]); } });
+  $(document).on('click.prIntel', '.pr-studio__link-all', function () {
+    var items = [];
+    $(this).closest('.pr-studio__block').find('.pr-studio__link-insert:not(:disabled)').each(function () { var it = linkItem($(this)); if (it) { items.push(it); } });
+    insertLinks($(this), items);
+  });
   $(document).on('input.prIntel', '#pr-studio-description', function () {
     var n = $(this).val().length;
     var format = t(n === 1 ? 'characterCountSingle' : 'characterCountPlural', n === 1 ? '%d character (target 70–160)' : '%d characters (target 70–160)');

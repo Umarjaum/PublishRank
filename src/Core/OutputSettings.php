@@ -108,4 +108,15 @@ final class OutputSettings {
 	public static function breadcrumb_schema() {
 		return self::is_on( self::BREADCRUMB_SCHEMA );
 	}
+
+	/**
+	 * Whether the "Powered by PublishRank" comments, generator tag and publishrank=active tag are printed.
+	 * On by default; an administrator can switch them off under Crawl Optimization (WordPress.org guideline:
+	 * credits in public output must be under the site owner's control).
+	 */
+	public static function source_markers() {
+		$options = get_option( 'publishrank_crawl_optimization', array() );
+		$hidden  = is_array( $options ) && ! empty( $options['hide_source_markers'] );
+		return (bool) apply_filters( 'publishrank_source_markers', ! $hidden );
+	}
 }

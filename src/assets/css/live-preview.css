@@ -108,3 +108,45 @@
 @media(max-width:600px){.pr-pv-snippet-editor__field{align-items:stretch;flex-direction:column}.pr-pv-snippet-editor__field>label{flex-basis:auto}.pr-pv-snippet-editor__field input,.pr-pv-snippet-editor__field textarea{width:100%;min-width:0}.pr-pv-meter{grid-template-columns:78px minmax(30px,1fr) 72px;gap:7px}}
 
 @media(prefers-reduced-motion:reduce){.pr-preview *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* ---------- Social previews: Google, Facebook/LinkedIn and X side by side ---------- */
+.pr-sp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:6px 0 10px}
+.pr-sp{display:flex;flex-direction:column;gap:10px;min-width:0;padding:12px;border:1px solid var(--pv-line,#e2e4e9);border-radius:14px;background:#fafbfc}
+.pr-sp__head{display:flex;align-items:center;gap:8px}
+.pr-sp__badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;color:#fff;font:700 13px/1 Arial,sans-serif}
+.pr-sp__badge--google{background:#fff;color:#4285f4;box-shadow:inset 0 0 0 1px #dadce0}
+.pr-sp__badge--facebook{background:#1877f2;font-size:15px}
+.pr-sp__badge--x{background:#0f1419;font-size:12px}
+.pr-sp__name{font-size:13px;font-weight:600;color:#1e2230}
+.pr-sp__frame{overflow:hidden;background:#fff;border:1px solid #e4e6eb;border-radius:10px;font-family:Arial,sans-serif}
+.pr-sp__media{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:1.91/1;background:linear-gradient(135deg,#eef0f4,#e2e5eb)}
+.pr-sp__media img{display:block;width:100%;height:100%;object-fit:cover}
+.pr-sp__noimg{font-size:12px;color:#65676b}
+.pr-sp__serp{padding:14px}
+.pr-sp__site{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.pr-sp__fav{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#f1f3f4;border:1px solid #dadce0;color:#4d5156;font-size:12px;font-weight:700}
+.pr-sp__sitetext{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.pr-sp__sitename{font-size:14px;color:#202124}
+.pr-sp__crumbs{font-size:12px;color:#4d5156;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-sp__gtitle{margin:2px 0 4px;font-size:18px;line-height:1.3;color:#1a0dab;overflow-wrap:anywhere}
+.pr-sp__gdesc{font-size:13px;line-height:1.55;color:#4d5156;overflow-wrap:anywhere}
+.pr-sp__fbbody{padding:10px 12px 12px;background:#f0f2f5;border-top:1px solid #e4e6eb}
+.pr-sp__host{font-size:11.5px;color:#65676b;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-sp__ftitle{margin:3px 0 2px;font-size:15px;font-weight:600;line-height:1.3;color:#050505;overflow-wrap:anywhere}
+.pr-sp__fdesc{font-size:13px;line-height:1.4;color:#65676b;overflow-wrap:anywhere}
+.pr-sp__x{padding:0;border:0;background:transparent}
+.pr-sp__xcard{overflow:hidden;border:1px solid #cfd9de;border-radius:16px;background:#fff}
+.pr-sp__xoverlay{position:absolute;left:10px;bottom:10px;max-width:calc(100% - 20px);padding:2px 6px;border-radius:4px;background:rgba(0,0,0,.77);color:#fff;font-size:13px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-sp__xfrom{margin-top:4px;font-size:13px;color:#536471}
+.pr-sp__xfrom::before{content:"From "}
+.pr-sp__x.is-small .pr-sp__xcard{display:flex}
+.pr-sp__x.is-small .pr-sp__xmedia{flex:0 0 120px;aspect-ratio:1/1;border-right:1px solid #cfd9de}
+.pr-sp__xtext{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;padding:10px 12px}
+.pr-sp__chips{display:flex;flex-wrap:wrap;gap:6px}
+.pr-sp__chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:500;background:#f0f1f4;color:#5f6475}
+.pr-sp__chip b{font-weight:700}
+.pr-sp__chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pr-sp__chip.is-good{background:#e8f7ee;color:#11713a}
+.pr-sp__chip.is-warn{background:#fdf3e2;color:#8a5a06}
+.pr-sp__chip.is-bad{background:#fdecee;color:#a3222b}
+.pr-sp__tip{padding:8px 12px;border-radius:8px;background:#fdf3e2;color:#8a5a06}

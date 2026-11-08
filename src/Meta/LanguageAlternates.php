@@ -126,6 +126,71 @@ final class LanguageAlternates {
 		return ( $default && ! empty( $alternates[ $default ] ) ) ? $alternates[ $default ] : '';
 	}
 
+	/** True when Polylang or WPML is active. */
+	public static function has_multilingual_plugin() {
+		return function_exists( 'pll_get_post_translations' ) || has_filter( 'wpml_element_trid' );
+	}
+
+	/** Locale of one post (Polylang / WPML), falling back to the site default. */
+	public static function post_locale( $post_id ) {
+		if ( function_exists( 'pll_get_post_language' ) ) {
+			$locale = self::locale( (string) pll_get_post_language( (int) $post_id, 'locale' ) );
+			if ( $locale ) {
+				return $locale; }
+		}
+		if ( has_filter( 'wpml_post_language_details' ) ) {
+			$details = apply_filters( 'wpml_post_language_details', null, (int) $post_id );
+			if ( is_array( $details ) && ! empty( $details['locale'] ) && self::locale( $details['locale'] ) ) {
+				return self::locale( $details['locale'] ); }
+		}
+		return self::default_locale();
+	}
+
+	/**
+	 * Published translations of a post, including the post itself.
+	 *
+	 * @return array<string,int> locale => post ID
+	 */
+	public static function post_translations( $post_id ) {
+		$post_id = (int) $post_id;
+		$out     = array();
+		if ( function_exists( 'pll_get_post_translations' ) ) {
+			foreach ( (array) pll_get_post_translations( $post_id ) as $id ) {
+				$locale = function_exists( 'pll_get_post_language' ) ? self::locale( (string) pll_get_post_language( (int) $id, 'locale' ) ) : '';
+				if ( $locale && 'publish' === get_post_status( (int) $id ) ) {
+					$out[ $locale ] = (int) $id; }
+			}
+		} elseif ( has_filter( 'wpml_element_trid' ) ) {
+			$type = 'post_' . (string) get_post_type( $post_id );
+			$trid = apply_filters( 'wpml_element_trid', null, $post_id, $type );
+			$rows = $trid ? apply_filters( 'wpml_get_element_translations', null, $trid, $type ) : array();
+			$langs = function_exists( 'icl_get_languages' ) ? (array) icl_get_languages( 'skip_missing=0' ) : array();
+			foreach ( (array) $rows as $code => $row ) {
+				$id = is_object( $row ) && isset( $row->element_id ) ? (int) $row->element_id : 0;
+				$locale = ! empty( $langs[ $code ]['default_locale'] ) ? self::locale( $langs[ $code ]['default_locale'] ) : self::locale( (string) $code );
+				if ( $id && $locale && 'publish' === get_post_status( $id ) ) {
+					$out[ $locale ] = $id; }
+			}
+		}
+		return (array) apply_filters( 'publishrank_post_translations', $out, $post_id );
+	}
+
+	/** xhtml:link hreflang entries for a sitemap <url>; empty unless the post has at least one translation. */
+	public static function sitemap_links( $post_id ) {
+		if ( ! get_option( 'publishrank_seo_multilingual_enabled', true ) || ! self::has_multilingual_plugin() ) {
+			return ''; }
+		$translations = self::post_translations( $post_id );
+		if ( count( $translations ) < 2 ) {
+			return ''; }
+		$xml = '';
+		foreach ( $translations as $locale => $id ) {
+			$url = get_permalink( $id );
+			if ( $url ) {
+				$xml .= '<xhtml:link rel="alternate" hreflang="' . esc_attr( $locale ) . '" href="' . esc_url( $url ) . '"/>'; }
+		}
+		return $xml;
+	}
+
 	/** @param string $value @return string */
 	public static function locale( $value ) {
 		$value = strtolower( preg_replace( '/[^a-zA-Z0-9_-]/', '', (string) $value ) );

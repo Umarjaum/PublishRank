@@ -72,10 +72,14 @@ final class HeadOutput {
 			return;
 		}
 		// Always disclose technical provenance in the public source. This is separate from the optional visible footer credit.
-		echo "<!-- SEO Powered by PublishRank -->\n";
-		echo '<!-- PublishRank: begin; version=' . esc_html( PUBLISHRANK_SEO_VERSION ) . '; output=technical,social,news -->' . "\n";
-		echo '<meta name="generator" content="PublishRank ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
-		echo '<meta name="publishrank" content="active" />' . "\n";
+		$markers = \PublishRankSEO\Core\OutputSettings::source_markers();
+		if ( $markers ) {
+			echo "<!-- SEO Powered by PublishRank -->\n"; }
+		echo '<!-- PublishRank: begin; version=' . esc_html( $markers ? PUBLISHRANK_SEO_VERSION : '' ) . '; output=technical,social,news -->' . "\n";
+		if ( $markers ) {
+			echo '<meta name="generator" content="PublishRank ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
+			echo '<meta name="publishrank" content="active" />' . "\n";
+		}
 		echo "<!-- Technical metadata begin -->\n";
 		$description = $this->meta->description();
 		if ( $this->registry->claim( 'description' ) && '' !== $description ) {
@@ -96,6 +100,15 @@ final class HeadOutput {
 			echo '<meta property="article:section" content="' . esc_attr( $this->meta->section() ) . '" />' . "\n";
 			foreach ( $this->meta->keywords() as $keyword ) {
 				echo '<meta property="article:tag" content="' . esc_attr( $keyword ) . '" />' . "\n";
+			}
+			$accessible = '1' === (string) PostMeta::get( $post_id, PostMeta::ACCESSIBLE_FOR_FREE, '1' );
+			echo '<meta property="article:content_tier" content="' . esc_attr( $accessible ? 'free' : 'locked' ) . '" />' . "\n";
+			$author_name = (string) PostMeta::get( $post_id, PostMeta::AUTHOR_NAME, '' );
+			if ( '' === $author_name ) {
+				$author_name = (string) get_the_author_meta( 'display_name', (int) get_post_field( 'post_author', $post_id ) );
+			}
+			if ( '' !== $author_name ) {
+				echo '<meta name="author" content="' . esc_attr( wp_strip_all_tags( $author_name ) ) . '" />' . "\n";
 			}
 				$news_keywords = implode( ', ', $this->meta->keywords() );
 			if ( $news_keywords ) {
@@ -134,6 +147,14 @@ final class HeadOutput {
 					echo '<meta property="og:image:type" content="' . esc_attr( $image_details['type'] ) . '" />' . "\n"; }
 				if ( 0 === strpos( strtolower( $image ), 'https://' ) ) {
 					echo '<meta property="og:image:secure_url" content="' . esc_url( $image ) . '" />' . "\n"; }
+			}
+			if ( is_singular() ) {
+				$video_url = (string) PostMeta::get( get_queried_object_id(), PostMeta::VIDEO_URL, '' );
+				if ( '' !== $video_url ) {
+					echo '<meta property="og:video" content="' . esc_url( $video_url ) . '" />' . "\n";
+					if ( 0 === strpos( strtolower( $video_url ), 'https://' ) ) {
+						echo '<meta property="og:video:secure_url" content="' . esc_url( $video_url ) . '" />' . "\n"; }
+				}
 			}
 			if ( $this->is_editorial_article() ) {
 				$publisher = $this->publisher_profile();
@@ -174,9 +195,25 @@ final class HeadOutput {
 				if ( $image_alt ) {
 					echo '<meta name="twitter:image:alt" content="' . esc_attr( $image_alt ) . '" />' . "\n"; }
 			}
+			if ( $this->is_editorial_article() ) {
+				// Enhanced X/Slack previews: author and reading time.
+				$tw_post    = get_post( get_queried_object_id() );
+				$tw_author  = $tw_post ? (string) get_the_author_meta( 'display_name', (int) $tw_post->post_author ) : '';
+				$tw_words   = $tw_post ? str_word_count( wp_strip_all_tags( strip_shortcodes( (string) $tw_post->post_content ) ) ) : 0;
+				$tw_minutes = max( 1, (int) ceil( $tw_words / 200 ) );
+				if ( '' !== $tw_author ) {
+					echo '<meta name="twitter:label1" content="' . esc_attr__( 'Written by', 'publishrank' ) . '" />' . "\n";
+					echo '<meta name="twitter:data1" content="' . esc_attr( $tw_author ) . '" />' . "\n";
+				}
+				if ( $tw_words > 0 ) {
+					echo '<meta name="twitter:label2" content="' . esc_attr__( 'Est. reading time', 'publishrank' ) . '" />' . "\n";
+					/* translators: %d: minutes. */
+					echo '<meta name="twitter:data2" content="' . esc_attr( sprintf( _n( '%d minute', '%d minutes', $tw_minutes, 'publishrank' ), $tw_minutes ) ) . '" />' . "\n";
+				}
+			}
 					echo "<!-- X/Twitter metadata end -->\n";
 		}
-			echo "<!-- end of SEO data Powered by PublishRank -->\n";
+			echo \PublishRankSEO\Core\OutputSettings::source_markers() ? "<!-- end of SEO data Powered by PublishRank -->\n" : "<!-- PublishRank: end -->\n";
 	}
 
 	/** Per-post social text override, falling back to the generated value. */
@@ -201,8 +238,13 @@ final class HeadOutput {
 			return 'noindex,nofollow';
 		}
 		$robots = $this->meta->robots();
-		if ( false === strpos( $robots, 'noindex' ) && false === strpos( $robots, 'max-image-preview' ) ) {
-			$robots .= ',max-image-preview:large';
+		if ( false === strpos( $robots, 'noindex' ) ) {
+			// Google's recommended preview controls for indexable pages; editor-set values are never overridden.
+			foreach ( array( 'max-image-preview' => 'max-image-preview:large', 'max-snippet' => 'max-snippet:-1', 'max-video-preview' => 'max-video-preview:-1' ) as $directive => $value ) {
+				if ( false === strpos( $robots, $directive ) && false === strpos( $robots, 'nosnippet' ) ) {
+					$robots .= ',' . $value;
+				}
+			}
 		}
 		return (string) apply_filters( 'publishrank_seo_robots', $robots );
 	}

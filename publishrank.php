@@ -3,7 +3,7 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrankseo.vercel.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.9.111
+ * Version: 2.17.0
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -11,23 +11,14 @@
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: publishrank
- * Domain Path: /languages
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.9.111' );
+define( 'PUBLISHRANK_SEO_VERSION', '2.17.0' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
-
-add_action(
-	'init',
-	static function () {
-		load_plugin_textdomain( 'publishrank', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-	},
-	0
-);
 
 // Built-in PublishRank Newsroom editorial workflow module.
 require_once __DIR__ . '/src/Newsroom/advanced.php';
@@ -107,6 +98,8 @@ register_deactivation_hook(
 			\PublishRankSEO\Monitor\ScheduledAudit::clear_schedule();
 		}
 			wp_clear_scheduled_hook( 'publishrank_daily_analytics_snapshot' );
+			wp_clear_scheduled_hook( 'publishrank_link_check_cron' );
+			wp_clear_scheduled_hook( 'publishrank_link_check_batch' );
 			// Never leave the custom administration-path block active after deactivation.
 			$publishrank_hide_login = get_option( 'publishrank_wp_hide_login', array() );
 			if ( is_array( $publishrank_hide_login ) ) {
@@ -206,7 +199,7 @@ add_action( 'wp_enqueue_scripts', 'publishrank_seo_admin_toolbar_styles' );
 function publishrank_seo_plugin_action_links( $links ) {
 	$settings    = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank' ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '</a>';
 	$wizard      = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-onboarding' ) ) . '">' . esc_html__( 'Setup Wizard', 'publishrank' ) . '</a>';
-	$sitemap     = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-sitemap-health' ) ) . '">' . esc_html__( 'Sitemap Health', 'publishrank' ) . '</a>';
+	$sitemap     = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-sitemap-health' ) ) . '">' . esc_html__( 'Sitemap Hub', 'publishrank' ) . '</a>';
 	$diagnostics = '<a href="' . esc_url( admin_url( 'admin.php?page=publishrank-seo-diagnostics' ) ) . '">' . esc_html__( 'Diagnostics', 'publishrank' ) . '</a>';
 	$support     = '<a href="https://publishrankseo.vercel.app/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Official Website', 'publishrank' ) . '</a>';
 	return array_merge( array( $settings, $wizard, $sitemap, $diagnostics, $support ), $links );

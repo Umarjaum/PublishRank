@@ -452,6 +452,9 @@ final class RobotsTxt {
 
 	/** @return string[] Sitemap URLs PublishRank advertises: the index and, when enabled, the News sitemap directly. */
 	public static function sitemap_urls() {
+		if ( ! \PublishRankSEO\Core\ModuleSwitches::sitemap_enabled() ) {
+			return array();
+		}
 		$urls = array( SitemapUrls::index_url() );
 		if ( get_option( 'publishrank_seo_news_enabled', true ) ) {
 			$urls[] = SitemapUrls::shard_url( 'news', 1 ); }

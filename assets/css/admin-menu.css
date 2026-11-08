@@ -147,3 +147,15 @@
 
 /* Short sidebar: non-essential tools are reached from the Dashboard cards. */
 #adminmenu .wp-submenu li.pr-submenu-hidden{display:none!important}
+
+/* First-run "Finish setting up PublishRank" notice (shown on every admin screen until setup is done). */
+.notice.prw-setup-notice { max-width: 1000px; padding: 14px 16px; border-left-color: #9b1245; }
+.prw-setup-notice__inner { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.prw-setup-notice__logo { flex: 0 0 44px; width: 44px; height: 44px; padding: 7px; box-sizing: border-box; border-radius: 12px; background: #650a24; object-fit: contain; }
+.prw-setup-notice__copy { flex: 1 1 260px; min-width: 0; }
+.prw-setup-notice__copy strong { font-size: 14px; color: #1e2230; }
+.prw-setup-notice__copy p { margin: 4px 0 0; padding: 0; color: #5f6475; }
+.notice.prw-setup-notice .button.prw-setup-notice__button { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 16px; border-color: #9b1245; border-radius: 10px; background: #9b1245; color: #fff; font-weight: 600; }
+.notice.prw-setup-notice .button.prw-setup-notice__button:hover,
+.notice.prw-setup-notice .button.prw-setup-notice__button:focus { border-color: #650a24; background: #650a24; color: #fff; }
+@media (max-width: 600px) { .notice.prw-setup-notice .button.prw-setup-notice__button { width: 100%; justify-content: center; } }

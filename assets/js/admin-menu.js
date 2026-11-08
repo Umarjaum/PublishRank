@@ -69,33 +69,47 @@
 		var items = Array.prototype.slice.call(menu.children);
 		var currentGroup = null;
 		var groupNumber = 0;
-		items.forEach(function (item) {
+		items.forEach(function (item, index) {
 			var link = item.querySelector('a');
 			var marker = link ? link.querySelector('.pr-submenu-group') : null;
 			if (marker) {
-				groupNumber += 1;
-				currentGroup = 'group-' + groupNumber;
-				var groupKey = currentGroup;
-				var title = marker.textContent.trim();
-				marker.remove();
-				item.id = currentGroup;
-				var toggle = document.createElement('button');
-				toggle.type = 'button';
-				toggle.className = 'pr-submenu-group-toggle';
-				toggle.setAttribute('aria-expanded', 'true');
-				toggle.setAttribute('aria-controls', currentGroup);
-				toggle.innerHTML = '<span class="pr-submenu-group-toggle__label"></span><span class="pr-submenu-group-toggle__chevron" aria-hidden="true">⌄</span>';
-				toggle.querySelector('.pr-submenu-group-toggle__label').textContent = title;
-				item.parentNode.insertBefore(toggle, item);
-				toggle.addEventListener('click', function () {
-					var expanded = toggle.getAttribute('aria-expanded') === 'true';
-					toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-					Array.prototype.slice.call(menu.children).forEach(function (candidate) {
-					if (candidate.getAttribute('data-pr-group') === groupKey) {
-							candidate.hidden = expanded;
-						}
-					});
+				var nextGroupIndex = index + 1;
+				while (nextGroupIndex < items.length) {
+					var nextLink = items[nextGroupIndex].querySelector('a');
+					if (nextLink && nextLink.querySelector('.pr-submenu-group')) {
+						break;
+					}
+					nextGroupIndex += 1;
+				}
+				var hasVisibleItems = items.slice(index, nextGroupIndex).some(function (candidate) {
+					return !candidate.classList.contains('pr-submenu-hidden') && !candidate.hidden;
 				});
+				marker.remove();
+				currentGroup = null;
+				if (hasVisibleItems) {
+					groupNumber += 1;
+					currentGroup = 'group-' + groupNumber;
+					var groupKey = currentGroup;
+					var title = marker.textContent.trim();
+					item.id = currentGroup;
+					var toggle = document.createElement('button');
+					toggle.type = 'button';
+					toggle.className = 'pr-submenu-group-toggle';
+					toggle.setAttribute('aria-expanded', 'true');
+					toggle.setAttribute('aria-controls', currentGroup);
+					toggle.innerHTML = '<span class="pr-submenu-group-toggle__label"></span><span class="pr-submenu-group-toggle__chevron" aria-hidden="true">⌄</span>';
+					toggle.querySelector('.pr-submenu-group-toggle__label').textContent = title;
+					item.parentNode.insertBefore(toggle, item);
+					toggle.addEventListener('click', function () {
+						var expanded = toggle.getAttribute('aria-expanded') === 'true';
+						toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+						Array.prototype.slice.call(menu.children).forEach(function (candidate) {
+							if (candidate.getAttribute('data-pr-group') === groupKey) {
+								candidate.hidden = expanded;
+							}
+						});
+					});
+				}
 			}
 			if (currentGroup) {
 				item.setAttribute('data-pr-group', currentGroup);

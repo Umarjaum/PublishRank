@@ -26,6 +26,20 @@ final class SettingsPage {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( 'publishrank' === $page ) {
 			VariablePicker::enqueue( '' );
+			wp_enqueue_style( 'publishrank-settings-ui', \PublishRankSEO\Core\Branding::asset_url( 'css/settings.css' ), array(), AdminShell::ver( 'css/settings.css' ) );
+			wp_enqueue_script( 'publishrank-settings-ui', \PublishRankSEO\Core\Branding::asset_url( 'js/settings.js' ), array(), AdminShell::ver( 'js/settings.js' ), true );
+			wp_localize_script(
+				'publishrank-settings-ui',
+				'publishrankSettingsUi',
+				array(
+					'dirty'     => __( 'You have unsaved changes', 'publishrank' ),
+					'clean'     => __( 'All changes saved', 'publishrank' ),
+					'saving'    => __( 'Saving…', 'publishrank' ),
+					/* translators: %d: number of matching settings. */
+					'matches'   => __( '%d matching settings', 'publishrank' ),
+					'noResults' => __( 'No settings match your search.', 'publishrank' ),
+				)
+			);
 		}
 	}
 
@@ -941,6 +955,60 @@ final class SettingsPage {
 	public function sanitize_sitemap_aliases( $value ) {
 		return ''; }
 
+	/** Settings sections in display order: icon, title and one-line summary. */
+	private static function sections() {
+		return array(
+			'titles'         => array( 'fa-heading', __( 'Titles & Meta', 'publishrank' ), __( 'How page titles are built in search results.', 'publishrank' ) ),
+			'identity'       => array( 'fa-id-card', __( 'Publisher identity variants', 'publishrank' ), __( 'Other names your publication is known by.', 'publishrank' ) ),
+			'output'         => array( 'fa-sliders', __( 'Output and indexing', 'publishrank' ), __( 'What PublishRank prints on your pages and what search engines may index.', 'publishrank' ) ),
+			'international'  => array( 'fa-globe', __( 'Multilingual and international SEO', 'publishrank' ), __( 'Language and regional versions of your site.', 'publishrank' ) ),
+			'attribution'    => array( 'fa-fingerprint', __( 'Attribution', 'publishrank' ), __( 'Technical markers in your page source.', 'publishrank' ) ),
+			'breadcrumbs'    => array( 'fa-signs-post', __( 'Breadcrumbs', 'publishrank' ), __( 'The breadcrumb trail readers see and its structured data.', 'publishrank' ) ),
+			'infrastructure' => array( 'fa-server', __( 'Infrastructure domains', 'publishrank' ), __( 'Optional media, CDN, video and API hosts.', 'publishrank' ) ),
+			'news'           => array( 'fa-newspaper', __( 'News SEO and sitemaps', 'publishrank' ), __( 'Google News, XML sitemap content, media sitemaps and monitoring.', 'publishrank' ) ),
+			'portability'    => array( 'fa-file-export', __( 'Settings portability', 'publishrank' ), __( 'Copy these settings to another site, or restore a backup.', 'publishrank' ) ),
+		);
+	}
+
+	/** Short labels for the section chips. */
+	private static function chip_labels() {
+		return array(
+			'titles'         => __( 'Titles & Meta', 'publishrank' ),
+			'identity'       => __( 'Identity', 'publishrank' ),
+			'output'         => __( 'Output & indexing', 'publishrank' ),
+			'international'  => __( 'International SEO', 'publishrank' ),
+			'attribution'    => __( 'Attribution', 'publishrank' ),
+			'breadcrumbs'    => __( 'Breadcrumbs', 'publishrank' ),
+			'infrastructure' => __( 'Infrastructure', 'publishrank' ),
+			'news'           => __( 'News & sitemaps', 'publishrank' ),
+			'portability'    => __( 'Portability', 'publishrank' ),
+		);
+	}
+
+	/** @var bool Whether a section card is open. */
+	private static $section_open = false;
+
+	/** Close the previous section card (if any) and open the next one. */
+	private static function section_open( $key, $extra = '' ) {
+		self::section_close();
+		$all = self::sections();
+		list( $icon, $title, $summary ) = $all[ $key ];
+		echo '<section class="pr-set-card" id="pr-settings-' . esc_attr( $key ) . '" data-pr-set-section aria-labelledby="pr-settings-' . esc_attr( $key ) . '-title">';
+		echo '<header class="pr-set-card__head"><span class="pr-set-card__icon" aria-hidden="true"><i class="fa-solid ' . esc_attr( $icon ) . '"></i></span>';
+		echo '<div class="pr-set-card__heading"><h2 class="pr-set-card__title" id="pr-settings-' . esc_attr( $key ) . '-title">' . esc_html( $title ) . '</h2><p class="pr-set-card__summary">' . esc_html( $summary ) . '</p></div>';
+		echo $extra; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts by the caller.
+		echo '</header><div class="pr-set-card__body">';
+		self::$section_open = true;
+	}
+
+	/** Close the open section card. */
+	private static function section_close() {
+		if ( self::$section_open ) {
+			echo '</div></section>';
+			self::$section_open = false;
+		}
+	}
+
 		/** Render the settings form. */
 	public function page() {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -962,21 +1030,39 @@ final class SettingsPage {
 			'archive' => array( 'label' => __( 'Archive title', 'publishrank' ), 'default' => '%%title%% %%sep%% %%sitename%%', 'context' => 'archive' ),
 		);
 		?>
-			<div class="wrap publishrank-settings-page">
+			<div class="wrap publishrank-settings-page pr-modules-wrap pr-set-wrap">
 		<?php
 		\PublishRankSEO\Admin\AdminAssets::header( __( 'Settings', 'publishrank' ), __( 'Output, indexing, News SEO, sitemaps and integrations. One-time publisher setup lives in the Setup Wizard.', 'publishrank' ) );
 		settings_errors();
 		?>
-			<p><?php esc_html_e( 'Configure PublishRank for this WordPress site. Every site in a multisite network keeps its own publication identity and infrastructure settings.', 'publishrank' ); ?></p>
-				<form method="post" action="options.php">
-			<?php settings_fields( 'publishrank_seo' ); ?>
-					<div class="publishrank-settings-actions publishrank-settings-actions--top"><?php submit_button( __( 'Save PublishRank settings', 'publishrank' ), 'primary', 'submit', false ); ?></div>
-				<div class="rhs-setup-summary" style="margin:14px 0 22px;padding:16px 18px;border:1px solid var(--pr-border);border-left:4px solid var(--pr-primary);border-radius:12px;background:#f8f8ff;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-					<div style="flex:1;min-width:240px"><strong><?php esc_html_e( 'One-time setup lives in the Setup Wizard', 'publishrank' ); ?></strong><p style="margin:4px 0 0"><?php esc_html_e( 'Publisher identity, organization or person details, social profiles, site verification, language and country, and homepage metadata are configured once in the wizard. This page keeps the ongoing controls.', 'publishrank' ); ?></p></div>
-					<a class="button button-primary" href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( \PublishRankSEO\Admin\OnboardingPage::SLUG ) . '&edit=1&step=2' ); ?>"><?php esc_html_e( 'Edit in Setup Wizard', 'publishrank' ); ?></a>
+			<div class="pr-modules-layout pr-set-layout">
+			<?php AdminShell::nav( 'settings' ); ?>
+			<div class="pr-modules-main pr-set-main">
+			<div class="pr-modules-intro pr-set-intro">
+				<div>
+					<p class="pr-shell-kicker"><?php esc_html_e( 'Control center', 'publishrank' ); ?></p>
+					<h2 class="pr-modules-title"><?php esc_html_e( 'General Settings', 'publishrank' ); ?></h2>
+					<p class="pr-modules-lead"><?php esc_html_e( 'Configure PublishRank for this WordPress site. Every site in a multisite network keeps its own publication identity and infrastructure settings.', 'publishrank' ); ?></p>
+				</div>
+				<a class="pr-set-wizard-link" href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( \PublishRankSEO\Admin\OnboardingPage::SLUG ) . '&edit=1&step=2' ); ?>"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> <?php esc_html_e( 'Edit in Setup Wizard', 'publishrank' ); ?></a>
 			</div>
-			<nav class="pr-settings-nav" aria-label="<?php esc_attr_e( 'Settings sections', 'publishrank' ); ?>"><a href="#pr-settings-titles"><?php esc_html_e( 'Titles & Meta', 'publishrank' ); ?></a><a href="#pr-settings-output"><?php esc_html_e( 'Output & indexing', 'publishrank' ); ?></a><a href="#pr-settings-international"><?php esc_html_e( 'International SEO', 'publishrank' ); ?></a><a href="#pr-settings-breadcrumbs"><?php esc_html_e( 'Breadcrumbs', 'publishrank' ); ?></a><a href="#pr-settings-infrastructure"><?php esc_html_e( 'Infrastructure', 'publishrank' ); ?></a><a href="#pr-settings-news"><?php esc_html_e( 'News & sitemaps', 'publishrank' ); ?></a><a href="#pr-settings-portability"><?php esc_html_e( 'Portability', 'publishrank' ); ?></a></nav>
-			<h2 class="pr-settings-section" id="pr-settings-titles"><?php esc_html_e( 'Titles & Meta', 'publishrank' ); ?></h2>
+			<div class="pr-set-callout">
+				<span class="pr-set-callout__icon" aria-hidden="true"><i class="fa-solid fa-circle-info"></i></span>
+				<div><strong><?php esc_html_e( 'One-time setup lives in the Setup Wizard', 'publishrank' ); ?></strong><p><?php esc_html_e( 'Publisher identity, organization or person details, social profiles, site verification, language and country, and homepage metadata are configured once in the wizard. This page keeps the ongoing controls.', 'publishrank' ); ?></p></div>
+			</div>
+			<div class="pr-set-toolbar" data-pr-set-toolbar>
+				<nav class="pr-set-chips" aria-label="<?php esc_attr_e( 'Settings sections', 'publishrank' ); ?>">
+				<?php foreach ( self::chip_labels() as $chip_key => $chip_label ) : ?>
+					<a href="#pr-settings-<?php echo esc_attr( $chip_key ); ?>" data-pr-set-chip="pr-settings-<?php echo esc_attr( $chip_key ); ?>"><?php echo esc_html( $chip_label ); ?></a>
+				<?php endforeach; ?>
+				</nav>
+				<label class="screen-reader-text" for="pr-set-search"><?php esc_html_e( 'Find a setting', 'publishrank' ); ?></label>
+				<span class="pr-modules-search pr-set-search hide-if-no-js"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="pr-set-search" placeholder="<?php esc_attr_e( 'Find a setting…', 'publishrank' ); ?>" autocomplete="off" data-pr-set-search /></span>
+			</div>
+			<p class="pr-set-search-status" data-pr-set-search-status aria-live="polite" hidden></p>
+				<form method="post" action="options.php" class="pr-set-form" data-pr-set-form>
+			<?php settings_fields( 'publishrank_seo' ); ?>
+			<?php self::section_open( 'titles' ); ?>
 			<p><?php esc_html_e( 'Control the global search-title format. Individual posts and pages can still override their own SEO title.', 'publishrank' ); ?></p>
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th scope="row"><label for="publishrank_seo_title_separator"><?php esc_html_e( 'Title Separator', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_title_separator" name="publishrank_seo_title_separator">
@@ -989,9 +1075,9 @@ final class SettingsPage {
 					<tr><th scope="row"><label for="<?php echo esc_attr( $template_option ); ?>"><?php echo esc_html( $template['label'] ); ?></label></th><td><input id="<?php echo esc_attr( $template_option ); ?>" name="<?php echo esc_attr( $template_option ); ?>" type="text" class="large-text code" value="<?php echo esc_attr( $val( $template_option, $template['default'] ) ); ?>" /> <?php echo VariablePicker::slot( $template_option, 'title', $template['context'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by VariablePicker::slot(). ?><p class="description"><?php esc_html_e( 'Use Insert variable to add a supported token, including %%sep%% for the separator above.', 'publishrank' ); ?></p></td></tr>
 				<?php endforeach; ?>
 			</tbody></table>
-			<h2 class="pr-settings-section" id="pr-settings-identity"><?php esc_html_e( 'Publisher identity variants', 'publishrank' ); ?></h2>
+			<?php self::section_open( 'identity' ); ?>
 			<table class="form-table" role="presentation"><tbody><tr><th scope="row"><label for="publishrank_identity_alternate_names"><?php esc_html_e( 'Organization name variants', 'publishrank' ); ?></label></th><td><textarea id="publishrank_identity_alternate_names" name="publishrank_identity_alternate_names" class="large-text" rows="4" placeholder="One variant per line"><?php echo esc_textarea( $val( 'publishrank_identity_alternate_names', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'Optional. Add recognized names, abbreviations, or spelling variants. Each line becomes an Organization alternateName value.', 'publishrank' ); ?></p></td></tr></tbody></table>
-		<h2 class="pr-settings-section" id="pr-settings-output"><?php esc_html_e( 'Output and indexing', 'publishrank' ); ?></h2>
+		<?php self::section_open( 'output' ); ?>
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th scope="row"><?php esc_html_e( 'SEO plugin ownership handoff', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_external_seo_handoff" value="0" /><label><input name="publishrank_external_seo_handoff" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::external_seo_handoff_preference() ); ?> /> <?php esc_html_e( 'Let a supported active SEO plugin own overlapping page metadata and JSON-LD', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Off by default. When enabled, PublishRank suppresses its titles, descriptions, canonical and robots tags, social metadata, hreflang and page JSON-LD only while Yoast SEO, Rank Math, All in One SEO, SEOPress or The SEO Framework is detected. Confirm the other plugin is configured to provide the output you need. This does not change its settings or your saved PublishRank output switches; redirects, sitemaps and standalone schema feeds are unaffected.', 'publishrank' ); ?></p>
 					<?php
@@ -1044,7 +1130,7 @@ final class SettingsPage {
 						?>
 						<option value="<?php echo esc_attr( $position ); ?>" <?php selected( $val( 'publishrank_social_watermark_position', 'bottom-right' ), $position ); ?>><?php echo esc_html( ucwords( str_replace( '-', ' ', $position ) ) ); ?></option><?php endforeach; ?></select> <label for="publishrank_social_watermark_opacity"><?php esc_html_e( 'Opacity %', 'publishrank' ); ?></label> <input id="publishrank_social_watermark_opacity" name="publishrank_social_watermark_opacity" type="number" min="10" max="100" value="<?php echo esc_attr( $val( 'publishrank_social_watermark_opacity', 75 ) ); ?>" class="small-text" /> <label for="publishrank_social_watermark_size"><?php esc_html_e( 'Size %', 'publishrank' ); ?></label> <input id="publishrank_social_watermark_size" name="publishrank_social_watermark_size" type="number" min="5" max="50" value="<?php echo esc_attr( $val( 'publishrank_social_watermark_size', 18 ) ); ?>" class="small-text" /> <label for="publishrank_social_watermark_margin"><?php esc_html_e( 'Margin px', 'publishrank' ); ?></label> <input id="publishrank_social_watermark_margin" name="publishrank_social_watermark_margin" type="number" min="0" max="300" value="<?php echo esc_attr( $val( 'publishrank_social_watermark_margin', 24 ) ); ?>" class="small-text" /></p><p class="description"><?php esc_html_e( 'The original media file is never changed. PublishRank creates and caches a separate copy only for social metadata; if GD is unavailable or processing fails, the original image is used.', 'publishrank' ); ?></p></td></tr>
 				</tbody></table>
-		<h2 class="pr-settings-section" id="pr-settings-international"><?php esc_html_e( 'Multilingual and international SEO', 'publishrank' ); ?></h2>
+		<?php self::section_open( 'international' ); ?>
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th scope="row"><?php esc_html_e( 'Multilingual and international SEO', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_multilingual_enabled" value="0" /><label><input name="publishrank_seo_multilingual_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_multilingual_enabled', true ) ); ?> /> <?php esc_html_e( 'Enable hreflang and regional metadata', 'publishrank' ); ?></label></td></tr>
 				<tr><th scope="row"><label for="publishrank_seo_hreflang_map"><?php esc_html_e( 'Language / regional URL map', 'publishrank' ); ?></label></th><td><textarea id="publishrank_seo_hreflang_map" name="publishrank_seo_hreflang_map" rows="5" class="large-text code" placeholder="en-US=https://example.com/
@@ -1053,12 +1139,12 @@ ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_h
 				<tr><th scope="row"><?php esc_html_e( 'Mirror map on every page', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_hreflang_mirror" value="0" /><label><input name="publishrank_seo_hreflang_mirror" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_hreflang_mirror', false ) ); ?> /> <?php esc_html_e( 'Use the map above for every page by repeating the page path under each language URL (only when every language folder has the same URL structure). Otherwise the map applies to the home page, and individual pages use their own list in the editor.', 'publishrank' ); ?></label></td></tr>
 				<tr><th scope="row"><label for="publishrank_seo_x_default_url"><?php esc_html_e( 'x-default URL', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_x_default_url" name="publishrank_seo_x_default_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_seo_x_default_url' ) ); ?>" class="large-text" /><p class="description"><?php esc_html_e( 'Optional fallback URL for visitors whose language or region is not mapped.', 'publishrank' ); ?></p></td></tr>
 			</tbody></table>
-		<h2 class="pr-settings-section" id="pr-settings-attribution"><?php esc_html_e( 'Attribution', 'publishrank' ); ?></h2>
+		<?php self::section_open( 'attribution' ); ?>
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th scope="row"><?php esc_html_e( 'Version provenance metadata', 'publishrank' ); ?></th><td><strong><?php esc_html_e( 'Always enabled', 'publishrank' ); ?></strong><p class="description"><?php esc_html_e( 'PublishRank adds technical brand, version, and fingerprint markers to public HTML source. These source markers cannot be disabled here and do not add a promotional link or visible footer credit.', 'publishrank' ); ?></p></td></tr>
 			</tbody></table>
 	
-			<h2 class="pr-settings-section" id="pr-settings-breadcrumbs"><?php esc_html_e( 'Breadcrumbs', 'publishrank' ); ?></h2>
+			<?php self::section_open( 'breadcrumbs' ); ?>
 				<table class="form-table" role="presentation"><tbody>
 					<tr><th scope="row"><?php esc_html_e( 'Frontend breadcrumbs', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_breadcrumbs_enabled" value="0" /><label><input name="publishrank_breadcrumbs_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::is_on( 'publishrank_breadcrumbs_enabled' ) ); ?> /> <?php esc_html_e( 'Show PublishRank breadcrumbs (posts, pages and category/tag/taxonomy archives)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_breadcrumb_schema_enabled" value="0" /><label><input name="publishrank_breadcrumb_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::is_on( 'publishrank_breadcrumb_schema_enabled' ) ); ?> /> <?php esc_html_e( 'Output BreadcrumbList structured data', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'These two switches are independent: you can show the visible trail without the structured data, or keep the structured data while your theme prints the visible trail. BreadcrumbList data is part of the JSON-LD graph, so it also needs "Output the connected JSON-LD schema graph" (Output controls above) to be on. Both are enabled by default and only change what PublishRank itself prints; a breadcrumb trail drawn by your theme or another plugin is not modified.', 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><?php esc_html_e( 'Visible publication identity', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_override_wp_identity" value="0" /><label><input name="publishrank_override_wp_identity" type="checkbox" value="1" <?php checked( $val( 'publishrank_override_wp_identity', true ) ); ?> /> <?php esc_html_e( 'Use the PublishRank publication title and description as the WordPress Site Title and Tagline on the public site (on by default)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_hide_visible_site_title" value="0" /><label><input name="publishrank_hide_visible_site_title" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_title', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site/publication title on the public site (on by default)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_hide_visible_site_description" value="0" /><label><input name="publishrank_hide_visible_site_description" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_description', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site description/tagline on the public site (on by default)', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'This is a visual-only control for common WordPress classic and block-theme selectors. It does not remove the site title or description from SEO meta tags, Open Graph, X/Twitter, JSON-LD, feeds or the WordPress General Settings fields. The publication title and description themselves are set in PublishRank (Identity), not taken from WordPress General Settings.', 'publishrank' ); ?></p></td></tr>
@@ -1081,14 +1167,14 @@ $pr_bc_is_preset = \PublishRankSEO\SEO\BreadcrumbSeparators::is_preset( $pr_bc_s
 <p class="description"><?php esc_html_e( 'Colours use hex codes such as #0a58ca. Leave them blank to follow your theme. Background applies to the Chips and Bar looks.', 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><?php esc_html_e( 'Breadcrumb error handling', 'publishrank' ); ?></th><td><label for="publishrank_breadcrumb_error_mode"><?php esc_html_e( 'Invalid item behavior', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_error_mode" name="publishrank_breadcrumb_error_mode"><option value="skip" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'skip' ); ?>><?php esc_html_e( 'Skip invalid item', 'publishrank' ); ?></option><option value="fallback" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'fallback' ); ?>><?php esc_html_e( 'Use fallback item', 'publishrank' ); ?></option><option value="text" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'text' ); ?>><?php esc_html_e( 'Keep text without link', 'publishrank' ); ?></option><option value="disable" <?php selected( $val( 'publishrank_breadcrumb_error_mode', 'skip' ), 'disable' ); ?>><?php esc_html_e( 'Disable breadcrumbs on error', 'publishrank' ); ?></option></select><br /><label for="publishrank_breadcrumb_error_key"><?php esc_html_e( 'Error key', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_error_key" name="publishrank_breadcrumb_error_key" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_error_key', 'breadcrumb_error' ) ); ?>" class="regular-text code" /><br /><label for="publishrank_breadcrumb_fallback_label"><?php esc_html_e( 'Fallback label', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_fallback_label" name="publishrank_breadcrumb_fallback_label" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_fallback_label', 'Home' ) ); ?>" class="regular-text" /><br /><label for="publishrank_breadcrumb_fallback_url"><?php esc_html_e( 'Fallback URL', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_fallback_url" name="publishrank_breadcrumb_fallback_url" type="url" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_fallback_url', home_url( '/' ) ) ); ?>" class="large-text" /><br /><input type="hidden" name="publishrank_breadcrumb_log_errors" value="0" /><label><input name="publishrank_breadcrumb_log_errors" type="checkbox" value="1" <?php checked( $val( 'publishrank_breadcrumb_log_errors', false ) ); ?> /> <?php esc_html_e( 'Record breadcrumb errors for administrators', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Use these controls when a taxonomy, archive, permalink, or canonical URL cannot be resolved. Error logs stay local to this site.', 'publishrank' ); ?></p></td></tr>
 				</tbody></table>
-			<h2 class="pr-settings-section" id="pr-settings-infrastructure"><?php esc_html_e( 'Infrastructure domains', 'publishrank' ); ?></h2>
+			<?php self::section_open( 'infrastructure' ); ?>
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th scope="row"><label for="publishrank_media_host"><?php esc_html_e( 'Media host', 'publishrank' ); ?></label></th><td><input id="publishrank_media_host" name="publishrank_media_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_media_host' ) ); ?>" class="large-text" placeholder="https://images.example.com" /><p class="description"><?php esc_html_e( 'Optional. Leave empty to keep normal WordPress uploads URLs.', 'publishrank' ); ?></p></td></tr>
 				<tr><th scope="row"><label for="publishrank_cdn_host"><?php esc_html_e( 'CDN host', 'publishrank' ); ?></label></th><td><input id="publishrank_cdn_host" name="publishrank_cdn_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_cdn_host' ) ); ?>" class="large-text" /><input type="hidden" name="publishrank_cdn_enabled" value="0" /><label><input id="publishrank_cdn_enabled" name="publishrank_cdn_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_cdn_enabled', false ) ); ?> /> <?php esc_html_e( 'Enable CDN URL generation', 'publishrank' ); ?></label></td></tr>
 				<tr><th scope="row"><label for="publishrank_video_host"><?php esc_html_e( 'Video host', 'publishrank' ); ?></label></th><td><input id="publishrank_video_host" name="publishrank_video_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_video_host' ) ); ?>" class="large-text" /></td></tr>
 				<tr><th scope="row"><label for="publishrank_api_host"><?php esc_html_e( 'API host', 'publishrank' ); ?></label></th><td><input id="publishrank_api_host" name="publishrank_api_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_api_host' ) ); ?>" class="large-text" /></td></tr>
 			</tbody></table>
-			<h2 class="pr-settings-section" id="pr-settings-news"><?php esc_html_e( 'News SEO and sitemaps', 'publishrank' ); ?></h2>
+			<?php self::section_open( 'news', '<a class="pr-set-card__link" href="' . esc_url( \PublishRankSEO\Core\Branding::page_url( 'publishrank-sitemap-health' ) ) . '"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> ' . esc_html__( 'Open Sitemap Hub', 'publishrank' ) . '</a>' ); ?>
 <table class="form-table" role="presentation"><tbody>
 <tr><th scope="row"><?php esc_html_e( 'News sitemap', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_enabled" value="0" /><label><input name="publishrank_seo_news_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_enabled', true ) ); ?> /> <?php esc_html_e( 'Enable the News sitemap', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Only recently published, indexable content is included.', 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><label for="publishrank_seo_news_post_types"><?php esc_html_e( 'News post types', 'publishrank' ); ?></label></th><td><textarea id="publishrank_seo_news_post_types" name="publishrank_seo_news_post_types" rows="2" class="large-text" placeholder="post
@@ -1127,12 +1213,19 @@ news"><?php echo esc_textarea( $val( 'publishrank_seo_news_post_types', 'post' )
 				<tr><th scope="row"><?php esc_html_e( 'Image optimization policy', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_image_optimizer_enabled" value="0" /><label><input name="publishrank_image_optimizer_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_image_optimizer_enabled', true ) ); ?> /> <?php esc_html_e( 'Enable image quality recommendations', 'publishrank' ); ?></label><br /><label><?php esc_html_e( 'Maximum width', 'publishrank' ); ?> <input name="publishrank_image_max_width" type="number" min="640" max="4000" value="<?php echo esc_attr( $val( 'publishrank_image_max_width', 2000 ) ); ?>" class="small-text" /></label> <label><?php esc_html_e( 'Quality', 'publishrank' ); ?> <input name="publishrank_image_quality" type="number" min="50" max="95" value="<?php echo esc_attr( $val( 'publishrank_image_quality', 82 ) ); ?>" class="small-text" /></label> <label><?php esc_html_e( 'Format', 'publishrank' ); ?> <select name="publishrank_image_format"><option value="webp" <?php selected( $val( 'publishrank_image_format', 'webp' ), 'webp' ); ?>>WebP</option><option value="jpeg" <?php selected( $val( 'publishrank_image_format', 'webp' ), 'jpeg' ); ?>>JPEG</option><option value="preserve" <?php selected( $val( 'publishrank_image_format', 'webp' ), 'preserve' ); ?>><?php esc_html_e( 'Preserve', 'publishrank' ); ?></option></select></label> <a class="button" href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( 'publishrank-image-optimizer' ) ); ?>"><?php esc_html_e( 'Review media', 'publishrank' ); ?></a></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'Monitoring', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_404_monitor" value="0" /><label><input name="publishrank_seo_404_monitor" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_404_monitor', false ) ); ?> /> <?php esc_html_e( 'Record a capped rolling 404 log', 'publishrank' ); ?></label></td></tr>
 			</tbody></table>
-			<div class="publishrank-settings-actions publishrank-settings-actions--bottom"><?php submit_button( __( 'Save PublishRank settings', 'publishrank' ), 'primary', 'submit', false ); ?></div>
+			<?php self::section_close(); ?>
+			<div class="pr-set-savebar" data-pr-set-savebar>
+				<span class="pr-set-savebar__status" data-pr-set-status><i class="fa-solid fa-circle-check" aria-hidden="true"></i> <span><?php esc_html_e( 'Changes apply after you save.', 'publishrank' ); ?></span></span>
+				<?php submit_button( __( 'Save PublishRank settings', 'publishrank' ), 'primary', 'submit', false ); ?>
+			</div>
 		</form>
-		<hr />
-		<h2 class="pr-settings-section" id="pr-settings-portability"><?php esc_html_e( 'Settings portability', 'publishrank' ); ?></h2>
+		<?php self::section_open( 'portability' ); ?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="publishrank_seo_export" /><?php wp_nonce_field( 'publishrank_seo_export' ); ?><?php submit_button( __( 'Export settings', 'publishrank' ), 'secondary', 'submit', false ); ?></form>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="publishrank_seo_import" /><?php wp_nonce_field( 'publishrank_seo_import' ); ?><label for="publishrank_seo_json"><span class="screen-reader-text"><?php esc_html_e( 'PublishRank JSON settings', 'publishrank' ); ?></span></label><textarea id="publishrank_seo_json" name="publishrank_seo_json" rows="8" class="large-text code" required></textarea><?php submit_button( __( 'Import settings', 'publishrank' ), 'secondary' ); ?></form>
+		<?php self::section_close(); ?>
+			<p class="pr-modules-empty" data-pr-set-empty hidden><?php esc_html_e( 'No settings match your search.', 'publishrank' ); ?></p>
+			</div>
+			</div>
 		</div>
 		<?php
 	}

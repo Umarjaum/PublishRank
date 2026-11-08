@@ -19,7 +19,7 @@
 	function draw(){var s=parseInt(size.value,10)||100,pages=Math.max(1,Math.ceil(hits.length/s));if(page>=pages)page=pages-1;
 		var from=page*s,to=from+s,set={};hits.slice(from,to).forEach(function(r){set[r._i]=1;});
 		rows.forEach(function(r,i){r.hidden=!set[i];});
-		cnt.textContent=hits.length===rows.length?rows.length.toLocaleString()+' URLs':hits.length.toLocaleString()+' of '+rows.length.toLocaleString()+' match';
+		cnt.textContent=hits.length===rows.length?rows.length.toLocaleString()+(rows.length===1?' address':' addresses'):hits.length.toLocaleString()+' of '+rows.length.toLocaleString()+' match';
 		rng.textContent=hits.length?('Showing '+(from+1).toLocaleString()+'–'+Math.min(to,hits.length).toLocaleString()+' of '+hits.length.toLocaleString()):'No matches';
 		prev.disabled=page===0;next.disabled=page>=pages-1;}
 	function filter(){var v=q.value.trim().toLowerCase();hits=v?rows.filter(function(r){return keys[r._i].indexOf(v)>-1;}):rows;page=0;draw();}

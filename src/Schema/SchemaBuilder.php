@@ -350,6 +350,9 @@ final class SchemaBuilder {
 		);
 		if ( $description ) {
 			$base['description'] = $description; }
+		if ( 'JobPosting' === $type ) {
+			return self::job_posting( $post, $permalink );
+		}
 		if ( 'Event' === $type ) {
 			$start      = trim( (string) PostMeta::get( $post->ID, PostMeta::EVENT_START, '' ) );
 			$location   = trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::EVENT_LOCATION, '' ) ) );
@@ -432,16 +435,9 @@ final class SchemaBuilder {
 				'@type' => 'Review',
 				'@id'   => $permalink . '#review',
 			) + $base;
-			$review['itemReviewed'] = array(
-				'@type' => 'Thing',
-				'name'  => $item,
-			);
-			$review['reviewRating'] = array(
-				'@type'       => 'Rating',
-				'ratingValue' => (float) $rating_raw,
-				'bestRating'  => 5,
-				'worstRating' => 0,
-			);
+			$review['itemReviewed'] = self::review_item( $post );
+			$review['reviewRating'] = self::review_rating( $post );
+			$review                 = self::review_notes( $review, $post );
 			$review['author']       = array(
 				'@type' => 'Person',
 				'name'  => wp_strip_all_tags( (string) $author_name ),
@@ -530,5 +526,189 @@ final class SchemaBuilder {
 				$urls[] = esc_url_raw( $line ); }
 		}
 		return array_values( array_unique( array_slice( $urls, 0, 20 ) ) );
+	}
+
+	/**
+	 * The reviewed item, typed for Google review snippets. Null when no item name is set.
+	 * The node is given its own @id so a Review and a ReviewNewsArticle on the same page describe one item.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public static function review_item( $post ) {
+		$name = trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::REVIEW_ITEM, '' ) ) );
+		if ( '' === $name ) {
+			return null; }
+		$type = (string) PostMeta::get( $post->ID, PostMeta::REVIEW_ITEM_TYPE, '' );
+		if ( ! array_key_exists( $type, PostMeta::review_item_types() ) ) {
+			$type = 'Thing'; }
+		$item = array(
+			'@type' => $type,
+			'@id'   => trailingslashit( (string) get_permalink( $post ) ) . '#itemreviewed',
+			'name'  => $name,
+		);
+		$url = (string) PostMeta::get( $post->ID, PostMeta::REVIEW_ITEM_URL, '' );
+		if ( '' !== $url ) {
+			$item['url'] = esc_url_raw( $url ); }
+		$image = (string) PostMeta::get( $post->ID, PostMeta::REVIEW_ITEM_IMAGE, '' );
+		if ( '' === $image ) {
+			$found = \PublishRankSEO\Meta\SeoData::image_for_post( $post );
+			$image = $found && ! empty( $found['url'] ) ? (string) $found['url'] : '';
+		}
+		if ( '' !== $image ) {
+			$item['image'] = esc_url_raw( $image ); }
+		$brand = trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::REVIEW_ITEM_BRAND, '' ) ) );
+		if ( '' !== $brand ) {
+			if ( in_array( $type, array( 'Product' ), true ) ) {
+				$item['brand'] = array( '@type' => 'Brand', 'name' => $brand );
+			} elseif ( in_array( $type, array( 'SoftwareApplication', 'MobileApplication', 'VideoGame' ), true ) ) {
+				$item['publisher'] = array( '@type' => 'Organization', 'name' => $brand );
+			}
+		}
+		$creator = trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::REVIEW_ITEM_CREATOR, '' ) ) );
+		if ( '' !== $creator ) {
+			$roles = array(
+				'Book'           => 'author',
+				'Movie'          => 'director',
+				'TVSeries'       => 'director',
+				'MusicRecording' => 'byArtist',
+				'MusicAlbum'     => 'byArtist',
+				'Course'         => 'provider',
+			);
+			if ( isset( $roles[ $type ] ) ) {
+				$item[ $roles[ $type ] ] = array( '@type' => 'Course' === $type ? 'Organization' : ( 'byArtist' === $roles[ $type ] ? 'MusicGroup' : 'Person' ), 'name' => $creator );
+			}
+		}
+		if ( in_array( $type, array( 'SoftwareApplication', 'MobileApplication' ), true ) ) {
+			$item['applicationCategory'] = 'MobileApplication' === $type ? 'MobileApplication' : 'Application'; }
+		return (array) apply_filters( 'publishrank_schema_review_item', $item, $post );
+	}
+
+	/** @return array<string,mixed>|null Rating on a 0–5 scale; null when no valid rating is stored. */
+	public static function review_rating( $post ) {
+		$raw = trim( (string) PostMeta::get( $post->ID, PostMeta::REVIEW_RATING, '' ) );
+		if ( ! is_numeric( $raw ) || (float) $raw < 0 || (float) $raw > 5 ) {
+			return null; }
+		return array(
+			'@type'       => 'Rating',
+			'ratingValue' => (float) $raw,
+			'bestRating'  => 5,
+			'worstRating' => 0,
+		);
+	}
+
+	/**
+	 * Add pros and cons (positiveNotes / negativeNotes) for editorial reviews.
+	 *
+	 * @param array<string,mixed> $node
+	 * @return array<string,mixed>
+	 */
+	public static function review_notes( array $node, $post ) {
+		foreach ( array(
+			'positiveNotes' => PostMeta::REVIEW_PROS,
+			'negativeNotes' => PostMeta::REVIEW_CONS,
+		) as $prop => $key ) {
+			$lines = array_values( array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', wp_strip_all_tags( (string) PostMeta::get( $post->ID, $key, '' ) ) ) ) ) );
+			if ( ! $lines ) {
+				continue; }
+			$items = array();
+			foreach ( array_slice( $lines, 0, 20 ) as $i => $line ) {
+				$items[] = array(
+					'@type'    => 'ListItem',
+					'position' => $i + 1,
+					'name'     => $line,
+				); }
+			$node[ $prop ] = array(
+				'@type'           => 'ItemList',
+				'itemListElement' => $items,
+			);
+		}
+		return $node;
+	}
+
+	/**
+	 * JobPosting (https://developers.google.com/search/docs/appearance/structured-data/job-posting).
+	 * Null unless hiring organization, valid-through date and a location (or remote country) exist.
+	 * Expired postings are not output.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public static function job_posting( $post, $permalink ) {
+		$org     = trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::JOB_HIRING_ORG, '' ) ) );
+		$until   = (string) PostMeta::get( $post->ID, PostMeta::JOB_VALID_THROUGH, '' );
+		$city    = trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::JOB_LOCALITY, '' ) ) );
+		$country = (string) PostMeta::get( $post->ID, PostMeta::JOB_COUNTRY, '' );
+		$remote  = '1' === (string) PostMeta::get( $post->ID, PostMeta::JOB_REMOTE, '0' );
+		$remote_country = (string) PostMeta::get( $post->ID, PostMeta::JOB_REMOTE_COUNTRY, '' );
+		if ( '' === $org || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $until ) ) {
+			return null; }
+		if ( strtotime( $until . ' 23:59:59' ) < time() ) {
+			return null; } // Google asks publishers to remove expired jobs.
+		if ( ! ( '' !== $city && '' !== $country ) && ! ( $remote && '' !== $remote_country ) ) {
+			return null; }
+		$description = trim( wp_kses( (string) $post->post_content, array( 'p' => array(), 'br' => array(), 'ul' => array(), 'ol' => array(), 'li' => array(), 'strong' => array(), 'em' => array(), 'h2' => array(), 'h3' => array() ) ) );
+		if ( '' === $description ) {
+			return null; }
+		$job = array(
+			'@type'          => 'JobPosting',
+			'@id'            => trailingslashit( $permalink ) . '#jobposting',
+			'title'          => wp_strip_all_tags( (string) get_the_title( $post ) ),
+			'description'    => $description,
+			'datePosted'     => get_post_time( 'Y-m-d', true, $post ),
+			'validThrough'   => $until . 'T23:59:59' . wp_date( 'P' ),
+			'url'            => $permalink,
+			'hiringOrganization' => array_filter(
+				array(
+					'@type'  => 'Organization',
+					'name'   => $org,
+					'sameAs' => esc_url_raw( (string) PostMeta::get( $post->ID, PostMeta::JOB_HIRING_ORG_URL, '' ) ),
+					'logo'   => esc_url_raw( (string) PostMeta::get( $post->ID, PostMeta::JOB_HIRING_ORG_LOGO, '' ) ),
+				)
+			),
+		);
+		$types = array_filter( explode( ',', (string) PostMeta::get( $post->ID, PostMeta::JOB_EMPLOYMENT_TYPE, '' ) ) );
+		if ( $types ) {
+			$job['employmentType'] = 1 === count( $types ) ? reset( $types ) : array_values( $types ); }
+		if ( '' !== $city && '' !== $country ) {
+			$job['jobLocation'] = array(
+				'@type'   => 'Place',
+				'address' => array_filter(
+					array(
+						'@type'           => 'PostalAddress',
+						'streetAddress'   => trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::JOB_STREET, '' ) ) ),
+						'addressLocality' => $city,
+						'addressRegion'   => trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::JOB_REGION, '' ) ) ),
+						'postalCode'      => trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::JOB_POSTAL_CODE, '' ) ) ),
+						'addressCountry'  => $country,
+					)
+				),
+			);
+		}
+		if ( $remote ) {
+			$job['jobLocationType'] = 'TELECOMMUTE';
+			if ( '' !== $remote_country ) {
+				$job['applicantLocationRequirements'] = array( '@type' => 'Country', 'name' => $remote_country ); }
+		}
+		$min      = (string) PostMeta::get( $post->ID, PostMeta::JOB_SALARY_MIN, '' );
+		$max      = (string) PostMeta::get( $post->ID, PostMeta::JOB_SALARY_MAX, '' );
+		$currency = (string) PostMeta::get( $post->ID, PostMeta::JOB_SALARY_CURRENCY, '' );
+		$unit     = (string) PostMeta::get( $post->ID, PostMeta::JOB_SALARY_UNIT, '' );
+		if ( '' !== $currency && '' !== $unit && ( '' !== $min || '' !== $max ) ) {
+			$value = array( '@type' => 'QuantitativeValue', 'unitText' => $unit );
+			if ( '' !== $min && '' !== $max && (float) $max > (float) $min ) {
+				$value['minValue'] = (float) $min;
+				$value['maxValue'] = (float) $max;
+			} else {
+				$value['value'] = (float) ( '' !== $min ? $min : $max ); }
+			$job['baseSalary'] = array(
+				'@type'    => 'MonetaryAmount',
+				'currency' => $currency,
+				'value'    => $value,
+			);
+		}
+		$ref = trim( (string) PostMeta::get( $post->ID, PostMeta::JOB_IDENTIFIER, '' ) );
+		if ( '' !== $ref ) {
+			$job['identifier'] = array( '@type' => 'PropertyValue', 'name' => $org, 'value' => $ref ); }
+		$job['directApply'] = '1' === (string) PostMeta::get( $post->ID, PostMeta::JOB_DIRECT_APPLY, '0' );
+		return (array) apply_filters( 'publishrank_schema_job_posting', $job, $post );
 	}
 }

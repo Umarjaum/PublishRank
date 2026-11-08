@@ -55,8 +55,31 @@ final class SitemapEngine {
 			}
 		} return null; }
 	public function index() {
-		return ( new SitemapIndex() )->render( $this->providers() ); }
+		return ( new SitemapIndex() )->render( $this->providers(), $this ); }
+	/** True when the XML holds at least one <url> entry. The sitemap protocol requires one, so an empty <urlset> is rejected by Google Search Console ("Missing XML tag: url"). */
+	public static function has_urls( $xml ) {
+		return is_string( $xml ) && false !== strpos( $xml, '<url>' ); }
+	/**
+	 * Shard numbers worth publishing for a provider. A sitemap file with no URLs is invalid, so an empty provider
+	 * (no forums yet, no web stories, no recent news) is left out of the index. Only the first file can be empty:
+	 * a provider with several files has more than one file of URLs by definition.
+	 *
+	 * @return int[]
+	 */
+	public function listed_shards( $provider ) {
+		$count = max( 0, (int) $provider->get_shard_count() );
+		if ( $count > 1 ) {
+			return range( 1, $count ); }
+		if ( 1 === $count && '' !== $this->render( $provider->get_slug(), 1 ) ) {
+			return array( 1 ); }
+		return array();
+	}
+	/** Public entry: an enabled provider with no URLs answers 404 instead of serving an invalid empty <urlset>. */
 	public function render( $slug, $shard = 1 ) {
+		$xml = $this->render_raw( $slug, $shard );
+		return ( is_string( $xml ) && '' !== $xml && ! self::has_urls( $xml ) ) ? '' : $xml;
+	}
+	private function render_raw( $slug, $shard = 1 ) {
 		$provider = $this->provider( $slug );
 		if ( ! $provider || ! $provider->is_enabled() || absint( $shard ) < 1 || absint( $shard ) > $provider->get_shard_count() ) {
 			return ''; }

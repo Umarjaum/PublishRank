@@ -127,7 +127,8 @@ final class RobotsPage {
 		echo '</select>';
 	}
 
-	private function toggle( $key, $label, $help, $default ) {
+	/** Checkbox row. $default is optional: the full-override toggle relies on it being off. */
+	private function toggle( $key, $label, $help, $default = false ) {
 		echo '<p class="pr-rb-toggle"><input type="hidden" name="' . esc_attr( $key ) . '" value="0" /><label><input type="checkbox" name="' . esc_attr( $key ) . '" value="1"' . checked( (bool) get_option( $key, $default ), true, false ) . ' /> <strong>' . esc_html( $label ) . '</strong></label><span class="description">' . esc_html( $help ) . '</span></p>';
 	}
 

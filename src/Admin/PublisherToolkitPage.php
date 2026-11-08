@@ -8,8 +8,6 @@ namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Meta\PostMeta;
-use PublishRankSEO\SEO\ArticleIntelligence;
-use PublishRankSEO\SEO\EditorialAudit;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -57,21 +55,14 @@ final class PublisherToolkitPage {
 			wp_die( esc_html__( 'You do not have permission to access Publisher Toolkit.', 'publishrank' ) );
 		}
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'bulk'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
-		$allowed_tabs = array( 'bulk', 'preflight' );
-		if ( current_user_can( 'manage_options' ) ) {
-			$allowed_tabs = array_merge( $allowed_tabs, array( 'images', 'access' ) );
-		}
-		if ( ! in_array( $tab, $allowed_tabs, true ) ) {
+		if ( ! in_array( $tab, array( 'bulk', 'images', 'access' ), true ) || ( 'bulk' !== $tab && ! current_user_can( 'manage_options' ) ) ) {
 			$tab = 'bulk';
 		}
 		echo '<div class="wrap">';
-		AdminAssets::header( __( 'Publisher Toolkit', 'publishrank' ), __( 'Editorial workflows for story preflight, bulk metadata, image alt text, and role-based access.', 'publishrank' ) );
+		AdminAssets::header( __( 'Publisher Toolkit', 'publishrank' ), __( 'Editorial-scale SEO workflows inspired by publisher needs: bulk metadata, missing image alt text, and role-based access.', 'publishrank' ) );
 		$this->notice();
 		echo '<nav class="nav-tab-wrapper">';
-		$tabs = array(
-			'bulk'     => __( 'Bulk SEO Editor', 'publishrank' ),
-			'preflight' => __( 'Pre-publication Preflight', 'publishrank' ),
-		);
+		$tabs = array( 'bulk' => __( 'Bulk SEO Editor', 'publishrank' ) );
 		if ( current_user_can( 'manage_options' ) ) {
 			$tabs['images'] = __( 'Image Alt Assistant', 'publishrank' );
 			$tabs['access'] = __( 'Role Access', 'publishrank' );
@@ -93,9 +84,7 @@ final class PublisherToolkitPage {
 			);
 		}
 		echo '</nav>';
-		if ( 'preflight' === $tab ) {
-			$this->preflight_tab();
-		} elseif ( 'images' === $tab ) {
+		if ( 'images' === $tab ) {
 			$this->images_tab();
 		} elseif ( 'access' === $tab ) {
 			$this->access_tab();
@@ -172,101 +161,6 @@ final class PublisherToolkitPage {
 				echo ' <a class="button ' . ( $i === $page_num ? 'button-primary' : '' ) . '" href="' . esc_url( $url ) . '">' . (int) $i . '</a> ';
 			}
 			echo '</p>';
-		}
-		wp_reset_postdata();
-	}
-
-	/** Read-only checklist for unpublished stories the current publisher is allowed to edit. */
-	private function preflight_tab() {
-		$page_num   = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination parameter.
-		$post_types = array_values( array_intersect( $this->editable_post_types(), ArticleIntelligence::supported_post_types() ) );
-		if ( empty( $post_types ) ) {
-			echo '<p>' . esc_html__( 'No supported editorial content types are available for preflight.', 'publishrank' ) . '</p>';
-			return;
-		}
-
-		$query_args = array(
-			'post_type'      => $post_types,
-			'post_status'    => array( 'draft', 'pending', 'future' ),
-			'posts_per_page' => 20,
-			'paged'          => $page_num,
-			'orderby'        => 'modified',
-			'order'          => 'DESC',
-			'no_found_rows'  => false,
-		);
-		$can_edit_others = false;
-		foreach ( $post_types as $post_type ) {
-			$type_object = get_post_type_object( $post_type );
-			$capability  = is_object( $type_object ) && isset( $type_object->cap->edit_others_posts ) ? $type_object->cap->edit_others_posts : 'edit_others_posts';
-			if ( current_user_can( $capability ) ) {
-				$can_edit_others = true;
-				break;
-			}
-		}
-		if ( ! $can_edit_others ) {
-			$query_args['author'] = get_current_user_id();
-		}
-
-		$query = new \WP_Query( $query_args );
-		echo '<p>' . esc_html__( 'Review drafts, stories awaiting approval, and scheduled pieces before they go live. This read-only checklist offers suggestions; it never blocks publication or changes your content. Only stories you can edit are shown.', 'publishrank' ) . '</p>';
-		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Story', 'publishrank' ) . '</th><th>' . esc_html__( 'Status / scheduled time', 'publishrank' ) . '</th><th>' . esc_html__( 'SEO checklist', 'publishrank' ) . '</th><th>' . esc_html__( 'Suggested next steps', 'publishrank' ) . '</th></tr></thead><tbody>';
-		$audit = new EditorialAudit();
-		$shown = 0;
-		foreach ( $query->posts as $post ) {
-			if ( ! current_user_can( 'edit_post', $post->ID ) ) {
-				continue;
-			}
-			$edit_url = get_edit_post_link( $post->ID );
-			if ( ! $edit_url ) {
-				continue;
-			}
-			++$shown;
-			$status_object = get_post_status_object( $post->post_status );
-			$status_label  = is_object( $status_object ) && isset( $status_object->label ) ? $status_object->label : $post->post_status;
-			$status_html   = esc_html( $status_label );
-			if ( 'future' === $post->post_status ) {
-				$timestamp = (int) get_post_time( 'U', true, $post );
-				if ( $timestamp > 0 ) {
-					$status_html .= '<br /><small>' . esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp ) ) . '</small>';
-				}
-			}
-
-			$report  = $audit->analyze( $post );
-			$score   = max( 0, min( 100, (int) ( $report['score'] ?? 0 ) ) );
-			$passed  = max( 0, (int) ( $report['passed'] ?? 0 ) );
-			$total   = max( 1, (int) ( $report['total'] ?? 8 ) );
-			$issues  = isset( $report['issues'] ) && is_array( $report['issues'] ) ? array_values( array_filter( $report['issues'], 'is_string' ) ) : array();
-			$title   = get_the_title( $post );
-			$title   = '' !== trim( (string) $title ) ? $title : __( '(no title)', 'publishrank' );
-			$type_object = get_post_type_object( $post->post_type );
-			$type_label  = is_object( $type_object ) && isset( $type_object->labels->singular_name ) ? $type_object->labels->singular_name : $post->post_type;
-			echo '<tr class="pr-preflight-row"><td><strong><a href="' . esc_url( $edit_url ) . '">' . esc_html( $title ) . '</a></strong><br /><small>' . esc_html( $type_label ) . ' · ID ' . (int) $post->ID . '</small></td><td>' . $status_html . '</td><td><strong>' . esc_html( sprintf( __( '%1$d/100 · %2$d of %3$d checks', 'publishrank' ), $score, $passed, $total ) ) . '</strong></td><td>';
-			if ( empty( $issues ) ) {
-				echo esc_html__( 'No suggestions from this checklist.', 'publishrank' );
-			} else {
-				$visible_issues = array_slice( $issues, 0, 3 );
-				echo '<details><summary>' . esc_html( sprintf( _n( '%d suggestion', '%d suggestions', count( $issues ), 'publishrank' ), count( $issues ) ) ) . '</summary><ul>';
-				foreach ( $visible_issues as $issue ) {
-					echo '<li>' . esc_html( $issue ) . '</li>';
-				}
-				if ( count( $issues ) > count( $visible_issues ) ) {
-					echo '<li>' . esc_html( sprintf( __( 'And %d more; open the story for the full checklist.', 'publishrank' ), count( $issues ) - count( $visible_issues ) ) ) . '</li>';
-				}
-				echo '</ul></details>';
-			}
-			echo '</td></tr>';
-		}
-		if ( 0 === $shown ) {
-			echo '<tr><td colspan="4">' . esc_html__( 'No draft, pending-review, or scheduled stories you can edit were found on this page.', 'publishrank' ) . '</td></tr>';
-		}
-		echo '</tbody></table>';
-		if ( $query->max_num_pages > 1 ) {
-			echo '<nav class="tablenav"><div class="tablenav-pages" aria-label="' . esc_attr__( 'Preflight pages', 'publishrank' ) . '">';
-			for ( $i = 1; $i <= (int) $query->max_num_pages; $i++ ) {
-				$url = add_query_arg( array( 'page' => self::SLUG, 'tab' => 'preflight', 'paged' => $i ), admin_url( 'admin.php' ) );
-				echo ' <a class="button ' . ( $i === $page_num ? 'button-primary' : '' ) . '" href="' . esc_url( $url ) . '"' . ( $i === $page_num ? ' aria-current="page"' : '' ) . '>' . (int) $i . '</a> ';
-			}
-			echo '</div></nav>';
 		}
 		wp_reset_postdata();
 	}
@@ -400,7 +294,7 @@ final class PublisherToolkitPage {
 		}
 		global $wp_roles;
 		$roles = isset( $wp_roles ) ? $wp_roles->roles : array();
-		echo '<p>' . esc_html__( 'Choose which WordPress roles can access PublishRank’s pre-publication preflight, bulk SEO editor, and image fallback settings. Administrator access is always retained. Grant access only to trusted editorial roles.', 'publishrank' ) . '</p>';
+		echo '<p>' . esc_html__( 'Choose which WordPress roles can access PublishRank’s bulk SEO editor and image fallback settings. Administrator access is always retained. Grant access only to trusted editorial roles.', 'publishrank' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		wp_nonce_field( 'publishrank_toolkit_save' );
 		echo '<input type="hidden" name="action" value="publishrank_toolkit_save" /><input type="hidden" name="return_tab" value="access" />';

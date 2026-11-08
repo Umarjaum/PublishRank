@@ -1,0 +1,275 @@
+/* PublishRank General Settings: section cards, chip navigation, search, toggle checkboxes and save bar.
+ * Colour tokens (--prm-*) come from modules.css, which loads on this screen too. */
+
+.pr-set-wrap { max-width: 1440px; }
+.pr-set-main { padding-bottom: 0; }
+.pr-set-intro { align-items: center; }
+
+.pr-set-wizard-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	flex: 0 0 auto;
+	padding: 9px 14px;
+	border: 1px solid color-mix(in srgb, var(--prm-primary) 30%, var(--prm-line));
+	border-radius: 10px;
+	background: var(--prm-surface);
+	color: var(--prm-primary);
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none;
+	transition: background .15s ease, border-color .15s ease;
+}
+.pr-set-wizard-link:hover,
+.pr-set-wizard-link:focus { background: var(--prm-primary-soft); border-color: var(--prm-primary); color: var(--prm-primary-strong); }
+
+/* ---------- callout ---------- */
+.pr-set-callout {
+	display: flex;
+	gap: 14px;
+	align-items: flex-start;
+	margin: 0 0 18px;
+	padding: 14px 16px;
+	border: 1px solid var(--prm-line);
+	border-radius: 12px;
+	background: var(--prm-canvas);
+}
+.pr-set-callout__icon { color: var(--prm-primary); font-size: 16px; line-height: 1.4; }
+.pr-set-callout strong { color: var(--prm-text); font-size: 13px; }
+.pr-set-callout p { margin: 3px 0 0; color: var(--prm-muted); font-size: 13px; line-height: 1.5; }
+
+/* ---------- sticky toolbar: chips + search ---------- */
+.pr-set-toolbar {
+	position: sticky;
+	top: 32px;
+	z-index: 30;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0 -30px 18px;
+	padding: 10px 30px;
+	background: color-mix(in srgb, var(--prm-surface) 94%, transparent);
+	border-top: 1px solid var(--prm-line);
+	border-bottom: 1px solid var(--prm-line);
+	backdrop-filter: blur(8px);
+}
+.pr-set-chips {
+	display: flex;
+	flex: 1 1 auto;
+	gap: 6px;
+	min-width: 0;
+	overflow-x: auto;
+	scrollbar-width: none;
+	-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+	mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+}
+.pr-set-chips::-webkit-scrollbar { display: none; }
+.pr-set-wrap .pr-set-chips a {
+	flex: 0 0 auto;
+	padding: 6px 12px;
+	border-radius: 999px;
+	color: var(--prm-muted);
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background .15s ease, color .15s ease;
+}
+.pr-set-wrap .pr-set-chips a:hover { background: var(--prm-canvas); color: var(--prm-text); }
+.pr-set-wrap .pr-set-chips a.is-active { background: var(--prm-primary-soft); color: var(--prm-primary); }
+.pr-set-wrap .pr-set-chips a:focus-visible { outline: 2px solid var(--prm-primary); outline-offset: 1px; box-shadow: none; }
+.pr-set-chips a.is-hidden { display: none; }
+.pr-set-search { flex: 0 0 auto; }
+.pr-set-search input[type="search"] { min-width: 220px; }
+.pr-set-search-status { margin: -6px 0 14px; color: var(--prm-muted); font-size: 13px; }
+
+/* ---------- section cards ---------- */
+.pr-set-card {
+	margin: 0 0 18px;
+	background: var(--prm-surface);
+	border: 1px solid var(--prm-line);
+	border-radius: var(--prm-radius);
+	box-shadow: var(--prm-shadow);
+	scroll-margin-top: 120px;
+}
+.pr-set-card[hidden] { display: none; }
+.pr-set-card__head {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--prm-line);
+}
+.pr-set-card__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 40px;
+	height: 40px;
+	border-radius: 11px;
+	background: var(--prm-primary-soft);
+	color: var(--prm-primary);
+	font-size: 16px;
+}
+.pr-set-card__heading { flex: 1 1 auto; min-width: 0; }
+.pr-set-wrap .pr-set-card__title { margin: 0; padding: 0; border: 0; background: none; font-size: 16px; line-height: 1.3; font-weight: 600; color: var(--prm-text); }
+.pr-set-card__summary { margin: 2px 0 0; color: var(--prm-muted); font-size: 13px; line-height: 1.45; }
+.pr-set-card__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex: 0 0 auto;
+	color: var(--prm-primary);
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none;
+}
+.pr-set-card__link:hover { color: var(--prm-primary-strong); text-decoration: underline; }
+.pr-set-card__body { padding: 4px 20px 8px; }
+.pr-set-card__body > p { margin: 14px 0 4px; color: var(--prm-muted); font-size: 13px; }
+.pr-set-card__body > form { margin: 14px 0; }
+.pr-set-card__body > form .submit { margin: 10px 0 0; padding: 0; }
+
+/* Rows: neutralise the global bordered form-table look inside cards. */
+.pr-set-wrap .pr-set-card .form-table {
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	overflow: visible;
+}
+.pr-set-wrap .pr-set-card .form-table tr { background: transparent; }
+.pr-set-wrap .pr-set-card .form-table tr:hover { background: transparent; }
+.pr-set-wrap .pr-set-card .form-table tbody tr + tr { border-top: 0; }
+.pr-set-wrap .pr-set-card .form-table th,
+.pr-set-wrap .pr-set-card .form-table td { border-bottom: 1px solid var(--prm-line); }
+.pr-set-wrap .pr-set-card .form-table tr:last-child th,
+.pr-set-wrap .pr-set-card .form-table tr:last-child td { border-bottom: 0; }
+.pr-set-wrap .pr-set-card .form-table th {
+	width: 230px;
+	padding: 18px 20px 18px 0;
+	color: var(--prm-text);
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.45;
+}
+.pr-set-wrap .pr-set-card .form-table td { padding: 16px 0; color: var(--prm-text); font-size: 13px; }
+.pr-set-wrap .pr-set-card .form-table td .description { max-width: 760px; color: var(--prm-muted); font-size: 12.5px; line-height: 1.55; }
+.pr-set-wrap .pr-set-card .form-table tr.is-match th,
+.pr-set-wrap .pr-set-card .form-table tr.is-match td { background: color-mix(in srgb, var(--prm-primary-soft) 55%, transparent); }
+.pr-set-wrap .pr-set-card .form-table tr[hidden] { display: none; }
+
+/* Fields */
+.pr-set-wrap .pr-set-card input[type="text"],
+.pr-set-wrap .pr-set-card input[type="url"],
+.pr-set-wrap .pr-set-card input[type="number"],
+.pr-set-wrap .pr-set-card select,
+.pr-set-wrap .pr-set-card textarea {
+	border: 1px solid #d5d7de;
+	border-radius: 8px;
+	box-shadow: none;
+}
+.pr-set-wrap .pr-set-card input:focus,
+.pr-set-wrap .pr-set-card select:focus,
+.pr-set-wrap .pr-set-card textarea:focus { border-color: var(--prm-primary); box-shadow: 0 0 0 3px var(--prm-primary-soft); outline: 0; }
+
+/* Checkboxes become switches. The input stays a real checkbox, so saving is unchanged. */
+.pr-set-wrap .pr-set-card label:has(> input[type="checkbox"]) {
+	display: inline-flex;
+	align-items: flex-start;
+	gap: 10px;
+	margin: 5px 0;
+	line-height: 1.5;
+	cursor: pointer;
+}
+.pr-set-wrap .pr-set-card input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+	position: relative;
+	flex: 0 0 auto;
+	width: 34px;
+	min-width: 34px;
+	height: 20px;
+	margin: 0;
+	border: 0;
+	border-radius: 999px;
+	background: var(--prm-track);
+	box-shadow: none;
+	vertical-align: middle;
+	cursor: pointer;
+	transition: background .2s ease;
+}
+.pr-set-wrap .pr-set-card input[type="checkbox"]::before,
+.pr-set-wrap .pr-set-card input[type="checkbox"]:checked::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	float: none;
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+	transition: transform .2s cubic-bezier(.3, .7, .4, 1);
+}
+.pr-set-wrap .pr-set-card input[type="checkbox"]:checked { background: var(--prm-primary); }
+.pr-set-wrap .pr-set-card input[type="checkbox"]:checked::before { transform: translateX(14px); }
+.pr-set-wrap .pr-set-card input[type="checkbox"]:focus-visible { outline: 2px solid var(--prm-primary); outline-offset: 2px; }
+.pr-set-wrap .pr-set-card input[type="checkbox"]:focus { box-shadow: none; }
+.pr-set-wrap .pr-set-card input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---------- sticky save bar ---------- */
+.pr-set-savebar {
+	position: sticky;
+	bottom: 0;
+	z-index: 30;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	margin: 6px -30px 0;
+	padding: 12px 30px;
+	background: color-mix(in srgb, var(--prm-surface) 95%, transparent);
+	border-top: 1px solid var(--prm-line);
+	backdrop-filter: blur(8px);
+}
+.pr-set-savebar__status { display: inline-flex; align-items: center; gap: 8px; color: var(--prm-muted); font-size: 13px; font-weight: 500; }
+.pr-set-savebar__status i { color: #22a05a; }
+.pr-set-savebar.is-dirty { box-shadow: 0 -10px 24px -18px rgba(155, 18, 69, .45); }
+.pr-set-savebar.is-dirty .pr-set-savebar__status { color: var(--prm-text); font-weight: 600; }
+.pr-set-savebar.is-dirty .pr-set-savebar__status i { color: var(--prm-primary); }
+.pr-set-savebar .button-primary { min-width: 200px; }
+.pr-set-savebar.is-dirty .button-primary { box-shadow: 0 0 0 3px var(--prm-primary-soft); }
+
+/* After the save bar, keep the portability card in the main column. */
+.pr-set-main > .pr-set-card:last-of-type { margin-top: 26px; }
+
+@media (max-width: 960px) {
+	.pr-set-toolbar { flex-wrap: wrap; }
+	.pr-set-search, .pr-set-search input[type="search"] { width: 100%; min-width: 0; }
+}
+@media (max-width: 782px) {
+	.pr-set-toolbar { top: 46px; }
+	.pr-set-wrap .pr-set-card .form-table th { width: auto; padding: 16px 0 4px; border-bottom: 0; }
+	.pr-set-wrap .pr-set-card .form-table td { padding: 4px 0 16px; }
+	.pr-set-wrap .pr-set-card .form-table th,
+	.pr-set-wrap .pr-set-card .form-table td { display: block; }
+	.pr-set-wrap .pr-set-card .form-table tr { display: block; border: 0; }
+}
+@media (max-width: 600px) {
+	.pr-set-intro { align-items: flex-start; }
+	.pr-set-toolbar { margin: 0 -14px 14px; padding: 8px 14px; }
+	.pr-set-savebar { margin: 6px -14px 0; padding: 10px 14px; flex-wrap: wrap; }
+	.pr-set-savebar .button-primary { flex: 1 1 auto; min-width: 0; }
+	.pr-set-card__head { padding: 14px; align-items: flex-start; flex-wrap: wrap; }
+	.pr-set-card__body { padding: 2px 14px 6px; }
+	.pr-set-card__icon { width: 34px; height: 34px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.pr-set-wrap .pr-set-card input[type="checkbox"],
+	.pr-set-wrap .pr-set-card input[type="checkbox"]::before { transition: none; }
+}

@@ -14,9 +14,19 @@ final class PublisherLinkIntelligence {
 	const STATE_KEY      = 'publishrank_link_intelligence_state';
 	const MAX_RESULTS    = 1000;
 
+	const SCHEDULE_OPTION = 'publishrank_link_check_schedule';
+	const CRON_HOOK       = 'publishrank_link_check_cron';
+	const BATCH_HOOK      = 'publishrank_link_check_batch';
+
 	public function register() {
+		// Automatic sitewide checking runs from WP-Cron, so these hooks are registered on every request.
+		add_action( self::CRON_HOOK, array( __CLASS__, 'cron_start' ) );
+		add_action( self::BATCH_HOOK, array( __CLASS__, 'cron_batch' ) );
+		add_action( 'init', array( __CLASS__, 'sync_schedule' ), 30 );
+		add_action( 'transition_post_status', array( __CLASS__, 'check_on_publish' ), 20, 3 );
 		if ( ! is_admin() ) {
 			return; }
+		add_action( 'admin_post_publishrank_link_check_schedule', array( $this, 'handle_schedule' ) );
 		add_action( 'admin_menu', array( $this, 'menu' ), 14 );
 		add_action( 'admin_post_publishrank_link_intelligence_start', array( $this, 'handle_start' ) );
 		add_action( 'admin_post_publishrank_link_intelligence_batch', array( $this, 'handle_batch' ) );
@@ -36,6 +46,24 @@ final class PublisherLinkIntelligence {
 	public function handle_start() {
 		$this->guard( 'publishrank_link_intelligence_start' );
 		check_admin_referer( 'publishrank_link_intelligence_start' ); // Explicit nonce verification for the request data read below.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard() above.
+		self::begin( ! empty( $_POST['check_external'] ) );
+
+		$this->redirect( __( 'Link audit started. Continue in batches to keep large sites responsive.', 'publishrank' ) );
+	}
+
+	public function handle_batch() {
+		$this->guard( 'publishrank_link_intelligence_batch' );
+		$state = get_transient( self::STATE_KEY );
+		if ( ! is_array( $state ) ) {
+			$this->redirect( __( 'No active audit. Start a new audit first.', 'publishrank' ), 'error' ); }
+		$more = self::run_batch( $state );
+			$this->redirect( $more ? __( 'Batch complete. Continue the audit to process the next group of posts or queued external links.', 'publishrank' ) : __( 'Audit complete. Review broken links, redirecting links and redirect rules below.', 'publishrank' ) );
+	}
+
+
+	/** Start a fresh audit (manual or scheduled). */
+	public static function begin( $external ) {
 		$types = Store::allowed_types();
 		$ids   = get_posts(
 			array(
@@ -65,21 +93,20 @@ final class PublisherLinkIntelligence {
 			'last_id'          => 0,
 			'processed'        => 0,
 			'total'            => $total,
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-			'external'         => ! empty( $_POST['check_external'] ),
+			'external'         => (bool) $external,
 			'external_checked' => 0,
 			'started'          => time(),
 		);
 		set_transient( self::STATE_KEY, $state, DAY_IN_SECONDS );
 		update_option( self::RESULTS_OPTION, array(), false );
-		$this->redirect( __( 'Link audit started. Continue in batches to keep large sites responsive.', 'publishrank' ) );
 	}
 
-	public function handle_batch() {
-		$this->guard( 'publishrank_link_intelligence_batch' );
-		$state = get_transient( self::STATE_KEY );
-		if ( ! is_array( $state ) ) {
-			$this->redirect( __( 'No active audit. Start a new audit first.', 'publishrank' ), 'error' ); }
+	/**
+	 * Process one batch of posts (and up to five queued external links). Saves state and results.
+	 *
+	 * @return bool True while work remains.
+	 */
+	public static function run_batch( array $state ) {
 		$types = Store::allowed_types();
 		// Use an explicit ID keyset query rather than offset pagination on large publisher archives.
 		global $wpdb;
@@ -146,9 +173,83 @@ final class PublisherLinkIntelligence {
 		update_option( self::RESULTS_OPTION, array_slice( $results, -self::MAX_RESULTS, null, true ), false );
 		$more = ! empty( $ids ) || ! empty( $state['external_queue'] );
 		if ( ! $more ) {
-			delete_transient( self::STATE_KEY ); } else {
+			delete_transient( self::STATE_KEY );
+			update_option( 'publishrank_link_check_last_run', time(), false );
+		} else {
 			set_transient( self::STATE_KEY, $state, DAY_IN_SECONDS ); }
-			$this->redirect( $more ? __( 'Batch complete. Continue the audit to process the next group of posts or queued external links.', 'publishrank' ) : __( 'Audit complete. Review broken links, redirecting links and redirect rules below.', 'publishrank' ) );
+		return $more;
+	}
+
+	/** off | daily | weekly. */
+	public static function schedule() {
+		$value = (string) get_option( self::SCHEDULE_OPTION, 'off' );
+		return in_array( $value, array( 'off', 'daily', 'weekly' ), true ) ? $value : 'off';
+	}
+
+	/** Keep the WP-Cron event in line with the saved schedule. */
+	public static function sync_schedule() {
+		$schedule = self::schedule();
+		$next     = wp_next_scheduled( self::CRON_HOOK );
+		$current  = $next ? wp_get_schedule( self::CRON_HOOK ) : false;
+		if ( 'off' === $schedule ) {
+			if ( $next ) {
+				wp_clear_scheduled_hook( self::CRON_HOOK ); }
+			return;
+		}
+		if ( $current !== $schedule ) {
+			wp_clear_scheduled_hook( self::CRON_HOOK );
+			wp_schedule_event( time() + HOUR_IN_SECONDS, $schedule, self::CRON_HOOK );
+		}
+	}
+
+	/** Scheduled sitewide check: start a new audit unless one is already running, then process in the background. */
+	public static function cron_start() {
+		if ( 'off' === self::schedule() ) {
+			return; }
+		if ( ! is_array( get_transient( self::STATE_KEY ) ) ) {
+			self::begin( '1' === (string) get_option( 'publishrank_link_check_external', '0' ) ); }
+		self::cron_batch();
+	}
+
+	/** Run batches for up to ~20 seconds, then hand off to a follow-up event so no single request runs long. */
+	public static function cron_batch() {
+		$deadline = microtime( true ) + 20;
+		$more     = false;
+		do {
+			$state = get_transient( self::STATE_KEY );
+			if ( ! is_array( $state ) ) {
+				return; }
+			$more = self::run_batch( $state );
+		} while ( $more && microtime( true ) < $deadline );
+		if ( $more && ! wp_next_scheduled( self::BATCH_HOOK ) ) {
+			wp_schedule_single_event( time() + 60, self::BATCH_HOOK ); }
+	}
+
+	/** When an article is published or updated, re-check its internal links straight away (no external requests). */
+	public static function check_on_publish( $new_status, $old_status, $post ) {
+		if ( 'publish' !== $new_status || 'off' === self::schedule() || ! $post instanceof \WP_Post || wp_is_post_revision( $post ) || ! in_array( $post->post_type, Store::allowed_types(), true ) ) {
+			return; }
+		$results = get_option( self::RESULTS_OPTION, array() );
+		$results = is_array( $results ) ? $results : array();
+		foreach ( $results as $key => $row ) {
+			if ( (int) ( $row['source_id'] ?? 0 ) === (int) $post->ID && in_array( $row['status'] ?? '', array( 'broken_internal', 'redirected_internal' ), true ) ) {
+				unset( $results[ $key ] ); }
+		}
+		foreach ( self::extract_links( (string) $post->post_content ) as $link ) {
+			$kind = self::classify_link( $link['url'] );
+			if ( 'broken_internal' === $kind || 'redirected_internal' === $kind ) {
+				self::add_result( $results, $post, $link, $kind, self::link_detail( $link['url'], $kind ) ); }
+		}
+		update_option( self::RESULTS_OPTION, array_slice( $results, -self::MAX_RESULTS, null, true ), false );
+	}
+
+	public function handle_schedule() {
+		$this->guard( 'publishrank_link_check_schedule' );
+		$value = isset( $_POST['schedule'] ) ? sanitize_key( wp_unslash( $_POST['schedule'] ) ) : 'off';
+		update_option( self::SCHEDULE_OPTION, in_array( $value, array( 'off', 'daily', 'weekly' ), true ) ? $value : 'off', false );
+		update_option( 'publishrank_link_check_external', empty( $_POST['schedule_external'] ) ? '0' : '1', false );
+		self::sync_schedule();
+		$this->redirect( __( 'Automatic link checking saved.', 'publishrank' ) );
 	}
 
 	public function handle_clear() {
@@ -380,6 +481,15 @@ final class PublisherLinkIntelligence {
 		wp_nonce_field( 'publishrank_link_intelligence_start' );
 		echo '<input type="hidden" name="action" value="publishrank_link_intelligence_start" />';
 		echo '<p><label><input type="checkbox" name="check_external" value="1" /> ' . esc_html__( 'Also check external HTTP/HTTPS links (slower; checks at most five external URLs per batch).', 'publishrank' ) . '</label></p><p><button class="button button-primary">' . esc_html__( 'Start new audit', 'publishrank' ) . '</button></p></form>';
+		$schedule = self::schedule();
+		$last_run = (int) get_option( 'publishrank_link_check_last_run', 0 );
+		echo '<h2>' . esc_html__( 'Automatic sitewide check', 'publishrank' ) . '</h2><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		wp_nonce_field( 'publishrank_link_check_schedule' );
+		echo '<input type="hidden" name="action" value="publishrank_link_check_schedule" /><p><label>' . esc_html__( 'Check every published article', 'publishrank' ) . ' <select name="schedule">';
+		foreach ( array( 'off' => __( 'Off', 'publishrank' ), 'daily' => __( 'Daily', 'publishrank' ), 'weekly' => __( 'Weekly', 'publishrank' ) ) as $value => $label ) {
+			echo '<option value="' . esc_attr( $value ) . '"' . selected( $schedule, $value, false ) . '>' . esc_html( $label ) . '</option>'; }
+		echo '</select></label> <label><input type="checkbox" name="schedule_external" value="1"' . checked( get_option( 'publishrank_link_check_external', '0' ), '1', false ) . ' /> ' . esc_html__( 'Include external links', 'publishrank' ) . '</label> <button class="button">' . esc_html__( 'Save', 'publishrank' ) . '</button></p>';
+		echo '<p class="description">' . esc_html__( 'Runs in the background in small batches. When on, each article is also re-checked for broken internal links as soon as it is published or updated.', 'publishrank' ) . ' ' . ( $last_run ? esc_html( sprintf( /* translators: %s: date and time */ __( 'Last full check finished: %s.', 'publishrank' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last_run ) ) ) : esc_html__( 'No automatic check has finished yet.', 'publishrank' ) ) . '</p></form>';
 		if ( is_array( $state ) ) {
 			echo '<p>' . esc_html( sprintf( /* translators: 1: posts processed, 2: total posts. */ __( 'Audit progress: %1$d of approximately %2$d posts processed.', 'publishrank' ), (int) $state['processed'], (int) $state['total'] ) ) . '</p><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 			wp_nonce_field( 'publishrank_link_intelligence_batch' );

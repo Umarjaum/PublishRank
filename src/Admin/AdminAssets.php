@@ -15,14 +15,19 @@ final class AdminAssets {
 		add_action( 'in_admin_header', array( $this, 'render_loader' ), 1 );
 	}
 
-	/** Print the animated-logo loader at the top of every PublishRank screen. */
+	/**
+	 * Print the slim page-progress bar at the top of every PublishRank screen.
+	 *
+	 * A thin brand-coloured bar under the toolbar replaces the old full-screen logo overlay: the
+	 * screen is readable and usable straight away, and navigation/saving still shows progress.
+	 */
 	public function render_loader() {
 		if ( ! Branding::is_plugin_screen() ) {
 			return;
 		}
 		echo '<div id="publishrank-loader" class="pr-loader" role="status" aria-live="polite">';
-		echo '<img class="pr-loader__logo" src="' . esc_url( Branding::loader_url() ) . '" width="132" height="132" alt="" />';
-		echo '<p class="pr-loader__label">' . esc_html__( 'Loading PublishRank…', 'publishrank' ) . '</p>';
+		echo '<span class="pr-loader__bar" aria-hidden="true"></span>';
+		echo '<span class="pr-loader__label screen-reader-text">' . esc_html__( 'Loading PublishRank…', 'publishrank' ) . '</span>';
 		echo '</div>';
 	}
 
@@ -143,7 +148,12 @@ final class AdminAssets {
 		);
 		if ( isset( $icons[ $page ] ) ) {
 			$icon = $icons[ $page ];
+		} elseif ( null !== AdminShell::tool( $page ) ) {
+			$tool = AdminShell::tool( $page );
+			$icon = 'fa-solid ' . $tool['icon'];
 		}
+		// The markers let AdminShell lift the header above the shared frame on framed screens.
+		echo '<!--pr-header-->';
 		echo '<div class="rhs-header">';
 		echo '<div class="rhs-header__icon" aria-hidden="true"><i class="' . esc_attr( $icon ) . '"></i></div>';
 		echo '<img class="rhs-header__logo" src="' . esc_url( Branding::logo_url() ) . '" width="40" height="40" alt="" />';
@@ -153,6 +163,7 @@ final class AdminAssets {
 		}
 		echo '</div><span class="rhs-header__badge">v' . esc_html( Branding::version() ) . '</span></div><hr class="wp-header-end" />';
 		do_action( 'publishrank_seo_after_admin_header', $page, $title );
+		echo '<!--/pr-header-->';
 	}
 
 	/** Store a one-time notice for the current user. */

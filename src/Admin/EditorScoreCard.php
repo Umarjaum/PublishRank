@@ -1,76 +1,197 @@
 <?php
+/**
+ * Floating "SEO Analysis" panel in the post editor: live score ring out of 100, rating, passed checks,
+ * items to improve, focus keyword and content metrics. It mirrors the PublishRank SEO Score meta box and
+ * updates whenever that analysis runs (including while typing in the block editor).
+ *
+ * @package PublishRankSEO
+ */
 namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\SEO\ArticleIntelligence;
-use PublishRankSEO\Core\OutputSettings;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Floating SEO score widget: ring, metrics, keyphrase status, priority count, last analysis. */
 final class EditorScoreCard {
 	public function register() {
-		add_action( 'admin_footer', array( $this, 'render' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+		if ( ! ArticleIntelligence::enabled() ) {
+			return;
+		}
+		add_action( 'admin_footer', array( $this, 'render' ), 20 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ), 20 );
+	}
+
+	private static function on_supported_screen() {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		return $screen && 'post' === $screen->base && in_array( (string) $screen->post_type, ArticleIntelligence::supported_post_types(), true );
 	}
 
 	public function enqueue( $hook ) {
-		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) {
-			return; }
-		wp_enqueue_style( 'publishrank-editor-score-card', Branding::asset_url( 'css/editor-score-card.css' ), array(), Branding::version() );
-		$script_path    = PUBLISHRANK_SEO_PATH . 'assets/js/editor-score-card.js';
-		$script_version = Branding::version() . '.' . ( file_exists( $script_path ) ? (string) filemtime( $script_path ) : '0' );
-		wp_enqueue_script( 'publishrank-editor-score-card', Branding::asset_url( 'js/editor-score-card.js' ), array( 'jquery' ), $script_version, true );
+		if ( ( 'post.php' !== $hook && 'post-new.php' !== $hook ) || ! self::on_supported_screen() ) {
+			return;
+		}
+		$css = PUBLISHRANK_SEO_PATH . 'assets/css/editor-score-card.css';
+		$js  = PUBLISHRANK_SEO_PATH . 'assets/js/editor-score-card.js';
+		wp_enqueue_style( 'publishrank-editor-score-card', Branding::asset_url( 'css/editor-score-card.css' ), array(), Branding::version() . '.' . ( file_exists( $css ) ? (string) filemtime( $css ) : '0' ) );
+		wp_enqueue_script( 'publishrank-editor-score-card', Branding::asset_url( 'js/editor-score-card.js' ), array( 'jquery', 'publishrank-link-inserter' ), Branding::version() . '.' . ( file_exists( $js ) ? (string) filemtime( $js ) : '0' ), true );
+		if ( function_exists( 'use_block_editor_for_post_type' ) && use_block_editor_for_post_type( (string) get_current_screen()->post_type ) ) {
+			$sidebar = PUBLISHRANK_SEO_PATH . 'assets/js/block-editor-sidebar.js';
+			wp_enqueue_script( 'publishrank-block-sidebar', Branding::asset_url( 'js/block-editor-sidebar.js' ), array( 'wp-plugins', 'wp-element', 'wp-components', 'wp-data', 'wp-i18n', 'wp-editor', 'wp-edit-post' ), Branding::version() . '.' . ( file_exists( $sidebar ) ? (string) filemtime( $sidebar ) : '0' ), true );
+			wp_set_script_translations( 'publishrank-block-sidebar', 'publishrank' );
+		}
+		wp_localize_script(
+			'publishrank-editor-score-card',
+			'publishrankScoreCard',
+			array(
+				'i18n' => self::strings(),
+			)
+		);
 	}
 
-	/** Print the score ring. Every dynamic value is escaped where it is printed. */
-	private static function ring( $score, $rating ) {
-		$score = max( 0, min( 100, (int) $score ) );
-		$r     = 19;
-		$c     = 2 * M_PI * $r;
-		$off   = $c * ( 1 - $score / 100 );
-		/* translators: %d: editorial SEO score. */
-		$label = sprintf( __( 'SEO score %d out of 100', 'publishrank' ), $score );
-		echo '<svg class="pr-editor-score-card__ring pr-ring--' . esc_attr( $rating ) . '" width="48" height="48" viewBox="0 0 48 48" role="img" aria-label="' . esc_attr( $label ) . '">';
-		echo '<defs><linearGradient id="publishrank-score-gradient" x1="0" y1="48" x2="48" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e53935"/><stop offset=".5" stop-color="#2196f3"/><stop offset="1" stop-color="#2eaf5d"/></linearGradient></defs>';
-		echo '<circle class="pr-ring__bg" cx="24" cy="24" r="' . esc_attr( (string) $r ) . '" stroke-width="5"/>';
-		echo '<circle class="pr-ring__val pr-ring__val--' . esc_attr( $rating ) . '" cx="24" cy="24" r="' . esc_attr( (string) $r ) . '" stroke-width="5" stroke="url(#publishrank-score-gradient)" stroke-dasharray="' . esc_attr( (string) round( $c, 2 ) ) . '" stroke-dashoffset="' . esc_attr( (string) round( $off, 2 ) ) . '" transform="rotate(-90 24 24)"/>';
-		echo '<text x="24" y="24" class="pr-ring__text" style="font-size:13px">' . esc_html( (string) $score ) . '</text></svg>';
+	/** Translated strings shared by PHP and JavaScript rendering. */
+	private static function strings() {
+		return array(
+			'excellent'     => __( 'Excellent', 'publishrank' ),
+			'good'          => __( 'Good', 'publishrank' ),
+			'ok'            => __( 'Needs improvement', 'publishrank' ),
+			'bad'           => __( 'Needs work', 'publishrank' ),
+			'msgExcellent'  => __( 'Your content is well optimized! Keep up the great work.', 'publishrank' ),
+			'msgGood'       => __( 'Looking good. A few small tweaks will make it even stronger.', 'publishrank' ),
+			'msgOk'         => __( 'You are on your way. Work through the items below.', 'publishrank' ),
+			'msgBad'        => __( 'Start with the items below to improve this article.', 'publishrank' ),
+			'analyzing'     => __( 'Analyzing…', 'publishrank' ),
+			'updated'       => __( 'Updated just now', 'publishrank' ),
+			'live'          => __( 'Updates as you write', 'publishrank' ),
+			'failed'        => __( 'Analysis failed. Save a draft and refresh.', 'publishrank' ),
+			'noKeyword'     => __( 'Not set — pick one in the SEO Score box below', 'publishrank' ),
+			'nothingToFix'  => __( 'Nothing to fix. Great job!', 'publishrank' ),
+			'nonePassed'    => __( 'No checks pass yet.', 'publishrank' ),
+			/* translators: %d: SEO score. */
+			'scoreAria'     => __( 'SEO score %d out of 100', 'publishrank' ),
+			'fix'           => __( 'Fix', 'publishrank' ),
+			'fixing'        => __( 'Fixing…', 'publishrank' ),
+			'fixed'         => __( 'Applied. Review it, then update the post.', 'publishrank' ),
+			'fixFailed'     => __( 'No automatic fix could be derived. Open the full report.', 'publishrank' ),
+			'linking'       => __( 'Finding related articles…', 'publishrank' ),
+			'noLinks'       => __( 'No related published articles found yet.', 'publishrank' ),
+			/* translators: %s: check title. */
+			'fixAria'       => __( 'Fix: %s', 'publishrank' ),
+		);
+	}
+
+	/** Rating key used for colors and labels. */
+	private static function band( $score ) {
+		$score = (int) $score;
+		if ( $score >= 90 ) {
+			return 'excellent';
+		}
+		if ( $score >= 80 ) {
+			return 'good';
+		}
+		return $score >= 55 ? 'ok' : 'bad';
+	}
+
+	/** Report for the current post: reuse the meta box's analysis when available, otherwise build one. */
+	private static function report( $post_id ) {
+		$report = ArticleIntelligence::panel_report();
+		if ( is_array( $report ) ) {
+			return $report;
+		}
+		$post = $post_id ? get_post( $post_id ) : null;
+		if ( ! $post instanceof \WP_Post ) {
+			return null;
+		}
+		try {
+			return ArticleIntelligence::analyze( ArticleIntelligence::data_from_post( $post ), true );
+		} catch ( \Throwable $e ) {
+			return null;
+		}
 	}
 
 	public function render() {
-		$screen = get_current_screen();
-		if ( ! $screen || 'post' !== $screen->base || ! in_array( (string) $screen->post_type, ArticleIntelligence::supported_post_types(), true ) ) {
-			return; }
-		$id     = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$stored = $id ? ArticleIntelligence::stored( $id ) : null;
-		$score  = $stored ? (int) $stored['score'] : 0;
-		$rating = $score >= 80 ? 'good' : ( $score >= 55 ? 'ok' : 'bad' );
-		$schema_score = OutputSettings::schema() ? 100 : 0;
-		$at     = ( $stored && ! empty( $stored['at'] ) )
-			? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $stored['at'] ) )
-			: __( 'Not analyzed yet', 'publishrank' );
-		$stats  = $stored && ! empty( $stored['stats'] ) && is_array( $stored['stats'] ) ? $stored['stats'] : array();
-		if ( $id && empty( $stats ) ) {
-			$editor_post = get_post( $id );
-			if ( $editor_post instanceof \WP_Post ) {
-				$initial_report = ArticleIntelligence::analyze( ArticleIntelligence::data_from_post( $editor_post ), true );
-				$stats = isset( $initial_report['stats'] ) && is_array( $initial_report['stats'] ) ? $initial_report['stats'] : array();
-			}
+		if ( ! self::on_supported_screen() ) {
+			return;
 		}
-		$metric = static function ( $key, $default = 0 ) use ( $stats ) { return isset( $stats[ $key ] ) ? (int) $stats[ $key ] : $default; };
-		echo '<aside id="publishrank-editor-score" class="pr-editor-score-card" data-score="' . esc_attr( (string) $score ) . '" data-post-id="' . esc_attr( (string) $id ) . '" data-schema-score="' . esc_attr( (string) $schema_score ) . '" aria-label="' . esc_attr__( 'PublishRank editorial scores', 'publishrank' ) . '">';
-		echo '<div class="pr-editor-score-card__top">';
-		echo '<div class="pr-editor-score-card__ring-wrap">';
-		self::ring( $score, $rating );
-		echo '<span class="pr-editor-score-card__ring-label">' . esc_html__( 'SEO score', 'publishrank' ) . '</span></div>';
-		echo '<div class="pr-editor-score-card__titles"><strong class="pr-editor-score-card__brand">PublishRank</strong><span class="pr-editor-score-card__status-text">' . esc_html( $at ) . '</span><span class="pr-editor-score-card__schema">' . esc_html__( 'Schema score:', 'publishrank' ) . ' <b class="pr-editor-score-card__schema-value">' . esc_html( (string) $schema_score ) . '/100</b></span></div>';
+		global $post;
+		$id      = $post instanceof \WP_Post ? (int) $post->ID : ( isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$report  = self::report( $id );
+		$score   = $report ? (int) $report['score'] : 0;
+		$band    = self::band( $score );
+		$checks  = $report ? ArticleIntelligence::check_summary( $report ) : array();
+		$stats   = $report && isset( $report['stats'] ) ? (array) $report['stats'] : array();
+		$keyword = $report && isset( $report['current']['keyphrase'] ) ? (string) $report['current']['keyphrase'] : '';
+		$s       = self::strings();
+		$labels  = array( 'excellent' => $s['excellent'], 'good' => $s['good'], 'ok' => $s['ok'], 'bad' => $s['bad'] );
+		$msgs    = array( 'excellent' => $s['msgExcellent'], 'good' => $s['msgGood'], 'ok' => $s['msgOk'], 'bad' => $s['msgBad'] );
+		$fix     = array_values( array_filter( $checks, static function ( $c ) { return 'good' !== $c['status']; } ) );
+		$pass    = array_values( array_filter( $checks, static function ( $c ) { return 'good' === $c['status']; } ) );
+		$r       = 44;
+		$circ    = 2 * M_PI * $r;
+		$offset  = $circ * ( 1 - max( 0, min( 100, $score ) ) / 100 );
+		$metric  = static function ( $key ) use ( $stats ) {
+			return isset( $stats[ $key ] ) ? (int) $stats[ $key ] : 0;
+		};
+
+		echo '<aside id="publishrank-editor-score" class="pr-esc pr-esc--' . esc_attr( $band ) . '" data-score="' . esc_attr( (string) $score ) . '" data-post-id="' . esc_attr( (string) $id ) . '" aria-label="' . esc_attr__( 'PublishRank SEO analysis', 'publishrank' ) . '">';
+
+		// Minimized pill.
+		echo '<button type="button" class="pr-esc__pill" data-pr-esc-expand aria-expanded="false" aria-controls="publishrank-editor-score-panel">';
+		echo '<span class="pr-esc__pill-ring" style="--pr-esc-score:' . esc_attr( (string) $score ) . '"><b data-pr-esc-pill-score>' . esc_html( (string) $score ) . '</b></span>';
+		echo '<span class="pr-esc__pill-text"><strong>' . esc_html__( 'SEO', 'publishrank' ) . '</strong><small data-pr-esc-pill-label>' . esc_html( $labels[ $band ] ) . '</small></span></button>';
+
+		echo '<div class="pr-esc__panel" id="publishrank-editor-score-panel">';
+		echo '<header class="pr-esc__head" data-pr-esc-drag>';
+		echo '<img class="pr-esc__logo" src="' . esc_url( Branding::logo_url() ) . '" width="20" height="20" alt="" />';
+		echo '<strong class="pr-esc__title">' . esc_html__( 'SEO Analysis', 'publishrank' ) . '</strong>';
+		echo '<span class="pr-esc__live" aria-hidden="true"><i></i>' . esc_html__( 'Live', 'publishrank' ) . '</span>';
+		echo '<button type="button" class="pr-esc__icon-btn" data-pr-esc-refresh aria-label="' . esc_attr__( 'Re-analyze now', 'publishrank' ) . '" title="' . esc_attr__( 'Re-analyze now', 'publishrank' ) . '"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M10 3a7 7 0 0 1 6.32 4H14v2h5V4h-2v1.76A9 9 0 1 0 19 10h-2a7 7 0 1 1-7-7z"/></svg></button>';
+		echo '<button type="button" class="pr-esc__icon-btn" data-pr-esc-collapse aria-expanded="true" aria-controls="publishrank-editor-score-panel" aria-label="' . esc_attr__( 'Minimize SEO analysis', 'publishrank' ) . '" title="' . esc_attr__( 'Minimize', 'publishrank' ) . '"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M4 9h12v2H4z"/></svg></button>';
+		echo '</header>';
+
+		echo '<div class="pr-esc__scroll">';
+		echo '<div class="pr-esc__score">';
+		echo '<svg class="pr-esc__ring" viewBox="0 0 100 100" width="112" height="112" role="img" aria-label="' . esc_attr( sprintf( $s['scoreAria'], $score ) ) . '" data-pr-esc-ring>';
+		echo '<circle class="pr-esc__ring-bg" cx="50" cy="50" r="' . esc_attr( (string) $r ) . '"/>';
+		echo '<circle class="pr-esc__ring-val" cx="50" cy="50" r="' . esc_attr( (string) $r ) . '" stroke-dasharray="' . esc_attr( (string) round( $circ, 2 ) ) . '" stroke-dashoffset="' . esc_attr( (string) round( $offset, 2 ) ) . '" transform="rotate(-90 50 50)" data-pr-esc-arc/>';
+		echo '</svg>';
+		echo '<span class="pr-esc__num"><b data-pr-esc-score>' . esc_html( (string) $score ) . '</b><small>/100</small></span>';
 		echo '</div>';
-		echo '<div class="pr-editor-score-card__metrics" role="list">';
-		foreach ( array( 'words' => __( 'Words', 'publishrank' ), 'images' => __( 'Images', 'publishrank' ), 'internal' => __( 'Internal links', 'publishrank' ), 'external' => __( 'External links', 'publishrank' ) ) as $key => $label ) {
-			echo '<span role="listitem"><b class="pr-editor-score-card__' . esc_attr( $key ) . '">' . esc_html( (string) $metric( $key ) ) . '</b><small>' . esc_html( $label ) . '</small></span>';
+		echo '<p class="pr-esc__rating" data-pr-esc-rating>' . esc_html( $labels[ $band ] ) . '</p>';
+		echo '<p class="pr-esc__msg" data-pr-esc-msg>' . esc_html( $msgs[ $band ] ) . '</p>';
+
+		echo '<div class="pr-esc__metrics" role="list">';
+		foreach ( array( 'words' => __( 'Words', 'publishrank' ), 'images' => __( 'Images', 'publishrank' ), 'internal' => __( 'Internal', 'publishrank' ), 'external' => __( 'External', 'publishrank' ) ) as $key => $label ) {
+			echo '<span role="listitem"><b data-pr-esc-metric="' . esc_attr( $key ) . '">' . esc_html( number_format_i18n( $metric( $key ) ) ) . '</b><small>' . esc_html( $label ) . '</small></span>';
 		}
-		echo '</div><div class="pr-editor-score-card__footer"><span class="pr-editor-score-card__live-status" aria-live="polite">' . esc_html__( 'Values update as you edit.', 'publishrank' ) . '</span><button type="button" class="button-link pr-editor-score-card__refresh" id="publishrank-editor-score-refresh">' . esc_html__( 'Refresh', 'publishrank' ) . '</button></div>';
-		echo '</aside>';
+		echo '</div>';
+
+		echo '<div class="pr-esc__lengths" role="list"><span role="listitem">' . esc_html__( 'SEO title', 'publishrank' ) . ' <b data-pr-esc-len="title">0</b>/60</span><span role="listitem">' . esc_html__( 'Meta description', 'publishrank' ) . ' <b data-pr-esc-len="desc">0</b>/160</span></div>';
+
+		echo '<div class="pr-esc__actions"><button type="button" class="button button-primary pr-esc__links-btn" data-pr-esc-links>' . esc_html__( 'Add internal links', 'publishrank' ) . '</button></div>';
+
+		echo '<div class="pr-esc__keyword"><span>' . esc_html__( 'Focus keyword', 'publishrank' ) . '</span><b data-pr-esc-keyword class="' . ( '' === $keyword ? 'is-empty' : '' ) . '">' . esc_html( '' === $keyword ? $s['noKeyword'] : $keyword ) . '</b></div>';
+
+		self::group( 'fix', __( 'To improve', 'publishrank' ), $fix, $s['nothingToFix'], true );
+		self::group( 'pass', __( 'Passed checks', 'publishrank' ), $pass, $s['nonePassed'], false );
+		echo '</div>';
+
+		echo '<footer class="pr-esc__foot"><span class="pr-esc__status" data-pr-esc-status role="status" aria-live="polite">' . esc_html( $s['live'] ) . '</span>';
+		echo '<a class="pr-esc__report" href="#publishrank_article_intelligence">' . esc_html__( 'Full report', 'publishrank' ) . '</a></footer>';
+		echo '</div></aside>';
+	}
+
+	/** One collapsible check group. */
+	private static function group( $kind, $title, array $rows, $empty, $open ) {
+		echo '<details class="pr-esc__group pr-esc__group--' . esc_attr( $kind ) . '"' . ( $open ? ' open' : '' ) . ' data-pr-esc-group="' . esc_attr( $kind ) . '">';
+		echo '<summary><span>' . esc_html( $title ) . '</span><span class="pr-esc__count" data-pr-esc-count>' . esc_html( (string) count( $rows ) ) . '</span></summary>';
+		echo '<ul class="pr-esc__list" data-pr-esc-list data-empty="' . esc_attr( $empty ) . '">';
+		if ( empty( $rows ) ) {
+			echo '<li class="pr-esc__empty">' . esc_html( $empty ) . '</li>';
+		}
+		foreach ( $rows as $row ) {
+			echo '<li class="pr-esc__check is-' . esc_attr( $row['status'] ) . '"><span class="pr-esc__dot" aria-hidden="true"></span><span><strong>' . esc_html( $row['title'] ) . '</strong><small>' . esc_html( $row['message'] ) . '</small></span>' . ( 'good' !== $row['status'] && ! empty( $row['fix'] ) ? '<button type="button" class="button button-small pr-esc__fix" data-pr-esc-fix="' . esc_attr( $row['fix'] ) . '" aria-label="' . esc_attr( sprintf( /* translators: %s: check title. */ __( 'Fix: %s', 'publishrank' ), $row['title'] ) ) . '">' . esc_html__( 'Fix', 'publishrank' ) . '</button>' : '' ) . '</li>';
+		}
+		echo '</ul></details>';
 	}
 }

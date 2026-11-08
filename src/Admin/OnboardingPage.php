@@ -3,7 +3,7 @@
  * First-run setup wizard for PublishRank.
  *
  * Holds every one-time setting (publisher identity, brand, social profiles, search appearance,
- * site verification, regional defaults, content scope). It opens as a modal on activation and,
+ * site verification, regional defaults, content scope). It opens inside the shared PublishRank frame on activation and,
  * on fresh installs, locks PublishRank screens until the required fields are saved. Ongoing
  * controls stay in the Settings page.
  *
@@ -42,7 +42,7 @@ final class OnboardingPage {
 	public static function steps() {
 		return array(
 			1 => array(
-				'label' => __( 'Welcome to PublishRank 🤗', 'publishrank' ),
+				'label' => __( 'Welcome', 'publishrank' ),
 				'icon'  => 'fa-solid fa-flag',
 			),
 			2 => array(
@@ -386,6 +386,29 @@ final class OnboardingPage {
 							'placeholder' => __( 'Investigative journalism, climate reporting, public policy', 'publishrank' ),
 						)
 					),
+					$f( 'publishrank_identity_slogan', 'text', __( 'Slogan / tagline', 'publishrank' ), array( 'for' => 'org' ) ),
+					$f( 'publishrank_identity_employees', 'text', __( 'Number of employees', 'publishrank' ), array( 'for' => 'org', 'placeholder' => '25' ) ),
+					$f( 'publishrank_identity_vat_id', 'text', __( 'VAT ID', 'publishrank' ), array( 'for' => 'org' ) ),
+					$f( 'publishrank_identity_tax_id', 'text', __( 'Tax ID / NTN', 'publishrank' ), array( 'for' => 'org' ) ),
+					$f( 'publishrank_identity_duns', 'text', __( 'DUNS number', 'publishrank' ), array( 'for' => 'org' ) ),
+					$f( 'publishrank_identity_lei_code', 'text', __( 'LEI code', 'publishrank' ), array( 'for' => 'org' ) ),
+					$f( 'publishrank_identity_iso6523', 'text', __( 'ISO 6523 identifier', 'publishrank' ), array( 'for' => 'org', 'placeholder' => '0199:724500PMK2A2M1SQQ228' ) ),
+					$f( 'publishrank_identity_naics', 'text', __( 'NAICS code', 'publishrank' ), array( 'for' => 'org', 'placeholder' => '513110' ) ),
+					$f( 'publishrank_identity_editorial_email', 'text', __( 'Newsroom / editorial email', 'publishrank' ), array( 'for' => 'org', 'san' => 'email' ) ),
+					$f( 'publishrank_identity_advertising_email', 'text', __( 'Advertising email', 'publishrank' ), array( 'for' => 'org', 'san' => 'email' ) ),
+					$f( 'publishrank_identity_tips_email', 'text', __( 'News tips email', 'publishrank' ), array( 'for' => 'org', 'san' => 'email' ) ),
+					$f( 'publishrank_identity_policy_publishing_principles', 'url', __( 'Publishing principles page URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_ethics', 'url', __( 'Ethics policy URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_corrections', 'url', __( 'Corrections policy URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_masthead', 'url', __( 'Masthead / team page URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_fact_checking', 'url', __( 'Fact-checking policy URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_unnamed_sources', 'url', __( 'Unnamed sources policy URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_feedback', 'url', __( 'Actionable feedback policy URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_diversity', 'url', __( 'Diversity policy URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_diversity_report', 'url', __( 'Diversity staffing report URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_ownership_funding', 'url', __( 'Ownership & funding info URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_no_bylines', 'url', __( 'No-bylines policy URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
+					$f( 'publishrank_identity_policy_mission_coverage', 'url', __( 'Mission & coverage priorities URL', 'publishrank' ), array( 'for' => 'org', 'san' => 'sanitize_public_url' ) ),
 					$f(
 						'publishrank_identity_person_job_title',
 						'text',
@@ -668,10 +691,10 @@ final class OnboardingPage {
 		}
 		$icon       = Branding::logo_url();
 		$wizard_url = Branding::page_url( self::SLUG );
-		echo '<div class="notice notice-info prw-setup-notice" style="border-left-color:#5a4be2;padding:14px 16px;max-width:1000px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
-		echo '<img src="' . esc_url( $icon ) . '" alt="" width="48" height="48" style="width:48px;height:48px;padding:7px;box-sizing:border-box;border-radius:12px;background:#590d22;object-fit:contain;flex:0 0 48px" />';
-		echo '<div style="flex:1;min-width:220px"><strong style="font-size:14px;color:#1b2340">' . esc_html__( 'First-time SEO configuration', 'publishrank' ) . '</strong><p style="margin:5px 0 0">' . esc_html__( 'Set up your publisher identity, social profiles, search appearance and content scope once in the setup wizard. PublishRank outputs your publisher details only after setup is completed.', 'publishrank' ) . '</p></div>';
-		echo '<a href="' . esc_url( $wizard_url ) . '" class="button button-primary prw-notice-button">' . esc_html__( 'Start onboarding', 'publishrank' ) . '</a>';
+		echo '<div class="notice notice-info prw-setup-notice"><div class="prw-setup-notice__inner">';
+		echo '<img class="prw-setup-notice__logo" src="' . esc_url( $icon ) . '" alt="" width="44" height="44" />';
+		echo '<div class="prw-setup-notice__copy"><strong>' . esc_html__( 'Finish setting up PublishRank', 'publishrank' ) . '</strong><p>' . esc_html__( 'Set up your publisher identity, social profiles, search appearance and content scope once in the setup wizard. PublishRank outputs your publisher details only after setup is completed.', 'publishrank' ) . '</p></div>';
+		echo '<a href="' . esc_url( $wizard_url ) . '" class="button button-primary prw-setup-notice__button">' . esc_html__( 'Start setup', 'publishrank' ) . ' <span aria-hidden="true">→</span></a>';
 		echo '</div></div>';
 	}
 
@@ -681,8 +704,19 @@ final class OnboardingPage {
 			return;
 		}
 		wp_enqueue_media();
-		wp_enqueue_style( 'publishrank-seo-onboarding', Branding::asset_url( 'css/onboarding.css' ), array( 'dashicons', 'publishrank-seo-admin' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/onboarding.css' ) );
-		wp_enqueue_script( 'publishrank-seo-onboarding', Branding::asset_url( 'js/onboarding.js' ), array( 'jquery' ), Branding::version(), true );
+		// Same frame styles as Features (modules.css + shell.css, enqueued by AdminShell), then the wizard layer on top.
+		wp_enqueue_style( 'publishrank-seo-onboarding', Branding::asset_url( 'css/onboarding.css' ), array( 'dashicons', 'publishrank-seo-admin', 'publishrank-shell' ), AdminShell::ver( 'css/onboarding.css' ) );
+		wp_enqueue_script( 'publishrank-seo-onboarding', Branding::asset_url( 'js/onboarding.js' ), array(), AdminShell::ver( 'js/onboarding.js' ), true );
+		wp_localize_script(
+			'publishrank-seo-onboarding',
+			'publishrankWizard',
+			array(
+				'dirty'   => __( 'You have unsaved changes on this step', 'publishrank' ),
+				'clean'   => __( 'Each step saves when you continue', 'publishrank' ),
+				'saving'  => __( 'Saving…', 'publishrank' ),
+				'confirm' => __( 'Leave this step? Changes you made here have not been saved yet.', 'publishrank' ),
+			)
+		);
 		\PublishRankSEO\Admin\VariablePicker::enqueue( '' );
 	}
 
@@ -735,12 +769,14 @@ final class OnboardingPage {
 			'perm'     => array(
 				'ok'    => get_option( 'permalink_structure' ) !== '',
 				'label' => __( 'Pretty permalinks enabled', 'publishrank' ),
+				'fix'   => admin_url( 'options-permalink.php' ),
 			),
 			/* translators: %s: name of the detected SEO plugin. */
 			'conflict' => array(
 				'ok'    => '' === $conflict,
 				/* translators: %s: name of the conflicting SEO plugin. */
 				'label' => $conflict ? sprintf( __( 'Another SEO plugin detected: %s — running both is not recommended.', 'publishrank' ), $conflict ) : __( 'No conflicting SEO plugin detected', 'publishrank' ),
+				'fix'   => admin_url( 'plugins.php' ),
 			),
 			'uploads'  => array(
 				'ok'    => empty( $uploads['error'] ),
@@ -875,6 +911,14 @@ final class OnboardingPage {
 			update_option( 'publishrank_local_seo_profile', \PublishRankSEO\SEO\LocalSEO::sanitize_profile( $local_input ) );
 		}
 
+		// Back saves what was typed, then returns to the previous step without blocking on required fields.
+		$back = isset( $_POST['prw_nav'] ) && 'back' === sanitize_key( wp_unslash( $_POST['prw_nav'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( $back ) {
+			$this->bump_cache();
+			wp_safe_redirect( Branding::page_url( self::SLUG ) . '&step=' . max( 1, $step - 1 ) . $edit );
+			exit;
+		}
+
 		$next = min( self::TOTAL_STEPS, $step + 1 );
 		if ( $errors ) {
 			$next = $step; // Stay here until the required fields are filled in.
@@ -906,35 +950,72 @@ final class OnboardingPage {
 	 * Rendering
 	 * ---------------------------------------------------------------- */
 
+	/**
+	 * Progress shown on the step track: 0 on the first step, 100 on the last.
+	 *
+	 * The track runs from the centre of the first dot to the centre of the last, so the
+	 * fill must use (step - 1) / (total - 1); step / total overshoots every dot.
+	 *
+	 * @param int $step Step number.
+	 * @return int Percentage 0–100.
+	 */
+	public static function progress_percent( $step ) {
+		$step = max( 1, min( self::TOTAL_STEPS, (int) $step ) );
+		return (int) round( ( ( $step - 1 ) / max( 1, self::TOTAL_STEPS - 1 ) ) * 100 );
+	}
+
+	/** Steps that have no required fields and may be skipped. @return int[] */
+	public static function optional_steps() {
+		return array( 3, 4, 5, 6, 7 );
+	}
+
 	/** Render a single field. */
 	private function render_field( array $field, $is_person ) {
-		if ( ( 'org' === $field['for'] && $is_person ) || ( 'person' === $field['for'] && ! $is_person ) ) {
-			return;
-		}
-		$key   = $field['key'];
-		$value = $this->value( $field );
-		$id    = 'prw_' . $key;
+		$applies = ! ( ( 'org' === $field['for'] && $is_person ) || ( 'person' === $field['for'] && ! $is_person ) );
+		$key     = $field['key'];
+		$value   = $this->value( $field );
+		$id      = 'prw_' . $key;
 		$show_validation_error = isset( $_GET['error'] ) && ! is_array( $_GET['error'] ) && 'required' === sanitize_key( wp_unslash( $_GET['error'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$invalid = $show_validation_error && $field['required'] && '' === trim( (string) $value );
-		$req     = $field['required'] ? ' required aria-required="true"' : '';
-		if ( $invalid ) {
-			$req .= ' aria-invalid="true" aria-describedby="' . esc_attr( 'prw_error_' . $key ) . '"';
+		$invalid   = $applies && $show_validation_error && $field['required'] && '' === trim( (string) $value );
+		$described = array();
+		if ( $field['help'] ) {
+			$described[] = 'prw_help_' . $key;
 		}
-		$class = 'prw-field' . ( $field['wide'] ? ' prw-field--wide' : '' ) . ( 'toggle' === $field['type'] ? ' prw-field--toggle' : '' );
-		echo '<div class="' . esc_attr( $class ) . '">';
+		if ( $invalid ) {
+			$described[] = 'prw_error_' . $key;
+		}
+		$req = $field['required'] ? ' required aria-required="true"' : '';
+		if ( $invalid ) {
+			$req .= ' aria-invalid="true"';
+		}
+		if ( $described ) {
+			$req .= ' aria-describedby="' . esc_attr( implode( ' ', $described ) ) . '"';
+		}
+		if ( ! $applies ) {
+			// Kept in the page so switching Organization / Person updates the form instantly; disabled
+			// controls are neither validated nor submitted, and save() ignores them anyway.
+			$req .= ' disabled';
+		}
+		$class = 'prw-field' . ( $field['wide'] ? ' prw-field--wide' : '' ) . ( 'toggle' === $field['type'] ? ' prw-field--toggle' : '' ) . ( $invalid ? ' is-invalid' : '' );
+		$attrs = 'both' !== $field['for'] ? ' data-prw-for="' . esc_attr( (string) $field['for'] ) . '"' . ( $applies ? '' : ' hidden' ) : '';
+		echo '<div class="' . esc_attr( $class ) . '"' . $attrs . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
 		if ( 'identity' === $field['type'] ) {
-			echo '<span class="prw-label">' . esc_html( $field['label'] ) . ' <em class="prw-req">*</em></span><div class="rhs-choice-grid">';
+			echo '<span class="prw-label" id="' . esc_attr( $id . '_label' ) . '">' . esc_html( $field['label'] ) . ' <em class="prw-req" aria-hidden="true">*</em></span><div class="prw-choices" role="radiogroup" aria-labelledby="' . esc_attr( $id . '_label' ) . '" aria-required="true">';
 			foreach ( array(
-				'organization' => array( __( 'Organization', 'publishrank' ), __( 'Newspapers, magazines, newsrooms and digital publishers.', 'publishrank' ) ),
-				'person'       => array( __( 'Person', 'publishrank' ), __( 'An individual publisher, journalist or creator-led site.', 'publishrank' ) ),
+				'organization' => array( __( 'Organization', 'publishrank' ), __( 'Newspapers, magazines, newsrooms and digital publishers.', 'publishrank' ), 'fa-building' ),
+				'person'       => array( __( 'Person', 'publishrank' ), __( 'An individual publisher, journalist or creator-led site.', 'publishrank' ), 'fa-user-pen' ),
 			) as $option => $copy ) {
-				echo '<label class="rhs-choice"><input type="radio" name="' . esc_attr( $key ) . '" value="' . esc_attr( $option ) . '"' . checked( $value, $option, false ) . ' /><span><b>' . esc_html( $copy[0] ) . '</b><small>' . esc_html( $copy[1] ) . '</small></span></label>';
+				echo '<label class="prw-choice"><input type="radio" name="' . esc_attr( $key ) . '" value="' . esc_attr( $option ) . '"' . checked( $value, $option, false ) . ' data-prw-identity /><span class="prw-choice__icon" aria-hidden="true"><i class="fa-solid ' . esc_attr( $copy[2] ) . '"></i></span><span class="prw-choice__text"><b>' . esc_html( $copy[0] ) . '</b><small>' . esc_html( $copy[1] ) . '</small></span><span class="prw-choice__check" aria-hidden="true"><i class="fa-solid fa-check"></i></span></label>';
 			}
 			echo '</div>';
 		} elseif ( 'toggle' === $field['type'] ) {
-			echo '<input type="hidden" name="' . esc_attr( $key ) . '" value="0" /><label class="rhs-toggle"><input id="' . esc_attr( $id ) . '" type="checkbox" name="' . esc_attr( $key ) . '" value="1"' . checked( (bool) $value, true, false ) . ' /><span><b>' . esc_html( $field['label'] ) . '</b>' . ( $field['help'] ? '<small>' . esc_html( $field['help'] ) . '</small>' : '' ) . '</span></label>';
+			echo '<input type="hidden" name="' . esc_attr( $key ) . '" value="0" /><label class="prw-switch-row" for="' . esc_attr( $id ) . '"><span class="prw-switch-row__text"><b>' . esc_html( $field['label'] ) . '</b>' . ( $field['help'] ? '<small>' . esc_html( $field['help'] ) . '</small>' : '' ) . '</span><span class="pr-switch"><input id="' . esc_attr( $id ) . '" type="checkbox" name="' . esc_attr( $key ) . '" value="1"' . checked( (bool) $value, true, false ) . ' /><span class="pr-switch__track"><span class="pr-switch__thumb"></span></span></span></label>';
 		} else {
-			echo '<label class="prw-label" for="' . esc_attr( $id ) . '">' . esc_html( $field['label'] ) . ( $field['required'] ? ' <em class="prw-req">*</em>' : '' ) . '</label>';
+			if ( 'posttypes' === $field['type'] ) {
+				echo '<span class="prw-label" id="' . esc_attr( $id . '_label' ) . '">' . esc_html( $field['label'] ) . '</span>';
+			} else {
+				echo '<label class="prw-label" for="' . esc_attr( $id ) . '">' . esc_html( $field['label'] ) . ( $field['required'] ? ' <em class="prw-req" aria-hidden="true">*</em><span class="screen-reader-text">' . esc_html__( '(required)', 'publishrank' ) . '</span>' : '' ) . '</label>';
+			}
 			switch ( $field['type'] ) {
 				case 'textarea':
 					echo '<textarea id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" rows="3" placeholder="' . esc_attr( $field['placeholder'] ) . '"' . $req . '>' . esc_textarea( (string) $value ) . '</textarea>'; // phpcs:ignore WordPress.Security.EscapeOutput
@@ -943,24 +1024,25 @@ final class OnboardingPage {
 					}
 					break;
 				case 'select':
-					echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '">';
+					echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '"' . $req . '>'; // phpcs:ignore WordPress.Security.EscapeOutput
 					foreach ( (array) $field['options'] as $option => $label ) {
 						echo '<option value="' . esc_attr( $option ) . '"' . selected( (string) $value, (string) $option, false ) . '>' . esc_html( $label ) . '</option>';
 					}
 					echo '</select>';
 					break;
 				case 'timezone':
-					echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '">' . wp_timezone_choice( (string) $value ) . '</select>'; // phpcs:ignore WordPress.Security.EscapeOutput
+					echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '"' . $req . '>' . wp_timezone_choice( (string) $value ) . '</select>'; // phpcs:ignore WordPress.Security.EscapeOutput
 					break;
 				case 'image':
-					echo '<span class="prw-media-row"><input type="text" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $value ) . '" placeholder="https://" /><button type="button" class="button rhs-media-button" data-target="' . esc_attr( $id ) . '">' . esc_html__( 'Choose image', 'publishrank' ) . '</button></span>';
+					$thumb = '' !== (string) $value ? '<img src="' . esc_url( (string) $value ) . '" alt="" loading="lazy" />' : '';
+					echo '<div class="prw-media"><span class="prw-media__thumb' . ( '' === $thumb ? ' is-empty' : '' ) . '" data-prw-thumb aria-hidden="true">' . $thumb . '<i class="fa-solid fa-image"></i></span><span class="prw-media__ctrl"><input type="text" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $value ) . '" placeholder="https://" inputmode="url" data-prw-media-input' . $req . ' /><button type="button" class="button rhs-media-button prw-media__button" data-target="' . esc_attr( $id ) . '"' . ( $applies ? '' : ' disabled' ) . '><i class="fa-solid fa-photo-film" aria-hidden="true"></i> ' . esc_html__( 'Choose image', 'publishrank' ) . '</button></span></div>'; // phpcs:ignore WordPress.Security.EscapeOutput
 					break;
 				case 'country':
-					echo '<input type="text" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $value ) . '" maxlength="2" pattern="[A-Za-z]{2}" placeholder="' . esc_attr( $field['placeholder'] ) . '" autocomplete="country"' . $req . ' style="text-transform:uppercase" />'; // phpcs:ignore WordPress.Security.EscapeOutput
+					echo '<input type="text" class="prw-input--country" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $value ) . '" maxlength="2" pattern="[A-Za-z]{2}" placeholder="' . esc_attr( $field['placeholder'] ) . '" autocomplete="country"' . $req . ' />'; // phpcs:ignore WordPress.Security.EscapeOutput
 					break;
 				case 'posttypes':
 					$selected = array_filter( array_map( 'sanitize_key', preg_split( '/[\s,]+/', (string) $value ) ) );
-					echo '<div class="prw-checks">';
+					echo '<div class="prw-chips" role="group" aria-labelledby="' . esc_attr( $id . '_label' ) . '"' . ( $field['help'] ? ' aria-describedby="' . esc_attr( 'prw_help_' . $key ) . '"' : '' ) . '>';
 					foreach ( get_post_types(
 						array(
 							'public'             => true,
@@ -970,7 +1052,7 @@ final class OnboardingPage {
 					) as $type => $object ) {
 						if ( 'attachment' === $type ) {
 							continue; }
-						echo '<label><input type="checkbox" name="' . esc_attr( $key ) . '[]" value="' . esc_attr( $type ) . '"' . checked( in_array( $type, $selected, true ), true, false ) . ' /> ' . esc_html( $object->labels->name ) . '</label>';
+						echo '<label class="prw-chip"><input type="checkbox" name="' . esc_attr( $key ) . '[]" value="' . esc_attr( $type ) . '"' . checked( in_array( $type, $selected, true ), true, false ) . ( $applies ? '' : ' disabled' ) . ' /><span><i class="fa-solid fa-check" aria-hidden="true"></i>' . esc_html( $object->labels->name ) . '</span></label>';
 					}
 					echo '</div>';
 					break;
@@ -982,10 +1064,10 @@ final class OnboardingPage {
 					}
 			}
 			if ( $field['help'] ) {
-				echo '<small class="prw-help">' . esc_html( $field['help'] ) . '</small>';
+				echo '<small class="prw-help" id="' . esc_attr( 'prw_help_' . $key ) . '">' . esc_html( $field['help'] ) . '</small>';
 			}
 			if ( $invalid ) {
-				echo '<small class="prw-field-error" id="' . esc_attr( 'prw_error_' . $key ) . '">' . esc_html__( 'This field is required.', 'publishrank' ) . '</small>';
+				echo '<small class="prw-field-error" id="' . esc_attr( 'prw_error_' . $key ) . '"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> ' . esc_html__( 'This field is required.', 'publishrank' ) . '</small>';
 			}
 		}
 		echo '</div>';
@@ -1001,26 +1083,39 @@ final class OnboardingPage {
 		$resolved = ( new \PublishRankSEO\Meta\MetaGenerator() )->resolve_template( $template, 0, 'title', array( 'title' => PublicationProfile::publication_name() ) );
 		return '' !== $resolved ? $resolved : __( 'Not configured', 'publishrank' );
 	}
-	/** Summary cards for the review step and the completed view. */
-	private function recap() {
-		$name  = (string) get_option( 'publishrank_identity_name', \PublishRankSEO\Core\PublicationProfile::publication_name() );
-		$title = self::homepage_title_preview();
-		$local = get_option( 'publishrank_local_seo_profile', array() );
-		$local = is_array( $local ) ? $local : array();
-		$news  = (bool) get_option( 'publishrank_seo_news_enabled', true );
-		$items = array(
-			array( ! empty( $name ) ? $name : \PublishRankSEO\Core\PublicationProfile::publication_name(), 'person' === PublicationProfile::identity_type() ? __( 'Publisher (person)', 'publishrank' ) : __( 'Publisher (organization)', 'publishrank' ) ),
-			array( ! empty( strtoupper( (string) get_option( 'publishrank_identity_country', '' ) ) ) ? strtoupper( (string) get_option( 'publishrank_identity_country', '' ) ) : '—', __( 'Country', 'publishrank' ) ),
-			array( count( PublicationProfile::social_profiles() ) . ' ' . __( 'profiles', 'publishrank' ), __( 'Social profiles (sameAs)', 'publishrank' ) ),
-			array( $title, __( 'Homepage SEO title', 'publishrank' ) ),
-			array( $news ? __( 'News sitemap on', 'publishrank' ) : __( 'News sitemap off', 'publishrank' ), (string) get_option( 'publishrank_sitemap_post_types', 'post' ) ),
-			array( ! empty( $local['enabled'] ) ? ( $local['name'] ?? __( 'Local business on', 'publishrank' ) ) : __( 'Local SEO off', 'publishrank' ), __( 'Local business', 'publishrank' ) ),
+
+	/**
+	 * Summary tiles for the review step and the completed view, each linking to the step that sets it.
+	 *
+	 * @param string $edit_base Base URL for the per-tile Edit links ('' hides them).
+	 */
+	private function recap( $edit_base = '' ) {
+		$name    = (string) get_option( 'publishrank_identity_name', PublicationProfile::publication_name() );
+		$title   = self::homepage_title_preview();
+		$local   = get_option( 'publishrank_local_seo_profile', array() );
+		$local   = is_array( $local ) ? $local : array();
+		$news    = (bool) get_option( 'publishrank_seo_news_enabled', true );
+		$country = strtoupper( (string) get_option( 'publishrank_identity_country', '' ) );
+		$social  = count( PublicationProfile::social_profiles() );
+		$items   = array(
+			array( 2, 'fa-building', 'person' === PublicationProfile::identity_type() ? __( 'Publisher · person', 'publishrank' ) : __( 'Publisher · organization', 'publishrank' ), '' !== $name ? $name : PublicationProfile::publication_name(), '' !== $name ),
+			array( 2, 'fa-earth-europe', __( 'Country', 'publishrank' ), '' !== $country ? $country : __( 'Not set', 'publishrank' ), '' !== $country ),
+			/* translators: %d: number of social profiles. */
+			array( 4, 'fa-share-nodes', __( 'Social profiles', 'publishrank' ), sprintf( _n( '%d profile', '%d profiles', $social, 'publishrank' ), $social ), $social > 0 ),
+			array( 5, 'fa-heading', __( 'Homepage SEO title', 'publishrank' ), $title, '' !== trim( (string) get_option( 'publishrank_home_title', '' ) ) ),
+			array( 6, 'fa-sitemap', __( 'Sitemaps', 'publishrank' ), ( $news ? __( 'News sitemap on', 'publishrank' ) : __( 'News sitemap off', 'publishrank' ) ) . ' · ' . str_replace( ',', ', ', (string) get_option( 'publishrank_sitemap_post_types', 'post' ) ), $news ),
+			array( 7, 'fa-location-dot', __( 'Local business', 'publishrank' ), ! empty( $local['enabled'] ) ? ( ! empty( $local['name'] ) ? (string) $local['name'] : __( 'Local business on', 'publishrank' ) ) : __( 'Local SEO off', 'publishrank' ), ! empty( $local['enabled'] ) ),
 		);
-		echo '<div class="prw-recap">';
+		echo '<ul class="prw-recap">';
 		foreach ( $items as $item ) {
-			echo '<div class="prw-recap__item"><strong>' . esc_html( (string) $item[0] ) . '</strong><span>' . esc_html( (string) $item[1] ) . '</span></div>';
+			echo '<li class="prw-recap__item' . ( $item[4] ? ' is-set' : '' ) . '"><span class="prw-recap__icon" aria-hidden="true"><i class="fa-solid ' . esc_attr( $item[1] ) . '"></i></span><span class="prw-recap__body"><span class="prw-recap__label">' . esc_html( (string) $item[2] ) . '</span><strong class="prw-recap__value">' . esc_html( (string) $item[3] ) . '</strong></span>';
+			if ( '' !== $edit_base ) {
+				/* translators: %s: summary item label. */
+				echo '<a class="prw-recap__edit" href="' . esc_url( $edit_base . '&step=' . (int) $item[0] ) . '" aria-label="' . esc_attr( sprintf( __( 'Edit %s', 'publishrank' ), (string) $item[2] ) ) . '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>';
+			}
+			echo '</li>';
 		}
-		echo '</div>';
+		echo '</ul>';
 	}
 
 	/** The optional Local SEO step. */
@@ -1052,7 +1147,8 @@ final class OnboardingPage {
 			)
 		);
 		echo '<div class="prw-fields">';
-		echo '<div class="prw-field prw-field--wide prw-field--toggle"><input type="hidden" name="local_seo[enabled]" value="0" /><label class="rhs-toggle"><input type="checkbox" name="local_seo[enabled]" value="1"' . checked( ! empty( $local['enabled'] ), true, false ) . ' /><span><b>' . esc_html__( 'Enable LocalBusiness schema', 'publishrank' ) . '</b><small>' . esc_html__( 'Leave off for a purely digital publication without a real public business location.', 'publishrank' ) . '</small></span></label></div>';
+		echo '<div class="prw-field prw-field--wide prw-field--toggle"><input type="hidden" name="local_seo[enabled]" value="0" /><label class="prw-switch-row" for="prw_local_enabled"><span class="prw-switch-row__text"><b>' . esc_html__( 'Enable LocalBusiness schema', 'publishrank' ) . '</b><small>' . esc_html__( 'Leave off for a purely digital publication without a real public business location.', 'publishrank' ) . '</small></span><span class="pr-switch"><input id="prw_local_enabled" type="checkbox" name="local_seo[enabled]" value="1"' . checked( ! empty( $local['enabled'] ), true, false ) . ' data-prw-local-toggle /><span class="pr-switch__track"><span class="pr-switch__thumb"></span></span></span></label></div>';
+		echo '<div class="prw-fields prw-field--wide prw-local-fields" data-prw-local-fields>';
 		$text = array(
 			'name'         => __( 'Business / location name', 'publishrank' ),
 			'url'          => __( 'Business URL', 'publishrank' ),
@@ -1079,9 +1175,48 @@ final class OnboardingPage {
 			$kind = in_array( $key, array( 'url', 'logo', 'has_map' ), true ) ? 'url' : ( 'email' === $key ? 'email' : ( in_array( $key, array( 'latitude', 'longitude' ), true ) ? 'number' : 'text' ) );
 			echo '<div class="prw-field"><label class="prw-label" for="prw_local_' . esc_attr( $key ) . '">' . esc_html( $label ) . '</label><input id="prw_local_' . esc_attr( $key ) . '" type="' . esc_attr( $kind ) . '"' . ( 'number' === $kind ? ' step="any"' : '' ) . ' name="local_seo[' . esc_attr( $key ) . ']" value="' . esc_attr( (string) $local[ $key ] ) . '" /></div>';
 		}
-		echo '<div class="prw-field prw-field--wide"><label class="prw-label" for="prw_local_hours">' . esc_html__( 'Opening hours', 'publishrank' ) . '</label><textarea id="prw_local_hours" name="local_seo[opening_hours]" rows="2">' . esc_textarea( is_array( $local['opening_hours'] ) ? implode( "\n", $local['opening_hours'] ) : '' ) . '</textarea><small class="prw-help">' . esc_html__( 'Example: Mo-Fr 09:00-17:00', 'publishrank' ) . '</small></div>';
+		echo '<div class="prw-field prw-field--wide"><label class="prw-label" for="prw_local_hours">' . esc_html__( 'Opening hours', 'publishrank' ) . '</label><textarea id="prw_local_hours" name="local_seo[opening_hours]" rows="2" aria-describedby="prw_local_hours_help">' . esc_textarea( is_array( $local['opening_hours'] ) ? implode( "\n", $local['opening_hours'] ) : '' ) . '</textarea><small class="prw-help" id="prw_local_hours_help">' . esc_html__( 'Example: Mo-Fr 09:00-17:00', 'publishrank' ) . '</small></div>';
 		echo '<div class="prw-field prw-field--wide"><label class="prw-label" for="prw_local_same">' . esc_html__( 'Official profile URLs (one per line)', 'publishrank' ) . '</label><textarea id="prw_local_same" name="local_seo[same_as]" rows="2">' . esc_textarea( is_array( $local['same_as'] ) ? implode( "\n", $local['same_as'] ) : '' ) . '</textarea></div>';
+		echo '</div></div>';
+	}
+
+	/** Shared intro block at the top of the main column (same markup as framed tool screens). */
+	private static function intro( $kicker, $title, $lead, $icon, $badge = '' ) {
+		echo '<div class="pr-modules-intro pr-shell-intro prw-intro"><div class="pr-shell-intro__text">';
+		echo '<p class="pr-shell-kicker">' . esc_html( $kicker ) . '</p>';
+		echo '<h2 class="pr-modules-title" id="prw-step-title" tabindex="-1">' . esc_html( $title ) . '</h2>';
+		echo '<p class="pr-modules-lead">' . esc_html( $lead ) . '</p></div>';
+		if ( '' !== $badge ) {
+			echo '<span class="pr-modules-count prw-intro__badge">' . esc_html( $badge ) . '</span>';
+		} else {
+			echo '<span class="pr-shell-intro__icon" aria-hidden="true"><i class="' . esc_attr( $icon ) . '"></i></span>';
+		}
 		echo '</div>';
+	}
+
+	/** Step track: one dot per step, finished steps link back, the fill animates between steps. */
+	private function render_track( $step, $self, $edit_qs, $navigable_all ) {
+		$steps    = self::steps();
+		$fraction = ( $step - 1 ) / max( 1, self::TOTAL_STEPS - 1 );
+		echo '<div class="prw-progress">';
+		echo '<div class="prw-progress__meta"><span class="prw-progress__count">' . esc_html( sprintf( /* translators: 1: step, 2: total. */ __( 'Step %1$d of %2$d', 'publishrank' ), $step, self::TOTAL_STEPS ) ) . '</span><span class="prw-progress__name">' . esc_html( $steps[ $step ]['label'] ) . '</span></div>';
+		echo '<ol class="prw-steps" role="list" aria-label="' . esc_attr__( 'Setup progress', 'publishrank' ) . '" style="--prw-steps:' . (int) self::TOTAL_STEPS . ';--prw-progress:' . esc_attr( number_format( $fraction, 4, '.', '' ) ) . '" data-prw-progress="' . esc_attr( number_format( $fraction, 4, '.', '' ) ) . '">';
+		foreach ( $steps as $number => $data ) {
+			$state = $number < $step ? 'is-done' : ( $number === $step ? 'is-active' : 'is-todo' );
+			$inner = '<span class="prw-steps__dot"><i class="' . esc_attr( $data['icon'] ) . '" aria-hidden="true"></i><span class="prw-steps__num" aria-hidden="true">' . (int) $number . '</span></span><span class="prw-steps__label">' . esc_html( $data['label'] ) . '</span>';
+			$status = 'is-done' === $state ? __( 'completed', 'publishrank' ) : ( 'is-active' === $state ? __( 'current step', 'publishrank' ) : __( 'not started', 'publishrank' ) );
+			$sr     = '<span class="screen-reader-text">' . esc_html( sprintf( /* translators: 1: step number, 2: status. */ __( 'Step %1$d, %2$s', 'publishrank' ), $number, $status ) ) . '</span>';
+			echo '<li class="prw-steps__item ' . esc_attr( $state ) . '">';
+			if ( 'is-active' === $state ) {
+				echo '<span class="prw-steps__link" aria-current="step">' . $inner . $sr . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+			} elseif ( 'is-done' === $state || $navigable_all ) {
+				echo '<a class="prw-steps__link" href="' . esc_url( $self . '&step=' . (int) $number . $edit_qs ) . '">' . $inner . $sr . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+			} else {
+				echo '<span class="prw-steps__link">' . $inner . $sr . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+			}
+			echo '</li>';
+		}
+		echo '</ol></div>';
 	}
 
 	public function page() {
@@ -1099,97 +1234,117 @@ final class OnboardingPage {
 		}
 
 		$is_person = PublicationProfile::identity_is_person();
-		$closable  = ! $locked;
 		$close_url = $complete ? Branding::page_url( self::SLUG ) : wp_nonce_url( admin_url( 'admin-post.php?action=publishrank_onboarding_exit' ), 'publishrank_onboarding_exit' );
 		$self      = Branding::page_url( self::SLUG );
 		$edit_qs   = $editing ? '&edit=1' : '';
-		$percent   = (int) round( ( $step / self::TOTAL_STEPS ) * 100 );
-		?>
-		<div class="wrap rhs-onboarding-wrap prw-modal-page">
-			<div class="prw-modal-backdrop" id="prw-modal">
-				<div class="prw-modal" role="dialog" aria-modal="true" aria-labelledby="prw-modal-title">
-					<header class="prw-modal__head">
-						<img src="<?php echo esc_url( Branding::logo_url() ); ?>" alt="" width="40" height="40" />
-						<div class="prw-modal__title">
-							<span class="rhs-eyebrow"><?php echo esc_html( $complete ? __( 'Edit setup', 'publishrank' ) : __( 'First-time setup', 'publishrank' ) ); ?> · <?php echo esc_html( sprintf( /* translators: 1: step, 2: total. */ __( 'Step %1$d of %2$d', 'publishrank' ), $step, self::TOTAL_STEPS ) ); ?></span>
-							<h1 id="prw-modal-title"><?php echo esc_html( $steps[ $step ]['label'] ); ?></h1>
-						</div>
-						<?php
-						if ( $closable ) :
-							?>
-							<a class="prw-modal__close" href="<?php echo esc_url( $close_url ); ?>" aria-label="<?php esc_attr_e( 'Close setup wizard', 'publishrank' ); ?>">&times;</a><?php endif; ?>
-					</header>
-					<div class="prw-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo esc_attr( $percent ); ?>"><span style="width:<?php echo esc_attr( $percent ); ?>%"></span></div>
-						<ol class="prw-stepper" aria-label="<?php esc_attr_e( 'Setup progress', 'publishrank' ); ?>">
-							<?php
-							foreach ( $steps as $number => $data ) :
-								$class = $number < $step ? 'is-done' : ( $number === $step ? 'is-active' : '' );
-								?>
-								<li class="prw-stepper__item <?php echo esc_attr( $class ); ?>"><span class="prw-stepper__bubble"><i class="<?php echo esc_attr( $data['icon'] ); ?>" aria-hidden="true"></i></span><span class="prw-stepper__label"><?php echo esc_html( $data['label'] ); ?></span></li>
-							<?php endforeach; ?>
-						</ol>
+		$lead      = $this->step_copy( $step, $is_person );
+		$optional  = in_array( $step, self::optional_steps(), true );
+		$error     = isset( $_GET['error'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$saved     = isset( $_GET['saved'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$kicker    = ( $complete ? __( 'Editing setup', 'publishrank' ) : __( 'First-time setup', 'publishrank' ) ) . ' · ' . sprintf( /* translators: 1: step, 2: total. */ __( 'Step %1$d of %2$d', 'publishrank' ), $step, self::TOTAL_STEPS );
 
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="prw-modal__form">
-						<input type="hidden" name="action" value="publishrank_onboarding_save" />
-						<input type="hidden" name="step" value="<?php echo esc_attr( $step ); ?>" />
-						<?php
-						if ( $editing ) :
-							?>
-							<input type="hidden" name="edit_mode" value="1" /><?php endif; ?>
-						<?php wp_nonce_field( 'publishrank_onboarding_save' ); ?>
-						<div class="prw-modal__body">
-							<?php if ( isset( $_GET['error'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-								<div class="notice notice-error inline prw-validation-summary" id="prw-validation-summary" role="alert" tabindex="-1"><p><?php echo esc_html( sprintf( /* translators: %s: field list. */ __( 'Please complete the required fields (*): %s', 'publishrank' ), ! empty( $this->missing_required() ) ? implode( ', ', $this->missing_required() ) : __( 'see highlighted fields', 'publishrank' ) ) ); ?></p></div>
-							<?php elseif ( isset( $_GET['saved'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-								<div class="notice notice-success inline"><p><?php esc_html_e( 'Saved.', 'publishrank' ); ?></p></div>
-							<?php endif; ?>
-							<?php $this->render_step_body( $step, $is_person, $locked ); ?>
-						</div>
-						<footer class="prw-modal__foot">
-							<span class="prw-modal__note"><?php echo esc_html( $locked ? __( 'Required one-time setup', 'publishrank' ) : __( 'Everything stays editable here later.', 'publishrank' ) ); ?></span>
-							<?php
-							if ( ! $locked && ! $complete ) :
-								?>
-								<a class="prw-exit" href="<?php echo esc_url( $close_url ); ?>"><?php esc_html_e( 'Exit wizard', 'publishrank' ); ?></a><?php endif; ?>
-							<?php
-							if ( $step > 1 ) :
-								?>
-								<a class="button" href="<?php echo esc_url( $self . '&step=' . ( $step - 1 ) . $edit_qs ); ?>"><?php esc_html_e( 'Back', 'publishrank' ); ?></a><?php endif; ?>
-							<?php if ( 1 === $step ) : ?>
-								<a class="button button-primary" href="<?php echo esc_url( $self . '&step=2' . $edit_qs ); ?>"><?php esc_html_e( 'Start configuration', 'publishrank' ); ?> <span>→</span></a>
-							<?php else : ?>
-								<button class="button button-primary" type="submit"><?php echo esc_html( 8 === $step ? __( 'Finish setup', 'publishrank' ) : __( 'Save & continue', 'publishrank' ) ); ?> <span>→</span></button>
-							<?php endif; ?>
-						</footer>
-					</form>
-				</div>
+		echo '<div class="wrap pr-modules-wrap pr-shell-wrap prw-wrap' . ( $locked ? ' is-locked' : '' ) . '" data-prw-wizard data-prw-step="' . (int) $step . '">';
+		AdminAssets::header( __( 'Setup wizard', 'publishrank' ), $complete ? __( 'Update your publisher identity and core SEO settings. Every step saves on its own.', 'publishrank' ) : __( 'A few quick steps so search engines know exactly who publishes this site.', 'publishrank' ) );
+		echo '<div class="pr-modules-layout">';
+		AdminShell::nav( self::SLUG, $locked );
+		echo '<div class="pr-modules-main pr-shell-main prw-main">';
+		self::intro( $kicker, $lead[0], $lead[1], $steps[ $step ]['icon'] );
+		$this->render_track( $step, $self, $edit_qs, $complete );
+		?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="prw-form" data-prw-form>
+			<?php if ( 1 !== $step ) : ?>
+				<?php /* Enter in a text field must continue, not go Back: the first submit button in the form is the default. */ ?>
+				<button type="submit" class="prw-default-submit" tabindex="-1" aria-hidden="true"></button>
+			<?php endif; ?>
+			<input type="hidden" name="action" value="publishrank_onboarding_save" />
+			<input type="hidden" name="step" value="<?php echo esc_attr( $step ); ?>" />
+			<?php if ( $editing ) : ?>
+				<input type="hidden" name="edit_mode" value="1" />
+			<?php endif; ?>
+			<?php wp_nonce_field( 'publishrank_onboarding_save' ); ?>
+			<?php if ( $error ) : ?>
+				<div class="prw-alert prw-alert--error prw-validation-summary" id="prw-validation-summary" role="alert" tabindex="-1"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><p><?php echo esc_html( sprintf( /* translators: %s: field list. */ __( 'Please complete the required fields (*): %s', 'publishrank' ), ! empty( $this->missing_required() ) ? implode( ', ', $this->missing_required() ) : __( 'see highlighted fields', 'publishrank' ) ) ); ?></p></div>
+			<?php endif; ?>
+			<section class="prw-panel prw-panel--step-<?php echo (int) $step; ?>" aria-labelledby="prw-step-title">
+				<?php $this->render_step_body( $step, $is_person, $locked, $self . $edit_qs ); ?>
+			</section>
+			<div class="prw-actions" data-prw-actions>
+				<span class="prw-actions__status" data-prw-status>
+					<i class="fa-solid <?php echo esc_attr( $locked ? 'fa-lock' : 'fa-circle-check' ); ?>" aria-hidden="true"></i>
+					<span data-prw-status-text><?php echo esc_html( $locked ? __( 'Required one-time setup', 'publishrank' ) : __( 'Each step saves when you continue', 'publishrank' ) ); ?></span>
+				</span>
+				<span class="prw-actions__buttons">
+					<?php if ( ! $locked && ! $complete ) : ?>
+						<a class="prw-link prw-link--muted" href="<?php echo esc_url( $close_url ); ?>"><?php esc_html_e( 'Exit wizard', 'publishrank' ); ?></a>
+					<?php elseif ( $complete ) : ?>
+						<a class="prw-link prw-link--muted" href="<?php echo esc_url( $close_url ); ?>"><?php esc_html_e( 'Cancel', 'publishrank' ); ?></a>
+					<?php endif; ?>
+					<?php if ( $optional ) : ?>
+						<a class="prw-link" href="<?php echo esc_url( $self . '&step=' . ( $step + 1 ) . $edit_qs ); ?>"><?php esc_html_e( 'Skip for now', 'publishrank' ); ?></a>
+					<?php endif; ?>
+					<?php if ( $step > 1 ) : ?>
+						<button class="button prw-btn prw-btn--ghost" type="submit" name="prw_nav" value="back" formnovalidate><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> <?php esc_html_e( 'Back', 'publishrank' ); ?></button>
+					<?php endif; ?>
+					<?php if ( 1 === $step ) : ?>
+						<a class="button button-primary prw-btn prw-btn--primary" href="<?php echo esc_url( $self . '&step=2' . $edit_qs ); ?>"><?php esc_html_e( 'Start configuration', 'publishrank' ); ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+					<?php else : ?>
+						<button class="button button-primary prw-btn prw-btn--primary" type="submit" name="prw_nav" value="next"><span class="prw-btn__spinner" aria-hidden="true"></span><?php echo esc_html( self::TOTAL_STEPS === $step ? __( 'Finish setup', 'publishrank' ) : __( 'Save & continue', 'publishrank' ) ); ?> <i class="fa-solid <?php echo esc_attr( self::TOTAL_STEPS === $step ? 'fa-check' : 'fa-arrow-right' ); ?>" aria-hidden="true"></i></button>
+					<?php endif; ?>
+				</span>
 			</div>
-		</div>
+		</form>
 		<?php
+		echo '</div></div>';
+		if ( $saved && $step > 1 ) {
+			echo '<div class="prw-toast" role="status" aria-live="polite" data-prw-toast><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ' . esc_html( sprintf( /* translators: %s: name of the previous step. */ __( '%s saved', 'publishrank' ), $steps[ max( 1, $step - 1 ) ]['label'] ) ) . '</div>';
+		}
+		echo '</div>';
 	}
 
-	private function render_step_body( $step, $is_person, $locked ) {
+	/** Heading and lead sentence for a step. @return array{0:string,1:string} */
+	private function step_copy( $step, $is_person ) {
 		$lead = array(
-			1 => array( __( 'Welcome to PublishRank 🤗', 'publishrank' ), __( 'Here is your quick-start guide. This one-time setup tells search engines who publishes this site, and everything can be edited later from the Setup Wizard.', 'publishrank' ) ),
+			1 => array( __( 'Welcome to PublishRank', 'publishrank' ), __( 'This one-time setup tells search engines who publishes this site. It takes about three minutes, and everything can be edited later.', 'publishrank' ) ),
 			2 => array( __( 'Who publishes this site?', 'publishrank' ), __( 'Powers your Organization/Person schema and keeps publisher information consistent across search surfaces. Fields marked * are required.', 'publishrank' ) ),
 			3 => array( $is_person ? __( 'About the publisher', 'publishrank' ) : __( 'Organization details', 'publishrank' ), __( 'All optional. Only add details that are public and accurate.', 'publishrank' ) ),
 			4 => array( __( 'Social profiles and sharing', 'publishrank' ), __( 'Official profiles become the schema sameAs list. Enter a handle or a full URL.', 'publishrank' ) ),
 			5 => array( __( 'Search appearance and verification', 'publishrank' ), __( 'Homepage title and description, plus ownership verification for search engines.', 'publishrank' ) ),
 			6 => array( __( 'Content scope', 'publishrank' ), __( 'Choose which content types appear in your sitemaps.', 'publishrank' ) ),
 			7 => array( __( 'Local business (optional)', 'publishrank' ), __( 'Only enable this if the publication has a real, public-facing business location.', 'publishrank' ) ),
-			8 => array( __( 'Review and finish', 'publishrank' ), __( 'Check your configuration, then finish. Ongoing controls such as the News window, breadcrumbs and robots live in Settings.', 'publishrank' ) ),
+			8 => array( __( 'Review and finish', 'publishrank' ), __( 'Check your configuration, then finish. Ongoing controls such as the News window, breadcrumbs and robots live in General Settings.', 'publishrank' ) ),
 		);
-		echo '<h2>' . esc_html( $lead[ $step ][0] ) . '</h2><p class="rhs-lead">' . esc_html( $lead[ $step ][1] ) . '</p>';
+		return $lead[ $step ];
+	}
+
+	private function render_step_body( $step, $is_person, $locked, $edit_base = '' ) {
 		if ( 1 === $step ) {
-			echo '<div class="prw-quick-start" role="note"><strong>' . esc_html__( 'Quick start', 'publishrank' ) . '</strong><ol><li>' . esc_html__( 'Add your publication identity and logo.', 'publishrank' ) . '</li><li>' . esc_html__( 'Review search appearance, social profiles and content scope.', 'publishrank' ) . '</li><li>' . esc_html__( 'Finish setup, then review ongoing controls in Settings.', 'publishrank' ) . '</li></ol></div>';
+			$quick = array(
+				array( 'fa-building', __( 'Publisher identity', 'publishrank' ), __( 'Your publication name, logo and country, used in schema, Open Graph and the News sitemap.', 'publishrank' ) ),
+				array( 'fa-magnifying-glass', __( 'Search appearance', 'publishrank' ), __( 'Homepage title, social profiles, verification codes and which content goes in your sitemaps.', 'publishrank' ) ),
+				array( 'fa-flag-checkered', __( 'Review & go live', 'publishrank' ), __( 'Check the summary and finish. Ongoing controls stay in General Settings.', 'publishrank' ) ),
+			);
+			echo '<ol class="pr-docs-steps prw-quick">';
+			foreach ( $quick as $i => $item ) {
+				echo '<li class="pr-docs-step"><span class="pr-docs-step__no" aria-hidden="true">' . (int) ( $i + 1 ) . '</span><span class="pr-docs-step__icon" aria-hidden="true"><i class="fa-solid ' . esc_attr( $item[0] ) . '"></i></span><strong>' . esc_html( $item[1] ) . '</strong><p>' . esc_html( $item[2] ) . '</p></li>';
+			}
+			echo '</ol>';
+			$checks = $this->environment_checks();
+			$ok     = count( array_filter( wp_list_pluck( $checks, 'ok' ) ) );
+			echo '<h3 class="pr-docs-h prw-subhead"><i class="fa-solid fa-stethoscope" aria-hidden="true"></i>' . esc_html__( 'Site readiness', 'publishrank' ) . '<span class="prw-subhead__meta">' . esc_html( sprintf( /* translators: 1: passed checks, 2: total checks. */ __( '%1$d of %2$d checks passed', 'publishrank' ), $ok, count( $checks ) ) ) . '</span></h3>';
 			echo '<ul class="prw-checklist">';
-			foreach ( $this->environment_checks() as $check ) {
+			foreach ( $checks as $check ) {
 				$icon = $check['ok'] ? 'fa-circle-check' : 'fa-triangle-exclamation';
-				echo '<li class="' . ( $check['ok'] ? 'is-ok' : 'is-warn' ) . '"><i class="fa-solid ' . esc_attr( $icon ) . '" aria-hidden="true"></i>' . esc_html( $check['label'] ) . '</li>';
+				echo '<li class="' . ( $check['ok'] ? 'is-ok' : 'is-warn' ) . '"><i class="fa-solid ' . esc_attr( $icon ) . '" aria-hidden="true"></i><span>' . esc_html( $check['label'] ) . '</span>';
+				if ( ! $check['ok'] && ! empty( $check['fix'] ) ) {
+					echo '<a class="prw-checklist__fix" href="' . esc_url( $check['fix'] ) . '">' . esc_html__( 'Fix', 'publishrank' ) . '</a>';
+				} else {
+					echo '<span class="prw-checklist__state">' . esc_html( $check['ok'] ? __( 'OK', 'publishrank' ) : __( 'Check', 'publishrank' ) ) . '</span>';
+				}
+				echo '</li>';
 			}
 			echo '</ul>';
 			if ( $locked ) {
-				echo '<p class="prw-lock-note">' . esc_html__( 'PublishRank screens unlock as soon as the required publisher fields are saved.', 'publishrank' ) . '</p>';
+				echo '<p class="prw-alert prw-alert--info"><i class="fa-solid fa-lock" aria-hidden="true"></i><span>' . esc_html__( 'PublishRank screens unlock as soon as the required publisher fields are saved.', 'publishrank' ) . '</span></p>';
 			}
 			return;
 		}
@@ -1197,12 +1352,12 @@ final class OnboardingPage {
 			$this->render_local_step();
 			return;
 		}
-		if ( 8 === $step ) {
-			$this->recap();
+		if ( self::TOTAL_STEPS === $step ) {
 			$missing = $this->missing_required();
 			if ( $missing ) {
-				echo '<div class="notice notice-warning inline"><p>' . esc_html( sprintf( /* translators: %s: field list. */ __( 'Still required: %s. Finishing will take you back to the Publisher step.', 'publishrank' ), implode( ', ', $missing ) ) ) . '</p></div>';
+				echo '<div class="prw-alert prw-alert--warn"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><p>' . esc_html( sprintf( /* translators: %s: field list. */ __( 'Still required: %s. Finishing will take you back to the Publisher step.', 'publishrank' ), implode( ', ', $missing ) ) ) . '</p></div>';
 			}
+			$this->recap( $edit_base );
 			return;
 		}
 		echo '<div class="prw-fields">';
@@ -1212,21 +1367,37 @@ final class OnboardingPage {
 		echo '</div>';
 	}
 
-	/** The summary shown once setup is complete. */
+	/** The summary shown once setup is complete, inside the shared frame. */
 	private function render_complete_view() {
 		$self = Branding::page_url( self::SLUG );
-		echo '<div class="wrap rhs-onboarding-wrap">';
-		AdminAssets::header( __( 'PublishRank Setup', 'publishrank' ), __( 'Your setup is complete. Review the configuration here, or edit it when your publication changes.', 'publishrank' ) );
+		$when = (string) get_option( 'publishrank_onboarding_completed_at', '' );
+		$time = '' !== $when ? strtotime( $when ) : false;
+		echo '<div class="wrap pr-modules-wrap pr-shell-wrap prw-wrap prw-wrap--complete">';
+		AdminAssets::header( __( 'Setup wizard', 'publishrank' ), __( 'Your setup is complete. Review the configuration here, or edit it when your publication changes.', 'publishrank' ) );
 		if ( isset( $_GET['done'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Setup complete. PublishRank is now outputting your publisher identity.', 'publishrank' ) . '</p></div>';
 		}
 		if ( isset( $_GET['restored'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Recommended defaults restored.', 'publishrank' ) . '</p></div>';
 		}
-			echo '<div class="rhs-onboarding-card"><div class="rhs-setup-complete"><div class="rhs-setup-complete__icon" aria-hidden="true">✓</div><div class="rhs-setup-complete__copy"><span class="rhs-eyebrow">' . esc_html__( 'Setup complete', 'publishrank' ) . '</span><h2>' . esc_html__( 'Your PublishRank configuration', 'publishrank' ) . '</h2><small>' . esc_html__( 'One-time settings live in this wizard. Ongoing controls are in Settings.', 'publishrank' ) . '</small></div></div>';
-			$this->recap();
-			echo '<div class="rhs-onboarding-actions"><a class="button button-primary" href="' . esc_url( $self . '&edit=1&step=2' ) . '">' . esc_html__( 'Edit setup', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( Branding::MENU_SLUG ) ) . '">' . esc_html__( 'Go to dashboard', 'publishrank' ) . '</a><a class="button button-secondary" href="' . esc_url( Branding::page_url( 'publishrank' ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '</a><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" onsubmit="return confirm(&quot;' . esc_attr__( 'Restore recommended defaults? Your current wizard-managed values will be replaced.', 'publishrank' ) . '&quot;);"><input type="hidden" name="action" value="publishrank_onboarding_defaults" />';
+		echo '<div class="pr-modules-layout">';
+		AdminShell::nav( self::SLUG );
+		echo '<div class="pr-modules-main pr-shell-main prw-main">';
+		self::intro( __( 'Help', 'publishrank' ), __( 'Setup wizard', 'publishrank' ), __( 'Review your core site identity and SEO settings, and jump straight to any step to change it.', 'publishrank' ), 'fa-solid fa-wand-magic-sparkles' );
+		echo '<div class="prw-success' . ( isset( $_GET['done'] ) ? ' is-celebrating' : '' ) . '"><span class="prw-success__icon" aria-hidden="true"><i class="fa-solid fa-check"></i></span><div class="prw-success__copy"><p class="pr-shell-kicker">' . esc_html__( 'Setup complete', 'publishrank' ) . '</p><h3>' . esc_html__( 'PublishRank is outputting your publisher identity', 'publishrank' ) . '</h3><p>'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( $time ) {
+			/* translators: %s: date the setup was completed. */
+			echo esc_html( sprintf( __( 'Completed on %s. One-time settings live in this wizard; ongoing controls are in General Settings.', 'publishrank' ), wp_date( get_option( 'date_format' ), $time ) ) );
+		} else {
+			esc_html_e( 'One-time settings live in this wizard; ongoing controls are in General Settings.', 'publishrank' );
+		}
+		echo '</p></div><a class="button button-primary prw-btn prw-btn--primary" href="' . esc_url( $self . '&edit=1&step=2' ) . '"><i class="fa-solid fa-pen" aria-hidden="true"></i> ' . esc_html__( 'Edit setup', 'publishrank' ) . '</a></div>';
+		echo '<h3 class="pr-docs-h prw-subhead"><i class="fa-solid fa-list-check" aria-hidden="true"></i>' . esc_html__( 'Your configuration', 'publishrank' ) . '</h3>';
+		$this->recap( $self . '&edit=1' );
+		echo '<div class="prw-complete-actions"><div class="prw-complete-actions__main"><a class="button prw-btn prw-btn--ghost" href="' . esc_url( Branding::page_url( Branding::MENU_SLUG ) ) . '"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> ' . esc_html__( 'Go to dashboard', 'publishrank' ) . '</a><a class="button prw-btn prw-btn--ghost" href="' . esc_url( Branding::page_url( 'publishrank' ) ) . '"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ' . esc_html__( 'General Settings', 'publishrank' ) . '</a><a class="button prw-btn prw-btn--ghost" href="' . esc_url( Branding::page_url( 'publishrank-modules' ) ) . '"><i class="fa-solid fa-toggle-on" aria-hidden="true"></i> ' . esc_html__( 'Features', 'publishrank' ) . '</a></div>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="prw-restore" onsubmit="return confirm(&quot;' . esc_attr__( 'Restore recommended defaults? Your current wizard-managed values will be replaced.', 'publishrank' ) . '&quot;);"><input type="hidden" name="action" value="publishrank_onboarding_defaults" />';
 		wp_nonce_field( 'publishrank_onboarding_defaults' );
-		echo '<button class="button" type="submit">' . esc_html__( 'Restore recommended defaults', 'publishrank' ) . '</button></form></div></div></div>';
+		echo '<button class="prw-link prw-link--danger" type="submit"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> ' . esc_html__( 'Restore recommended defaults', 'publishrank' ) . '</button></form></div>';
+		echo '</div></div></div>';
 	}
 }

@@ -84,7 +84,7 @@ final class DiagnosticsPage {
 		foreach ( $providers as $provider ) {
 			if ( $provider->is_enabled() ) {
 				++$enabled;
-				$shards += $provider->get_shard_count();
+				$shards += count( $engine->listed_shards( $provider ) );
 			}
 		}
 			$this->row( __( 'Generated sitemap XML audit', 'publishrank' ), $audit['status'], sprintf( /* translators: 1: providers, 2: shards, 3: URLs. */ __( '%1$d active providers, %2$d shard(s), %3$d URL(s), %4$d generated XML issue(s).', 'publishrank' ), $enabled, $shards, $audit['urls'], count( $audit['errors'] ) ) );

@@ -25,6 +25,54 @@ final class LiveBlogSchema {
 
 	public function register() {
 		add_action( 'save_post', array( $this, 'save' ), 12, 2 );
+		add_shortcode( 'publishrank_live_updates', array( $this, 'shortcode' ) );
+		add_filter( 'the_content', array( $this, 'append_updates' ), 15 );
+	}
+
+	/** [publishrank_live_updates] prints the live updates where the editor wants them. */
+	public function shortcode() {
+		$post = get_post();
+		return $post && self::is_live_blog( $post ) ? self::render_updates( $post ) : '';
+	}
+
+	/**
+	 * Show the updates on the article itself. Google requires live-blog markup to match visible content,
+	 * and every liveBlogUpdate URL points at one of these anchors. Skipped when the shortcode is used.
+	 */
+	public function append_updates( $content ) {
+		if ( is_admin() || is_feed() || ! in_the_loop() || ! is_main_query() || ! is_singular() ) {
+			return $content; }
+		$post = get_post();
+		if ( ! $post || ! self::is_live_blog( $post ) || has_shortcode( (string) $post->post_content, 'publishrank_live_updates' ) ) {
+			return $content; }
+		if ( ! apply_filters( 'publishrank_live_updates_auto_display', true, $post ) ) {
+			return $content; }
+		$html = self::render_updates( $post );
+		// Newest first above the article body, the usual live-coverage layout.
+		return '' === $html ? $content : $html . $content;
+	}
+
+	/** Escaped HTML list of updates, newest first, each with the anchor used in the schema. */
+	public static function render_updates( $post ) {
+		$updates = self::updates( $post->ID );
+		if ( ! $updates ) {
+			return ''; }
+		$ended = '' !== self::time_meta( $post->ID, self::COVERAGE_END );
+		$out   = '<section class="publishrank-live-updates" aria-label="' . esc_attr__( 'Live updates', 'publishrank' ) . '">';
+		$out  .= '<p class="publishrank-live-status"><strong>' . ( $ended ? esc_html__( 'Live coverage has ended', 'publishrank' ) : esc_html__( 'Live', 'publishrank' ) ) . '</strong></p>';
+		foreach ( array_reverse( $updates ) as $update ) {
+			$ts   = strtotime( $update['time'] );
+			$out .= '<article class="publishrank-live-update" id="' . esc_attr( 'live-update-' . $update['id'] ) . '">';
+			$out .= '<p class="publishrank-live-time"><time datetime="' . esc_attr( $update['time'] ) . '">' . esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $ts ) ) . '</time></p>';
+			if ( '' !== $update['headline'] ) {
+				$out .= '<h3 class="publishrank-live-headline">' . esc_html( $update['headline'] ) . '</h3>'; }
+			$out .= wpautop( esc_html( $update['body'] ) );
+			if ( '' !== $update['author'] ) {
+				/* translators: %s: author name */
+				$out .= '<p class="publishrank-live-author">' . esc_html( sprintf( __( 'By %s', 'publishrank' ), $update['author'] ) ) . '</p>'; }
+			$out .= '</article>';
+		}
+		return $out . '</section>';
 	}
 
 	/** True only for an explicit editor choice; titles and categories never trigger it. */
@@ -61,11 +109,16 @@ final class LiveBlogSchema {
 			foreach ( array_reverse( $updates ) as $update ) {
 				$node = array(
 					'@type'         => 'BlogPosting',
+					'headline'      => wp_trim_words( $update['body'], 12, '…' ),
 					'@id'           => $base . '#live-update-' . $update['id'],
 					'url'           => $base . '#live-update-' . $update['id'],
 					'datePublished' => $update['time'],
 					'articleBody'   => $update['body'],
 				);
+				if ( isset( $article['publisher'] ) ) {
+					$node['publisher'] = $article['publisher']; }
+				if ( isset( $article['image'] ) ) {
+					$node['image'] = is_array( $article['image'] ) && isset( $article['image']['@id'] ) ? array( '@id' => $article['image']['@id'] ) : $article['image']; }
 				if ( '' !== $update['headline'] ) {
 					$node['headline'] = $update['headline']; }
 				if ( '' !== $update['author'] ) {
@@ -76,6 +129,9 @@ final class LiveBlogSchema {
 				$list[] = $node;
 			}
 			$article['liveBlogUpdate'] = $list;
+			$latest = end( $updates );
+			if ( $latest && ( empty( $article['dateModified'] ) || strtotime( $latest['time'] ) > strtotime( (string) $article['dateModified'] ) ) ) {
+				$article['dateModified'] = $latest['time']; }
 		}
 		return $article;
 	}

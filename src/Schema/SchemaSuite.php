@@ -115,9 +115,48 @@ final class SchemaSuite {
 			$this->schema_textarea_field( $post->ID, PostMeta::RECIPE_STEPS, __( 'Preparation steps', 'publishrank' ) );
 			$this->schema_text_field( $post->ID, PostMeta::RECIPE_TIME, __( 'Preparation time (ISO 8601 duration)', 'publishrank' ), 'PT30M' );
 			$this->schema_text_field( $post->ID, PostMeta::RECIPE_YIELD, __( 'Yield', 'publishrank' ), '4 servings' );
-			echo '</div><div class="pr-schema-panel" data-types="Review" style="display:none"><hr /><h4>' . esc_html__( 'Review details', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'Use a genuine rating visible on the page; the reviewed item and rating are required for Review markup.', 'publishrank' ) . '</p>';
-			$this->schema_text_field( $post->ID, PostMeta::REVIEW_ITEM, __( 'Item being reviewed', 'publishrank' ) );
+			echo '</div><div class="pr-schema-panel" data-types="JobPosting" style="display:none"><hr /><h4>' . esc_html__( 'Job posting details', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'Job markup is output only when the hiring organization, a closing date and either a location or remote country are filled in. The post title is the job title and the post content is the job description. Remove or expire the posting once the job is filled.', 'publishrank' ) . '</p><input type="hidden" name="publishrank_job_fields" value="1" />';
+			$this->schema_text_field( $post->ID, PostMeta::JOB_HIRING_ORG, __( 'Hiring organization', 'publishrank' ) );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_HIRING_ORG_URL, __( 'Organization website (optional)', 'publishrank' ), 'https://', 'url' );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_HIRING_ORG_LOGO, __( 'Organization logo URL (optional)', 'publishrank' ), 'https://', 'url' );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_VALID_THROUGH, __( 'Applications close (YYYY-MM-DD)', 'publishrank' ), '', 'date' );
+			$selected_types = array_filter( explode( ',', (string) PostMeta::get( $post->ID, PostMeta::JOB_EMPLOYMENT_TYPE, '' ) ) );
+			echo '<p><strong>' . esc_html__( 'Employment type', 'publishrank' ) . '</strong><br />';
+			foreach ( PostMeta::job_employment_types() as $job_key => $job_label ) {
+				echo '<label style="margin-right:10px"><input type="checkbox" name="' . esc_attr( PostMeta::JOB_EMPLOYMENT_TYPE ) . '[]" value="' . esc_attr( strtolower( $job_key ) ) . '"' . checked( in_array( $job_key, $selected_types, true ), true, false ) . ' /> ' . esc_html( $job_label ) . '</label>'; }
+			echo '</p>';
+			$this->schema_text_field( $post->ID, PostMeta::JOB_STREET, __( 'Street address (optional)', 'publishrank' ) );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_LOCALITY, __( 'City', 'publishrank' ) );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_REGION, __( 'State / region (optional)', 'publishrank' ) );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_POSTAL_CODE, __( 'Postal code (optional)', 'publishrank' ) );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_COUNTRY, __( 'Country code (e.g. PK, US)', 'publishrank' ) );
+			echo '<p><label><input type="checkbox" name="' . esc_attr( PostMeta::JOB_REMOTE ) . '" value="1"' . checked( PostMeta::get( $post->ID, PostMeta::JOB_REMOTE, '0' ), '1', false ) . ' /> ' . esc_html__( 'Fully remote job', 'publishrank' ) . '</label></p>';
+			$this->schema_text_field( $post->ID, PostMeta::JOB_REMOTE_COUNTRY, __( 'Remote: country applicants must live in (code)', 'publishrank' ) );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_SALARY_MIN, __( 'Salary from (optional)', 'publishrank' ), '', 'number', '0.01' );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_SALARY_MAX, __( 'Salary to (optional)', 'publishrank' ), '', 'number', '0.01' );
+			$this->schema_text_field( $post->ID, PostMeta::JOB_SALARY_CURRENCY, __( 'Salary currency (e.g. PKR, USD)', 'publishrank' ) );
+			$unit = (string) PostMeta::get( $post->ID, PostMeta::JOB_SALARY_UNIT, '' );
+			echo '<p><label><strong>' . esc_html__( 'Salary is per', 'publishrank' ) . '</strong><br /><select name="' . esc_attr( PostMeta::JOB_SALARY_UNIT ) . '"><option value="">—</option>';
+			foreach ( array( 'HOUR' => __( 'Hour', 'publishrank' ), 'DAY' => __( 'Day', 'publishrank' ), 'WEEK' => __( 'Week', 'publishrank' ), 'MONTH' => __( 'Month', 'publishrank' ), 'YEAR' => __( 'Year', 'publishrank' ) ) as $u => $l ) {
+				echo '<option value="' . esc_attr( $u ) . '"' . selected( $unit, $u, false ) . '>' . esc_html( $l ) . '</option>'; }
+			echo '</select></label></p>';
+			$this->schema_text_field( $post->ID, PostMeta::JOB_IDENTIFIER, __( 'Internal job reference (optional)', 'publishrank' ) );
+			echo '<p><label><input type="checkbox" name="' . esc_attr( PostMeta::JOB_DIRECT_APPLY ) . '" value="1"' . checked( PostMeta::get( $post->ID, PostMeta::JOB_DIRECT_APPLY, '0' ), '1', false ) . ' /> ' . esc_html__( 'Applicants can apply directly on this page', 'publishrank' ) . '</label></p>';
+			echo '</div><div class="pr-schema-panel" data-types="Review,ReviewNewsArticle" style="display:none"><hr /><h4>' . esc_html__( 'Review details', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'Use a genuine rating visible on the page. Google only shows review stars when the reviewed item has a specific type (Product, Book, Movie …), not a generic “Thing”.', 'publishrank' ) . '</p>';
+			$current_item_type = (string) PostMeta::get( $post->ID, PostMeta::REVIEW_ITEM_TYPE, '' );
+			echo '<p><label><strong>' . esc_html__( 'Type of item reviewed', 'publishrank' ) . '</strong><br /><select name="' . esc_attr( PostMeta::REVIEW_ITEM_TYPE ) . '"><option value="">' . esc_html__( '— Choose a type —', 'publishrank' ) . '</option>';
+			foreach ( PostMeta::review_item_types() as $item_key => $item_label ) {
+				echo '<option value="' . esc_attr( $item_key ) . '"' . selected( $current_item_type, $item_key, false ) . '>' . esc_html( $item_label ) . '</option>';
+			}
+			echo '</select></label></p>';
+			$this->schema_text_field( $post->ID, PostMeta::REVIEW_ITEM, __( 'Name of the item reviewed', 'publishrank' ) );
 			$this->schema_text_field( $post->ID, PostMeta::REVIEW_RATING, __( 'Rating (0–5)', 'publishrank' ), '', 'number', '0.1' );
+			$this->schema_text_field( $post->ID, PostMeta::REVIEW_ITEM_URL, __( 'Official page of the item (optional)', 'publishrank' ), 'https://', 'url' );
+			$this->schema_text_field( $post->ID, PostMeta::REVIEW_ITEM_IMAGE, __( 'Image of the item (optional)', 'publishrank' ), 'https://', 'url' );
+			$this->schema_text_field( $post->ID, PostMeta::REVIEW_ITEM_BRAND, __( 'Brand or maker (products, apps; optional)', 'publishrank' ) );
+			$this->schema_text_field( $post->ID, PostMeta::REVIEW_ITEM_CREATOR, __( 'Author / director / artist (books, films, music; optional)', 'publishrank' ) );
+			$this->schema_textarea_field( $post->ID, PostMeta::REVIEW_PROS, __( 'Pros, one per line (optional)', 'publishrank' ) );
+			$this->schema_textarea_field( $post->ID, PostMeta::REVIEW_CONS, __( 'Cons, one per line (optional)', 'publishrank' ) );
 			echo '</div><div class="pr-schema-panel" data-types="Product" style="display:none"><hr /><h4>' . esc_html__( 'Product and offer details', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'Offer markup requires an accurate price and ISO 4217 currency. Keep all details accurate and visible to visitors.', 'publishrank' ) . '</p>';
 			$this->schema_text_field( $post->ID, PostMeta::PRODUCT_SKU, __( 'SKU (optional)', 'publishrank' ) );
 			$this->schema_text_field( $post->ID, PostMeta::PRODUCT_BRAND, __( 'Brand (optional)', 'publishrank' ) );

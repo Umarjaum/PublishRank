@@ -82,7 +82,7 @@ final class DashboardPage {
 		$groups = array(
 			array(
 				'label' => '',
-				'items' => array( Branding::MENU_SLUG, 'publishrank-onboarding' ),
+				'items' => array( Branding::MENU_SLUG, 'publishrank-modules', 'publishrank-onboarding' ),
 			),
 			array(
 				'label' => __( 'Content & publishing', 'publishrank' ),
@@ -111,7 +111,7 @@ final class DashboardPage {
 			),
 		);
 
-		$essential = apply_filters( 'publishrank_seo_sidebar_essential_pages', array( Branding::MENU_SLUG, 'publishrank-onboarding', 'uj-newsroom', 'publishrank', 'publishrank-documentation' ) );
+		$essential = apply_filters( 'publishrank_seo_sidebar_essential_pages', array( Branding::MENU_SLUG, 'publishrank-modules', 'publishrank-onboarding', 'uj-newsroom', 'publishrank', 'publishrank-documentation' ) );
 		$ordered   = array();
 		foreach ( $groups as $group ) {
 			$items = array();
@@ -125,24 +125,18 @@ final class DashboardPage {
 					unset( $registered[ $entry ] );
 				}
 			}
-					if ( empty( $items ) ) {
-						continue;
-					}
-					// Keep the sidebar short: only essential destinations stay visible. Every other registered
-					// screen remains registered (so direct links and dashboard cards authorize correctly) and is
-					// reached from the Dashboard tool cards.
-					$first_in_group = true;
-					foreach ( $items as $item ) {
-						if ( '' !== $group['label'] && $first_in_group ) {
-							$item[0] = '<span class="pr-submenu-group" aria-hidden="true">' . esc_html( $group['label'] ) . '</span><span class="pr-submenu-item-label">' . $item[0] . '</span>';
-							$item[4] = trim( ( isset( $item[4] ) ? $item[4] . ' ' : '' ) . 'pr-submenu-group-start' );
-						}
-						if ( ! in_array( (string) $item[2], $essential, true ) ) {
-							$item[4] = trim( ( isset( $item[4] ) ? $item[4] . ' ' : '' ) . 'pr-submenu-hidden' );
-						}
-						$ordered[] = $item;
-						$first_in_group = false;
-					}
+			if ( empty( $items ) ) {
+				continue;
+			}
+			// Keep the sidebar short: only essential destinations stay visible. Every other registered
+			// screen remains registered (so direct links and dashboard cards authorize correctly) and is
+			// reached from the Dashboard tool cards.
+			foreach ( $items as $item ) {
+				if ( ! in_array( (string) $item[2], $essential, true ) ) {
+					$item[4] = trim( ( isset( $item[4] ) ? $item[4] . ' ' : '' ) . 'pr-submenu-hidden' );
+				}
+				$ordered[] = $item;
+			}
 		}
 
 		// Preserve screens added by other modules or third-party extensions.
@@ -255,6 +249,7 @@ final class DashboardPage {
 						<li><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><?php esc_html_e( 'Lightweight & Fast', 'publishrank' ); ?></li>
 						<li><i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i><?php esc_html_e( 'Seamless WordPress Integration', 'publishrank' ); ?></li>
 					</ul>
+					<?php ModulesPage::render_dashboard_section(); ?>
 					<section class="pr-workflow" aria-labelledby="pr-workflow-title">
 						<p class="pr-workflow__kicker"><?php esc_html_e( 'A practical workflow', 'publishrank' ); ?></p>
 						<h2 id="pr-workflow-title"><?php esc_html_e( 'From publication setup to a healthier archive', 'publishrank' ); ?></h2>

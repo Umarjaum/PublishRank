@@ -10,6 +10,10 @@ final class SitemapController {
 	public function __construct() {
 		$this->engine = new SitemapEngine(); }
 	public function register() {
+		// Master switch (Features screen). When off, WordPress core sitemaps stay available.
+		if ( ! \PublishRankSEO\Core\ModuleSwitches::sitemap_enabled() ) {
+			return;
+		}
 		add_action( 'init', array( $this, 'rewrite' ) );
 		add_action( 'template_redirect', array( $this, 'render' ), 0 );
 		add_filter( 'wp_sitemaps_enabled', '__return_false', 20 );
@@ -88,7 +92,7 @@ final class SitemapController {
 			status_header( 500 );
 			header( 'Content-Type: text/plain; charset=UTF-8' );
 			header( 'X-Robots-Tag: noindex' );
-			echo 'Sitemap generation failed. See PublishRank > Sitemap Health for details.';
+			echo 'Sitemap generation failed. See PublishRank > Sitemap Hub for details.';
 			exit; }
 		// '': unknown provider, disabled provider or shard number out of range: a genuine 404.
 		if ( '' === $xml ) {

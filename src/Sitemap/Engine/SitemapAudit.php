@@ -31,8 +31,7 @@ final class SitemapAudit {
 		foreach ( $engine->providers() as $provider ) {
 			if ( ! $provider->is_enabled() ) {
 				continue; }
-			$count = max( 0, (int) $provider->get_shard_count() );
-			for ( $shard = 1; $shard <= $count; $shard++ ) {
+			foreach ( $engine->listed_shards( $provider ) as $shard ) {
 				$expected_children[ self::url_key( SitemapUrls::shard_url( $provider->get_slug(), $shard ) ) ] = true; }
 		}
 		$actual_children = self::url_values( $index );
@@ -63,8 +62,7 @@ final class SitemapAudit {
 			if ( ! $provider->is_enabled() ) {
 				continue; }
 			++$report['providers'];
-			$count = max( 0, (int) $provider->get_shard_count() );
-			for ( $shard = 1; $shard <= $count; $shard++ ) {
+			foreach ( $engine->listed_shards( $provider ) as $shard ) {
 				++$report['shards'];
 				$xml = $engine->render( $provider->get_slug(), $shard );
 				/* translators: %1$s: sitemap provider name; %2$d: 1-based sitemap shard number. */

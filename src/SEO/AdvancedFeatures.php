@@ -137,6 +137,19 @@ final class AdvancedFeatures {
 		$this->render_seo_field( $post->ID, PostMeta::VIDEO_THUMBNAIL, __( 'Video thumbnail URL', 'publishrank' ), __( 'Thumbnail image URL for this article’s video, when applicable.', 'publishrank' ), 'url' );
 		$this->render_seo_field( $post->ID, PostMeta::VIDEO_DURATION, __( 'Video duration', 'publishrank' ), __( 'Enter an ISO 8601 duration, for example PT4M30S for four minutes and thirty seconds.', 'publishrank' ), 'text', 32 );
 		$this->render_seo_field( $post->ID, PostMeta::CITATIONS, __( 'Citations or source references', 'publishrank' ), __( 'Optional references that support the article. Add one citation per line.', 'publishrank' ), 'textarea', 2000 );
+		$this->render_seo_field( $post->ID, PostMeta::DATELINE, __( 'Dateline', 'publishrank' ), __( 'Where the story was filed, for example “LAHORE, Pakistan”. Recommended for Reportage and other news articles.', 'publishrank' ), 'text', 120 );
+		$this->render_seo_field( $post->ID, PostMeta::LOCATION_CREATED, __( 'Reported from (location created)', 'publishrank' ), __( 'Place where the reporting was done. Used as locationCreated in news schema.', 'publishrank' ), 'text', 200 );
+		$this->render_seo_field( $post->ID, PostMeta::CONTENT_LOCATION, __( 'Story location (content location)', 'publishrank' ), __( 'Place the story is about, when it differs from where it was reported.', 'publishrank' ), 'text', 200 );
+		$this->render_seo_field( $post->ID, PostMeta::BACKSTORY, __( 'Backstory / how we reported this', 'publishrank' ), __( 'Optional note on sourcing and methods. Used as backstory in news schema.', 'publishrank' ), 'textarea', 1000 );
+		$this->render_seo_field( $post->ID, PostMeta::CORRECTION, __( 'Correction notice', 'publishrank' ), __( 'Describe any correction made after publication. Output as a CorrectionComment with the last modified date.', 'publishrank' ), 'textarea', 1000 );
+		$this->render_seo_field( $post->ID, PostMeta::PAYWALL_SELECTOR, __( 'Paywalled section CSS class', 'publishrank' ), __( 'Only for subscriber-only articles (box above unticked). The CSS class that wraps the locked part, for example .paywall. Google needs this to tell a paywall from cloaking.', 'publishrank' ), 'text', 200, array(), '.paywall' );
+		echo '<h4>' . esc_html__( 'Fact-check (ClaimReview)', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'Fill in only when this article checks one specific claim. The rating must match the verdict shown in the article.', 'publishrank' ) . '</p>';
+		$this->render_seo_field( $post->ID, PostMeta::CLAIM_TEXT, __( 'Claim checked', 'publishrank' ), __( 'Short, neutral summary of the claim.', 'publishrank' ), 'textarea', 500 );
+		$this->render_seo_field( $post->ID, PostMeta::CLAIM_AUTHOR, __( 'Who made the claim', 'publishrank' ), '', 'text', 200 );
+		$this->render_seo_field( $post->ID, PostMeta::CLAIM_APPEARANCE, __( 'Where the claim appeared (URL)', 'publishrank' ), '', 'url' );
+		$this->render_seo_field( $post->ID, PostMeta::CLAIM_DATE, __( 'Date the claim was made (YYYY-MM-DD)', 'publishrank' ), '', 'text', 10 );
+		$this->render_seo_field( $post->ID, PostMeta::CLAIM_VERDICT, __( 'Verdict shown to readers', 'publishrank' ), __( 'For example False, Misleading, Mostly true, True.', 'publishrank' ), 'text', 100 );
+		$this->render_seo_field( $post->ID, PostMeta::CLAIM_RATING, __( 'Verdict on a 1–5 scale', 'publishrank' ), __( '1 = False, 2 = Mostly false, 3 = Half true, 4 = Mostly true, 5 = True.', 'publishrank' ), 'text', 1 );
 		echo '</section>';
 
 		echo '<section class="pr-seo-group" aria-labelledby="pr-seo-indexing-title"><h3 id="pr-seo-indexing-title">' . esc_html__( '5. Indexing and distribution', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Change these only when you want to alter whether or how search engines discover this article.', 'publishrank' ) . '</p>';

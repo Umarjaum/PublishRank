@@ -112,7 +112,7 @@ final class FrontendOutputRecovery {
 		$insertion = '';
 		// Inject technical provenance even when the theme has already printed SEO
 		// metadata, or when metadata/schema output is disabled by the administrator.
-			if ( '' !== $this->trace_payload && false === strpos( $html, '<!-- SEO Powered by PublishRank -->' ) ) {
+			if ( '' !== $this->trace_payload && \PublishRankSEO\Core\OutputSettings::source_markers() && false === strpos( $html, '<!-- SEO Powered by PublishRank -->' ) ) {
 			$insertion .= $this->trace_payload;
 		}
 			$has_seo_output = false !== strpos( $html, '<!-- SEO Powered by PublishRank -->' ) || false !== strpos( $html, '<!-- PublishRank: begin;' ) || false !== strpos( $html, '<!-- SEO Powered by PublishRank: structured data begin' );

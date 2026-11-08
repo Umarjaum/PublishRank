@@ -59,6 +59,11 @@ final class GraphOutput {
 				}
 			}
 		}
+		if ( $this->is_editorial_article() ) {
+			$claim = $this->claim_review( get_queried_object() );
+			if ( $claim ) {
+				$graph[] = $claim; }
+		}
 		$graph = apply_filters( 'publishrank_schema_graph', $graph, $this );
 		if ( ! is_array( $graph ) ) {
 			$graph = array(); }
@@ -103,7 +108,8 @@ final class GraphOutput {
 			$entities .= ',article'; }
 		if ( $list ) {
 			$entities .= ',itemlist'; }
-		echo '<!-- SEO Powered by PublishRank: structured data begin; entities=' . esc_attr( $entities ) . " -->\n";
+		$markers = OutputSettings::source_markers();
+		echo ( $markers ? '<!-- SEO Powered by PublishRank: structured data begin; entities=' : '<!-- PublishRank: begin; structured data; entities=' ) . esc_attr( $entities ) . " -->\n";
 		echo '<script type="application/ld+json">';
 		echo wp_json_encode(
 			array(
@@ -113,7 +119,7 @@ final class GraphOutput {
 			JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
 		);
 		echo '</script>' . "\n";
-		echo "<!-- end of SEO data Powered by PublishRank -->\n";
+		echo $markers ? "<!-- end of SEO data Powered by PublishRank -->\n" : "<!-- PublishRank: end -->\n";
 	}
 
 	/**
@@ -258,6 +264,91 @@ final class GraphOutput {
 		$social = PublicationProfile::social_profiles();
 		if ( ! empty( $social ) ) {
 			$organization['sameAs'] = $social; }
+		$organization = $this->organization_advanced( $organization, $org, $url, $type, $logo_url );
+		return (array) apply_filters( 'publishrank_schema_organization', $organization );
+	}
+
+	/**
+	 * Google-recommended Organization properties and NewsMediaOrganization trust signals: top-level email
+	 * and telephone, several contact points, identifiers (VAT, tax, DUNS, LEI, ISO 6523, NAICS), slogan,
+	 * employee count, image, and the editorial policy pages (ethics, corrections, masthead …).
+	 *
+	 * @param array<string,mixed> $organization Node.
+	 * @param array<string,mixed> $org          Stored identity.
+	 * @param string              $url          Site URL.
+	 * @param string              $type         Organization type.
+	 * @param string              $logo_url     Logo URL.
+	 * @return array<string,mixed>
+	 */
+	private function organization_advanced( array $organization, array $org, $url, $type, $logo_url ) {
+		if ( ! empty( $org['contact_email'] ) && is_email( $org['contact_email'] ) ) {
+			$organization['email'] = sanitize_email( $org['contact_email'] );
+		}
+		if ( ! empty( $org['contact_phone'] ) ) {
+			$organization['telephone'] = sanitize_text_field( $org['contact_phone'] );
+		}
+		$points = isset( $organization['contactPoint'] ) ? array( $organization['contactPoint'] ) : array();
+		foreach ( array(
+			'editorial_email'   => 'editorial',
+			'advertising_email' => 'advertising',
+			'tips_email'        => 'news tips',
+		) as $key => $contact_type ) {
+			if ( ! empty( $org[ $key ] ) && is_email( $org[ $key ] ) ) {
+				$points[] = array(
+					'@type'       => 'ContactPoint',
+					'contactType' => $contact_type,
+					'email'       => sanitize_email( $org[ $key ] ),
+				);
+			}
+		}
+		if ( $points ) {
+			if ( ! empty( $organization['address']['addressCountry'] ) ) {
+				foreach ( $points as $i => $point ) {
+					$points[ $i ]['areaServed'] = $organization['address']['addressCountry'];
+				}
+			}
+			$language = sanitize_text_field( (string) get_option( 'publishrank_default_language', substr( (string) get_locale(), 0, 2 ) ) );
+			foreach ( $points as $i => $point ) {
+				$points[ $i ]['availableLanguage'] = $language;
+			}
+			$organization['contactPoint'] = 1 === count( $points ) ? $points[0] : $points;
+		}
+		foreach ( array(
+			'vat_id'    => 'vatID',
+			'tax_id'    => 'taxID',
+			'duns'      => 'duns',
+			'lei_code'  => 'leiCode',
+			'iso6523'   => 'iso6523Code',
+			'naics'     => 'naics',
+			'slogan'    => 'slogan',
+		) as $key => $prop ) {
+			if ( ! empty( $org[ $key ] ) ) {
+				$organization[ $prop ] = sanitize_text_field( $org[ $key ] );
+			}
+		}
+		$employees = isset( $org['employees'] ) ? absint( $org['employees'] ) : 0;
+		if ( $employees > 0 ) {
+			$organization['numberOfEmployees'] = array(
+				'@type' => 'QuantitativeValue',
+				'value' => $employees,
+			);
+		}
+		if ( $logo_url ) {
+			$organization['image'] = array( '@id' => $url . '#publisher-logo' );
+		}
+		$principles = PublicationProfile::publishing_principles();
+		if ( $principles ) {
+			if ( ! empty( $principles['publishingPrinciples'] ) ) {
+				$organization['publishingPrinciples'] = $principles['publishingPrinciples'];
+			}
+			if ( 'NewsMediaOrganization' === $type ) {
+				foreach ( $principles as $prop => $policy_url ) {
+					if ( 'publishingPrinciples' !== $prop ) {
+						$organization[ $prop ] = $policy_url;
+					}
+				}
+			}
+		}
 		return $organization;
 	}
 
@@ -300,7 +391,7 @@ final class GraphOutput {
 			'name'            => PublicationProfile::publication_name(),
 			'description'     => wp_strip_all_tags( (string) \PublishRankSEO\Core\PublicationProfile::publication_description() ),
 			'publisher'       => array( '@id' => $this->identity_id() ),
-			'inLanguage'      => sanitize_text_field( (string) get_option( 'publishrank_default_locale', get_bloginfo( 'language' ) ) ),
+			'inLanguage'      => \PublishRankSEO\Meta\LanguageAlternates::current_locale(),
 			'potentialAction' => array(
 				'@type'       => 'SearchAction',
 				'target'      => array(
@@ -322,7 +413,7 @@ final class GraphOutput {
 			'url'         => $canonical,
 			'name'        => wp_get_document_title(),
 			'description' => ( new \PublishRankSEO\Meta\MetaGenerator() )->description(),
-			'inLanguage'  => sanitize_text_field( (string) get_option( 'publishrank_default_locale', get_bloginfo( 'language' ) ) ),
+			'inLanguage'  => \PublishRankSEO\Meta\LanguageAlternates::current_locale(),
 			'isPartOf'    => array( '@id' => trailingslashit( PublicationProfile::primary_url() ) . '#website' ),
 			'about'       => array( '@id' => $this->identity_id() ),
 		);
@@ -385,7 +476,7 @@ final class GraphOutput {
 			'datePublished'       => get_post_time( DATE_W3C, true, $post ),
 			'dateModified'        => get_post_modified_time( DATE_W3C, true, $post ),
 			'dateCreated'         => get_post_time( DATE_W3C, true, $post ),
-			'inLanguage'          => sanitize_text_field( (string) get_option( 'publishrank_default_language', substr( (string) get_locale(), 0, 2 ) ) ),
+			'inLanguage'          => \PublishRankSEO\Meta\LanguageAlternates::post_locale( $post->ID ),
 			'isAccessibleForFree' => '1' !== (string) PostMeta::get( $post->ID, PostMeta::ACCESSIBLE_FOR_FREE, '1' ) ? false : true,
 			'isPartOf'            => array( '@id' => $site_url . '#website' ),
 			'author'              => array( '@id' => $author_node_id ),
@@ -431,15 +522,29 @@ final class GraphOutput {
 		$video = $this->video_object( $post, $image );
 		if ( $video ) {
 			$article['video'] = $video; }
-			$dateline = sanitize_text_field( (string) get_post_meta( $post->ID, '_publishrank_seo_dateline', true ) );
-		if ( $dateline ) {
-			$article['dateline'] = $dateline; }
-			$location = sanitize_text_field( (string) get_post_meta( $post->ID, '_publishrank_seo_location_created', true ) );
-		if ( $location ) {
-			$article['locationCreated'] = array(
-				'@type' => 'Place',
-				'name'  => $location,
-			); }
+		$article = $this->news_article_details( $article, $post, $schema_type, $image );
+		if ( 'ReviewNewsArticle' === $schema_type ) {
+			$item_reviewed = SchemaBuilder::review_item( $post );
+			if ( $item_reviewed ) {
+				$article['itemReviewed'] = $item_reviewed;
+				$rating = SchemaBuilder::review_rating( $post );
+				if ( $rating ) {
+					$article['reviewRating'] = $rating; }
+				$article = SchemaBuilder::review_notes( $article, $post );
+			}
+		}
+		$article = self::paywall( $article, $post );
+		// Link translations of this article so search engines treat them as one story in several languages.
+		$translations = \PublishRankSEO\Meta\LanguageAlternates::post_translations( $post->ID );
+		if ( count( $translations ) > 1 ) {
+			$others = array();
+			foreach ( $translations as $translation_id ) {
+				if ( (int) $translation_id !== (int) $post->ID ) {
+					$others[] = array( '@id' => trailingslashit( (string) get_permalink( $translation_id ) ) . '#article' ); }
+			}
+			if ( $others ) {
+				$article['workTranslation'] = $others; }
+		}
 		if ( 'LiveBlogPosting' === $schema_type ) {
 			$article = LiveBlogSchema::decorate( $article, $post ); }
 			// Speakable is opt-in: selectors depend on the theme, so none are invented. Return CSS selectors from this filter to enable it.
@@ -450,6 +555,64 @@ final class GraphOutput {
 				'cssSelector' => $speakable,
 			); }
 			return $article;
+	}
+
+	/**
+	 * NewsArticle-family details (ReportageNewsArticle, AnalysisNewsArticle, …): dateline, where it was
+	 * reported, what place it is about, backstory, corrections and thumbnail. Only real values are output.
+	 *
+	 * @param array<string,mixed> $article Article node.
+	 * @param \WP_Post            $post    Post.
+	 * @param string              $type    Resolved schema type.
+	 * @param string              $image   Primary image URL.
+	 * @return array<string,mixed>
+	 */
+	private function news_article_details( array $article, $post, $type, $image ) {
+		$get      = static function ( $key ) use ( $post ) {
+			return trim( sanitize_text_field( (string) get_post_meta( $post->ID, $key, true ) ) );
+		};
+		$is_news  = 'NewsArticle' === $type || 'NewsArticle' === substr( (string) $type, -11 );
+		$dateline = $get( PostMeta::DATELINE );
+		$location = $get( PostMeta::LOCATION_CREATED );
+		$about    = $get( PostMeta::CONTENT_LOCATION );
+		if ( '' === $dateline && '' !== $location && $is_news ) {
+			// A dateline is the filing place; fall back to the reported-from place for news articles.
+			$dateline = $location;
+		}
+		if ( '' !== $dateline ) {
+			$article['dateline'] = $dateline;
+		}
+		if ( '' !== $location ) {
+			$article['locationCreated'] = array( '@type' => 'Place', 'name' => $location );
+		}
+		if ( '' !== $about ) {
+			$article['contentLocation'] = array( '@type' => 'Place', 'name' => $about );
+		} elseif ( '' !== $location && 'ReportageNewsArticle' === $type ) {
+			// Reportage is first-hand reporting: the story is about the place it was reported from unless told otherwise.
+			$article['contentLocation'] = array( '@type' => 'Place', 'name' => $location );
+		}
+		$backstory = trim( sanitize_textarea_field( (string) get_post_meta( $post->ID, PostMeta::BACKSTORY, true ) ) );
+		if ( '' !== $backstory && $is_news ) {
+			$article['backstory'] = $backstory;
+		}
+		$correction = trim( sanitize_textarea_field( (string) get_post_meta( $post->ID, PostMeta::CORRECTION, true ) ) );
+		if ( '' !== $correction ) {
+			$article['correction'] = array(
+				'@type'       => 'CorrectionComment',
+				'text'        => $correction,
+				'datePublished' => get_post_modified_time( DATE_W3C, true, $post ),
+			);
+		}
+		if ( $image ) {
+			$article['thumbnailUrl'] = esc_url_raw( $image );
+		}
+		if ( $is_news ) {
+			$principles = PublicationProfile::publishing_principles();
+			if ( ! empty( $principles['publishingPrinciples'] ) ) {
+				$article['publishingPrinciples'] = $principles['publishingPrinciples'];
+			}
+		}
+		return $article;
 	}
 
 	/** @return array<string, mixed> A stable author node connected to the article by @id. */
@@ -690,6 +853,78 @@ final class GraphOutput {
 				$result[] = $node; }
 		}
 		return $result;
+	}
+
+	/**
+	 * Paywall markup Google requires for subscription content: isAccessibleForFree=false plus a hasPart
+	 * WebPageElement naming the CSS class that wraps the locked section, so it is not treated as cloaking.
+	 *
+	 * @param array<string,mixed> $article
+	 * @return array<string,mixed>
+	 */
+	public static function paywall( array $article, $post ) {
+		if ( ! isset( $article['isAccessibleForFree'] ) || false !== $article['isAccessibleForFree'] ) {
+			return $article; }
+		$selector = trim( (string) PostMeta::get( $post->ID, PostMeta::PAYWALL_SELECTOR, '' ) );
+		$selector = '' === $selector ? '.paywall' : $selector;
+		$selector = (string) apply_filters( 'publishrank_paywall_selector', $selector, $post );
+		// Google accepts class selectors only.
+		if ( ! preg_match( '/^\.[A-Za-z_][A-Za-z0-9_-]*$/', $selector ) ) {
+			$selector = '.' . preg_replace( '/[^A-Za-z0-9_-]/', '', ltrim( $selector, '.' ) ); }
+		if ( '.' === $selector ) {
+			return $article; }
+		$article['hasPart'] = array(
+			'@type'               => 'WebPageElement',
+			'isAccessibleForFree' => false,
+			'cssSelector'         => $selector,
+		);
+		return $article;
+	}
+
+	/**
+	 * ClaimReview for a fact-check article (https://developers.google.com/search/docs/appearance/structured-data/factcheck).
+	 * Output only when the claim, a 1–5 rating and its verdict text are all filled in.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public function claim_review( $post ) {
+		if ( ! $post instanceof \WP_Post ) {
+			return null; }
+		$claim   = trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::CLAIM_TEXT, '' ) ) );
+		$rating  = absint( PostMeta::get( $post->ID, PostMeta::CLAIM_RATING, '' ) );
+		$verdict = trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::CLAIM_VERDICT, '' ) ) );
+		if ( '' === $claim || $rating < 1 || $rating > 5 || '' === $verdict ) {
+			return null; }
+		$permalink = (string) get_permalink( $post );
+		$base      = trailingslashit( $permalink );
+		$item      = array( '@type' => 'Claim' );
+		$who       = trim( wp_strip_all_tags( (string) PostMeta::get( $post->ID, PostMeta::CLAIM_AUTHOR, '' ) ) );
+		if ( '' !== $who ) {
+			$item['author'] = array( '@type' => 'Thing', 'name' => $who ); }
+		$date = (string) PostMeta::get( $post->ID, PostMeta::CLAIM_DATE, '' );
+		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+			$item['datePublished'] = $date; }
+		$appearance = (string) PostMeta::get( $post->ID, PostMeta::CLAIM_APPEARANCE, '' );
+		if ( '' !== $appearance ) {
+			$item['appearance'] = array( '@type' => 'CreativeWork', 'url' => esc_url_raw( $appearance ) ); }
+		$node = array(
+			'@type'         => 'ClaimReview',
+			'@id'           => $base . '#claimreview',
+			'url'           => $permalink,
+			'claimReviewed' => $claim,
+			'datePublished' => get_post_time( DATE_W3C, true, $post ),
+			'author'        => array( '@id' => $this->identity_id() ),
+			'reviewRating'  => array(
+				'@type'         => 'Rating',
+				'ratingValue'   => $rating,
+				'bestRating'    => 5,
+				'worstRating'   => 1,
+				'alternateName' => $verdict,
+			),
+			'itemReviewed'  => $item,
+			'isPartOf'      => array( '@id' => $base . '#article' ),
+		);
+		return (array) apply_filters( 'publishrank_schema_claim_review', $node, $post );
 	}
 }
 /* EOF */

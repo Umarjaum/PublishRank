@@ -64,14 +64,14 @@ final class TemplateVariables {
 	private static function texts() {
 		return array(
 			'sitename'         => array(
-				'label'       => __( 'Publication name', 'publishrank' ),
-				'description' => __( 'The publication name configured in PublishRank Identity settings.', 'publishrank' ),
-				'fallback'    => __( 'Empty when no PublishRank publication name is configured.', 'publishrank' ),
+				'label'       => __( 'Site name', 'publishrank' ),
+				'description' => __( 'The site title from Settings → General.', 'publishrank' ),
+				'fallback'    => __( 'Empty when the site has no title.', 'publishrank' ),
 			),
 			'site_description' => array(
-				'label'       => __( 'Publication description', 'publishrank' ),
-				'description' => __( 'The publication description configured in PublishRank Identity settings.', 'publishrank' ),
-				'fallback'    => __( 'Empty when no PublishRank publication description is configured.', 'publishrank' ),
+				'label'       => __( 'Site tagline', 'publishrank' ),
+				'description' => __( 'The tagline from Settings → General.', 'publishrank' ),
+				'fallback'    => __( 'Empty when no tagline is set.', 'publishrank' ),
 			),
 			'sep'              => array(
 				'label'       => __( 'Title separator', 'publishrank' ),
@@ -85,7 +85,7 @@ final class TemplateVariables {
 			),
 			'excerpt'          => array(
 				'label'       => __( 'Excerpt', 'publishrank' ),
-				'description' => __( 'The post excerpt, or an automatic summary of the content when there is none. Outside a post, it uses the PublishRank publication description.', 'publishrank' ),
+				'description' => __( 'The post excerpt, or an automatic summary of the content when there is none. On archives it is the site tagline.', 'publishrank' ),
 				'fallback'    => __( 'Empty for password-protected posts so protected content is never published.', 'publishrank' ),
 			),
 			'permalink'        => array(

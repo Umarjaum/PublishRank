@@ -1,4 +1,4 @@
-/* PublishRank loader: hide when the screen is ready, show again while navigating or saving. */
+/* PublishRank page-progress bar: finish when the screen is ready, run again while navigating or saving. */
 (function () {
 	'use strict';
 
@@ -16,7 +16,8 @@
 	var navigationTimer = 0;
 
 	function show() {
-		loader.classList.remove('is-done');
+		loader.classList.remove('is-done', 'is-navigating');
+		void loader.offsetWidth; // Restart the bar animation when it was already running.
 		loader.classList.add('is-navigating');
 		loader.removeAttribute('aria-hidden');
 		// Downloads (exports) never unload the page, so never leave the loader up indefinitely.
@@ -27,11 +28,11 @@
 	// Export, download and CSV actions return a file instead of a page.
 	var downloadPattern = /(export|download|csv|calendar_feed)/i;
 
-	if (document.readyState === 'complete') {
+	// The screen is usable as soon as its HTML is parsed; do not wait for images or third-party assets.
+	if (document.readyState !== 'loading') {
 		hide();
 	} else {
-		window.addEventListener('load', hide);
-		// Do not wait for slow third-party assets longer than necessary.
+		document.addEventListener('DOMContentLoaded', hide);
 		window.setTimeout(hide, 4000);
 	}
 
