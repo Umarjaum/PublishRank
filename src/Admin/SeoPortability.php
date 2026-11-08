@@ -1,0 +1,295 @@
+<?php
+/**
+ * Cross-plugin SEO metadata portability.
+ *
+ * Reads third-party post meta without deleting or disabling the source plugin.
+ *
+ * @package PublishRankSEO
+ */
+namespace PublishRankSEO\Admin;
+
+use PublishRankSEO\Meta\PostMeta;
+
+defined( 'ABSPATH' ) || exit;
+
+final class SeoPortability {
+	const IMPORT_ACTION = 'publishrank_seo_compat_import';
+	const EXPORT_ACTION = 'publishrank_seo_compat_export';
+	const SCAN_ACTION   = 'publishrank_seo_compat_scan';
+	const ROLLBACK_ACTION = 'publishrank_seo_compat_rollback';
+	const RESULT_KEY    = 'publishrank_seo_compat_result';
+	const BACKUP_OPTION = 'publishrank_seo_compat_backups';
+
+	/** @var array<string,array<string,mixed>> */
+	private $adapters;
+
+	public function __construct() {
+		$this->adapters = array(
+			'yoast' => array(
+				'label' => 'Yoast SEO',
+				'plugin' => 'wordpress-seo/wp-seo.php',
+				'keys' => array(
+					'title' => '_yoast_wpseo_title', 'description' => '_yoast_wpseo_metadesc',
+					'focus_keyword' => '_yoast_wpseo_focuskw', 'canonical' => '_yoast_wpseo_canonical',
+					'og_title' => '_yoast_wpseo_opengraph-title', 'og_description' => '_yoast_wpseo_opengraph-description',
+					'og_image' => '_yoast_wpseo_opengraph-image', 'twitter_title' => '_yoast_wpseo_twitter-title',
+					'twitter_description' => '_yoast_wpseo_twitter-description', 'robots' => '_yoast_wpseo_meta-robots-noindex',
+				),
+			),
+			'rank_math' => array(
+				'label' => 'Rank Math', 'plugin' => 'seo-by-rank-math/rank-math.php',
+				'keys' => array(
+					'title' => 'rank_math_title', 'description' => 'rank_math_description',
+					'focus_keyword' => 'rank_math_focus_keyword', 'canonical' => 'rank_math_canonical_url',
+					'og_title' => 'rank_math_facebook_title', 'og_description' => 'rank_math_facebook_description',
+					'og_image' => 'rank_math_facebook_image', 'twitter_title' => 'rank_math_twitter_title',
+					'twitter_description' => 'rank_math_twitter_description', 'robots' => 'rank_math_robots',
+				),
+			),
+			'aioseo' => array(
+				'label' => 'All in One SEO', 'plugin' => 'all-in-one-seo-pack/all_in_one_seo_pack.php',
+				'keys' => array(
+					'title' => '_aioseo_title', 'description' => '_aioseo_description', 'focus_keyword' => '_aioseo_keywords',
+					'canonical' => '_aioseo_canonical_url', 'og_title' => '_aioseo_og_title',
+					'og_description' => '_aioseo_og_description', 'og_image' => '_aioseo_og_image',
+					'twitter_title' => '_aioseo_twitter_title', 'twitter_description' => '_aioseo_twitter_description',
+				),
+			),
+			'seopress' => array(
+				'label' => 'SEOPress', 'plugin' => 'wp-seopress/seopress.php',
+				'keys' => array(
+					'title' => '_seopress_titles_title', 'description' => '_seopress_titles_desc',
+					'focus_keyword' => '_seopress_analysis_target_kw', 'canonical' => '_seopress_robots_canonical',
+					'og_title' => '_seopress_social_fb_title', 'og_description' => '_seopress_social_fb_desc',
+					'og_image' => '_seopress_social_fb_img', 'twitter_title' => '_seopress_social_twitter_title',
+					'twitter_description' => '_seopress_social_twitter_desc',
+				),
+			),
+			'tsf' => array(
+				'label' => 'The SEO Framework', 'plugin' => 'autodescription/autodescription.php',
+				'keys' => array(
+					'title' => '_genesis_title', 'description' => '_genesis_description',
+					'canonical' => '_genesis_canonical_uri', 'robots' => '_genesis_noindex',
+				),
+			),
+		);
+	}
+
+	/** Register actions and the compatibility admin page. */
+	public function register() {
+		add_action( 'admin_post_' . self::IMPORT_ACTION, array( $this, 'import' ) );
+		add_action( 'admin_post_' . self::EXPORT_ACTION, array( $this, 'export' ) );
+		add_action( 'admin_post_' . self::SCAN_ACTION, array( $this, 'scan' ) );
+		add_action( 'admin_post_' . self::ROLLBACK_ACTION, array( $this, 'rollback' ) );
+		add_action( 'admin_menu', array( $this, 'menu' ), 25 );
+	}
+
+	public function menu() {
+		add_submenu_page( Branding::MENU_SLUG, __( 'SEO Migration & Portability', 'publishrank' ), __( 'Migration & Portability', 'publishrank' ), 'manage_options', 'publishrank-seo-portability', array( $this, 'page' ) );
+	}
+
+	/** @return array<string,array<string,mixed>> */
+	public function adapters() { return $this->adapters; }
+
+	/** @return array<string,bool> */
+	public function detected() {
+		$active = function_exists( 'get_option' ) ? (array) get_option( 'active_plugins', array() ) : array();
+		if ( is_multisite() ) { $active = array_merge( $active, array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) ); }
+		$found = array();
+		foreach ( $this->adapters as $id => $adapter ) {
+			$found[ $id ] = in_array( $adapter['plugin'], $active, true ) || ( function_exists( 'is_plugin_active' ) && is_plugin_active( $adapter['plugin'] ) );
+		}
+		return $found;
+	}
+
+	/** Render the dedicated migration screen. */
+	public function page() {
+		if ( ! current_user_can( 'manage_options' ) ) { return; }
+		$detected = $this->detected();
+		$result   = get_transient( self::RESULT_KEY . '_' . get_current_user_id() );
+		if ( false !== $result ) { delete_transient( self::RESULT_KEY . '_' . get_current_user_id() ); }
+		?>
+		<div class="wrap publishrank-settings-page">
+			<h1><?php esc_html_e( 'SEO Migration & Portability', 'publishrank' ); ?></h1>
+			<p><?php esc_html_e( 'Move post-level SEO data into PublishRank without removing the source plugin data. Imports are field-aware, sanitized, reversible at the source-meta level, and never silently overwrite existing PublishRank fields unless you choose Overwrite.', 'publishrank' ); ?></p>
+			<?php if ( is_array( $result ) ) : ?><div class="notice notice-<?php echo ! empty( $result['error'] ) ? 'error' : 'success'; ?>"><p><?php echo esc_html( $result['message'] ); ?></p></div><?php endif; ?>
+			<h2><?php esc_html_e( 'Detected SEO plugins', 'publishrank' ); ?></h2>
+			<ul><?php foreach ( $this->adapters as $id => $adapter ) : ?><li><strong><?php echo esc_html( $adapter['label'] ); ?></strong>: <?php echo ! empty( $detected[ $id ] ) ? esc_html__( 'active', 'publishrank' ) : esc_html__( 'not detected', 'publishrank' ); ?></li><?php endforeach; ?></ul>
+			<h2><?php esc_html_e( 'Import into PublishRank', 'publishrank' ); ?></h2>
+			<p><?php esc_html_e( 'The migration engine creates a bounded rollback snapshot before every real import. Use Dry run first to see exactly how many posts and fields would change.', 'publishrank' ); ?></p>
+			<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( self::IMPORT_ACTION ); ?>" /><?php wp_nonce_field( self::IMPORT_ACTION ); ?>
+				<p><label><?php esc_html_e( 'Source plugin', 'publishrank' ); ?> <select name="source" required><option value="json"><?php esc_html_e( 'Normalized JSON upload', 'publishrank' ); ?></option><?php foreach ( $this->adapters as $id => $adapter ) : ?><option value="<?php echo esc_attr( $id ); ?>" <?php disabled( empty( $detected[ $id ] ) ); ?>><?php echo esc_html( $adapter['label'] ); ?></option><?php endforeach; ?></select></label></p>
+				<p><label><?php esc_html_e( 'Import policy', 'publishrank' ); ?> <select name="mode"><option value="merge"><?php esc_html_e( 'Merge — keep existing PublishRank values', 'publishrank' ); ?></option><option value="overwrite"><?php esc_html_e( 'Overwrite — replace matching PublishRank values', 'publishrank' ); ?></option></select></label></p>
+				<p><label><?php esc_html_e( 'Content types', 'publishrank' ); ?> <input type="text" name="post_types" value="post,page" class="regular-text" /></label> <span class="description"><?php esc_html_e( 'Comma-separated public post types. Leave blank for all supported public types.', 'publishrank' ); ?></span></p>
+				<p><strong><?php esc_html_e( 'Fields to migrate', 'publishrank' ); ?></strong><br /><?php foreach ( $this->field_labels() as $field => $label ) : ?><label style="display:inline-block;margin-right:14px"><input type="checkbox" name="fields[]" value="<?php echo esc_attr( $field ); ?>" checked="checked" /> <?php echo esc_html( $label ); ?></label><?php endforeach; ?></p>
+				<p><label><input type="checkbox" name="include_empty" value="1" /> <?php esc_html_e( 'Import empty source fields too (normally skipped)', 'publishrank' ); ?></label></p>
+				<p><label><input type="checkbox" name="dry_run" value="1" /> <?php esc_html_e( 'Dry run only — do not write anything', 'publishrank' ); ?></label></p>
+				<p><?php submit_button( __( 'Run migration', 'publishrank' ), 'primary', 'submit', false ); ?></p>
+				<p><label><?php esc_html_e( 'Or import a normalized JSON export from another site', 'publishrank' ); ?> <input type="file" name="seo_json_file" accept="application/json,.json" /></label></p>
+			</form>
+			<?php $backups = $this->backups(); if ( ! empty( $backups ) ) : ?><h3><?php esc_html_e( 'Rollback snapshots', 'publishrank' ); ?></h3><ul><?php foreach ( $backups as $backup ) : ?><li><?php echo esc_html( $backup['label'] . ' — ' . (int) $backup['posts'] . ' posts' ); ?> <form style="display:inline" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="<?php echo esc_attr( self::ROLLBACK_ACTION ); ?>" /><input type="hidden" name="backup_id" value="<?php echo esc_attr( $backup['id'] ); ?>" /><?php wp_nonce_field( self::ROLLBACK_ACTION ); ?><button class="button-link-delete" type="submit"><?php esc_html_e( 'Rollback', 'publishrank' ); ?></button></form></li><?php endforeach; ?></ul><?php endif; ?>
+			<h2><?php esc_html_e( 'Export normalized SEO data', 'publishrank' ); ?></h2>
+			<p><?php esc_html_e( 'Download a versioned JSON export containing PublishRank fields plus compatible field names for the selected target plugin. This is suitable for staging, backups, audits, and controlled cross-site migrations.', 'publishrank' ); ?></p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( self::EXPORT_ACTION ); ?>" /><?php wp_nonce_field( self::EXPORT_ACTION ); ?>
+				<p><label><?php esc_html_e( 'Target format', 'publishrank' ); ?> <select name="target"><option value="publishrank">PublishRank (canonical)</option><?php foreach ( $this->adapters as $id => $adapter ) : ?><option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $adapter['label'] ); ?></option><?php endforeach; ?></select></label></p>
+				<p><label><?php esc_html_e( 'Content types', 'publishrank' ); ?> <input type="text" name="post_types" value="post,page" class="regular-text" /></label></p>
+				<?php submit_button( __( 'Download normalized export', 'publishrank' ), 'secondary', 'submit', false ); ?>
+			</form>
+			<h2><?php esc_html_e( 'Preflight scan', 'publishrank' ); ?></h2>
+			<p><?php esc_html_e( 'Scan counts records before changing anything, so you can review coverage and choose the right source and policy.', 'publishrank' ); ?></p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="<?php echo esc_attr( self::SCAN_ACTION ); ?>" /><?php wp_nonce_field( self::SCAN_ACTION ); ?><?php submit_button( __( 'Run preflight scan', 'publishrank' ), 'secondary', 'submit', false ); ?></form>
+		</div>
+		<?php
+	}
+
+	public function scan() {
+		$this->guard( self::SCAN_ACTION );
+		$counts = array();
+		foreach ( $this->adapters as $id => $adapter ) { $counts[ $id ] = $this->count_source_records( $adapter ); }
+		$message = __( 'Preflight complete: ', 'publishrank' );
+		foreach ( $counts as $id => $count ) { $message .= $this->adapters[ $id ]['label'] . ' ' . (int) $count . '; '; }
+		$this->finish( $message );
+	}
+
+	public function import() {
+		$this->guard( self::IMPORT_ACTION );
+		$source = isset( $_POST['source'] ) ? sanitize_key( wp_unslash( $_POST['source'] ) ) : '';
+		$json_records = $this->uploaded_records();
+		if ( 'json' !== $source && ! isset( $this->adapters[ $source ] ) ) { $this->finish( __( 'Unsupported source plugin.', 'publishrank' ), true ); return; }
+		if ( 'json' === $source && null === $json_records ) { $this->finish( __( 'Select a normalized JSON file when using JSON upload mode.', 'publishrank' ), true ); return; }
+		$source_label = 'json' === $source ? __( 'normalized JSON', 'publishrank' ) : $this->adapters[ $source ]['label'];
+		$mode = ( isset( $_POST['mode'] ) && 'overwrite' === $_POST['mode'] ) ? 'overwrite' : 'merge';
+		$types = $this->post_types( isset( $_POST['post_types'] ) ? wp_unslash( $_POST['post_types'] ) : '' );
+		$fields = $this->selected_fields();
+		$dry_run = ! empty( $_POST['dry_run'] );
+		$stats = array( 'scanned' => 0, 'changed' => 0, 'fields' => 0, 'skipped' => 0, 'unmatched' => 0 );
+		$backup = array( 'id' => uniqid( 'migration_', true ), 'label' => current_time( 'mysql' ) . ' — ' . $source_label, 'created' => time(), 'posts' => 0, 'records' => array() );
+		$process = function ( $post_id, $row ) use ( &$stats, &$backup, $fields, $mode, $dry_run ) {
+			$stats['scanned']++;
+			$before = array( 'localized' => get_post_meta( $post_id, \PublishRankSEO\Meta\LocalizedSeoMeta::META_KEY, true ) );
+			foreach ( $fields as $field ) { $key = $this->field_meta_key( $field ); $before[ $field ] = get_post_meta( $post_id, $key, true ); }
+			$changed = $this->count_changes( $post_id, $row, $mode, $fields, ! empty( $_POST['include_empty'] ) );
+			if ( isset( $row['localized'] ) && is_array( $row['localized'] ) && ! empty( $row['localized'] ) ) { $changed++; }
+			if ( $changed > 0 ) { $backup['posts']++; $backup['records'][ (int) $post_id ] = $before; if ( ! $dry_run ) { $this->write_row( $post_id, $row, $mode, ! empty( $_POST['include_empty'] ), $fields ); if ( isset( $row['localized'] ) && is_array( $row['localized'] ) ) { update_post_meta( $post_id, \PublishRankSEO\Meta\LocalizedSeoMeta::META_KEY, $this->sanitize_localized( $row['localized'] ) ); } } }
+			$stats['fields'] += $changed; $stats['changed'] += $changed > 0 ? 1 : 0; $stats['skipped'] += $changed ? 0 : 1;
+		};
+		if ( null !== $json_records ) {
+			foreach ( $json_records as $record ) { $post_id = $this->match_record( $record ); if ( ! $post_id ) { $stats['unmatched']++; continue; } $process( $post_id, isset( $record['fields'] ) && is_array( $record['fields'] ) ? $record['fields'] : array() ); }
+		} else {
+			$page = 1;
+			do {
+				$query = new \WP_Query( array( 'post_type' => $types, 'post_status' => 'any', 'posts_per_page' => 250, 'paged' => $page, 'fields' => 'ids', 'no_found_rows' => true, 'update_post_meta_cache' => true ) );
+				foreach ( (array) $query->posts as $post_id ) { $process( (int) $post_id, $this->read_row( (int) $post_id, $this->adapters[ $source ] ) ); }
+				$page++;
+			} while ( ! empty( $query->posts ) );
+		}
+		wp_reset_postdata();
+		if ( ! $dry_run && $backup['posts'] > 0 ) { $this->save_backup( $backup ); }
+		$prefix = $dry_run ? __( 'Dry run: ', 'publishrank' ) : '';
+		$this->finish( sprintf( __( '%1$s%2$d fields across %3$d posts would change/changed from %4$s (%5$d unchanged, %6$d unmatched).', 'publishrank' ), $prefix, $stats['fields'], $stats['changed'], $source_label, $stats['skipped'], $stats['unmatched'] ) );
+	}
+
+	public function rollback() {
+		$this->guard( self::ROLLBACK_ACTION );
+		$id = isset( $_POST['backup_id'] ) ? sanitize_text_field( wp_unslash( $_POST['backup_id'] ) ) : '';
+		foreach ( $this->backups() as $backup ) { if ( $id !== $backup['id'] ) { continue; } foreach ( $backup['records'] as $post_id => $values ) { foreach ( $values as $field => $value ) { $key = 'localized' === $field ? \PublishRankSEO\Meta\LocalizedSeoMeta::META_KEY : $this->field_meta_key( $field ); if ( ! $key ) { continue; } if ( '' === (string) $value || ( is_array( $value ) && empty( $value ) ) ) { delete_post_meta( (int) $post_id, $key ); } else { update_post_meta( (int) $post_id, $key, $value ); } } } $this->finish( __( 'Migration rollback completed.', 'publishrank' ) ); return; }
+		$this->finish( __( 'Rollback snapshot not found.', 'publishrank' ), true );
+	}
+
+	public function export() {
+		$this->guard( self::EXPORT_ACTION );
+		$target = isset( $_POST['target'] ) ? sanitize_key( wp_unslash( $_POST['target'] ) ) : 'publishrank';
+		$types  = $this->post_types( isset( $_POST['post_types'] ) ? wp_unslash( $_POST['post_types'] ) : '' );
+		$rows = array();
+		$page = 1;
+		do {
+			$query = new \WP_Query( array( 'post_type' => $types, 'post_status' => 'any', 'posts_per_page' => 250, 'paged' => $page, 'fields' => 'ids', 'no_found_rows' => true, 'update_post_meta_cache' => true ) );
+		foreach ( (array) $query->posts as $post_id ) { $row = $this->read_row( (int) $post_id, null ); $localized = get_post_meta( (int) $post_id, \PublishRankSEO\Meta\LocalizedSeoMeta::META_KEY, true ); if ( $this->has_values( $row ) || is_array( $localized ) ) { $rows[] = array( 'post_id' => (int) $post_id, 'post_type' => get_post_type( $post_id ), 'post_url' => get_permalink( $post_id ), 'fields' => $row, 'localized' => is_array( $localized ) ? $localized : array(), 'target' => $this->target_fields( $row, $target ) ); } }
+			$page++;
+		} while ( ! empty( $query->posts ) );
+		wp_reset_postdata();
+			$payload = array( '_schema' => 'publishrank/seo-portability/v1', 'generated_at' => gmdate( 'c' ), 'source' => 'PublishRank ' . ( defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '' ), 'target' => $target, 'global_settings' => $this->global_export(), 'records' => $rows );
+		nocache_headers(); header( 'Content-Type: application/json; charset=' . get_bloginfo( 'charset' ) ); header( 'Content-Disposition: attachment; filename=publishrank-seo-portability-' . gmdate( 'Ymd-His' ) . '.json' ); echo wp_json_encode( $payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ); exit;
+	}
+
+	/** @param array<string,mixed>|null $adapter @return array<string,string> */
+	private function read_row( $post_id, $adapter ) {
+		$fields = array( 'title' => '', 'description' => '', 'focus_keyword' => '', 'canonical' => '', 'og_title' => '', 'og_description' => '', 'og_image' => '', 'twitter_title' => '', 'twitter_description' => '', 'robots' => '' );
+		if ( null === $adapter ) {
+			$map = array( 'title' => PostMeta::TITLE, 'description' => PostMeta::DESCRIPTION, 'focus_keyword' => PostMeta::FOCUS_KEYWORD, 'canonical' => PostMeta::CANONICAL, 'og_title' => PostMeta::OG_TITLE, 'og_description' => PostMeta::OG_DESCRIPTION, 'og_image' => PostMeta::OG_IMAGE, 'robots' => PostMeta::ROBOTS );
+			foreach ( $map as $field => $key ) { $fields[ $field ] = (string) get_post_meta( $post_id, $key, true ); }
+			return $fields;
+		}
+		foreach ( $adapter['keys'] as $field => $key ) { $value = get_post_meta( $post_id, $key, true ); if ( is_array( $value ) ) { $value = implode( ',', array_filter( array_map( 'sanitize_key', $value ) ) ); } if ( is_scalar( $value ) ) { $fields[ $field ] = $this->normalize_source_value( $field, trim( (string) $value ) ); } }
+		return $fields;
+	}
+
+	private function normalize_source_value( $field, $value ) {
+		if ( 'robots' !== $field ) { return $value; }
+		$value = strtolower( trim( (string) $value ) );
+		if ( in_array( $value, array( '1', 'true', 'noindex' ), true ) ) { return 'noindex'; }
+		if ( in_array( $value, array( '-1', '0', 'false', 'index', 'follow' ), true ) ) { return ''; }
+		return str_replace( array( '|', ';' ), ',', $value );
+	}
+
+	private function field_labels() { return array( 'title' => __( 'Title', 'publishrank' ), 'description' => __( 'Description', 'publishrank' ), 'focus_keyword' => __( 'Focus keyword', 'publishrank' ), 'canonical' => __( 'Canonical', 'publishrank' ), 'og_title' => __( 'Open Graph title', 'publishrank' ), 'og_description' => __( 'Open Graph description', 'publishrank' ), 'og_image' => __( 'Open Graph image', 'publishrank' ), 'robots' => __( 'Robots', 'publishrank' ) ); }
+	private function selected_fields() { $fields = isset( $_POST['fields'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['fields'] ) ) : array_keys( $this->field_labels() ); return array_values( array_intersect( array_keys( $this->field_labels() ), $fields ) ); }
+	private function field_meta_key( $field ) { $map = array( 'title' => PostMeta::TITLE, 'description' => PostMeta::DESCRIPTION, 'focus_keyword' => PostMeta::FOCUS_KEYWORD, 'canonical' => PostMeta::CANONICAL, 'og_title' => PostMeta::OG_TITLE, 'og_description' => PostMeta::OG_DESCRIPTION, 'og_image' => PostMeta::OG_IMAGE, 'robots' => PostMeta::ROBOTS ); return isset( $map[ $field ] ) ? $map[ $field ] : ''; }
+	private function count_changes( $post_id, $row, $mode, $fields, $include_empty ) { $count = 0; foreach ( $fields as $field ) { $value = isset( $row[ $field ] ) ? trim( (string) $row[ $field ] ) : ''; if ( '' === $value && ! $include_empty ) { continue; } if ( 'merge' === $mode && '' !== (string) get_post_meta( $post_id, $this->field_meta_key( $field ), true ) ) { continue; } $count++; } return $count; }
+	private function write_row( $post_id, $row, $mode, $include_empty, $fields = null ) {
+		$map = array( 'title' => PostMeta::TITLE, 'description' => PostMeta::DESCRIPTION, 'focus_keyword' => PostMeta::FOCUS_KEYWORD, 'canonical' => PostMeta::CANONICAL, 'og_title' => PostMeta::OG_TITLE, 'og_description' => PostMeta::OG_DESCRIPTION, 'og_image' => PostMeta::OG_IMAGE, 'robots' => PostMeta::ROBOTS );
+		if ( null === $fields ) { $fields = array_keys( $map ); }
+		$changed = 0;
+		foreach ( $map as $field => $key ) { if ( ! in_array( $field, $fields, true ) ) { continue; } $value = isset( $row[ $field ] ) ? trim( (string) $row[ $field ] ) : ''; if ( '' === $value && ! $include_empty ) { continue; } if ( 'merge' === $mode && '' !== (string) get_post_meta( $post_id, $key, true ) ) { continue; } $value = $this->sanitize_field( $field, $value ); if ( '' === $value ) { delete_post_meta( $post_id, $key ); } else { update_post_meta( $post_id, $key, $value ); } $changed++; }
+		return $changed;
+	}
+	private function uploaded_records() {
+		if ( empty( $_FILES['seo_json_file']['tmp_name'] ) || ! is_uploaded_file( $_FILES['seo_json_file']['tmp_name'] ) ) { return null; }
+		if ( ! empty( $_FILES['seo_json_file']['size'] ) && (int) $_FILES['seo_json_file']['size'] > 20 * 1024 * 1024 ) { wp_die( esc_html__( 'The JSON migration file is too large.', 'publishrank' ), 400 ); }
+		$data = json_decode( file_get_contents( $_FILES['seo_json_file']['tmp_name'] ), true );
+		if ( ! is_array( $data ) || 'publishrank/seo-portability/v1' !== ( $data['_schema'] ?? '' ) || ! is_array( $data['records'] ?? null ) ) { wp_die( esc_html__( 'The normalized migration JSON is invalid.', 'publishrank' ), 400 ); }
+		return array_slice( $data['records'], 0, 100000 );
+	}
+	private function match_record( $record ) {
+		if ( ! is_array( $record ) ) { return 0; }
+		$id = ! empty( $record['post_id'] ) ? absint( $record['post_id'] ) : 0;
+		if ( $id && get_post( $id ) ) { return $id; }
+		$url = ! empty( $record['post_url'] ) ? esc_url_raw( $record['post_url'] ) : '';
+		if ( $url ) { $path = wp_parse_url( $url, PHP_URL_PATH ); $slug = basename( trim( (string) $path, '/' ) ); if ( $slug ) { $posts = get_posts( array( 'name' => sanitize_title( $slug ), 'post_type' => 'any', 'post_status' => 'any', 'numberposts' => 2 ) ); if ( 1 === count( $posts ) ) { return (int) $posts[0]->ID; } } }
+		return 0;
+	}
+	private function backups() { $items = (array) get_option( self::BACKUP_OPTION, array() ); return array_slice( array_reverse( $items ), 0, 5 ); }
+	private function save_backup( $backup ) { $items = (array) get_option( self::BACKUP_OPTION, array() ); $items[] = $backup; update_option( self::BACKUP_OPTION, array_slice( $items, -5 ), false ); }
+
+	private function sanitize_field( $field, $value ) {
+		if ( in_array( $field, array( 'canonical', 'og_image' ), true ) ) { return esc_url_raw( $value ); }
+		if ( 'robots' === $field ) { return sanitize_text_field( $value ); }
+		return sanitize_textarea_field( $value );
+	}
+	private function sanitize_localized( $data ) {
+		$out = array(); foreach ( $data as $locale => $row ) { $locale = \PublishRankSEO\Meta\LanguageAlternates::locale( $locale ); if ( ! $locale || ! is_array( $row ) ) { continue; } foreach ( array( 'title' => 255, 'description' => 320, 'focus_keyword' => 120, 'og_title' => 255, 'og_description' => 320, 'robots' => 120 ) as $field => $length ) { if ( isset( $row[ $field ] ) && '' !== trim( (string) $row[ $field ] ) ) { $out[ $locale ][ $field ] = 'robots' === $field ? sanitize_text_field( $row[ $field ] ) : \PublishRankSEO\Meta\TemplateResolver::sanitize_template( $row[ $field ], $length ); } } if ( isset( $row['og_image'] ) ) { $out[ $locale ]['og_image'] = \PublishRankSEO\Meta\PostMeta::sanitize_public_url( $row['og_image'] ); } } return $out;
+	}
+
+	private function target_fields( $row, $target ) {
+		if ( 'publishrank' === $target || ! isset( $this->adapters[ $target ] ) ) { return $row; }
+		$out = array(); foreach ( $this->adapters[ $target ]['keys'] as $field => $key ) { if ( isset( $row[ $field ] ) && '' !== $row[ $field ] ) { $out[ $key ] = $row[ $field ]; } } return $out;
+	}
+	private function global_export() {
+		$out = array();
+		$allow = array(
+			'wpseo_titles' => array( 'title-home-wpseo', 'metadesc-home-wpseo', 'title-post-wpseo', 'metadesc-post-wpseo' ),
+			'rank-math-options-titles' => array( 'homepage-title', 'homepage-description', 'pt_post_title', 'pt_post_description' ),
+		);
+		foreach ( $allow as $option => $keys ) { $value = get_option( $option, array() ); if ( ! is_array( $value ) ) { continue; } foreach ( $keys as $key ) { if ( array_key_exists( $key, $value ) ) { $out[ $option ][ $key ] = sanitize_textarea_field( (string) $value[ $key ] ); } } }
+		return $out;
+	}
+
+	private function has_values( $row ) { foreach ( $row as $value ) { if ( '' !== trim( (string) $value ) ) { return true; } } return false; }
+	private function post_types( $raw ) { $types = array_filter( array_map( 'sanitize_key', preg_split( '/[,\\s]+/', (string) $raw ) ) ); if ( empty( $types ) ) { $types = PostMeta::post_types(); } return array_values( array_intersect( $types, PostMeta::post_types() ) ); }
+	private function count_source_records( $adapter ) { $keys = array_values( $adapter['keys'] ); if ( empty( $keys ) ) { return 0; } global $wpdb; $like = array(); $args = array(); foreach ( $keys as $key ) { $like[] = 'pm.meta_key = %s'; $args[] = $key; } $sql = 'SELECT COUNT(DISTINCT pm.post_id) FROM ' . $wpdb->postmeta . ' pm INNER JOIN ' . $wpdb->posts . ' p ON p.ID = pm.post_id WHERE (' . implode( ' OR ', $like ) . ') AND pm.meta_value <> %s AND p.post_status <> %s'; $args[] = ''; $args[] = 'trash'; return (int) $wpdb->get_var( $wpdb->prepare( $sql, $args ) ); }
+	private function guard( $action ) { if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'You are not allowed to use SEO portability.', 'publishrank' ), 403 ); } check_admin_referer( $action ); }
+	private function finish( $message, $error = false ) { set_transient( self::RESULT_KEY . '_' . get_current_user_id(), array( 'message' => $message, 'error' => $error ), 120 ); wp_safe_redirect( Branding::page_url( 'publishrank-seo-portability' ) ); exit; }
+}
+/* EOF */

@@ -10,14 +10,14 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 
 ## Current release
 
-- **Version:** 2.9.104
+- **Version:** 2.18.1
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
 - **Requires PHP:** 7.4 or newer
 - **Repository:** <https://github.com/Umarjaum/PublishRank>
 - **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
 
-Version 2.9.104 adds an expandable, keyboard-accessible admin navigation, distinct colored Dashicons for every tool, the dashboard authorization fix, and safe resolution of schema description template variables.
+Version 2.18.1 includes a broad locale-aware per-post SEO catalog, Urdu and RTL support, and the field-aware migration workspace for Yoast SEO, Rank Math, All in One SEO, SEOPress, and The SEO Framework.
 
 ## Highlights
 
@@ -26,8 +26,10 @@ Version 2.9.104 adds an expandable, keyboard-accessible admin navigation, distin
 - SEO titles and descriptions with shared template variables.
 - Canonical URLs, robots directives, Open Graph, and X/Twitter metadata.
 - Hreflang and language alternates.
+- Locale-aware per-post SEO overrides for titles, descriptions, focus keywords, Open Graph data, and robots directives, with a broad LTR/RTL language catalog and arbitrary WPML, Polylang, or hreflang-map locales supported. Urdu (`ur` / `ur-PK`) is included.
 - Live Search, Website, Social, Meta, and JSON-LD previews.
 - Per-post and per-page overrides with capability and nonce checks.
+- Migration & Portability with preflight counts, merge/overwrite policies, source-data preservation, sanitized imports, and normalized JSON exports for compatible target plugins.
 
 ### Connected structured data
 

@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.17.0
+Stable tag: 2.18.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -28,6 +28,7 @@ Features include:
 * XML sitemaps for posts, pages, taxonomies, authors, images and videos, including a Google News sitemap.
 * Redirect management and a privacy-conscious local 404 monitor with normalized paths, grouped browser/mobile/crawler hits, referrer paths without query strings, noise suppression for assets and infrastructure probes, throttled and locked bounded writes, 90-day retention, searchable/sortable review, clearable logs, and same-site redirect creation.
 * Per-article author schema overrides for author name, job title and image, plus selectable Article, NewsArticle and BlogPosting types.
+* Migration & Portability workspace for Yoast SEO, Rank Math, All in One SEO, SEOPress and The SEO Framework, with preflight scans, safe merge/overwrite imports, preserved source metadata and normalized JSON exports.
 * Global and per-content robots directives, including index/noindex and follow/nofollow controls, plus configurable robots.txt rules.
 * Robots.txt controls, hreflang support and breadcrumbs.
 * IndexNow notifications and manual URL submission (optional; sends eligible public URLs to the IndexNow service when enabled).
@@ -142,6 +143,8 @@ Other website links in the administration interface (including the Schema.org vo
 
 == Changelog ==
 
+= 2.18.1 =
+* **Broad multilingual SEO catalog.** Locale-specific SEO title, description, focus keyword, Open Graph and robots overrides now cover major LTR and RTL languages, including Urdu, Arabic, Persian, Hebrew, Bengali, Hindi, Chinese, Japanese, Korean, European languages and Southeast Asian languages. WPML, Polylang and custom hreflang locales are merged automatically.
 = 2.17.0 =
 * **SEO Analysis 3.0: focus-keyword scoring restored.** The live analysis now scores the focus keyword in the title, meta description, URL slug, opening paragraph, subheadings, image alt text, body density (0.5–3%) and distribution across the article. Plural/singular variants are matched.
 
@@ -149,6 +152,8 @@ Other website links in the administration interface (including the Schema.org vo
 * **Job Posting pages.** New "Job Posting" schema type with fields for hiring organization (name, website, logo), closing date, employment type, address or fully remote (with applicant country), salary range, currency and period, job reference and direct apply. The title is the job title and the post content the description. Markup is only output when the required details are complete, and stops automatically after the closing date.
 * **Automatic sitewide broken-link checker.** Link Intelligence can now check every published article daily or weekly in the background (optionally including external links), and re-checks an article's internal links as soon as it is published or updated. Shows when the last full check finished.
 * **Better multi-language support (Polylang and WPML).** Sitemaps list each article's translations (hreflang links); article schema uses the article's own language and links its translations (workTranslation); publication name, descriptions, title templates and separators can be translated in Polylang Strings / WPML String Translation.
+* **Localized SEO handling.** Each post can store language-specific SEO title, meta description, focus keyword, Open Graph title/description/image and robots directives. PublishRank selects the current language first, then its base language, then the normal post SEO value. The built-in catalog covers major LTR and RTL languages including English, Urdu, Arabic, Persian, Hebrew, Bengali, Hindi, Chinese, Japanese, Korean, German, Spanish, French, Portuguese, Italian, Dutch, Russian, Turkish, Ukrainian, Vietnamese, Indonesian and more. Any valid locale supplied by WPML, Polylang or the hreflang map is also accepted.
+* An Urdu translation of the PublishRank interface is included. Set the WordPress site language to Urdu (`ur`) or Urdu (Pakistan) (`ur_PK`) to use it; Urdu and all other RTL fields use the correct text direction.
 
 = 2.15.0 =
 * **Review articles: proper reviewed item.** Review and Review News Article now ask for the type of item (Product, Book, Movie, TV series, app, game, course, restaurant, hotel …), its page, image, brand or maker, author/director/artist, and pros and cons. itemReviewed is no longer a generic "Thing" (which Google ignores for review stars), and ReviewNewsArticle now carries itemReviewed, reviewRating, positiveNotes and negativeNotes.

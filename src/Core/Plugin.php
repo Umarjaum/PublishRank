@@ -16,6 +16,7 @@ use PublishRankSEO\Admin\SettingsPage;
 use PublishRankSEO\Admin\OnboardingPage;
 use PublishRankSEO\Admin\DiagnosticsPage;
 use PublishRankSEO\Admin\ImportExport;
+use PublishRankSEO\Admin\SeoPortability;
 use PublishRankSEO\Admin\DashboardPage;
 use PublishRankSEO\Compatibility\JNewsAdapter;
 use PublishRankSEO\Monitor\NotFoundMonitor;
@@ -98,6 +99,7 @@ final class Plugin {
 		$this->loader->register( FrontendOutputRecovery::class, true, array( $this->registry ) );
 		$this->loader->register( LanguageAlternates::class, false );
 		$this->loader->register( \PublishRankSEO\Meta\MultilingualStrings::class, false );
+		$this->loader->register( \PublishRankSEO\Meta\LocalizedSeoMeta::class, false );
 		$this->loader->register( GraphOutput::class, true, array( $this->registry ) );
 		$this->loader->register( SchemaIndexEndpoint::class, false );
 		$this->loader->register( SchemaAggregator::class, false );
@@ -156,6 +158,7 @@ final class Plugin {
 			$this->loader->register( OnboardingPage::class, false );
 			$this->loader->register( DiagnosticsPage::class, false, array( $this->registry, new JNewsAdapter() ) );
 			$this->loader->register( ImportExport::class, false );
+			$this->loader->register( SeoPortability::class, false );
 			$this->loader->register( AdminAssets::class, false );
 			$this->loader->register( RedirectsPage::class, false );
 			$this->loader->register( NotFoundPage::class, false );
