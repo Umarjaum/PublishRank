@@ -254,6 +254,10 @@ final class BreadcrumbEngine {
 		if ( ! function_exists( 'register_block_type' ) ) {
 			return; }
 		wp_register_script( 'publishrank-breadcrumbs-block', \PublishRankSEO\Core\Branding::asset_url( 'js/breadcrumbs-block.js' ), array( 'wp-blocks', 'wp-element', 'wp-i18n' ), \PublishRankSEO\Core\Branding::version(), true );
+		if ( function_exists( 'wp_set_script_translations' ) ) {
+			// WordPress generates the wp.i18n.setLocaleData() bootstrap from the bundled MO catalog.
+			wp_set_script_translations( 'publishrank-breadcrumbs-block', 'publishrank', PUBLISHRANK_SEO_PATH . 'languages' );
+		}
 		register_block_type(
 			self::BLOCK_NAME,
 			array(

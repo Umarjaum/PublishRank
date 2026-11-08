@@ -1220,6 +1220,7 @@ news"><?php echo esc_textarea( $val( 'publishrank_seo_news_post_types', 'post' )
 			</div>
 		</form>
 		<?php self::section_open( 'portability' ); ?>
+		<p class="description"><?php esc_html_e( 'Move metadata from Yoast SEO, Rank Math, AIOSEO, SEOPress, or The SEO Framework with field-aware safeguards.', 'publishrank' ); ?> <a class="button" href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( 'publishrank-seo-portability' ) ); ?>"><?php esc_html_e( 'Open Migration & Portability', 'publishrank' ); ?></a></p>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="publishrank_seo_export" /><?php wp_nonce_field( 'publishrank_seo_export' ); ?><?php submit_button( __( 'Export settings', 'publishrank' ), 'secondary', 'submit', false ); ?></form>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="publishrank_seo_import" /><?php wp_nonce_field( 'publishrank_seo_import' ); ?><label for="publishrank_seo_json"><span class="screen-reader-text"><?php esc_html_e( 'PublishRank JSON settings', 'publishrank' ); ?></span></label><textarea id="publishrank_seo_json" name="publishrank_seo_json" rows="8" class="large-text code" required></textarea><?php submit_button( __( 'Import settings', 'publishrank' ), 'secondary' ); ?></form>
 		<?php self::section_close(); ?>

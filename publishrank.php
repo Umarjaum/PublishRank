@@ -3,7 +3,7 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrankseo.vercel.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.17.0
+ * Version: 2.18.1
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -11,11 +11,16 @@
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: publishrank
+ * Domain Path: /languages
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.17.0' );
+add_action( 'init', static function () {
+	load_plugin_textdomain( 'publishrank', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+}, 1 );
+
+define( 'PUBLISHRANK_SEO_VERSION', '2.18.1' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );

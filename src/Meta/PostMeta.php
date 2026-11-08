@@ -195,6 +195,10 @@ final class PostMeta {
 
 	public static function get( $post_id, $key, $default = '' ) {
 		$value = get_post_meta( $post_id, $key, true );
+		$localized = LocalizedSeoMeta::get_override( $post_id, $key );
+		if ( '' !== $localized ) {
+			$value = $localized;
+		}
 		return '' === $value ? $default : $value;
 	}
 
