@@ -1103,7 +1103,7 @@ final class OnboardingPage {
 			/* translators: %d: number of social profiles. */
 			array( 4, 'fa-share-nodes', __( 'Social profiles', 'publishrank' ), sprintf( _n( '%d profile', '%d profiles', $social, 'publishrank' ), $social ), $social > 0 ),
 			array( 5, 'fa-heading', __( 'Homepage SEO title', 'publishrank' ), $title, '' !== trim( (string) get_option( 'publishrank_home_title', '' ) ) ),
-			array( 6, 'fa-sitemap', __( 'Sitemaps', 'publishrank' ), ( $news ? __( 'News sitemap on', 'publishrank' ) : __( 'News sitemap off', 'publishrank' ) ) . ' · ' . str_replace( ',', ', ', (string) get_option( 'publishrank_sitemap_post_types', 'post' ) ), $news ),
+			array( 6, 'fa-sitemap', __( 'Sitemaps', 'publishrank' ), ( $news ? __( 'News sitemap on', 'publishrank' ) : __( 'News sitemap off', 'publishrank' ) ) . ' · ' . str_replace( ',', ', ', (string) get_option( 'publishrank_seo_news_post_types', 'post' ) ), $news ),
 			array( 7, 'fa-location-dot', __( 'Local business', 'publishrank' ), ! empty( $local['enabled'] ) ? ( ! empty( $local['name'] ) ? (string) $local['name'] : __( 'Local business on', 'publishrank' ) ) : __( 'Local SEO off', 'publishrank' ), ! empty( $local['enabled'] ) ),
 		);
 		echo '<ul class="prw-recap">';

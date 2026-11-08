@@ -41,7 +41,7 @@ class WP_Query {
 			if ( $p->ts < $from || $p->ts > $to ) { continue; }
 			$out[ $id ] = $p->ts;
 		}
-		arsort( $out ); $this->posts = array_slice( array_keys( $out ), 0, (int) $args['posts_per_page'] );
+		arsort( $out ); $size = (int) $args['posts_per_page']; $page = max( 1, (int) ( $args['paged'] ?? 1 ) ); $this->posts = array_slice( array_keys( $out ), ( $page - 1 ) * $size, $size );
 	}
 }
 foreach ( array( 'Providers/SitemapProviderInterface', 'Engine/SitemapRenderer', 'Engine/SitemapCursorStore', 'Engine/SitemapIndex', 'SitemapUrls', 'News/NewsSitemapProvider' ) as $f ) { require_once __DIR__ . '/../src/Sitemap/' . $f . '.php'; }
@@ -115,9 +115,14 @@ $p = new P();
 $check( '14. 1,001 eligible articles produce 2 news sitemap files', 2 === $p->get_shard_count() );
 $check( '14b. first file holds exactly 1,000 entries, second holds 1', 1000 === count( $urls( $render( 1 ) ) ) && 1 === count( $urls( $render( 2 ) ) ) );
 $check( '14c. both files are valid XML', $valid( $render( 1 ) ) && $valid( $render( 2 ) ) );
-$index = ( new PublishRankSEO\Sitemap\Engine\SitemapIndex() )->render( array( $p ) );
-$check( '13. sitemap index lists both news sitemap files', false !== strpos( $index, 'publishrank-news-sitemap-1.xml' ) && false !== strpos( $index, 'publishrank-news-sitemap-2.xml' ) && 2 === substr_count( $index, '<sitemap>' ) );
-$T['opts']['publishrank_seo_news_enabled'] = false;
+	$index = ( new PublishRankSEO\Sitemap\Engine\SitemapIndex() )->render( array( $p ) );
+	$check( '13. sitemap index lists both news sitemap files', false !== strpos( $index, 'publishrank-news-sitemap-1.xml' ) && false !== strpos( $index, 'publishrank-news-sitemap-2.xml' ) && 2 === substr_count( $index, '<sitemap>' ) );
+	$T['posts'] = array(); $id = 0;
+	for ( $i = 0; $i < 5000; $i++ ) { $add( 60 + $i, array( 'meta' => array( '_publishrank_seo_robots' => 'noindex,follow' ) ) ); }
+	$late = $add( 60 + 5000 );
+	$rows = ( new P() )->eligible();
+	$check( '14c. valid articles beyond the ineligible candidate crowd are retained', 1 === count( $rows ) && (int) $late === (int) $rows[0]['id'] );
+	$T['opts']['publishrank_seo_news_enabled'] = false;
 $check( 'disabled provider is omitted from the index', 0 === substr_count( ( new PublishRankSEO\Sitemap\Engine\SitemapIndex() )->render( array( new P() ) ), '<sitemap>' ) );
 
 // Static checks for engine/controller behaviour that needs a real HTTP stack to exercise end to end.

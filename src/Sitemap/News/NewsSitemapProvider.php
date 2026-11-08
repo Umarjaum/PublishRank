@@ -24,7 +24,9 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 	/** Google: at most 1,000 <news:news> entries per sitemap file. */
 	const SHARD_SIZE = 1000;
 	/** Safety bound on candidate posts examined per request (window-limited). */
-	const MAX_CANDIDATES = 5000;
+	const MAX_CANDIDATES = 50000;
+	/** Query page size used while filtering candidates in PHP. */
+	const CANDIDATE_BATCH = 500;
 	/** Seconds the candidate list may be reused (also invalidated by version bumps). */
 	const CANDIDATE_TTL      = 60;
 	const DIAGNOSTICS_OPTION = 'publishrank_seo_news_diagnostics';
@@ -139,18 +141,30 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 			$args['post__not_in'] = $excluded_ids; }
 		if ( $excluded_cats ) {
 			$args['category__not_in'] = $excluded_cats; }
-		$ids = ( new \WP_Query( $args ) )->posts;
-		remove_filter( 'posts_where', $where, 10 );
-		$ids = array_map( 'absint', (array) $ids );
-		if ( $ids && function_exists( 'update_meta_cache' ) ) {
-			update_meta_cache( 'post', $ids ); }
 		$rows = array();
-		foreach ( $ids as $id ) {
-			$entry = $this->build_entry( $id, $skipped );
-			if ( $entry ) {
-				$rows[] = $entry; }
+		$scanned = 0;
+		$page    = 1;
+		do {
+			$args['posts_per_page'] = self::CANDIDATE_BATCH;
+			$args['paged']          = $page;
+			$ids                    = array_map( 'absint', (array) ( new \WP_Query( $args ) )->posts );
+			$scanned               += count( $ids );
+			if ( $ids && function_exists( 'update_meta_cache' ) ) {
+				update_meta_cache( 'post', $ids ); }
+			foreach ( $ids as $id ) {
+				$entry = $this->build_entry( $id, $skipped );
+				if ( $entry ) {
+					$rows[] = $entry; }
+			}
+			$page++;
+		} while ( count( $ids ) === self::CANDIDATE_BATCH && $scanned < self::MAX_CANDIDATES );
+		remove_filter( 'posts_where', $where, 10 );
+		if ( $scanned > self::MAX_CANDIDATES ) {
+			$scanned = self::MAX_CANDIDATES; }
+		if ( $scanned >= self::MAX_CANDIDATES ) {
+			$skipped['candidate_limit'] = ( $skipped['candidate_limit'] ?? 0 ) + 1;
 		}
-		$this->record( count( $ids ), count( $rows ), $skipped );
+		$this->record( $scanned, count( $rows ), $skipped );
 		return $rows;
 	}
 
