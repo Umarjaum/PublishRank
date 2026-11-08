@@ -1,6 +1,6 @@
 # Versioning
 
-The release number is **2.18.3**. It appears in:
+The release number is **2.18.4**. It appears in:
 
 1. `publishrank.php` plugin header (`Version:`)
 2. `PUBLISHRANK_SEO_VERSION` constant (source of truth at runtime)

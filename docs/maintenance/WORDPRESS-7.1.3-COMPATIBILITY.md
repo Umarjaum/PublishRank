@@ -13,7 +13,7 @@ This is a staging checklist, not a statement of test results. Complete it on a c
 - [ ] Activate without notices; setup wizard opens
 - [ ] PublishRank sidebar menu, groups and Dashboard icon render in at least two admin colour schemes
 - [ ] Toolbar item and WordPress-logo dropdown entry show the PublishRank mark
-- [ ] Screen headers show the version `2.18.3`
+- [ ] Screen headers show the version `2.18.4`
 
 ## Output
 

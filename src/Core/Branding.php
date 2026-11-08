@@ -42,7 +42,7 @@ final class Branding {
 	}
 
 	public static function version() {
-		return defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '2.18.3';
+		return defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '2.18.4';
 	}
 
 	/** @param string $page Admin page slug. */

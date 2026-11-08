@@ -1,6 +1,6 @@
 # PublishRank documentation
 
-Current release: **2.18.3**. Official website: <https://publishrankseo.vercel.app/>
+Current release: **2.18.4**. Official website: <https://publishrankseo.vercel.app/>
 
 Every version marker in the package (plugin header, `PUBLISHRANK_SEO_VERSION`, readme stable tag, Newsroom module, admin headers and the sitemap view footer) reads the same number.
 
@@ -18,7 +18,7 @@ docs/
 | --- | --- | --- |
 | Getting started | [INSTALLATION.md](getting-started/INSTALLATION.md) | Install, activate and first steps |
 | Getting started | [SETUP-WIZARD.md](getting-started/SETUP-WIZARD.md) | Where the wizard lives and who can open it |
-| Features | [FEATURES.md](features/FEATURES.md) | Complete feature inventory shown in the dashboard through 2.18.3 |
+| Features | [FEATURES.md](features/FEATURES.md) | Complete feature inventory shown in the dashboard through 2.18.4 |
 | Features | [SITEMAPS.md](features/SITEMAPS.md) | Sitemap index, child sitemaps and the readable browser view |
 | Features | [404-MONITOR.md](features/404-MONITOR.md) | 404 capture, privacy, filtering and redirect workflow |
 | Admin | [ADMIN-NAVIGATION.md](admin/ADMIN-NAVIGATION.md) | Sidebar groups, Setup Wizard entry, toolbar and keyboard use |

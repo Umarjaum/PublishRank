@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.18.3
+Stable tag: 2.18.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -143,6 +143,8 @@ Other website links in the administration interface (including the Schema.org vo
 
 == Changelog ==
 
+= 2.18.4 =
+* **Maintenance release.** Version markers and package metadata updated to 2.18.4; no functional changes.
 = 2.18.3 =
 * **News sitemap completeness for busy publications.** News candidates are scanned in bounded pages up to a larger safety ceiling, so noindex, password-protected, excluded, or malformed stories cannot crowd valid recent articles out of the sitemap.
 * **News-site setup clarity.** The onboarding summary now reports the actual News sitemap post types.
