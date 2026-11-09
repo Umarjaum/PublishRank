@@ -1,3 +1,6 @@
+= 2.19.0 =
+* **New: Mastodon.** Profile verification (rel="me" + fediverse:creator), automatic and manual sharing of posts to Mastodon, per-post custom message, hashtags from post tags, visibility setting, per-author profiles and share history. Access token stored encrypted.
+
 = 2.18.4 =
 * **Maintenance release.** Version markers and package metadata updated to 2.18.4; no functional changes.
 
