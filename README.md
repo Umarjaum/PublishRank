@@ -19,6 +19,22 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 
 Version 2.19.2 keeps keyword editing in the PublishRank SEO box, saves keyword fields in the background, and refreshes dependent SEO values without a full editor reload.
 
+## Actual interface screenshots
+
+These are real PublishRank WordPress-admin captures from the official website’s screenshot gallery, not promotional mockups:
+
+![PublishRank Dashboard](docs/screenshots/publishrank-dashboard.png)
+
+![PublishRank Features](docs/screenshots/publishrank-features.png)
+
+![PublishRank Schema settings](docs/screenshots/publishrank-schema-markup.png)
+
+![PublishRank SEO score](docs/screenshots/publishrank-seo-score.png)
+
+![PublishRank Newsroom](docs/screenshots/publishrank-newsroom.png)
+
+See the [full official interface screenshot gallery](https://publishrankseo.vercel.app/features#product-screenshots) for the complete set of dashboard, SEO, schema, sitemap and newsroom screens.
+
 ## Highlights
 
 ### SEO and metadata

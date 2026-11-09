@@ -40,6 +40,13 @@ Features include:
 
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
 
+== Screenshots ==
+1. The real PublishRank Dashboard in the WordPress admin.
+2. The real PublishRank Features screen with the available SEO tools.
+3. The real PublishRank Schema settings screen.
+4. The real PublishRank SEO Score screen.
+5. The real PublishRank Newsroom interface.
+
 == Source code ==
 PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained source repository is [github.com/Umarjaum/PublishRank](https://github.com/Umarjaum/PublishRank). First-party runtime assets in `assets/` are shipped unminified and human-readable, with corresponding first-party sources in `src/assets/`. Font Awesome Free 7.3.1 is bundled locally under `assets/vendor/fontawesome-free-7.3.1/` with its upstream license. There is no build step or third-party asset CDN request.
 
