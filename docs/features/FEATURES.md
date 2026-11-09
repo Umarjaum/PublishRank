@@ -1,4 +1,4 @@
-# Features provided through PublishRank 2.18.4
+# Features provided through PublishRank 2.19.1
 
 This inventory documents every feature card and Technical Health check shown on the PublishRank dashboard in the current release. Names follow the dashboard labels. A feature may be optional, permission-gated, dependent on WordPress/theme configuration, or dependent on an external service; those conditions are noted where relevant.
 
@@ -25,6 +25,7 @@ This inventory documents every feature card and Technical Health check shown on 
 | --- | --- |
 | **SEO score** | Review practical content and technical SEO checks across the site. Editorial scores are guidance, not ranking guarantees. |
 | **SEO Overrides** | Open a post and manage its search, social, indexing and related SEO fields through PublishRank. |
+| **Mastodon** | Verify a website/profile link, credit authors with `fediverse:creator`, auto-share or manually publish posts, attach featured images with alt text, add per-post content warnings, fit copy to the instance's configured character limit, and review share history. Image uploads require the optional `write:media` scope. |
 | **Google Discover image** | Review post SEO image dimensions and create a resized copy without replacing the original media file. |
 | **Author expertise** | Manage author credentials and publication expertise information used by supported author and publisher workflows. |
 | **Local SEO** | Configure local business identity and location-oriented search signals. |
@@ -120,3 +121,7 @@ For detailed workflows, see the individual guides in `docs/`, especially the sit
 
 - **One look on every tool screen**: cards, tables, fields, tick boxes, switches, tabs and notices inside the shared frame now match Features, Help & documentation and the Setup Wizard.
 - **Robots.txt screen fixed**: it now loads completely (save button, live preview, checks, matrix and URL tester) inside the shared frame.
+
+## New in 2.19.1
+
+- **Mastodon publishing upgrades:** featured-image uploads carry the WordPress Media Library alt text as an accessibility description; editors can set a per-post content warning; and status text is shortened to the character limit advertised by the connected Mastodon instance.

@@ -22,6 +22,8 @@ final class Mastodon {
 	const META_SHARE      = '_publishrank_mastodon_share';
 	const META_MESSAGE    = '_publishrank_mastodon_message';
 	const META_STATUS     = '_publishrank_mastodon_status_url';
+	const META_IMAGE      = '_publishrank_mastodon_image';
+	const META_SPOILER    = '_publishrank_mastodon_spoiler';
 	const CRON_HOOK       = 'publishrank_mastodon_share_post';
 	const DEFAULT_TEMPLATE = "{title}\n\n{excerpt}\n\n{url}\n\n{hashtags}";
 
@@ -49,6 +51,7 @@ final class Mastodon {
 			'template'     => self::DEFAULT_TEMPLATE,
 			'visibility'   => 'public',
 			'hashtags'     => 1,
+			'attach_image' => 0,
 			'creator_tag'  => 1,
 			'author_tags'  => 1,
 		);
@@ -121,6 +124,36 @@ final class Mastodon {
 	public static function disconnect() {
 		delete_option( self::TOKEN_OPTION );
 		delete_option( self::ACCOUNT_OPTION );
+	}
+
+	/** Return the configured status limit for this instance, falling back to Mastodon's default. */
+	public static function character_limit() {
+		$s = self::settings();
+		if ( '' === $s['instance'] ) {
+			return 500;
+		}
+		$key    = 'publishrank_mastodon_limit_' . md5( $s['instance'] );
+		$cached = get_transient( $key );
+		if ( is_numeric( $cached ) && (int) $cached >= 100 && (int) $cached <= 10000 ) {
+			return (int) $cached;
+		}
+		$response = wp_safe_remote_get(
+			$s['instance'] . '/api/v2/instance',
+			array(
+				'timeout' => 5,
+				'headers' => array( 'Accept' => 'application/json' ),
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			return 500;
+		}
+		$data  = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		$limit = (int) ( $data['configuration']['statuses']['max_characters'] ?? $data['max_toot_chars'] ?? 500 );
+		if ( $limit < 100 || $limit > 10000 ) {
+			$limit = 500;
+		}
+		set_transient( $key, $limit, 12 * HOUR_IN_SECONDS );
+		return $limit;
 	}
 
 	/* ------------------------------------------------------------------ API */
@@ -299,10 +332,30 @@ final class Mastodon {
 			)
 		);
 		$text = trim( preg_replace( "/\n{3,}/", "\n\n", $text ) );
-		return self::fit( $text, 500 );
+		return self::fit( $text, self::character_limit() );
 	}
 
 	/** Shorten the excerpt part so the status fits Mastodon's limit (links count as 23). */
+	private static function text_length( $text ) {
+		$text = (string) $text;
+		if ( function_exists( 'mb_strlen' ) ) {
+			return mb_strlen( $text );
+		}
+		$matched = preg_match_all( '/./us', $text, $characters );
+		return false === $matched ? strlen( $text ) : $matched;
+	}
+
+	private static function text_substr( $text, $start, $length = null ) {
+		$text = (string) $text;
+		if ( function_exists( 'mb_substr' ) ) {
+			return mb_substr( $text, $start, $length );
+		}
+		if ( false === preg_match_all( '/./us', $text, $characters ) ) {
+			return substr( $text, $start, $length );
+		}
+		return implode( '', array_slice( $characters[0], $start, $length ) );
+	}
+
 	public static function fit( $text, $limit ) {
 		$length = self::length( $text );
 		if ( $length <= $limit ) {
@@ -314,21 +367,115 @@ final class Mastodon {
 			if ( preg_match( '#https?://#', $line ) || 0 === strpos( ltrim( $line ), '#' ) || $i === 0 ) {
 				continue;
 			}
-			$len = function_exists( 'mb_strlen' ) ? mb_strlen( $line ) : strlen( $line );
+			$len = self::text_length( $line );
 			if ( $len > $over ) {
-				$lines[ $i ] = rtrim( function_exists( 'mb_substr' ) ? mb_substr( $line, 0, $len - $over ) : substr( $line, 0, $len - $over ) ) . '…';
+				$lines[ $i ] = rtrim( self::text_substr( $line, 0, $len - $over ) ) . '…';
 				return implode( "\n", $lines );
 			}
 			$lines[ $i ] = '';
 			$over       -= $len;
 		}
 		$text = implode( "\n", $lines );
-		return function_exists( 'mb_substr' ) ? mb_substr( $text, 0, $limit ) : substr( $text, 0, $limit );
+		return self::text_substr( $text, 0, $limit );
 	}
 
 	public static function length( $text ) {
 		$text = preg_replace( '#https?://\S+#', str_repeat( 'x', 23 ), (string) $text );
-		return function_exists( 'mb_strlen' ) ? mb_strlen( $text ) : strlen( $text );
+		return self::text_length( $text );
+	}
+
+	/** Upload the post thumbnail with the Media Library alt text as its accessible description. */
+	private static function upload_featured_image( \WP_Post $post ) {
+		$attachment_id = (int) get_post_thumbnail_id( $post->ID );
+		if ( ! $attachment_id ) {
+			return '';
+		}
+		$file = get_attached_file( $attachment_id );
+		if ( ! is_string( $file ) || ! is_readable( $file ) ) {
+			return new \WP_Error( 'publishrank_mastodon_image_file', __( 'The featured image file is not available on this server.', 'publishrank' ) );
+		}
+		$size = filesize( $file );
+		if ( false === $size || $size > 32 * 1024 * 1024 ) {
+			return new \WP_Error( 'publishrank_mastodon_image_size', __( 'The featured image must be smaller than 32 MB to attach it to a Mastodon post.', 'publishrank' ) );
+		}
+		$type     = wp_check_filetype( $file );
+		$mime     = (string) ( $type['type'] ?? '' );
+		$allowed  = array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp' );
+		$contents = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		if ( false === $contents || ! in_array( $mime, $allowed, true ) ) {
+			return new \WP_Error( 'publishrank_mastodon_image_type', __( 'The featured image must be a readable JPEG, PNG, GIF, or WebP file.', 'publishrank' ) );
+		}
+		$alt      = sanitize_text_field( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) );
+		$filename = sanitize_file_name( basename( $file ) );
+		$boundary = '----PublishRank' . str_replace( '-', '', wp_generate_uuid4() );
+		$body     = self::multipart_body( $contents, $filename, $mime, $alt, $boundary );
+		$response = wp_safe_remote_request(
+			self::settings()['instance'] . '/api/v2/media',
+			array(
+				'method'  => 'POST',
+				'timeout' => 30,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . self::token(),
+					'Accept'        => 'application/json',
+					'Content-Type'  => 'multipart/form-data; boundary=' . $boundary,
+				),
+				'body'    => $body,
+			)
+		);
+		// Mastodon 3.1.3+ supports the asynchronous v2 endpoint. Fall back for older compatible servers.
+		if ( ! is_wp_error( $response ) && in_array( (int) wp_remote_retrieve_response_code( $response ), array( 404, 405 ), true ) ) {
+			$response = wp_safe_remote_request(
+				self::settings()['instance'] . '/api/v1/media',
+				array(
+					'method'  => 'POST',
+					'timeout' => 30,
+					'headers' => array(
+						'Authorization' => 'Bearer ' . self::token(),
+						'Accept'        => 'application/json',
+						'Content-Type'  => 'multipart/form-data; boundary=' . $boundary,
+					),
+					'body'    => $body,
+				)
+			);
+		}
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		if ( $code < 200 || $code >= 300 || empty( $data['id'] ) ) {
+			$error = is_array( $data ) && ! empty( $data['error'] ) ? (string) $data['error'] : sprintf( 'HTTP %d', $code );
+			return new \WP_Error( 'publishrank_mastodon_media', sprintf( __( 'Mastodon could not upload the featured image: %s', 'publishrank' ), $error ) );
+		}
+		$media_id = (string) $data['id'];
+		if ( empty( $data['url'] ) ) {
+			for ( $attempt = 0; $attempt < 5; $attempt++ ) {
+				usleep( 400000 );
+				$ready = self::request( 'GET', '/api/v1/media/' . rawurlencode( $media_id ) );
+				if ( is_wp_error( $ready ) ) {
+					return $ready;
+				}
+				if ( ! empty( $ready['url'] ) ) {
+					break;
+				}
+			}
+			if ( empty( $ready['url'] ) ) {
+				return new \WP_Error( 'publishrank_mastodon_media_processing', __( 'Mastodon is still processing the featured image. Try sharing again shortly.', 'publishrank' ) );
+			}
+		}
+		return $media_id;
+	}
+
+	/** Build a multipart request body for Mastodon's media endpoint. */
+	private static function multipart_body( $contents, $filename, $mime, $description, $boundary ) {
+		$filename    = str_replace( array( '"', "\r", "\n" ), '', sanitize_file_name( (string) $filename ) );
+		$description = str_replace( array( "\r", "\n" ), ' ', sanitize_text_field( (string) $description ) );
+		return '--' . $boundary . "\r\n"
+			. 'Content-Disposition: form-data; name="file"; filename="' . $filename . "\"\r\n"
+			. 'Content-Type: ' . $mime . "\r\n\r\n" . $contents . "\r\n"
+			. '--' . $boundary . "\r\n"
+			. "Content-Disposition: form-data; name=\"description\"\r\n\r\n" . $description . "\r\n"
+			. '--' . $boundary . "--\r\n";
 	}
 
 	/** @return array|\WP_Error */
@@ -340,16 +487,34 @@ final class Mastodon {
 		if ( ! $force && ! self::should_share( $post ) ) {
 			return new \WP_Error( 'publishrank_mastodon_skip', __( 'Sharing is turned off for this post.', 'publishrank' ) );
 		}
-		$s      = self::settings();
+		$s         = self::settings();
+		$image     = (string) get_post_meta( $post->ID, self::META_IMAGE, true );
+		$use_image = '' === $image ? ! empty( $s['attach_image'] ) : 'yes' === $image;
+		$media_id  = '';
+		if ( $use_image && has_post_thumbnail( $post ) ) {
+			$uploaded = self::upload_featured_image( $post );
+			if ( is_wp_error( $uploaded ) ) {
+				self::log( $post, $uploaded );
+				return $uploaded;
+			}
+			$media_id = (string) $uploaded;
+		}
+		$spoiler = sanitize_text_field( (string) get_post_meta( $post->ID, self::META_SPOILER, true ) );
+		$body    = array(
+			'status'       => self::compose( $post ),
+			'visibility'   => in_array( $s['visibility'], array( 'public', 'unlisted', 'private' ), true ) ? $s['visibility'] : 'public',
+			'language'     => substr( (string) get_locale(), 0, 2 ),
+			'spoiler_text' => $spoiler,
+			'sensitive'    => '' !== $spoiler,
+			'_key'         => 'publishrank-' . $post->ID . '-' . md5( (string) $post->post_date_gmt ),
+		);
+		if ( '' !== $media_id ) {
+			$body['media_ids'] = array( $media_id );
+		}
 		$result = self::request(
 			'POST',
 			'/api/v1/statuses',
-			array(
-				'status'     => self::compose( $post ),
-				'visibility' => in_array( $s['visibility'], array( 'public', 'unlisted', 'private' ), true ) ? $s['visibility'] : 'public',
-				'language'   => substr( (string) get_locale(), 0, 2 ),
-				'_key'       => 'publishrank-' . $post->ID . '-' . md5( (string) $post->post_date_gmt ),
-			)
+			$body
 		);
 		self::log( $post, $result );
 		if ( ! is_wp_error( $result ) && ! empty( $result['url'] ) ) {
@@ -400,8 +565,15 @@ final class Mastodon {
 		$default = ! empty( self::settings()['auto_share'] );
 		$checked = '' === $choice ? $default : 'yes' === $choice;
 		echo '<p><label><input type="checkbox" name="publishrank_mastodon_share" value="yes" ' . checked( $checked, true, false ) . ' /> ' . esc_html__( 'Share when published', 'publishrank' ) . '</label></p>';
+		$image_choice = (string) get_post_meta( $post->ID, self::META_IMAGE, true );
+		$use_image    = '' === $image_choice ? ! empty( self::settings()['attach_image'] ) : 'yes' === $image_choice;
+		echo '<p><label><input type="checkbox" name="publishrank_mastodon_image" value="yes" ' . checked( $use_image, true, false ) . ' /> ' . esc_html__( 'Attach featured image', 'publishrank' ) . '</label><br /><span class="description">' . esc_html__( 'Uses the image alt text from the Media Library as Mastodon’s accessible description.', 'publishrank' ) . '</span></p>';
+		if ( $use_image && has_post_thumbnail( $post ) && '' === trim( (string) get_post_meta( (int) get_post_thumbnail_id( $post->ID ), '_wp_attachment_image_alt', true ) ) ) {
+			echo '<p class="description">' . esc_html__( 'This featured image has no alt text yet. Add it in the Media Library so Mastodon receives an accessible image description.', 'publishrank' ) . '</p>';
+		}
 		echo '<p><label for="publishrank_mastodon_message">' . esc_html__( 'Custom message (optional)', 'publishrank' ) . '</label><textarea class="widefat" rows="4" id="publishrank_mastodon_message" name="publishrank_mastodon_message" placeholder="' . esc_attr( self::DEFAULT_TEMPLATE ) . '">' . esc_textarea( (string) get_post_meta( $post->ID, self::META_MESSAGE, true ) ) . '</textarea></p>';
-		echo '<p class="description">' . esc_html__( 'Variables: {title} {excerpt} {url} {hashtags} {site}. 500 characters max; links count as 23.', 'publishrank' ) . '</p>';
+		echo '<p><label for="publishrank_mastodon_spoiler">' . esc_html__( 'Content warning (optional)', 'publishrank' ) . '</label><input class="widefat" type="text" id="publishrank_mastodon_spoiler" name="publishrank_mastodon_spoiler" value="' . esc_attr( (string) get_post_meta( $post->ID, self::META_SPOILER, true ) ) . '" /><span class="description">' . esc_html__( 'Adds a Mastodon content warning and marks the post as sensitive.', 'publishrank' ) . '</span></p>';
+		echo '<p class="description">' . esc_html__( 'Variables: {title} {excerpt} {url} {hashtags} {site}. Links count as 23; the status is fitted to your server’s character limit.', 'publishrank' ) . '</p>';
 		if ( 'publish' === $post->post_status ) {
 			$url = wp_nonce_url( admin_url( 'admin-post.php?action=publishrank_mastodon_share_now&post_id=' . (int) $post->ID ), 'publishrank_mastodon_share_now_' . (int) $post->ID );
 			echo '<p><a class="button" href="' . esc_url( $url ) . '">' . esc_html( '' !== $status ? __( 'Share again now', 'publishrank' ) : __( 'Share now', 'publishrank' ) ) . '</a></p>';
@@ -421,6 +593,13 @@ final class Mastodon {
 			delete_post_meta( $post_id, self::META_MESSAGE );
 		} else {
 			update_post_meta( $post_id, self::META_MESSAGE, $message );
+		}
+		update_post_meta( $post_id, self::META_IMAGE, isset( $_POST['publishrank_mastodon_image'] ) ? 'yes' : 'no' );
+		$spoiler = isset( $_POST['publishrank_mastodon_spoiler'] ) ? sanitize_text_field( wp_unslash( $_POST['publishrank_mastodon_spoiler'] ) ) : '';
+		if ( '' === $spoiler ) {
+			delete_post_meta( $post_id, self::META_SPOILER );
+		} else {
+			update_post_meta( $post_id, self::META_SPOILER, $spoiler );
 		}
 	}
 

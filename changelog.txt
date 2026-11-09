@@ -1,3 +1,7 @@
+= 2.19.1 =
+* **Mastodon publishing upgrades.** Optionally attach featured images with their WordPress alt text, add per-post content warnings, and adapt the text length to the connected server's configured limit. Media uploads use Mastodon's `write:media` permission and the API's asynchronous processing flow.
+* **Dashboard styling consistency.** The live admin stylesheet now includes the matching card styles for the site overview, sitemap URLs and current configuration panels.
+
 = 2.19.0 =
 * **New: Mastodon.** Profile verification (rel="me" + fediverse:creator), automatic and manual sharing of posts to Mastodon, per-post custom message, hashtags from post tags, visibility setting, per-author profiles and share history. Access token stored encrypted.
 

@@ -64,11 +64,11 @@ final class MastodonPage {
 			$this->button( 'publishrank_mastodon_verify', __( 'Check again', 'publishrank' ), 'secondary' );
 			echo ' ';
 			$this->button( 'publishrank_mastodon_disconnect', __( 'Disconnect', 'publishrank' ), 'link-delete' );
-		} else {
-			echo '<p>' . esc_html__( 'Not connected.', 'publishrank' ) . '</p>';
-			echo '<ol><li>' . esc_html__( 'On your Mastodon server open Preferences → Development → New application.', 'publishrank' ) . '</li>';
-			echo '<li>' . esc_html__( 'Name it "PublishRank", tick only the read:accounts and write:statuses permissions, and save.', 'publishrank' ) . '</li>';
-			echo '<li>' . esc_html__( 'Open the application, copy "Your access token" and paste it below with your server address.', 'publishrank' ) . '</li></ol>';
+			} else {
+				echo '<p>' . esc_html__( 'Not connected.', 'publishrank' ) . '</p>';
+				echo '<ol><li>' . esc_html__( 'On your Mastodon server open Preferences → Development → New application.', 'publishrank' ) . '</li>';
+				echo '<li>' . esc_html__( 'Name it "PublishRank", select read:accounts and write:statuses, and save. Add write:media only if you want to attach featured images.', 'publishrank' ) . '</li>';
+				echo '<li>' . esc_html__( 'Open the application, copy "Your access token" and paste it below with your server address.', 'publishrank' ) . '</li></ol>';
 		}
 		echo '</section>';
 
@@ -101,8 +101,9 @@ final class MastodonPage {
 			echo '<label style="margin-right:14px"><input type="checkbox" name="post_types[]" value="' . esc_attr( $type->name ) . '" ' . checked( in_array( $type->name, (array) $s['post_types'], true ), true, false ) . ' /> ' . esc_html( $type->labels->singular_name ) . '</label>';
 		}
 		echo '</td></tr>';
-		echo '<tr><th scope="row"><label for="pr-mastodon-template">' . esc_html__( 'Message format', 'publishrank' ) . '</label></th><td><textarea class="large-text" rows="5" id="pr-mastodon-template" name="template">' . esc_textarea( $s['template'] ) . '</textarea><p class="description">' . esc_html__( 'Variables: {title} {excerpt} {url} {hashtags} {site}. Long excerpts are shortened to fit 500 characters.', 'publishrank' ) . '</p></td></tr>';
-		echo '<tr><th scope="row">' . esc_html__( 'Hashtags', 'publishrank' ) . '</th><td><label><input type="checkbox" name="hashtags" value="1" ' . checked( ! empty( $s['hashtags'] ), true, false ) . ' /> ' . esc_html__( 'Turn the post\'s tags into hashtags (up to 5)', 'publishrank' ) . '</label></td></tr>';
+			echo '<tr><th scope="row"><label for="pr-mastodon-template">' . esc_html__( 'Message format', 'publishrank' ) . '</label></th><td><textarea class="large-text" rows="5" id="pr-mastodon-template" name="template">' . esc_textarea( $s['template'] ) . '</textarea><p class="description">' . esc_html__( 'Variables: {title} {excerpt} {url} {hashtags} {site}. Long excerpts are shortened to fit this server’s character limit.', 'publishrank' ) . '</p></td></tr>';
+			echo '<tr><th scope="row">' . esc_html__( 'Hashtags', 'publishrank' ) . '</th><td><label><input type="checkbox" name="hashtags" value="1" ' . checked( ! empty( $s['hashtags'] ), true, false ) . ' /> ' . esc_html__( 'Turn the post\'s tags into hashtags (up to 5)', 'publishrank' ) . '</label></td></tr>';
+			echo '<tr><th scope="row">' . esc_html__( 'Featured images', 'publishrank' ) . '</th><td><label><input type="checkbox" name="attach_image" value="1" ' . checked( ! empty( $s['attach_image'] ), true, false ) . ' /> ' . esc_html__( 'Attach featured images to shared posts by default', 'publishrank' ) . '</label><p class="description">' . esc_html__( 'PublishRank sends the Media Library alt text as the image description for accessibility. This requires the optional write:media permission.', 'publishrank' ) . '</p></td></tr>';
 		echo '<tr><th scope="row"><label for="pr-mastodon-visibility">' . esc_html__( 'Who can see shared posts', 'publishrank' ) . '</label></th><td><select id="pr-mastodon-visibility" name="visibility">';
 		foreach ( array( 'public' => __( 'Public', 'publishrank' ), 'unlisted' => __( 'Unlisted', 'publishrank' ), 'private' => __( 'Followers only', 'publishrank' ) ) as $k => $label ) {
 			echo '<option value="' . esc_attr( $k ) . '" ' . selected( $s['visibility'], $k, false ) . '>' . esc_html( $label ) . '</option>';
@@ -156,6 +157,7 @@ final class MastodonPage {
 			'template'    => isset( $_POST['template'] ) && '' !== trim( (string) wp_unslash( $_POST['template'] ) ) ? sanitize_textarea_field( wp_unslash( $_POST['template'] ) ) : Mastodon::DEFAULT_TEMPLATE,
 			'visibility'  => in_array( $vis, array( 'public', 'unlisted', 'private' ), true ) ? $vis : 'public',
 			'hashtags'    => empty( $_POST['hashtags'] ) ? 0 : 1,
+			'attach_image' => empty( $_POST['attach_image'] ) ? 0 : 1,
 			'creator_tag' => empty( $_POST['creator_tag'] ) ? 0 : 1,
 			'author_tags' => empty( $_POST['author_tags'] ) ? 0 : 1,
 		);
