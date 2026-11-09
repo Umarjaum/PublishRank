@@ -133,6 +133,15 @@ final class ModuleSwitches {
 				'title'       => __( 'IndexNow', 'publishrank' ),
 				'description' => __( 'Notify Bing, Yandex and other IndexNow engines the moment you publish or update a post.', 'publishrank' ),
 			),
+			'mastodon'       => array(
+				'option'      => 'publishrank_mastodon_enabled',
+				'default'     => false,
+				'icon'        => 'fa-comment-dots',
+				'group'       => 'content',
+				'page'        => 'publishrank-mastodon',
+				'title'       => __( 'Mastodon', 'publishrank' ),
+				'description' => __( 'Verify your Mastodon profile (green check), credit authors in link previews, and share new posts to Mastodon automatically.', 'publishrank' ),
+			),
 			'bbpress'        => array(
 				'option'      => 'publishrank_integration_bbpress',
 				'default'     => true,

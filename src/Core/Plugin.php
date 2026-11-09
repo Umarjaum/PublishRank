@@ -114,6 +114,7 @@ final class Plugin {
 		add_action( 'init', array( ModuleSwitches::class, 'maybe_flush_rewrite_rules' ), 100 );
 				$this->loader->register( IndexNow::class, false );
 			$this->loader->register( BaiduSubmission::class, false );
+		$this->loader->register( \PublishRankSEO\Social\Mastodon::class, false );
 		$this->loader->register( AnalyticsCollector::class, false );
 		$this->loader->register( LiveSync::class, false );
 		$this->loader->register( \PublishRankSEO\Admin\LivePreview::class, false );
@@ -173,6 +174,7 @@ final class Plugin {
 				$this->loader->register( LLMSTxtPage::class, false );
 				$this->loader->register( ImageOptimizerPage::class, false );
 			$this->loader->register( IndexNowPage::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\MastodonPage::class, false );
 			$this->loader->register( PublisherToolkitPage::class, false );
 			$this->loader->register( HelpDocumentationPage::class, false );
 				$this->loader->register( SchemaPage::class, false );
