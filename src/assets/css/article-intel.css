@@ -127,3 +127,25 @@
 .pr-studio__copy-feedback{min-width:1px;color:#1d2327;font-size:12px}
 @media(max-width:782px){.pr-intel__head{align-items:flex-start}.pr-intel__head h2{flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){.pr-ring__val,.pr-cat__bar span{transition:none!important}.pr-intel__flash{animation:none!important}}
+
+/* Keyphrase scorecards. Status is always spelled out in text; colour is only a second cue. */
+.pr-kp{margin:16px 0}
+.pr-kp__title{font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em;color:#1d2327}
+.pr-kp__combined,.pr-kp__meta{font-size:12px;line-height:1.5;margin:4px 0;color:#50575e}
+.pr-kp__warn{font-size:12px;line-height:1.5;margin:6px 0;padding:6px 10px;background:#fcf9e8;border-left:4px solid #996800;color:#1d2327}
+.pr-kp__card{border:1px solid #dcdcde;border-left-width:4px;border-radius:2px;background:#fff;margin:8px 0;padding:10px 12px}
+.pr-kp__card--good{border-left-color:#00a32a}
+.pr-kp__card--ok{border-left-color:#996800}
+.pr-kp__card--bad{border-left-color:#b32d2e}
+.pr-kp__head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.pr-kp__phrase{font-weight:600;font-size:14px;color:#1d2327;overflow-wrap:anywhere}
+.pr-kp__role{font-size:11px;padding:1px 6px;border-radius:2px;background:#f0f0f1;color:#50575e}
+.pr-kp__score{margin-inline-start:auto;font-weight:700;font-size:16px;color:#1d2327}
+.pr-kp__score small{font-weight:400;font-size:11px;color:#50575e}
+.pr-kp__places{display:flex;flex-wrap:wrap;gap:4px 12px;list-style:none;margin:8px 0 4px;padding:0}
+.pr-kp__place{font-size:12px;color:#1d2327}
+.pr-kp__place b{font-weight:600}
+.pr-kp__place--exact b{color:#007017}
+.pr-kp__place--loose b{color:#755100}
+.pr-kp__place--none b{color:#b32d2e}
+.pr-kp__recs{margin:8px 0 0;padding-inline-start:18px;font-size:12px;line-height:1.5;color:#1d2327}

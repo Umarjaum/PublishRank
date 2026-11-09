@@ -7,7 +7,6 @@
 namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Compatibility\ConflictDetector;
-use PublishRankSEO\Compatibility\JNewsAdapter;
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Core\OutputRegistry;
 use PublishRankSEO\Sitemap\SitemapController;
@@ -19,12 +18,8 @@ final class DiagnosticsPage {
 	/** @var OutputRegistry */
 	private $registry;
 
-	/** @var JNewsAdapter */
-	private $jnews;
-
-	public function __construct( OutputRegistry $registry, JNewsAdapter $jnews ) {
+	public function __construct( OutputRegistry $registry ) {
 		$this->registry = $registry;
-		$this->jnews    = $jnews;
 	}
 
 	public function register() {
@@ -72,9 +67,7 @@ final class DiagnosticsPage {
 		AdminAssets::header( __( 'Diagnostics', 'publishrank' ), __( 'Check configuration, then scan your live pages for duplicate or missing SEO tags.', 'publishrank' ) );
 
 		$conflicts     = ( new ConflictDetector() )->diagnostics();
-		$compatibility = $this->jnews->diagnostics();
 		$this->row( __( 'SEO plugin conflicts', 'publishrank' ), $conflicts['status'], $conflicts['message'] );
-		$this->row( __( 'JNews compatibility', 'publishrank' ), $compatibility['status'], $compatibility['message'] );
 
 		$engine    = ( new SitemapController() )->engine();
 		$audit     = SitemapAudit::run( $engine, 5 );

@@ -35,6 +35,12 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 	/** @var array<string,mixed>|null Per-request memo. */
 	private $memo = null;
 
+	/** @var int[] Post IDs excluded in settings (set while collecting). */
+	private $excluded_ids = array();
+
+	/** @var int[] Category IDs excluded in settings (set while collecting). */
+	private $excluded_cats = array();
+
 	public function get_name() {
 		return 'News'; }
 	public function get_slug() {
@@ -75,6 +81,9 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 				if ( $keywords ) {
 					$news .= '<news:keywords>' . SitemapRenderer::text( implode( ', ', $keywords ) ) . '</news:keywords>'; }
 			}
+			// Optional, legacy: Google's current News sitemap documentation lists only publication, date and title.
+			if ( ! empty( $row['tickers'] ) && get_option( 'publishrank_seo_news_stock_tickers', false ) ) {
+				$news .= '<news:stock_tickers>' . SitemapRenderer::text( implode( ', ', array_slice( (array) $row['tickers'], 0, 5 ) ) ) . '</news:stock_tickers>'; }
 			$news     .= '</news:news>';
 			$entries[] = SitemapRenderer::url( $row['url'], gmdate( DATE_W3C, (int) $row['modified'] ), $news );
 		}
@@ -153,12 +162,9 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 			'fields'              => 'ids',
 			'suppress_filters'    => false,
 		);
-		$excluded_ids  = $this->ids( 'publishrank_seo_news_exclude_ids' );
-		$excluded_cats = $this->ids( 'publishrank_seo_news_exclude_categories' );
-		if ( $excluded_ids ) {
-			$args['post__not_in'] = $excluded_ids; }
-		if ( $excluded_cats ) {
-			$args['category__not_in'] = $excluded_cats; }
+		// Exclusions are applied in PHP (not SQL) so every excluded article is counted in the diagnostics.
+		$this->excluded_ids  = $this->ids( 'publishrank_seo_news_exclude_ids' );
+		$this->excluded_cats = $this->ids( 'publishrank_seo_news_exclude_categories' );
 		$rows = array();
 		$scanned = 0;
 		$page    = 1;
@@ -195,6 +201,12 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 		if ( '-1' === (string) get_post_meta( $post_id, PostMeta::NEWS_ELIGIBLE, true ) ) {
 			$skipped['excluded_by_editor'] = ( $skipped['excluded_by_editor'] ?? 0 ) + 1;
 			return null; }
+		if ( $this->excluded_ids && in_array( (int) $post_id, $this->excluded_ids, true ) ) {
+			$skipped['excluded_by_id'] = ( $skipped['excluded_by_id'] ?? 0 ) + 1;
+			return null; }
+		if ( $this->excluded_cats && has_term( $this->excluded_cats, 'category', (int) $post_id ) ) {
+			$skipped['excluded_by_category'] = ( $skipped['excluded_by_category'] ?? 0 ) + 1;
+			return null; }
 		if ( self::is_noindex( $post_id ) ) {
 			$skipped['noindex'] = ( $skipped['noindex'] ?? 0 ) + 1;
 			return null; }
@@ -219,6 +231,7 @@ final class NewsSitemapProvider implements SitemapProviderInterface {
 			'title'     => $title,
 			'published' => $published,
 			'modified'  => $modified > 0 ? $modified : $published,
+			'tickers'   => get_option( 'publishrank_seo_news_stock_tickers', false ) ? PostMeta::parse_tickers( (string) get_post_meta( $post_id, PostMeta::NEWS_STOCK_TICKERS, true ) ) : array(),
 		);
 	}
 

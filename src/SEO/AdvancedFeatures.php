@@ -14,6 +14,9 @@ final class AdvancedFeatures {
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ), 10, 2 );
 		add_action( 'init', array( PostMeta::class, 'register_meta' ), 20 );
 		add_action( 'save_post', array( PostMeta::class, 'save' ), 10 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_keyword_fields' ), 20 );
+		add_action( 'wp_ajax_publishrank_save_keyword_fields', array( $this, 'ajax_save_keyword_fields' ) );
+		add_action( 'wp_ajax_publishrank_refresh_resolved_summary', array( $this, 'ajax_refresh_resolved_summary' ) );
 		add_action( 'wp_ajax_publishrank_resize_discover_image', array( $this, 'ajax_resize_discover_image' ) );
 		add_action( 'wp_head', array( $this, 'render_pagination_links' ), 2 );
 		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_noindex_posts' ), 10, 2 );
@@ -96,11 +99,19 @@ final class AdvancedFeatures {
 		PostMeta::OG_IMAGE_ALT   => isset( $seo_image['alt'] ) ? $seo_image['alt'] : '',
 		);
 		$is_article = $this->is_article_type( $post->post_type );
+		echo '<div data-publishrank-resolved-summary data-post-id="' . esc_attr( (string) $post->ID ) . '">';
 		$this->render_resolved_summary( $post );
+		echo '</div>';
 		echo '<div class="notice notice-success inline"><p><strong>' . esc_html__( 'Automatic SEO is active.', 'publishrank' ) . '</strong> ' . esc_html__( 'PublishRank fills in search and social details from the article by default. Use the sections below only when you need an override; blank fields stay automatic.', 'publishrank' ) . '</p></div>';
 		echo '<p class="pr-seo-editor-intro">' . esc_html__( 'Work from top to bottom: search appearance, social sharing, article details, then indexing. These settings affect search and sharing output, not the way your theme displays the article.', 'publishrank' ) . '</p>';
 
 		echo '<section class="pr-seo-group" aria-labelledby="pr-seo-search-title"><h3 id="pr-seo-search-title">' . esc_html__( '1. Search appearance', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Use dynamic variables instead of hard-coded text when you want reusable templates. Pick a variable from the “Insert variable” list under each field, or type it. Leave a field blank to use its automatic value.', 'publishrank' ) . '</p>';
+		echo '<div class="pr-keyword-fields" data-publishrank-keyword-fields data-post-id="' . esc_attr( (string) $post->ID ) . '">';
+		$this->render_seo_field( $post->ID, PostMeta::FOCUS_KEYWORD, __( 'Focus keyword', 'publishrank' ), __( 'The main word or phrase this article should rank for. It powers the keyword checks in the SEO analysis. Use one phrase of one to four words.', 'publishrank' ), 'text', 100 );
+		$this->render_list_field( $post->ID, PostMeta::SECONDARY_KEYPHRASES, __( 'Secondary keyphrases', 'publishrank' ), __( 'Other phrases this article should also cover. One per line, up to 10. Each one gets its own score; the focus keyword stays the main target.', 'publishrank' ) );
+		$this->render_list_field( $post->ID, PostMeta::KEYPHRASE_SYNONYMS, __( 'Synonyms for the focus keyword', 'publishrank' ), __( 'Alternative wordings that count as the focus keyword. One per line.', 'publishrank' ) );
+		$this->render_list_field( $post->ID, PostMeta::RELATED_TERMS, __( 'Related keyphrases', 'publishrank' ), __( 'Supporting terms a thorough article would mention. One per line. They are checked for coverage, not scored as targets.', 'publishrank' ) );
+		echo '<p class="description pr-keyword-fields__status" data-publishrank-keyword-status role="status" aria-live="polite" aria-atomic="true"></p></div>';
 		$this->render_seo_field( $post->ID, PostMeta::TITLE, __( 'SEO title', 'publishrank' ), __( 'The title shown in search results. Use variables such as %%title%% %%sep%% %%sitename%% rather than hard-coding article-specific text. Leave blank for the global template.', 'publishrank' ), 'text', 255, $placeholders );
 		$this->render_seo_field( $post->ID, PostMeta::DESCRIPTION, __( 'Meta description', 'publishrank' ), __( 'The short summary shown beneath the search title. Use the “Insert variable” list to add dynamic values. Leave blank for an automatic summary.', 'publishrank' ), 'textarea', 320, $placeholders );
 		$this->render_seo_field( $post->ID, PostMeta::CANONICAL, __( 'Canonical URL', 'publishrank' ), __( 'Usually leave blank. Add a URL only when this article is a copy or syndicated version and another page should be treated as the original.', 'publishrank' ), 'url', 0, $placeholders );
@@ -157,7 +168,11 @@ final class AdvancedFeatures {
 		if ( $is_article ) {
 			$news_eligible = '-1' !== (string) get_post_meta( $post->ID, PostMeta::NEWS_ELIGIBLE, true );
 			$news_help = 'pr-seo-news-eligible-help';
-			echo '<div class="pr-seo-field"><label><input type="checkbox" name="' . esc_attr( PostMeta::NEWS_ELIGIBLE ) . '" value="1" aria-describedby="' . esc_attr( $news_help ) . '" ' . checked( $news_eligible, true, false ) . ' /> <strong>' . esc_html__( 'Include in Google News sitemap', 'publishrank' ) . '</strong></label><p class="description" id="' . esc_attr( $news_help ) . '">' . esc_html__( 'Eligible public, indexable articles are included automatically within the configured freshness window. Clear this only to exclude this article.', 'publishrank' ) . '</p></div>';
+			echo '<div class="pr-seo-field"><input type="hidden" name="' . esc_attr( PostMeta::NEWS_ELIGIBLE ) . '" value="0" /><label><input type="checkbox" name="' . esc_attr( PostMeta::NEWS_ELIGIBLE ) . '" value="1" aria-describedby="' . esc_attr( $news_help ) . '" ' . checked( $news_eligible, true, false ) . ' /> <strong>' . esc_html__( 'Include in Google News sitemap', 'publishrank' ) . '</strong></label><p class="description" id="' . esc_attr( $news_help ) . '">' . esc_html__( 'Eligible public, indexable articles are included automatically within the configured freshness window. Clear this only to exclude this article.', 'publishrank' ) . '</p></div>';
+			if ( get_option( 'publishrank_seo_news_stock_tickers', false ) ) {
+				$tick_help = 'pr-seo-news-tickers-help';
+				echo '<div class="pr-seo-field"><input type="hidden" name="publishrank_seo_news_tickers_field" value="1" /><label for="pr-seo-news-tickers"><strong>' . esc_html__( 'Stock tickers (legacy, optional)', 'publishrank' ) . '</strong></label><input id="pr-seo-news-tickers" type="text" class="large-text" name="' . esc_attr( PostMeta::NEWS_STOCK_TICKERS ) . '" value="' . esc_attr( (string) get_post_meta( $post->ID, PostMeta::NEWS_STOCK_TICKERS, true ) ) . '" placeholder="NASDAQ:GOOG, NYSE:IBM" aria-describedby="' . esc_attr( $tick_help ) . '" /><p class="description" id="' . esc_attr( $tick_help ) . '">' . esc_html__( 'Up to 5, as EXCHANGE:SYMBOL. Only for financial stories. Google no longer lists this tag in its News sitemap documentation, so it may be ignored; invalid entries are dropped.', 'publishrank' ) . '</p></div>';
+			}
 			$free_help = 'pr-seo-accessible-free-help';
 			echo '<input type="hidden" name="publishrank_seo_article_fields" value="1" /><div class="pr-seo-field"><label><input type="checkbox" name="' . esc_attr( PostMeta::ACCESSIBLE_FOR_FREE ) . '" value="1" aria-describedby="' . esc_attr( $free_help ) . '" ' . checked( PostMeta::get( $post->ID, PostMeta::ACCESSIBLE_FOR_FREE, '1' ), '1', false ) . ' /> <strong>' . esc_html__( 'Article is accessible for free', 'publishrank' ) . '</strong></label><p class="description" id="' . esc_attr( $free_help ) . '">' . esc_html__( 'Uncheck this for content that requires a subscription or payment.', 'publishrank' ) . '</p></div>';
 		}
@@ -322,6 +337,101 @@ final class AdvancedFeatures {
 	}
 
 	/** Render an optional post-level SEO override with a human-readable label and help. */
+	/** True on the block editor screen, where the sidebar replaces these fields. */
+	/**
+	 * The block editor sidebar carries the focus keyword fields only when the post type exposes meta to the editor, which WordPress
+	 * limits to post types that support custom fields. Otherwise the fields stay in this meta box so they are never missing.
+	 */
+	private function focus_fields_in_sidebar( $post ) {
+		return $this->is_block_editor_screen() && post_type_supports( (string) $post->post_type, 'custom-fields' );
+	}
+
+	private function is_block_editor_screen() {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		return $screen && method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor();
+	}
+
+	/** Enqueue the scoped autosave used by the keyword fields in the PublishRank box. */
+	public function enqueue_keyword_fields( $hook ) {
+		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) {
+			return;
+		}
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || ! in_array( (string) $screen->post_type, PostMeta::post_types(), true ) ) {
+			return;
+		}
+		$path = PUBLISHRANK_SEO_PATH . 'assets/js/keyword-fields.js';
+		wp_enqueue_script( 'publishrank-keyword-fields', \PublishRankSEO\Core\Branding::asset_url( 'js/keyword-fields.js' ), array( 'jquery' ), \PublishRankSEO\Core\Branding::version() . '.' . ( file_exists( $path ) ? (string) filemtime( $path ) : '0' ), true );
+		wp_localize_script(
+			'publishrank-keyword-fields',
+			'publishrankKeywordFields',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'publishrank_save_keyword_fields' ),
+				'summaryNonce' => wp_create_nonce( 'publishrank_refresh_resolved_summary' ),
+				'summaryAction' => 'publishrank_refresh_resolved_summary',
+				'postId'  => isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'saving'  => __( 'Saving…', 'publishrank' ),
+				'saved'   => __( 'Saved automatically', 'publishrank' ),
+				'failed'  => __( 'Could not save yet. Your next post update will save these fields.', 'publishrank' ),
+			)
+		);
+	}
+
+	/** Save only the keyword panel fields; never submit or reload the editor page. */
+	public function ajax_save_keyword_fields() {
+		check_ajax_referer( 'publishrank_save_keyword_fields', 'nonce' );
+		$post_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+		$post    = $post_id ? get_post( $post_id ) : null;
+		if ( ! $post instanceof \WP_Post || ! current_user_can( 'edit_post', $post_id ) || ! in_array( $post->post_type, PostMeta::post_types(), true ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to save these fields.', 'publishrank' ) ), 403 );
+		}
+		$focus = isset( $_POST[ PostMeta::FOCUS_KEYWORD ] ) ? sanitize_text_field( wp_unslash( $_POST[ PostMeta::FOCUS_KEYWORD ] ) ) : '';
+		$focus = PostMeta::truncate( $focus, 100 );
+		update_post_meta( $post_id, PostMeta::FOCUS_KEYWORD, $focus );
+		foreach ( array(
+			PostMeta::SECONDARY_KEYPHRASES => array( 10, 100 ),
+			PostMeta::KEYPHRASE_SYNONYMS   => array( 10, 100 ),
+			PostMeta::RELATED_TERMS        => array( 20, 100 ),
+		) as $key => $limits ) {
+			$raw = isset( $_POST[ $key ] ) ? wp_unslash( $_POST[ $key ] ) : array();
+			update_post_meta( $post_id, $key, PostMeta::parse_list( $raw, $limits[0], $limits[1] ) );
+		}
+		$score = null;
+		if ( ArticleIntelligence::enabled() ) {
+			$report = ArticleIntelligence::store( $post );
+			$score  = isset( $report['score'] ) ? (int) $report['score'] : null;
+		}
+		wp_send_json_success( array( 'focus' => $focus, 'score' => $score ) );
+	}
+
+	/** Return only the resolved SEO summary markup for an in-place editor refresh. */
+	public function ajax_refresh_resolved_summary() {
+		check_ajax_referer( 'publishrank_refresh_resolved_summary', 'nonce' );
+		$post_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+		$post    = $post_id ? get_post( $post_id ) : null;
+		if ( ! $post instanceof \WP_Post || ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to refresh this summary.', 'publishrank' ) ), 403 );
+		}
+		ob_start();
+		$this->render_resolved_summary( $post );
+		wp_send_json_success( array( 'html' => ob_get_clean() ) );
+	}
+
+	/** A textarea holding one list item per line (secondary keyphrases, synonyms, related terms). */
+	private function render_list_field( $post_id, $key, $label, $help = '' ) {
+		$id      = (string) $key;
+		$help_id = $id . '-help';
+		$limits  = PostMeta::keyphrase_list_limits();
+		$max     = isset( $limits[ $key ] ) ? $limits[ $key ][0] : 10;
+		echo '<div class="pr-seo-field"><label for="' . esc_attr( $id ) . '"><strong>' . esc_html( $label ) . '</strong></label>';
+		echo '<textarea class="widefat" rows="3" id="' . esc_attr( $id ) . '" name="' . esc_attr( $id ) . '" aria-describedby="' . esc_attr( $help_id ) . '" data-max-items="' . esc_attr( (string) $max ) . '">' . esc_textarea( implode( "\n", PostMeta::get_list( $post_id, $key ) ) ) . '</textarea>';
+		if ( '' !== $help ) {
+			echo '<p class="description" id="' . esc_attr( $help_id ) . '">' . esc_html( $help ) . '</p>';
+		}
+		echo '</div>';
+	}
+
 	private function render_seo_field( $post_id, $key, $label, $help = '', $type = 'text', $max = 0, $placeholders = array(), $placeholder = '' ) {
 		$id       = (string) $key;
 		$help_id  = $id . '-help';

@@ -139,18 +139,22 @@
 		try { var mce = window.tinymce && tinymce.get('content'); if (mce && !mce.isHidden()) { return mce.getContent(); } } catch (e) {}
 		return value(['#content']);
 	}
+	function kpFields() {
+		function list(key) { var el = document.getElementById(key); return el && typeof el.value === 'string' ? el.value : (Array.isArray(edMeta(key)) ? edMeta(key).join('\n') : ''); }
+		return { secondary: list('_publishrank_seo_secondary_keyphrases'), synonyms: list('_publishrank_seo_keyphrase_synonyms'), related: list('_publishrank_seo_related_terms') };
+	}
 	function standalone() {
 		var card = document.getElementById('publishrank-editor-score');
 		if (!card || !window.publishrankIntel) { return; }
-		$.post(publishrankIntel.ajaxUrl, {
+		$.post(publishrankIntel.ajaxUrl, $.extend({
 			action: publishrankIntel.action, nonce: publishrankIntel.nonce, post_id: card.getAttribute('data-post-id') || 0,
 			title: edAttr('title') || value(['#title']), content: edContent(), excerpt: edAttr('excerpt') || value(['#excerpt']),
 			slug: edAttr('slug') || value(['#post_name']),
 			seo_title: value(['#publishrank_seo_title', '[name="publishrank_seo_title"]', '#_publishrank_seo_title', '[name="_publishrank_seo_title"]']),
 			description: value(['#publishrank_meta_description', '[name="publishrank_seo_description"]', '#_publishrank_seo_description', '[name="_publishrank_seo_description"]']),
-			keyphrase: value(['#publishrank_focus_keyword', '[name="publishrank_focus_keyword"]', '#_publishrank_seo_focus_keyword', '[name="_publishrank_seo_focus_keyword"]']),
+			keyphrase: value(['#publishrank_focus_keyword', '[name="publishrank_focus_keyword"]', '#_publishrank_seo_focus_keyword', '[name="_publishrank_seo_focus_keyword"]']) || edMeta('_publishrank_seo_focus_keyword'),
 			has_thumbnail: !!(edAttr('featured_media') || document.querySelector('#postimagediv .inside img'))
-		});
+		}, kpFields()));
 	}
 	function analyzeNow() {
 		var btn = document.getElementById('pr-intel-refresh');
@@ -181,9 +185,9 @@
 			slug: edAttr('slug') || value(['#post_name']),
 			seo_title: value(['#publishrank_seo_title', '[name="publishrank_seo_title"]', '#_publishrank_seo_title', '[name="_publishrank_seo_title"]']),
 			description: value(['#publishrank_meta_description', '[name="publishrank_seo_description"]', '#_publishrank_seo_description', '[name="_publishrank_seo_description"]']),
-			keyphrase: value(['#publishrank_focus_keyword', '[name="publishrank_focus_keyword"]', '#_publishrank_seo_focus_keyword', '[name="_publishrank_seo_focus_keyword"]'])
+			keyphrase: value(['#publishrank_focus_keyword', '[name="publishrank_focus_keyword"]', '#_publishrank_seo_focus_keyword', '[name="_publishrank_seo_focus_keyword"]']) || edMeta('_publishrank_seo_focus_keyword')
 		};
-		return $.extend(d, extra || {});
+		return $.extend(d, kpFields(), extra || {});
 	}
 	function suggest(kind) {
 		return $.post(publishrankIntel.ajaxUrl, payload({ action: publishrankIntel.suggestAction, nonce: publishrankIntel.suggestNonce, kind: kind }));

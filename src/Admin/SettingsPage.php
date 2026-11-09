@@ -623,7 +623,32 @@ final class SettingsPage {
 				'default'           => false,
 			)
 		);
-		foreach ( array( 'publishrank_seo_publication_name', 'publishrank_indexnow_key', 'publishrank_indexnow_post_types', 'publishrank_seo_hreflang_map', 'publishrank_seo_news_post_types', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_exclude_categories', 'publishrank_seo_news_genre', 'publishrank_editorial_genre', 'publishrank_seo_publisher_name', 'publishrank_publication_short_name', 'publishrank_default_language', 'publishrank_default_locale', 'publishrank_timezone', 'publishrank_country', 'publishrank_copyright', 'publishrank_contact', 'publishrank_social_profiles', 'publishrank_author_mode', 'publishrank_schema_org_description', 'publishrank_schema_legal_name', 'publishrank_schema_founder', 'publishrank_schema_phone', 'publishrank_schema_street_address', 'publishrank_schema_address_locality', 'publishrank_schema_address_region', 'publishrank_schema_postal_code', 'publishrank_schema_knows_about', 'publishrank_schema_parent_organization', 'publishrank_schema_founding_location' ) as $field ) {
+		// News sitemap category exclusions: accepts the legacy comma-separated text or the category picker array; always stored as "3, 7".
+		$this->reg(
+			'publishrank_seo_news_exclude_categories',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => static function ( $value ) {
+					$items = is_array( $value ) ? $value : preg_split( '/[\s,]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY );
+					$ids   = array();
+					foreach ( (array) $items as $item ) {
+						if ( is_scalar( $item ) && absint( $item ) ) {
+							$ids[] = absint( $item ); }
+					}
+					return implode( ', ', array_values( array_unique( $ids ) ) );
+				},
+				'default'           => '',
+			)
+		);
+		$this->reg(
+			'publishrank_seo_news_stock_tickers',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => false,
+			)
+		);
+		foreach ( array( 'publishrank_seo_publication_name', 'publishrank_indexnow_key', 'publishrank_indexnow_post_types', 'publishrank_seo_hreflang_map', 'publishrank_seo_news_post_types', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_genre', 'publishrank_editorial_genre', 'publishrank_seo_publisher_name', 'publishrank_publication_short_name', 'publishrank_default_language', 'publishrank_default_locale', 'publishrank_timezone', 'publishrank_country', 'publishrank_copyright', 'publishrank_contact', 'publishrank_social_profiles', 'publishrank_author_mode', 'publishrank_schema_org_description', 'publishrank_schema_legal_name', 'publishrank_schema_founder', 'publishrank_schema_phone', 'publishrank_schema_street_address', 'publishrank_schema_address_locality', 'publishrank_schema_address_region', 'publishrank_schema_postal_code', 'publishrank_schema_knows_about', 'publishrank_schema_parent_organization', 'publishrank_schema_founding_location' ) as $field ) {
 			$this->reg(
 				$field,
 				array(
@@ -1200,18 +1225,30 @@ news"><?php echo esc_textarea( $val( 'publishrank_seo_news_post_types', 'post' )
 <tr><th scope="row"><label for="publishrank_seo_news_modified_window"><?php esc_html_e( 'Updated articles window (hours)', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_modified_window" name="publishrank_seo_news_modified_window" type="number" min="1" max="168" value="<?php echo esc_attr( $val( 'publishrank_seo_news_modified_window', 48 ) ); ?>" class="small-text" /><p class="description"><?php esc_html_e( 'How long an edited article stays in the News sitemap after its last update. Default is 48 hours.', 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><label for="publishrank_seo_news_max_urls"><?php esc_html_e( 'Maximum News URLs', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_max_urls" name="publishrank_seo_news_max_urls" type="number" min="1" max="1000" value="<?php echo esc_attr( $val( 'publishrank_seo_news_max_urls', 1000 ) ); ?>" class="small-text" /></td></tr>
 <tr><th scope="row"><label for="publishrank_seo_news_exclude_ids"><?php esc_html_e( 'Exclude post IDs', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_exclude_ids" name="publishrank_seo_news_exclude_ids" type="text" value="<?php echo esc_attr( $val( 'publishrank_seo_news_exclude_ids' ) ); ?>" class="large-text" placeholder="12, 45, 89" /></td></tr>
-<tr><th scope="row"><label for="publishrank_seo_news_exclude_categories"><?php esc_html_e( 'Exclude category IDs', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_news_exclude_categories" name="publishrank_seo_news_exclude_categories" type="text" value="<?php echo esc_attr( $val( 'publishrank_seo_news_exclude_categories' ) ); ?>" class="large-text" placeholder="3, 7" /></td></tr>
-<tr><th scope="row"><label for="publishrank_seo_news_genre"><?php esc_html_e( 'News genre', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_news_genre" name="publishrank_seo_news_genre"><option value="" <?php selected( $val( 'publishrank_seo_news_genre' ), '' ); ?>><?php esc_html_e( 'Not specified', 'publishrank' ); ?></option>
+<tr><th scope="row"><label for="publishrank_seo_news_exclude_categories"><?php esc_html_e( 'Exclude categories', 'publishrank' ); ?></label></th><td>
+<?php
+$pr_cats     = get_categories( array( 'hide_empty' => false, 'orderby' => 'name', 'number' => 500 ) );
+$pr_selected = array_map( 'absint', preg_split( '/[\s,]+/', (string) $val( 'publishrank_seo_news_exclude_categories' ), -1, PREG_SPLIT_NO_EMPTY ) );
+?>
+<input type="hidden" name="publishrank_seo_news_exclude_categories[]" value="" />
+<select id="publishrank_seo_news_exclude_categories" name="publishrank_seo_news_exclude_categories[]" multiple size="6" class="large-text">
+<?php foreach ( $pr_cats as $pr_cat ) : ?>
+<option value="<?php echo esc_attr( (string) $pr_cat->term_id ); ?>" <?php selected( in_array( (int) $pr_cat->term_id, $pr_selected, true ) ); ?>><?php echo esc_html( $pr_cat->name ); ?></option>
+<?php endforeach; ?>
+</select>
+<p class="description"><?php esc_html_e( 'Articles in any selected category are left out of the News sitemap and counted as excluded in the diagnostics. Ctrl/Cmd-click to select several.', 'publishrank' ); ?></p></td></tr>
+<tr><th scope="row"><?php esc_html_e( 'Stock tickers (legacy)', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_stock_tickers" value="0" /><label><input name="publishrank_seo_news_stock_tickers" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_stock_tickers', false ) ); ?> /> <?php esc_html_e( 'Add an optional stock-ticker field to articles and output it in the News sitemap', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Off by default. Google no longer lists the stock_tickers tag in its News sitemap documentation, so it may be ignored. Only valid EXCHANGE:SYMBOL entries (max 5 per article) are output.', 'publishrank' ); ?></p></td></tr>
+<tr><th scope="row"><label for="publishrank_seo_news_genre"><?php esc_html_e( 'News genre (legacy)', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_news_genre" name="publishrank_seo_news_genre"><option value="" <?php selected( $val( 'publishrank_seo_news_genre' ), '' ); ?>><?php esc_html_e( 'Not specified', 'publishrank' ); ?></option>
 		<?php
 		foreach ( array( 'Opinion', 'PressRelease', 'Satire', 'UserGenerated', 'Report', 'Review', 'Interview', 'Background', 'Transcript', 'Obituary', 'Profile' ) as $genre ) :
 			?>
-	<option value="<?php echo esc_attr( $genre ); ?>" <?php selected( $val( 'publishrank_seo_news_genre' ), $genre ); ?>><?php echo esc_html( $genre ); ?></option><?php endforeach; ?></select></td></tr>
+	<option value="<?php echo esc_attr( $genre ); ?>" <?php selected( $val( 'publishrank_seo_news_genre' ), $genre ); ?>><?php echo esc_html( $genre ); ?></option><?php endforeach; ?></select><p class="description"><?php esc_html_e( "Google's current News sitemap documentation no longer lists this tag, so it is not written to the sitemap unless a developer enables it with the publishrank_news_emit_legacy_tags filter.", 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><label for="publishrank_editorial_genre"><?php esc_html_e( 'Publisher editorial genre', 'publishrank' ); ?></label></th><td><select id="publishrank_editorial_genre" name="publishrank_editorial_genre"><option value="" <?php selected( $val( 'publishrank_editorial_genre' ), '' ); ?>><?php esc_html_e( 'Not specified', 'publishrank' ); ?></option>
 		<?php
 		foreach ( array( 'News', 'Breaking News', 'Live Updates', 'Developing Story', 'Local News', 'National News', 'International News', 'Regional News', 'World News', 'Report', 'Investigative', 'In-Depth', 'Exclusive', 'Special Report', 'Field Report', 'Eyewitness Report', 'Data Journalism', 'Fact Check', 'Verification', 'News Analysis', 'Analysis', 'Explainer', 'Background', 'Context', 'Briefing', 'News Brief', 'Roundup', 'Timeline', 'Opinion', 'Editorial', 'Column', 'Commentary', 'Op-Ed', 'Letter to the Editor', 'Guest Essay', 'Perspective', 'Interview', 'Profile', 'Q&A', 'Portrait', 'Biography', 'Obituary', 'Tribute', 'Live Blog', 'Event Coverage', 'Election Coverage', 'Breaking Coverage', 'Conference Coverage', 'Sports Coverage', 'Review', 'Criticism', 'Preview', 'Guide', 'How-To', 'FAQ', 'Consumer Advice', 'Service Journalism', 'Travel', 'Food', 'Technology', 'Science', 'Health', 'Business', 'Finance', 'Politics', 'Sports', 'Entertainment', 'Culture', 'Press Release', 'Statement', 'Transcript', 'Speech', 'Announcement', 'Official Statement', 'Court Filing', 'Document', 'Public Records', 'Research', 'Study', 'Survey', 'Feature', 'Longform', 'Magazine', 'Essay', 'Human Interest', 'Special Feature', 'Photo Essay', 'Multimedia', 'Documentary', 'Satire', 'User Generated', 'Blog', 'Archive', 'Correction', 'Update', 'Retraction', 'Clarification', 'Fact Correction' ) as $genre ) :
 			?>
 	<option value="<?php echo esc_attr( $genre ); ?>" <?php selected( $val( 'publishrank_editorial_genre' ), $genre ); ?>><?php echo esc_html( $genre ); ?></option><?php endforeach; ?></select><p class="description"><?php esc_html_e( 'Editorial classification for newsroom workflows and publisher taxonomy. This is separate from the Google News genre field above and is not written to the News Sitemap as a Google genre value.', 'publishrank' ); ?></p></td></tr>
-	<tr><th scope="row"><?php esc_html_e( 'News keywords', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_keywords" value="0" /><label><input name="publishrank_seo_news_keywords" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_keywords', true ) ); ?> /> <?php esc_html_e( 'Include tags, categories, and focus keyword as news keywords', 'publishrank' ); ?></label></td></tr>
+	<tr><th scope="row"><?php esc_html_e( 'News keywords (legacy)', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_keywords" value="0" /><label><input name="publishrank_seo_news_keywords" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_keywords', true ) ); ?> /> <?php esc_html_e( 'Include tags, categories, and focus keyword as news keywords', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( "Google's current News sitemap documentation no longer lists this tag, so it is not written to the sitemap unless a developer enables it with the publishrank_news_emit_legacy_tags filter.", 'publishrank' ); ?></p></td></tr>
 	<tr><th scope="row"><label for="publishrank_sitemap_post_types"><?php esc_html_e( 'Standard sitemap post types', 'publishrank' ); ?></label></th><td><input id="publishrank_sitemap_post_types" name="publishrank_sitemap_post_types" type="text" value="<?php echo esc_attr( $val( 'publishrank_sitemap_post_types', 'post' ) ); ?>" class="large-text" /><p class="description"><?php esc_html_e( 'Public, queryable types included in the standard post sitemap.', 'publishrank' ); ?></p></td></tr>
 	<tr><th scope="row"><?php esc_html_e( 'Additional sitemap providers', 'publishrank' ); ?></th><td>
 		<?php

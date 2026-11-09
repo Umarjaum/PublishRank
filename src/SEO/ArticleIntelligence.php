@@ -16,6 +16,7 @@
 namespace PublishRankSEO\SEO;
 
 use PublishRankSEO\Meta\PostMeta;
+use PublishRankSEO\SEO\Content\KeyphraseAnalyzer;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -194,6 +195,11 @@ final class ArticleIntelligence {
 			$value = isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			return self::substr( $value, $limit );
 		};
+		$list    = static function ( $key, $max, $fallback ) {
+			if ( ! isset( $_POST[ $key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				return $fallback; }
+			return PostMeta::parse_list( wp_unslash( $_POST[ $key ] ), $max, 100 ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- parse_list() sanitizes every item.
+		};
 		$content = isset( $_POST['content'] ) ? wp_kses_post( wp_unslash( $_POST['content'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$post    = $post_id ? get_post( $post_id ) : null;
 			$data    = $post instanceof \WP_Post ? self::data_from_post( $post ) : self::blank_data();
@@ -214,6 +220,10 @@ final class ArticleIntelligence {
 						'description'   => '' !== $text( 'description', 320 ) ? $text( 'description', 320 ) : (string) ( $stored['description'] ?? '' ),
 					// Same rule for the focus keyword: there is no keyword field on every editor screen.
 					'keyphrase'     => '' !== $text( 'keyphrase', 100 ) ? $text( 'keyphrase', 100 ) : (string) ( $stored['keyphrase'] ?? '' ),
+					// Lists: a submitted value (even an emptied one) wins when the editor sent the field; otherwise keep the saved list.
+					'secondary'     => $list( 'secondary', 10, (array) ( $stored['secondary'] ?? array() ) ),
+					'synonyms'      => $list( 'synonyms', 10, (array) ( $stored['synonyms'] ?? array() ) ),
+					'related'       => $list( 'related', 20, (array) ( $stored['related'] ?? array() ) ),
 					'has_thumbnail' => ! empty( $_POST['has_thumbnail'] ) ? true : ( $post instanceof \WP_Post && has_post_thumbnail( $post ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
 				)
 			),
@@ -235,6 +245,7 @@ final class ArticleIntelligence {
 				'rating'   => $report['rating'],
 				'checks'   => self::check_summary( $report ),
 				'keyphrase' => isset( $report['current']['keyphrase'] ) ? (string) $report['current']['keyphrase'] : '',
+				'combined'  => (int) $report['combined_score'],
 			)
 		);
 	}
@@ -374,6 +385,9 @@ final class ArticleIntelligence {
 			'seo_title'     => '',
 			'description'   => '',
 			'keyphrase'     => '',
+			'secondary'     => array(),
+			'synonyms'      => array(),
+			'related'       => array(),
 			'terms'         => '',
 			'has_thumbnail' => false,
 			'has_author'    => false,
@@ -404,6 +418,9 @@ final class ArticleIntelligence {
 				'seo_title'     => (string) PostMeta::get( $id, PostMeta::TITLE, '' ),
 				'description'   => (string) PostMeta::get( $id, PostMeta::DESCRIPTION, '' ),
 				'keyphrase'     => (string) PostMeta::get( $id, PostMeta::FOCUS_KEYWORD, '' ),
+				'secondary'     => PostMeta::get_list( $id, PostMeta::SECONDARY_KEYPHRASES ),
+				'synonyms'      => PostMeta::get_list( $id, PostMeta::KEYPHRASE_SYNONYMS ),
+				'related'       => PostMeta::get_list( $id, PostMeta::RELATED_TERMS ),
 				'terms'         => implode( ', ', array_unique( array_filter( $terms ) ) ),
 				'has_thumbnail' => (bool) has_post_thumbnail( $post ),
 				'has_author'    => (bool) ( PostMeta::get( $id, PostMeta::AUTHOR_NAME, '' ) || get_userdata( (int) $post->post_author ) ),
@@ -836,8 +853,34 @@ final class ArticleIntelligence {
 			$groups[ $g ] = $v['max'] > 0 ? (int) round( ( $v['earned'] / $v['max'] ) * 100 ) : 0;
 		}
 
+		// Per-keyphrase scorecards. The article score above is untouched; this adds scores for each phrase.
+		$kp_result = null;
+		if ( '' !== $keyphrase || ! empty( $d['secondary'] ) ) {
+			$kp_result = KeyphraseAnalyzer::analyze(
+				array(
+					'primary'     => $keyphrase,
+					'secondary'   => (array) $d['secondary'],
+					'synonyms'    => (array) $d['synonyms'],
+					'related'     => (array) $d['related'],
+					'title'       => $title,
+					'serp_title'  => $serp_title,
+					'description' => $description,
+					'slug'        => (string) $d['slug'],
+					'paragraphs'  => $paragraphs,
+					'headings'    => $headings,
+					'images'      => $images,
+					'links'       => $links,
+					'words'       => $words,
+					'post_id'     => (int) $d['post_id'],
+					'site'        => (bool) $site,
+				)
+			);
+		}
+
 		return array(
 			'score'       => $score,
+			'combined_score' => $kp_result ? KeyphraseAnalyzer::combine( $score, $kp_result ) : $score,
+			'keyphrases'  => $kp_result,
 			'rating'      => $score >= 80 ? 'good' : ( $score >= 55 ? 'ok' : 'bad' ),
 			'groups'      => $groups,
 			'checks'      => $checks,
@@ -1593,6 +1636,11 @@ final class ArticleIntelligence {
 		}
 		$out .= '<div class="pr-cat pr-cat--na" role="listitem"><div class="pr-cat__top"><span class="pr-cat__name">' . esc_html__( 'Structured data', 'publishrank' ) . '</span><span class="pr-cat__val pr-cat__val--na">' . esc_html__( 'n/a', 'publishrank' ) . '</span></div><div class="pr-cat__meta">' . esc_html__( 'Not evaluated by the article analyzer — see the PublishRank Schema suite.', 'publishrank' ) . '</div></div>';
 		$out .= '</div>';
+
+		/* --- Keyphrase scorecards (primary plus secondary) --- */
+		if ( ! empty( $report['keyphrases'] ) ) {
+			$out .= KeyphraseAnalyzer::render( $report['keyphrases'], $score );
+		}
 
 		/* --- Tally --- */
 		$passed = count(

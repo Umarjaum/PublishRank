@@ -737,17 +737,7 @@ final class OnboardingPage {
 		if ( ! function_exists( 'is_plugin_active' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
-		$seo_plugins = array(
-			'wordpress-seo/wp-seo.php'                    => 'Yoast SEO',
-			'rank-math/rank-math.php'                     => 'Rank Math',
-			'all-in-one-seo-pack/all_in_one_seo_pack.php' => 'All in One SEO',
-		);
-		$conflict    = '';
-		foreach ( $seo_plugins as $file => $label ) {
-			if ( is_plugin_active( $file ) ) {
-				$conflict = $label;
-				break; }
-		}
+		$conflict = implode( ', ', ( new \PublishRankSEO\Compatibility\ConflictDetector() )->active() );
 		$uploads = wp_upload_dir();
 		return array(
 			/* translators: %s: dynamic value identified by the surrounding label or sentence. */
@@ -775,7 +765,7 @@ final class OnboardingPage {
 			'conflict' => array(
 				'ok'    => '' === $conflict,
 				/* translators: %s: name of the conflicting SEO plugin. */
-				'label' => $conflict ? sprintf( __( 'Another SEO plugin detected: %s — running both is not recommended.', 'publishrank' ), $conflict ) : __( 'No conflicting SEO plugin detected', 'publishrank' ),
+				'label' => $conflict ? sprintf( __( '⚠️ Another SEO plugin is active: %s. Running two SEO plugins can print duplicate titles, canonicals and schema.', 'publishrank' ), $conflict ) : __( 'No conflicting SEO plugin detected', 'publishrank' ),
 				'fix'   => admin_url( 'plugins.php' ),
 			),
 			'uploads'  => array(

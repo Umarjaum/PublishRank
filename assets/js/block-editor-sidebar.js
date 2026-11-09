@@ -16,6 +16,10 @@
 	var C = wp.components;
 	var TITLE = '_publishrank_seo_title';
 	var DESC = '_publishrank_seo_description';
+	var FOCUS = '_publishrank_seo_focus_keyword';
+	var SECONDARY = '_publishrank_seo_secondary_keyphrases';
+	var SYNONYMS = '_publishrank_seo_keyphrase_synonyms';
+	var RELATED = '_publishrank_seo_related_terms';
 
 	function Counter(props) {
 		var n = (props.value || '').length;
@@ -23,6 +27,20 @@
 		var color = state === 'over' ? '#d63638' : (state === 'short' ? '#996800' : '#00a32a');
 		return el('p', { style: { margin: '-4px 0 12px', fontSize: '12px', color: color } },
 			n + ' / ' + props.max + ' ' + __('characters', 'publishrank') + (state === 'over' ? ' — ' + __('too long', 'publishrank') : (state === 'short' ? ' — ' + __('a little short', 'publishrank') : '')));
+	}
+
+	/* One item per line. Local state keeps the textarea natural to type in (Enter, trailing spaces) while the saved meta stays a clean list. */
+	function ListField(props) {
+		var initial = Array.isArray(props.value) ? props.value.join('\n') : '';
+		var state = wp.element.useState(initial);
+		var text = state[0], setText = state[1];
+		return el(C.TextareaControl, {
+			label: props.label, help: props.help, value: text, rows: 3, __nextHasNoMarginBottom: true,
+			onChange: function (v) {
+				setText(v);
+				props.onList(v.split(/[\r\n,;\u060C\u061B]+/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, props.max));
+			}
+		});
 	}
 
 	function openCard() {

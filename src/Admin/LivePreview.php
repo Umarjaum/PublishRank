@@ -408,6 +408,7 @@ final class LivePreview {
 		$nodes   = array();
 		$issues  = array();
 		$defined = array();
+		$nested  = array(); // Entities defined inside another node (valid JSON-LD), by @id.
 		$refs    = array();
 		$walk    = static function ( $value, $cb ) use ( &$walk ) {
 			if ( is_array( $value ) ) {
@@ -458,9 +459,12 @@ final class LivePreview {
 				}
 				$walk(
 					$node,
-					static function ( $arr ) use ( &$refs ) {
-						if ( isset( $arr['@id'] ) && 1 === count( $arr ) && is_string( $arr['@id'] ) ) {
-							$refs[ $arr['@id'] ] = true;
+					static function ( $arr ) use ( &$refs, &$nested ) {
+						if ( isset( $arr['@id'] ) && is_string( $arr['@id'] ) ) {
+							if ( 1 === count( $arr ) ) {
+								$refs[ $arr['@id'] ] = true;
+							} elseif ( isset( $arr['@type'] ) ) {
+								$nested[ $arr['@id'] ] = true; }
 						} }
 				);
 				$issues = array_merge( $issues, $this->check_node( $node, $list ) );
@@ -475,7 +479,7 @@ final class LivePreview {
 		$home = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		foreach ( array_keys( $refs ) as $ref ) {
 			/* translators: %s: Search Console property or first date, as labelled in the message. */
-			if ( ! isset( $defined[ $ref ] ) && (string) wp_parse_url( $ref, PHP_URL_HOST ) === $home ) {
+			if ( ! isset( $defined[ $ref ] ) && ! isset( $nested[ $ref ] ) && (string) wp_parse_url( $ref, PHP_URL_HOST ) === $home ) {
 				$issues[] = array(
 					'level' => 'warn',
 					'area'  => 'JSON-LD',

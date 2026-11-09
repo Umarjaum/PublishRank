@@ -7,7 +7,6 @@
 namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Compatibility\ConflictDetector;
-use PublishRankSEO\Compatibility\JNewsAdapter;
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Core\OutputRegistry;
 use PublishRankSEO\Sitemap\SitemapUrls;
@@ -17,12 +16,8 @@ final class DashboardPage {
 	/** @var OutputRegistry */
 	private $registry;
 
-	/** @var JNewsAdapter */
-	private $jnews;
-
-	public function __construct( OutputRegistry $registry, JNewsAdapter $jnews ) {
+	public function __construct( OutputRegistry $registry ) {
 		$this->registry = $registry;
-		$this->jnews    = $jnews;
 	}
 
 	public function register() {
@@ -438,7 +433,6 @@ final class DashboardPage {
 			'publisher_logo' => array( 'url' => add_query_arg( array( 'edit' => 1, 'step' => 3 ), Branding::page_url( 'publishrank-onboarding' ) ), 'label' => __( 'Review publisher logo', 'publishrank' ) ),
 			'default_social_image' => array( 'url' => add_query_arg( array( 'edit' => 1, 'step' => 4 ), Branding::page_url( 'publishrank-onboarding' ) ), 'label' => __( 'Review social sharing settings', 'publishrank' ) ),
 			'robots_txt' => array( 'url' => Branding::page_url( 'publishrank-seo-robots' ), 'label' => __( 'Review robots settings', 'publishrank' ) ),
-			'jnews_compatibility' => array( 'url' => Branding::page_url( 'publishrank-seo-diagnostics' ), 'label' => __( 'Review diagnostics', 'publishrank' ) ),
 		);
 		return isset( $actions[ $check['id'] ] ) ? $actions[ $check['id'] ] : null;
 	}
@@ -519,13 +513,6 @@ final class DashboardPage {
 				'message' => $physical ? __( 'A physical robots.txt overrides the virtual one PublishRank manages.', 'publishrank' ) : __( 'PublishRank can manage the virtual robots.txt.', 'publishrank' ),
 			);
 
-			$compatibility = $this->jnews->diagnostics();
-			$checks[]      = array(
-				'label'   => __( 'JNews compatibility', 'publishrank' ),
-				'id'      => 'jnews_compatibility',
-				'status'  => strtoupper( $compatibility['status'] ),
-				'message' => $compatibility['message'],
-			);
 			return $checks;
 	}
 }

@@ -18,7 +18,6 @@ use PublishRankSEO\Admin\DiagnosticsPage;
 use PublishRankSEO\Admin\ImportExport;
 use PublishRankSEO\Admin\SeoPortability;
 use PublishRankSEO\Admin\DashboardPage;
-use PublishRankSEO\Compatibility\JNewsAdapter;
 use PublishRankSEO\Monitor\NotFoundMonitor;
 use PublishRankSEO\SEO\AdvancedFeatures;
 use PublishRankSEO\SEO\AutomaticArticleSEO;
@@ -148,7 +147,8 @@ final class Plugin {
 		// Register this module on every request: its frontend hooks and shortcode must exist outside wp-admin.
 		$this->loader->register( PreferredSourcesPage::class, false );
 		if ( is_admin() ) {
-			$this->loader->register( DashboardPage::class, false, array( $this->registry, new JNewsAdapter() ) );
+			$this->loader->register( \PublishRankSEO\Compatibility\ConflictNotice::class, false );
+			$this->loader->register( DashboardPage::class, false, array( $this->registry ) );
 			$this->loader->register( SettingsPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\ModulesPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\AdminShell::class, false );
@@ -157,7 +157,7 @@ final class Plugin {
 			$this->loader->register( \PublishRankSEO\Admin\VariablePicker::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\BreadcrumbsPage::class, false );
 			$this->loader->register( OnboardingPage::class, false );
-			$this->loader->register( DiagnosticsPage::class, false, array( $this->registry, new JNewsAdapter() ) );
+			$this->loader->register( DiagnosticsPage::class, false, array( $this->registry ) );
 			$this->loader->register( ImportExport::class, false );
 			$this->loader->register( SeoPortability::class, false );
 			$this->loader->register( AdminAssets::class, false );
@@ -274,7 +274,7 @@ final class Plugin {
 				3
 			);
 			// Editor-controlled eligibility/robots/title metadata changes must refresh the News sitemap immediately.
-			$news_meta_keys = array( '_publishrank_seo_news_eligible', '_publishrank_seo_robots', '_publishrank_seo_title', '_publishrank_seo_canonical', '_yoast_wpseo_meta-robots-noindex', 'rank_math_robots' );
+			$news_meta_keys = array( '_publishrank_seo_news_eligible', '_publishrank_seo_news_stock_tickers', '_publishrank_seo_robots', '_publishrank_seo_title', '_publishrank_seo_canonical', '_yoast_wpseo_meta-robots-noindex', 'rank_math_robots' );
 		foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $meta_hook ) {
 			add_action(
 				$meta_hook,
@@ -305,7 +305,7 @@ final class Plugin {
 			};
 			add_action( 'update_option_publishrank_sitemap_endpoint', $refresh_sitemap_routes, 20 );
 			add_action( 'update_option_publishrank_sitemap_aliases', $refresh_sitemap_routes, 20 );
-		foreach ( array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_window', 'publishrank_seo_news_include_modified', 'publishrank_seo_news_modified_window', 'publishrank_seo_news_post_types', 'publishrank_seo_news_max_urls', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_exclude_categories', 'publishrank_seo_news_keywords', 'publishrank_seo_news_genre' ) as $setting ) {
+		foreach ( array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_window', 'publishrank_seo_news_include_modified', 'publishrank_seo_news_modified_window', 'publishrank_seo_news_post_types', 'publishrank_seo_news_max_urls', 'publishrank_seo_news_exclude_ids', 'publishrank_seo_news_exclude_categories', 'publishrank_seo_news_stock_tickers', 'publishrank_seo_news_keywords', 'publishrank_seo_news_genre' ) as $setting ) {
 			add_action( 'update_option_' . $setting, $invalidate_news, 20 ); }
 			add_action( 'update_option_publishrank_seo_image_sitemap', $invalidate_image, 20 );
 			add_action( 'update_option_publishrank_seo_media_post_types', $invalidate, 20 );

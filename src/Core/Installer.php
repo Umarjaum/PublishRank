@@ -31,6 +31,7 @@ final class Installer {
 				'publishrank_seo_news_max_urls'           => 1000,
 				'publishrank_seo_news_exclude_ids'        => '',
 				'publishrank_seo_news_exclude_categories' => '',
+				'publishrank_seo_news_stock_tickers'     => 0,
 				'publishrank_seo_news_keywords'           => 1,
 				'publishrank_seo_news_genre'              => '',
 				'publishrank_editorial_genre'             => '',

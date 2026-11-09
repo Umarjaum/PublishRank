@@ -47,8 +47,27 @@
     try { if (window.wp && wp.data && wp.data.select) { return wp.data.select('core/editor').getEditedPostAttribute(name) || ''; } } catch (e) {}
     return '';
   }
-  function payload() {
+  /* Keyphrase fields: classic textareas in the PublishRank SEO box, with block-editor meta as a fallback. */
+  function metaValue(key) {
+    try {
+      var m = window.wp && wp.data && wp.data.select('core/editor').getEditedPostAttribute('meta');
+      var v = m && m[key];
+      return Array.isArray(v) ? v.join('\n') : (typeof v === 'string' ? v : '');
+    } catch (e) { return ''; }
+  }
+  function keyphraseFields() {
+    function list(key) {
+      var el = document.getElementById(key);
+      return el && typeof el.value === 'string' ? el.value : metaValue(key);
+    }
     return {
+      secondary: list('_publishrank_seo_secondary_keyphrases'),
+      synonyms: list('_publishrank_seo_keyphrase_synonyms'),
+      related: list('_publishrank_seo_related_terms')
+    };
+  }
+  function payload() {
+    return $.extend({
       action: publishrankIntel.action, nonce: publishrankIntel.nonce, post_id: getPostId(),
       title: getValue(['#title', '.editor-post-title__input']) || getBlockAttr('title'),
       content: getEditorContent(),
@@ -56,9 +75,9 @@
       slug: getValue(['#post_name', '#post_name_display']),
       seo_title: getValue(['#publishrank_seo_title', '#publishrank_title', '[name="publishrank_seo_title"]', '#_publishrank_seo_title', '[name="_publishrank_seo_title"]']),
       description: getValue(['#publishrank_meta_description', '#publishrank_description', '[name="publishrank_seo_description"]', '#_publishrank_seo_description', '[name="_publishrank_seo_description"]']),
-      keyphrase: getValue(['#publishrank_focus_keyword', '#publishrank_keyphrase', '[name="publishrank_focus_keyword"]', '#_publishrank_seo_focus_keyword', '[name="_publishrank_seo_focus_keyword"]']),
+      keyphrase: getValue(['#publishrank_focus_keyword', '#publishrank_keyphrase', '[name="publishrank_focus_keyword"]', '#_publishrank_seo_focus_keyword', '[name="_publishrank_seo_focus_keyword"]']) || metaValue('_publishrank_seo_focus_keyword'),
       has_thumbnail: !!document.querySelector('#postimagediv .inside img,.editor-post-featured-image__preview img')
-    };
+    }, keyphraseFields());
   }
 
   function paint(data) {
@@ -91,7 +110,7 @@
     $('#pr-intel-status').text(publishrankIntel.analyzing);
     $('#pr-intel-refresh').prop('disabled', true).text(publishrankIntel.analyzing);
     $.post(publishrankIntel.ajaxUrl, payload())
-      .done(function (r) { if (seq !== analyzeSeq) { return; } if (r && r.success) { paint(r.data); } else { $('#pr-intel-status').text(publishrankIntel.failed); if (window.console) { console.warn('PublishRank analyzer rejected the request', r); } } })
+	      .done(function (r) { if (seq !== analyzeSeq) { return; } if (r && r.success) { paint(r.data); $(document).trigger('publishrank:analysis-updated'); } else { $('#pr-intel-status').text(publishrankIntel.failed); if (window.console) { console.warn('PublishRank analyzer rejected the request', r); } } })
       .fail(function (xhr) { if (seq === analyzeSeq) { $('#pr-intel-status').text(publishrankIntel.failed); if (window.console) { console.warn('PublishRank analyzer request failed', xhr.status); } } })
       .always(function () {
         if (seq !== analyzeSeq) { return; }
@@ -394,8 +413,8 @@
   });
 
   /* Live re-analysis with debounce */
-  $(document).on('input.prIntel change.prIntel',
-    '#title,.editor-post-title__input,#content,#excerpt,#publishrank_seo_title,#publishrank_meta_description,#publishrank_focus_keyword,[name="publishrank_seo_title"],[name="publishrank_seo_description"],[name="publishrank_focus_keyword"],[name="_publishrank_seo_title"],[name="_publishrank_seo_description"],[name="_publishrank_seo_focus_keyword"]',
+	  $(document).on('input.prIntel change.prIntel',
+	    '#title,.editor-post-title__input,#content,#excerpt,#publishrank_seo_title,#publishrank_meta_description,#publishrank_focus_keyword,#_publishrank_seo_secondary_keyphrases,#_publishrank_seo_keyphrase_synonyms,#_publishrank_seo_related_terms,[name="publishrank_seo_title"],[name="publishrank_seo_description"],[name="publishrank_focus_keyword"],[name="_publishrank_seo_title"],[name="_publishrank_seo_description"],[name="_publishrank_seo_focus_keyword"],[name="_publishrank_seo_secondary_keyphrases"],[name="_publishrank_seo_keyphrase_synonyms"],[name="_publishrank_seo_related_terms"]',
     schedule);
 
 })(jQuery);

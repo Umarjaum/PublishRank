@@ -101,6 +101,8 @@ final class GraphOutput {
 		if ( ! $identity_on ) {
 			$graph = self::without_identity_nodes( $graph );
 		}
+		// Every { "@id": ... } reference must resolve inside the graph, so a node that is only defined nested (such as the publisher logo) is also listed as its own entry.
+		$graph = self::hoist_embedded_references( $graph );
 		if ( empty( $graph ) ) {
 			return; }
 		$entities = $identity_on ? ( PublicationProfile::identity_is_person() ? 'person,website,webpage' : 'organization,website,webpage' ) : 'webpage';
@@ -139,6 +141,45 @@ final class GraphOutput {
 			$kept[] = self::strip_references( $node, $removed );
 		}
 		return $kept;
+	}
+
+	/**
+	 * Add a top-level node for every { "@id": ... } reference whose target is only defined nested inside another node.
+	 * Nothing is removed or rewritten: references to ids that are not defined anywhere (for example another page) are left alone.
+	 *
+	 * @param array<int,array<string,mixed>> $graph Graph nodes.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function hoist_embedded_references( array $graph ) {
+		$defined  = array();
+		$refs     = array();
+		$embedded = array();
+		foreach ( $graph as $node ) {
+			if ( is_array( $node ) && isset( $node['@id'] ) ) {
+				$defined[ (string) $node['@id'] ] = true; }
+		}
+		$walk = null;
+		$walk = static function ( $value, $top ) use ( &$walk, &$refs, &$embedded ) {
+			if ( ! is_array( $value ) ) {
+				return; }
+			if ( ! $top && isset( $value['@id'] ) && is_scalar( $value['@id'] ) ) {
+				$id = (string) $value['@id'];
+				if ( 1 === count( $value ) ) {
+					$refs[ $id ] = true;
+				} elseif ( isset( $value['@type'] ) && ! isset( $embedded[ $id ] ) ) {
+					$embedded[ $id ] = $value; }
+			}
+			foreach ( $value as $child ) {
+				$walk( $child, false ); }
+		};
+		foreach ( $graph as $node ) {
+			$walk( $node, true ); }
+		foreach ( array_keys( $refs ) as $id ) {
+			if ( ! isset( $defined[ $id ] ) && isset( $embedded[ $id ] ) ) {
+				$graph[]       = $embedded[ $id ];
+				$defined[ $id ] = true; }
+		}
+		return $graph;
 	}
 
 	/** @param mixed $value Node or property value. @param string[] $ids Ids to drop. @return mixed */

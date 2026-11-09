@@ -74,6 +74,7 @@ final class RestFields {
 			'focus_keyword'        => PostMeta::get( $post_id, PostMeta::FOCUS_KEYWORD, '' ),
 			'primary_keyphrase'    => PostMeta::get( $post_id, PostMeta::PRIMARY_KEYPHRASE, '' ),
 			'secondary_keyphrases' => PostMeta::get_list( $post_id, PostMeta::SECONDARY_KEYPHRASES ),
+			'keyphrase_synonyms'   => PostMeta::get_list( $post_id, PostMeta::KEYPHRASE_SYNONYMS ),
 			'related_terms'        => PostMeta::get_list( $post_id, PostMeta::RELATED_TERMS ),
 			'entity_topic'         => PostMeta::get( $post_id, PostMeta::ENTITY_TOPIC, '' ),
 			'cornerstone'          => '1' === PostMeta::get( $post_id, PostMeta::CORNERSTONE, '0' ),

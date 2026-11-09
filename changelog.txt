@@ -1,4 +1,17 @@
+= 2.19.2 =
+* **Fix: keyword fields stay in the PublishRank SEO box.** Focus keyword, secondary keyphrases, synonyms and related keyphrases no longer redirect editors to Gutenberg’s sidebar or appear in duplicate locations.
+* **Fix: background field saving and live updates.** Keyword fields autosave through a scoped AJAX request, refresh the resolved automatic SEO summary in place, and update live SEO analysis without a full editor reload.
+
 = 2.19.1 =
+* **Fix: false "entity is not in the graph" warning in Live Preview.** The checker only counted top-level graph entries, so an entity defined inside another node (such as the publisher logo inside Organization) was reported missing. Nested definitions now count.
+* **Fix: structured-data reference to the publisher logo that was not in the graph.** The organization's logo was only defined nested inside the Organization node while another property referenced it by @id, which validators report as a missing entity. Any such nested definition that is referenced by @id is now also listed as its own graph node.
+* **Fix: Focus keyword not visible in the block editor.** The focus keyword and keyphrase fields stay in the PublishRank SEO sidebar, and the meta box now says so with a button that opens the sidebar. For post types that cannot expose meta to the editor (no custom-fields support), the fields are shown in the meta box instead, so they are never missing.
+* **Removed the JNews compatibility check** (it only ever reported that JNews could not be verified) from the Dashboard and Diagnostics.
+* **Stronger other-SEO-plugin detection with a clear warning.** Detects Yoast SEO, Rank Math, All in One SEO, SEOPress, The SEO Framework, Squirrly SEO, SmartCrawl and Slim SEO by active plugin file (including renamed folders and network-activated plugins), constants, classes and functions. Administrators now see a prominent warning with action buttons on every PublishRank screen, the Dashboard and the Plugins screen; setup wizard and Diagnostics use the same detector.
+* **News sitemap: category picker and accurate exclusion counts.** Exclude categories from a picker (the saved option format is unchanged). Articles excluded by category or post ID are now counted in the News sitemap diagnostics.
+* **Fix:** unchecking "Include in Google News sitemap" in the Classic Editor now actually excludes the article.
+* **Optional stock tickers (legacy, off by default).** Per-article EXCHANGE:SYMBOL field (max 5, invalid entries dropped) written as news:stock_tickers only when enabled. Google's current News sitemap documentation no longer lists this tag.
+* **Clearer legacy settings.** "News keywords" and "News genre" are labelled legacy and explain they are not output unless the publishrank_news_emit_legacy_tags filter is enabled.
 * **Mastodon publishing upgrades.** Optionally attach featured images with their WordPress alt text, add per-post content warnings, and adapt the text length to the connected server's configured limit. Media uploads use Mastodon's `write:media` permission and the API's asynchronous processing flow.
 * **Dashboard styling consistency.** The live admin stylesheet now includes the matching card styles for the site overview, sitemap URLs and current configuration panels.
 

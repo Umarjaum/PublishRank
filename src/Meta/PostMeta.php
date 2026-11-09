@@ -20,6 +20,7 @@ final class PostMeta {
 	const FOCUS_KEYWORD            = '_publishrank_seo_focus_keyword';
 	const PRIMARY_KEYPHRASE        = '_publishrank_seo_primary_keyphrase';
 	const SECONDARY_KEYPHRASES     = '_publishrank_seo_secondary_keyphrases';
+	const KEYPHRASE_SYNONYMS       = '_publishrank_seo_keyphrase_synonyms';
 	const RELATED_TERMS            = '_publishrank_seo_related_terms';
 	const ENTITY_TOPIC             = '_publishrank_seo_entity_topic';
 	const CORNERSTONE              = '_publishrank_seo_cornerstone';
@@ -40,6 +41,7 @@ final class PostMeta {
 	const EVENT_POSTAL_CODE        = '_publishrank_seo_event_postal_code';
 	const EVENT_COUNTRY            = '_publishrank_seo_event_country';
 	const NEWS_ELIGIBLE            = '_publishrank_seo_news_eligible';
+	const NEWS_STOCK_TICKERS       = '_publishrank_seo_news_stock_tickers';
 	const AUTHOR_NAME              = '_publishrank_seo_author_name';
 	const AUTHOR_JOB_TITLE         = '_publishrank_seo_author_job_title';
 	const AUTHOR_IMAGE             = '_publishrank_seo_author_image';
@@ -190,7 +192,69 @@ final class PostMeta {
 					)
 				);
 			}
+			// The focus keyword is edited in the block editor sidebar, so it must be exposed to the REST API.
+			register_post_meta(
+				$post_type,
+				self::FOCUS_KEYWORD,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'default'           => '',
+					'show_in_rest'      => true,
+					'sanitize_callback' => static function ( $value ) {
+						return self::truncate( sanitize_text_field( is_scalar( $value ) ? (string) $value : '' ), 100 );
+					},
+					'auth_callback'     => static function ( $allowed, $meta_key, $post_id ) {
+						return current_user_can( 'edit_post', (int) $post_id );
+					},
+				)
+			);
+			// Secondary keyphrases, synonyms and related terms are lists of short strings.
+			foreach ( self::keyphrase_list_limits() as $list_key => $limits ) {
+				register_post_meta(
+					$post_type,
+					$list_key,
+					array(
+						'type'              => 'array',
+						'single'            => true,
+						'default'           => array(),
+						'show_in_rest'      => array(
+							'schema' => array(
+								'type'  => 'array',
+								'items' => array( 'type' => 'string' ),
+							),
+						),
+						'sanitize_callback' => static function ( $value ) use ( $limits ) {
+							return PostMeta::parse_list( $value, $limits[0], $limits[1] );
+						},
+						'auth_callback'     => static function ( $allowed, $meta_key, $post_id ) {
+							return current_user_can( 'edit_post', (int) $post_id );
+						},
+					)
+				);
+			}
 		}
+	}
+
+	/** Keyphrase list meta keys with their maximum item count and item length. @return array<string,array<int,int>> */
+	public static function keyphrase_list_limits() {
+		return array(
+			self::SECONDARY_KEYPHRASES => array( 10, 100 ),
+			self::KEYPHRASE_SYNONYMS   => array( 10, 100 ),
+			self::RELATED_TERMS        => array( 20, 100 ),
+		);
+	}
+
+	/** Accept an array, or a string with one item per line or comma separated, and return a clean list. */
+	public static function parse_list( $value, $max_items = 20, $length = 100 ) {
+		if ( is_string( $value ) ) {
+			$value = preg_split( '/[\r\n,;\x{060C}\x{061B}]+/u', $value, -1, PREG_SPLIT_NO_EMPTY );
+			$value = is_array( $value ) ? $value : array();
+		} elseif ( ! is_array( $value ) ) {
+			$value = array();
+		}
+		$value = array_filter( $value, 'is_scalar' );
+		return self::sanitize_list( array_map( 'strval', $value ), $max_items, $length );
 	}
 
 	public static function get( $post_id, $key, $default = '' ) {
@@ -253,6 +317,24 @@ final class PostMeta {
 		return $clean;
 	}
 
+	/**
+	 * Validate a comma/space/newline separated list of EXCHANGE:SYMBOL stock tickers (max 5).
+	 * Invalid entries are dropped, never guessed or rewritten into a different symbol.
+	 *
+	 * @param mixed $raw Raw user input.
+	 * @return string[]
+	 */
+	public static function parse_tickers( $raw ) {
+		if ( ! is_scalar( $raw ) ) {
+			return array(); }
+		$out = array();
+		foreach ( preg_split( '/[\s,;]+/', strtoupper( sanitize_text_field( (string) $raw ) ), -1, PREG_SPLIT_NO_EMPTY ) as $symbol ) {
+			if ( preg_match( '/^[A-Z0-9]{1,12}:[A-Z0-9][A-Z0-9.\-]{0,11}$/', $symbol ) ) {
+				$out[] = $symbol; }
+		}
+		return array_slice( array_values( array_unique( $out ) ), 0, 5 );
+	}
+
 	public static function save( $post_id ) {
 		if ( ! isset( $_POST['publishrank_seo_meta_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['publishrank_seo_meta_nonce'] ) ), 'publishrank_seo_meta' ) ) {
 			return; }
@@ -292,18 +374,22 @@ final class PostMeta {
 			if ( isset( $_POST[ $key ] ) ) {
 				update_post_meta( $post_id, $key, self::truncate( sanitize_textarea_field( wp_unslash( $_POST[ $key ] ) ), $length ) ); }
 		}
+		if ( isset( $_POST[ self::FOCUS_KEYWORD ] ) ) {
+			update_post_meta( $post_id, self::FOCUS_KEYWORD, self::truncate( sanitize_text_field( wp_unslash( $_POST[ self::FOCUS_KEYWORD ] ) ), 100 ) ); }
 		foreach ( $text_fields as $key => $length ) {
 			if ( isset( $_POST[ $key ] ) ) {
 				update_post_meta( $post_id, $key, TemplateResolver::sanitize_template( wp_unslash( $_POST[ $key ] ), $length ) ); }
 		}
 		foreach ( array(
 			self::SECONDARY_KEYPHRASES => array( 10, 100 ),
+			self::KEYPHRASE_SYNONYMS   => array( 10, 100 ),
 			self::RELATED_TERMS        => array( 20, 100 ),
 		) as $key => $limits ) {
 			if ( ! isset( $_POST[ $key ] ) ) {
 				continue; }
-			$raw = map_deep( wp_unslash( $_POST[ $key ] ), 'sanitize_text_field' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
-			update_post_meta( $post_id, $key, self::sanitize_list( $raw, $limits[0], $limits[1] ) );
+			// Textareas post one string (one item per line); older forms post an array. Both are accepted.
+			$raw = wp_unslash( $_POST[ $key ] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified above; parse_list() sanitizes every item.
+			update_post_meta( $post_id, $key, self::parse_list( $raw, $limits[0], $limits[1] ) );
 		}
 		foreach ( array( self::CANONICAL ) as $key ) {
 			if ( isset( $_POST[ $key ] ) ) {
@@ -436,6 +522,15 @@ final class PostMeta {
 		}
 		if ( ! empty( $_POST['publishrank_seo_article_fields'] ) ) {
 			update_post_meta( $post_id, self::ACCESSIBLE_FOR_FREE, isset( $_POST[ self::ACCESSIBLE_FOR_FREE ] ) ? '1' : '0' ); }
+		if ( ! empty( $_POST['publishrank_seo_news_tickers_field'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified above; parse_tickers() validates every symbol.
+			$tickers = self::parse_tickers( isset( $_POST[ self::NEWS_STOCK_TICKERS ] ) ? wp_unslash( $_POST[ self::NEWS_STOCK_TICKERS ] ) : '' );
+			if ( $tickers ) {
+				update_post_meta( $post_id, self::NEWS_STOCK_TICKERS, implode( ', ', $tickers ) );
+			} else {
+				delete_post_meta( $post_id, self::NEWS_STOCK_TICKERS );
+			}
+		}
 		if ( isset( $_POST[ self::NEWS_ELIGIBLE ] ) ) {
 			update_post_meta( $post_id, self::NEWS_ELIGIBLE, in_array( sanitize_text_field( wp_unslash( $_POST[ self::NEWS_ELIGIBLE ] ) ), array( '1' ), true ) ? '1' : '-1' );
 		}

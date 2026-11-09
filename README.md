@@ -10,14 +10,14 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 
 ## Current release
 
-- **Version:** 2.18.1
+- **Version:** 2.19.2
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
 - **Requires PHP:** 7.4 or newer
 - **Repository:** <https://github.com/Umarjaum/PublishRank>
 - **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
 
-Version 2.18.1 includes a broad locale-aware per-post SEO catalog, Urdu and RTL support, and the field-aware migration workspace for Yoast SEO, Rank Math, All in One SEO, SEOPress, and The SEO Framework.
+Version 2.19.2 keeps keyword editing in the PublishRank SEO box, saves keyword fields in the background, and refreshes dependent SEO values without a full editor reload.
 
 ## Highlights
 
