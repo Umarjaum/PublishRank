@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.20.3
+Stable tag: 2.20.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -149,6 +149,10 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. PublishRank's source-provenance markers are technical metadata only; the plugin does not insert a visible footer credit or promotional link.
 
 == Changelog ==
+= 2.20.4 =
+* **Mastodon connection UX and resilience.** Clarified server, token, profile, message and sharing settings. The encrypted saved token is hidden by default and can be revealed by an administrator with an accessible eye control. Failed verification no longer deletes a saved token; status sharing now requires a Mastodon status ID and records successful private posts even when the server omits a public URL.
+* **Mastodon media readiness.** Allow additional time for asynchronous featured-image processing before reporting that a share should be retried.
+
 = 2.20.3 =
 * **Mastodon verification helper.** Added a generated, copyable `<link rel="me">` head snippet, with live updates from the profile URL field, plus clearer official verification steps.
 * **WP Hide Login visual refresh.** Improved branded login and redirect URL controls, contrast, keyboard focus and small-screen layout.

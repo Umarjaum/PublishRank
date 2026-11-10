@@ -362,3 +362,28 @@ body[class*="publishrank"] .wrap table.widefat thead th,body[class*="publishrank
 .pr-mastodon-copy-row--code textarea{flex:1;min-width:0;min-height:68px;box-sizing:border-box;padding:10px 12px;border:1px solid #D9D0D4;border-radius:9px;background:#FBF9F5;color:#302630;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}
 .pr-mastodon-copy-row--code textarea:focus{border-color:#9B1245;outline:2px solid rgba(155,18,69,.18);outline-offset:1px}
 @media(max-width:600px){.pr-mastodon-copy-row--code textarea{width:100%;max-width:100%;min-height:72px}.pr-mastodon-copy-row--code .button{width:100%;min-height:44px}}
+
+
+/* Mastodon connection fields: visible labels, aligned help text and a touch-friendly token reveal control. */
+.publishrank-mastodon{max-width:1240px}.publishrank-mastodon .form-table th{width:240px}.publishrank-mastodon .form-table td{vertical-align:top}.publishrank-mastodon .form-table input.regular-text,.publishrank-mastodon .form-table select{max-width:100%;min-height:40px}.publishrank-mastodon .form-table textarea{max-width:760px}.pr-mastodon-token-field{display:flex;align-items:stretch;gap:8px;max-width:520px}.pr-mastodon-token-field input{flex:1;min-width:0;max-width:none!important}.pr-mastodon-token-toggle{display:inline-flex!important;align-items:center;justify-content:center;min-width:44px!important;min-height:40px!important;padding:6px 10px!important}.pr-mastodon-token-toggle .dashicons{width:20px;height:20px;font-size:20px;line-height:20px}.pr-mastodon-token-field+.description{max-width:620px;margin-top:7px}.pr-mastodon-site-label{display:block;margin:12px 0 6px;font-weight:600}.publishrank-mastodon .rhs-card p{line-height:1.55}@media(max-width:782px){.publishrank-mastodon .form-table th{width:auto}.publishrank-mastodon .form-table td{padding-top:4px}.pr-mastodon-token-field{width:100%}.pr-mastodon-token-field input{width:100%;min-height:44px}.pr-mastodon-token-toggle{min-width:48px!important;min-height:44px!important}.publishrank-mastodon .rhs-grid{grid-template-columns:1fr}.publishrank-mastodon .pr-mastodon-copy-row{align-items:stretch}}
+
+
+/* Contrast repair from the mobile Migration & Portability screenshot. WordPress notices
+   may inherit white text from theme/page heroes, so set both foreground and surface explicitly. */
+body[class*="publishrank"] #wpbody-content .notice,
+body[class*="publishrank"] #wpbody-content .notice p,
+body[class*="publishrank"] #wpbody-content .notice strong,
+body[class*="publishrank"] #wpbody-content .notice a,
+.pr-migration-page .pr-migration-notice,
+.pr-migration-page .pr-migration-notice p,
+.pr-migration-page .pr-migration-notice strong{color:#24212a!important}
+body[class*="publishrank"] #wpbody-content .notice-warning,
+.pr-migration-page .pr-migration-notice.notice-warning{background:#fff7e6!important;border-left-color:#a65b00!important}
+body[class*="publishrank"] #wpbody-content .notice-error,
+.pr-migration-page .pr-migration-notice.notice-error{background:#fff1f0!important;border-left-color:#b42318!important}
+body[class*="publishrank"] #wpbody-content .notice-success,
+.pr-migration-page .pr-migration-notice.notice-success{background:#edf8f1!important;border-left-color:#13795b!important}
+body[class*="publishrank"] #wpbody-content .notice-info,
+.pr-migration-page .pr-migration-notice.notice-info{background:#eef6ff!important;border-left-color:#1d5d91!important}
+.pr-migration-page .pr-migration-checks input[type="checkbox"],
+.pr-migration-page .pr-migration-options input[type="checkbox"]{accent-color:#9b1245}

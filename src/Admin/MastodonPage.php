@@ -74,11 +74,16 @@ final class MastodonPage {
 			$this->button( 'publishrank_mastodon_verify', __( 'Check again', 'publishrank' ), 'secondary' );
 			echo ' ';
 			$this->button( 'publishrank_mastodon_disconnect', __( 'Disconnect', 'publishrank' ), 'link-delete' );
-			} else {
+		} elseif ( Mastodon::connected() ) {
+			echo '<p>' . esc_html__( 'Your token is saved, but the account has not been verified yet. Check the server URL and token permissions, then try again.', 'publishrank' ) . '</p>';
+			$this->button( 'publishrank_mastodon_verify', __( 'Verify connection', 'publishrank' ), 'secondary' );
+			echo ' ';
+			$this->button( 'publishrank_mastodon_disconnect', __( 'Disconnect', 'publishrank' ), 'link-delete' );
+		} else {
 				echo '<p>' . esc_html__( 'Not connected.', 'publishrank' ) . '</p>';
 				echo '<ol><li>' . esc_html__( 'On your Mastodon server open Preferences → Development → New application.', 'publishrank' ) . '</li>';
 				echo '<li>' . esc_html__( 'Name it "PublishRank", select read:accounts and write:statuses, and save. Add write:media only if you want to attach featured images.', 'publishrank' ) . '</li>';
-				echo '<li>' . esc_html__( 'Open the application, copy "Your access token" and paste it below with your server address.', 'publishrank' ) . '</li></ol>';
+			echo '<li>' . esc_html__( 'Open the application, copy "Your access token" and paste it below with your server address.', 'publishrank' ) . '</li></ol>';
 		}
 		echo '</section>';
 
@@ -107,9 +112,11 @@ final class MastodonPage {
 		echo '<input type="hidden" name="action" value="publishrank_mastodon_save" />';
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr><th scope="row">' . esc_html__( 'Mastodon feature', 'publishrank' ) . '</th><td><label><input type="checkbox" name="enabled" value="1" ' . checked( Mastodon::enabled(), true, false ) . ' /> ' . esc_html__( 'Turn on Mastodon verification and sharing', 'publishrank' ) . '</label></td></tr>';
-		echo '<tr><th scope="row"><label for="pr-mastodon-instance">' . esc_html__( 'Server', 'publishrank' ) . '</label></th><td><input type="text" class="regular-text" id="pr-mastodon-instance" name="instance" value="' . esc_attr( $s['instance'] ) . '" placeholder="mastodon.social" /></td></tr>';
-		echo '<tr><th scope="row"><label for="pr-mastodon-token">' . esc_html__( 'Mastodon access token', 'publishrank' ) . '</label></th><td><input type="password" class="regular-text" id="pr-mastodon-token" name="token" value="" autocomplete="off" placeholder="' . esc_attr( Mastodon::connected() ? __( 'Saved — leave empty to keep', 'publishrank' ) : '' ) . '" /><p class="description">' . esc_html__( 'Paste the “Your access token” value from your Mastodon application. Stored encrypted and never shown again.', 'publishrank' ) . '</p></td></tr>';
-		echo '<tr><th scope="row"><label for="pr-mastodon-profile">' . esc_html__( 'Mastodon profile URL or handle', 'publishrank' ) . '</label></th><td><input type="text" class="regular-text" id="pr-mastodon-profile" name="profile_url" value="' . esc_attr( $s['profile_url'] ) . '" placeholder="https://mastodon.social/@yourpublication" /><p class="description">' . esc_html__( 'Paste your Mastodon profile URL or @user@server. This is the profile PublishRank links back to with rel="me". A read:accounts token is needed for the automatic Check again status.', 'publishrank' ) . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="pr-mastodon-instance">' . esc_html__( 'Mastodon server URL', 'publishrank' ) . '</label></th><td><input type="url" class="regular-text" id="pr-mastodon-instance" name="instance" value="' . esc_attr( $s['instance'] ) . '" placeholder="https://mastodon.social" autocomplete="url" /><p class="description">' . esc_html__( 'Enter the home address of the server that issued your token. Use the server domain only, for example https://mastodon.social.', 'publishrank' ) . '</p></td></tr>';
+		$stored_token = Mastodon::token();
+		echo '<tr><th scope="row"><label for="pr-mastodon-token">' . esc_html__( 'Mastodon access token', 'publishrank' ) . '</label></th><td><div class="pr-mastodon-token-field"><input type="password" class="regular-text" id="pr-mastodon-token" name="token" value="' . esc_attr( $stored_token ) . '" autocomplete="new-password" spellcheck="false" autocapitalize="off" />';
+		echo '<button type="button" class="button pr-mastodon-token-toggle" aria-controls="pr-mastodon-token" aria-pressed="false" data-show-label="' . esc_attr__( 'Show access token', 'publishrank' ) . '" data-hide-label="' . esc_attr__( 'Hide access token', 'publishrank' ) . '" aria-label="' . esc_attr__( 'Show access token', 'publishrank' ) . '"><span class="dashicons dashicons-visibility" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__( 'Show access token', 'publishrank' ) . '</span></button></div><p class="description">' . esc_html__( 'Stored encrypted on this site. It is hidden by default; use the eye button to reveal it to administrators. Leave unchanged to keep the saved token.', 'publishrank' ) . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="pr-mastodon-profile">' . esc_html__( 'Mastodon profile URL or handle', 'publishrank' ) . '</label></th><td><input type="text" class="regular-text" id="pr-mastodon-profile" name="profile_url" value="' . esc_attr( $s['profile_url'] ) . '" placeholder="https://mastodon.social/@yourpublication or @you@mastodon.social" autocomplete="url" /><p class="description">' . esc_html__( 'Enter the profile PublishRank should link back to with rel="me". A token with read:accounts permission is needed for the automatic profile verification check.', 'publishrank' ) . '</p></td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Automatic sharing', 'publishrank' ) . '</th><td><label><input type="checkbox" name="auto_share" value="1" ' . checked( ! empty( $s['auto_share'] ), true, false ) . ' /> ' . esc_html__( 'Share new posts when they are published (can be changed per post)', 'publishrank' ) . '</label></td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Content types', 'publishrank' ) . '</th><td>';
 		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $type ) {
@@ -119,7 +126,7 @@ final class MastodonPage {
 			echo '<label style="margin-right:14px"><input type="checkbox" name="post_types[]" value="' . esc_attr( $type->name ) . '" ' . checked( in_array( $type->name, (array) $s['post_types'], true ), true, false ) . ' /> ' . esc_html( $type->labels->singular_name ) . '</label>';
 		}
 		echo '</td></tr>';
-			echo '<tr><th scope="row"><label for="pr-mastodon-template">' . esc_html__( 'Message format', 'publishrank' ) . '</label></th><td><textarea class="large-text" rows="5" id="pr-mastodon-template" name="template">' . esc_textarea( $s['template'] ) . '</textarea><p class="description">' . esc_html__( 'Variables: {title} {excerpt} {url} {hashtags} {site}. Long excerpts are shortened to fit this server’s character limit.', 'publishrank' ) . '</p></td></tr>';
+			echo '<tr><th scope="row"><label for="pr-mastodon-template">' . esc_html__( 'Post message template', 'publishrank' ) . '</label></th><td><textarea class="large-text" rows="5" id="pr-mastodon-template" name="template">' . esc_textarea( $s['template'] ) . '</textarea><p class="description">' . esc_html__( 'Variables: {title}, {excerpt}, {url}, {hashtags}, and {site}. Long excerpts are shortened to fit the server’s post limit.', 'publishrank' ) . '</p></td></tr>';
 			echo '<tr><th scope="row">' . esc_html__( 'Hashtags', 'publishrank' ) . '</th><td><label><input type="checkbox" name="hashtags" value="1" ' . checked( ! empty( $s['hashtags'] ), true, false ) . ' /> ' . esc_html__( 'Turn the post\'s tags into hashtags (up to 5)', 'publishrank' ) . '</label></td></tr>';
 			echo '<tr><th scope="row">' . esc_html__( 'Featured images', 'publishrank' ) . '</th><td><label><input type="checkbox" name="attach_image" value="1" ' . checked( ! empty( $s['attach_image'] ), true, false ) . ' /> ' . esc_html__( 'Attach featured images to shared posts by default', 'publishrank' ) . '</label><p class="description">' . esc_html__( 'PublishRank sends the Media Library alt text as the image description for accessibility. This requires the optional write:media permission.', 'publishrank' ) . '</p></td></tr>';
 		echo '<tr><th scope="row"><label for="pr-mastodon-visibility">' . esc_html__( 'Who can see shared posts', 'publishrank' ) . '</label></th><td><select id="pr-mastodon-visibility" name="visibility">';
@@ -163,6 +170,7 @@ final class MastodonPage {
 		$this->guard( 'publishrank_mastodon_save' );
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified in guard().
 		$old      = Mastodon::settings();
+		$token    = isset( $_POST['token'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['token'] ) ) ) : '';
 		$instance = Mastodon::normalize_instance( isset( $_POST['instance'] ) ? sanitize_text_field( wp_unslash( $_POST['instance'] ) ) : '' );
 		$types    = isset( $_POST['post_types'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['post_types'] ) ) : array();
 		$types    = array_values( array_filter( $types, 'post_type_exists' ) );
@@ -180,11 +188,14 @@ final class MastodonPage {
 			'author_tags' => empty( $_POST['author_tags'] ) ? 0 : 1,
 		);
 		update_option( Mastodon::ENABLED_OPTION, empty( $_POST['enabled'] ) ? 0 : 1 );
-		if ( $old['instance'] !== $instance && '' !== $old['instance'] ) {
-			Mastodon::disconnect(); // A token only works on the server that issued it.
+		if ( $old['instance'] !== $instance ) {
+			if ( '' === $token ) {
+				Mastodon::disconnect(); // A token only works on the server that issued it.
+			} else {
+				delete_option( Mastodon::ACCOUNT_OPTION ); // Do not show the previous server's account during reconnection.
+			}
 		}
 		update_option( Mastodon::SETTINGS_OPTION, $settings, false );
-		$token = isset( $_POST['token'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['token'] ) ) ) : '';
 		// phpcs:enable
 		if ( '' !== $token ) {
 			if ( '' === $instance ) {
@@ -195,8 +206,7 @@ final class MastodonPage {
 			}
 			$result = Mastodon::verify();
 			if ( is_wp_error( $result ) ) {
-				Mastodon::disconnect();
-				$this->redirect( 'error', $result->get_error_message() );
+				$this->redirect( 'error', sprintf( __( 'The token was saved securely, but Mastodon could not verify the connection: %s. Check the server URL, token permissions, and network connection, then try again.', 'publishrank' ), $result->get_error_message() ) );
 			}
 			/* translators: %s: Mastodon handle. */
 			$this->redirect( 'success', sprintf( __( 'Connected as @%s.', 'publishrank' ), $result['acct'] ) );
