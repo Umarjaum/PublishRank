@@ -63,6 +63,8 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 * In WordPress: **PublishRank → Documentation & Help** explains titles, variables, output controls, breadcrumbs, sitemaps, schema, robots, redirects, the robust 404 Monitor, IndexNow, Baidu, diagnostics, the admin menu and toolbar, the sitemap browser view, versions and troubleshooting.
 * In the package: `docs/features/FEATURES.md` lists every dashboard feature and Technical Health check provided through version 2.10.1. The `docs/` folder also contains guides for sitemaps, branding, admin navigation, the 404 Monitor, troubleshooting, versioning and a WordPress 7.1.3 compatibility checklist.
 * Online: [publishrankseo.vercel.app](https://publishrankseo.vercel.app/).
+* Developer website: [umarjaum.vercel.app](https://umarjaum.vercel.app/).
+* Official plugin listing: [WordPress.org](https://wordpress.org/plugins/publishrank/).
 
 == Frequently Asked Questions ==
 

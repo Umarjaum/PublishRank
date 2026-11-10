@@ -7,7 +7,7 @@ defined( 'ABSPATH' ) || exit;
 final class Branding {
 	const MENU_SLUG     = 'publishrank-seo-dashboard';
 	const WEBSITE_URL   = 'https://publishrankseo.vercel.app';
-	const DEVELOPER_URL = 'https://umarjaum.netlify.app';
+	const DEVELOPER_URL = 'https://umarjaum.vercel.app';
 	const CONTACT_EMAIL = 'umarjaum@gmail.com';
 	/** The one official PublishRank logo (white mark on a transparent background) in assets/images. */
 	const LOGO_FILE     = 'publishrank-brand-mark.png';
