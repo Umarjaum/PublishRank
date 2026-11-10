@@ -129,7 +129,6 @@ final class Plugin {
 				$this->loader->register( TraceIntegrity::class, false );
 			$this->loader->register( SecurityHeaders::class, false );
 			$this->loader->register( TrafficGuard::class, false );
-		$this->loader->register( \PublishRankSEO\Security\WPHideLogin::class, false );
 			$this->loader->register( ReadingExperience::class, false );
 			$this->loader->register( LinkManager::class, false );
 			$this->loader->register( ResourceHints::class, false );

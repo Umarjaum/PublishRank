@@ -23,6 +23,7 @@
 | Editorial controls | Keyphrase, cornerstone, primary category, author, schema, video, and News eligibility fields. |
 | Publisher profile | Organization name, type, logo, locale, country, contact, and social profiles. |
 | Image/video sitemaps | Additional media discovery for eligible public content. |
+| Mastodon | Profile verification with reciprocal `rel="me"` output and a generated, copyable HTML-head snippet; optional account-status check, automatic/manual post sharing, per-post controls and share history. |
 | Site Verification | First item in the PublishRank menu. Meta-tag verification for Google, Bing, Yandex, Baidu, Naver, Seznam, Pinterest and Facebook, safe custom tags, and verification-file hosting (upload or paste) with a live crawler-view check, cache purge and conflict detection. |
 | IndexNow | Optional automatic publication/update and deletion notifications, key-file verification, individual and bulk post-list actions, manual URL submission, wildcard path exclusions, CSV history export, and bounded retries. Background notifications are debounced and queued into batches of up to 100 URLs per API request, with a bounded queue and batched log writes for lower database overhead. Notifications are shared among participating engines; indexing is not guaranteed and Google does not support IndexNow. |
 
@@ -40,6 +41,7 @@
 | Search Engines & Baidu | Site-specific encrypted HTTPS Baidu ordinary-inclusion endpoint, manual batches up to 2,000 URLs, opt-in first-publication submission and URL-free quota/response history. IndexNow remains the shared notification route for participating engines; Baidu analytics are not claimed. |
 | Import/export | Schema-validated settings portability without exporting the IndexNow secret. |
 | WP-CLI | Sitemap status, regeneration, and cache clearing. |
+| WP Hide Login | Dedicated PublishRank settings page for a custom login URL and blocked-visitor redirect, with responsive PublishRank styling. |
 | Admin banner | Supplied PublishRank product branding on the dashboard. |
 
 ## Integration boundaries

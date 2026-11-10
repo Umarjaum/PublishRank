@@ -3,11 +3,11 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrankseo.vercel.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.19.2
+ * Version: 2.20.3
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
- * Author URI: https://umarjaum.vercel.app
+ * Author URI: https://umarjaum.netlify.app
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: publishrank
@@ -20,10 +20,16 @@ add_action( 'init', static function () {
 	load_plugin_textdomain( 'publishrank', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 }, 1 );
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.19.2' );
+define( 'PUBLISHRANK_SEO_VERSION', '2.20.3' );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
+define( 'PUBLISHRANK_HIDE_LOGIN_BASENAME', plugin_basename( __FILE__ ) );
+
+// PublishRank Hide Login: custom login URL, blocks wp-login.php and wp-admin for visitors.
+// Booted early on plugins_loaded so its own plugins_loaded (9999) handler still runs.
+require_once __DIR__ . '/src/Security/WPHideLogin.php';
+add_action( 'plugins_loaded', array( '\\PublishRankSEO\\Security\\WPHideLogin', 'get_instance' ), 1 );
 
 // Built-in PublishRank Newsroom editorial workflow module.
 require_once __DIR__ . '/src/Newsroom/advanced.php';
@@ -105,21 +111,6 @@ register_deactivation_hook(
 			wp_clear_scheduled_hook( 'publishrank_daily_analytics_snapshot' );
 			wp_clear_scheduled_hook( 'publishrank_link_check_cron' );
 			wp_clear_scheduled_hook( 'publishrank_link_check_batch' );
-			// Never leave the custom administration-path block active after deactivation.
-			$publishrank_hide_login = get_option( 'publishrank_wp_hide_login', array() );
-			if ( is_array( $publishrank_hide_login ) ) {
-				$publishrank_hide_login['enabled'] = 0;
-				update_option( 'publishrank_wp_hide_login', $publishrank_hide_login, false );
-			}
-			update_option( 'publishrank_wp_hide_login_apache_rules_active', 0, false );
-			global $wp_rewrite;
-			if ( isset( $wp_rewrite->extra_rules_top ) && is_array( $wp_rewrite->extra_rules_top ) ) {
-				foreach ( $wp_rewrite->extra_rules_top as $publishrank_regex => $publishrank_query ) {
-					if ( is_string( $publishrank_query ) && false !== strpos( $publishrank_query, 'publishrank_custom_login=1' ) ) {
-						unset( $wp_rewrite->extra_rules_top[ $publishrank_regex ] );
-					}
-				}
-			}
 			flush_rewrite_rules( true );
 	}
 );

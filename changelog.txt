@@ -1,3 +1,17 @@
+= 2.20.3 =
+* **Mastodon verification helper.** Added a generated, copyable `<link rel="me">` head snippet, with live updates from the profile URL field, plus clearer official verification steps.
+* **WP Hide Login visual refresh.** Improved branded login and redirect URL controls, contrast, keyboard focus and small-screen layout.
+
+= 2.20.2 =
+* **Mastodon site verification made easier.** Added a copy-ready Website URL field and clearer steps for the reciprocal rel="me" verification flow. Mastodon does not issue a separate one-time site-verification code.
+
+= 2.20.1 =
+* **WP Hide Login spotlight.** The optional module now has a PublishRank-style “New” badge in its own submenu and Dashboard card. The badge clears for each administrator after the dedicated module page is opened.
+* **Migration & Portability page contrast and mobile usability.** Corrected hero text contrast, strengthened keyboard focus styling and improved narrow-screen form spacing and tap targets.
+
+= 2.20.0 =
+* **WP Hide Login module.** Added a dedicated login URL and request-handling module based on a port of WPS Hide Login 1.9.19 (GPLv2+).
+
 = 2.19.2 =
 * **Fix: keyword fields stay in the PublishRank SEO box.** Focus keyword, secondary keyphrases, synonyms and related keyphrases no longer redirect editors to Gutenberg’s sidebar or appear in duplicate locations.
 * **Fix: background field saving and live updates.** Keyword fields autosave through a scoped AJAX request, refresh the resolved automatic SEO summary in place, and update live SEO analysis without a full editor reload.

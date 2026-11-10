@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.19.2
+Stable tag: 2.20.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -35,7 +35,7 @@ Features include:
 * Configurable llms.txt and optional llms-full.txt resources, with a public paginated schema-discovery endpoint linked from llms.txt.
 * Editorial SEO analysis, internal-link recommendations, sitemap diagnostics and WP-CLI commands.
 * Publisher Toolkit with permission-aware bulk SEO metadata editing, role-based access for the toolkit, and optional image alt-text assistance that preserves existing descriptions.
-* Optional built-in WP Hide Login module with a custom login endpoint, configurable slug, administration URL rewriting where Apache rules are available, and 404 protection for direct default paths.
+* **New: WP Hide Login.** Optional custom sign-in URL, default-login-route handling, redirect behavior and multisite defaults, managed from its own PublishRank submenu screen. Based on a port of WPS Hide Login 1.9.19 (GPLv2+).
 * Always-on technical source provenance markers in page source; they do not add a promotional link or visible footer credit.
 
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
@@ -63,8 +63,6 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 * In WordPress: **PublishRank → Documentation & Help** explains titles, variables, output controls, breadcrumbs, sitemaps, schema, robots, redirects, the robust 404 Monitor, IndexNow, Baidu, diagnostics, the admin menu and toolbar, the sitemap browser view, versions and troubleshooting.
 * In the package: `docs/features/FEATURES.md` lists every dashboard feature and Technical Health check provided through version 2.10.1. The `docs/` folder also contains guides for sitemaps, branding, admin navigation, the 404 Monitor, troubleshooting, versioning and a WordPress 7.1.3 compatibility checklist.
 * Online: [publishrankseo.vercel.app](https://publishrankseo.vercel.app/).
-* Developer website: [umarjaum.vercel.app](https://umarjaum.vercel.app/).
-* Official plugin listing: [WordPress.org](https://wordpress.org/plugins/publishrank/).
 
 == Frequently Asked Questions ==
 
@@ -151,6 +149,17 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. PublishRank's source-provenance markers are technical metadata only; the plugin does not insert a visible footer credit or promotional link.
 
 == Changelog ==
+= 2.20.3 =
+* **Mastodon verification helper.** Added a generated, copyable `<link rel="me">` head snippet, with live updates from the profile URL field, plus clearer official verification steps.
+* **WP Hide Login visual refresh.** Improved branded login and redirect URL controls, contrast, keyboard focus and small-screen layout.
+= 2.20.2 =
+* **Mastodon site verification made easier.** Added a copy-ready Website URL field and clearer steps for the reciprocal rel="me" verification flow. Mastodon does not issue a separate one-time site-verification code.
+
+= 2.20.1 =
+* **New: WP Hide Login module spotlight.** The module now carries a first-visit New badge in the PublishRank menu and dashboard; its dedicated settings screen remains separate from WordPress Settings.
+* **Migration & Portability contrast and mobile layout.** Improved heading contrast and touch-friendly responsive controls.
+= 2.20.0 =
+* Added PublishRank Hide Login, a port of WPS Hide Login 1.9.19 (GPLv2+): custom login URL, handling for wp-login.php, wp-register.php and wp-admin requests, custom redirect URL, and multisite network defaults. Settings live on the dedicated PublishRank > Hide Login page.
 
 = 2.19.2 =
 * **Fix: keyword fields stay in the PublishRank SEO box.** Focus keyword, secondary keyphrases, synonyms and related keyphrases no longer redirect editors to Gutenberg’s sidebar or appear in duplicate locations.

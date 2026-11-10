@@ -17,6 +17,7 @@ final class MastodonPage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 15 );
 		add_action( 'admin_post_publishrank_mastodon_save', array( $this, 'save' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_verification_assets' ) );
 		add_action( 'admin_post_publishrank_mastodon_verify', array( $this, 'verify' ) );
 		add_action( 'admin_post_publishrank_mastodon_disconnect', array( $this, 'disconnect' ) );
 		add_action( 'admin_notices', array( $this, 'editor_notice' ) );
@@ -24,6 +25,15 @@ final class MastodonPage {
 		add_action( 'edit_user_profile', array( $this, 'user_field' ) );
 		add_action( 'personal_options_update', array( $this, 'save_user_field' ) );
 		add_action( 'edit_user_profile_update', array( $this, 'save_user_field' ) );
+	}
+
+	public function enqueue_verification_assets( $hook ) {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( self::SLUG !== $page ) {
+			return;
+		}
+		$path = PUBLISHRANK_SEO_PATH . 'assets/js/mastodon.js';
+		wp_enqueue_script( 'publishrank-mastodon', Branding::asset_url( 'js/mastodon.js' ), array(), Branding::version() . '.' . ( file_exists( $path ) ? (string) filemtime( $path ) : '0' ), true );
 	}
 
 	public function menu() {
@@ -74,12 +84,20 @@ final class MastodonPage {
 
 		// Verification steps.
 		$home = home_url( '/' );
-		echo '<section class="rhs-card"><h2>' . esc_html__( 'Verify your profile', 'publishrank' ) . '</h2>';
-		echo '<p>' . esc_html__( 'PublishRank adds the rel="me" link Mastodon looks for to every page of your site, so you only need one step on Mastodon:', 'publishrank' ) . '</p>';
-		echo '<ol><li>' . esc_html__( 'On Mastodon open Edit profile → Extra fields.', 'publishrank' ) . '</li>';
-		/* translators: %s: site URL. */
-		echo '<li>' . wp_kses_post( sprintf( __( 'Add a field named "Website" with the value %s and save.', 'publishrank' ), '<code>' . esc_html( $home ) . '</code>' ) ) . '</li>';
-		echo '<li>' . esc_html__( 'Come back here and press "Check again". A green check appears on your Mastodon profile within a few minutes.', 'publishrank' ) . '</li></ol>';
+		$profile_url = Mastodon::normalize_profile( '' !== $s['profile_url'] ? $s['profile_url'] : (string) ( $account['url'] ?? '' ) );
+		$rel_me_code = '' !== $profile_url ? '<link rel="me" href="' . esc_url( $profile_url ) . '" />' : '';
+		echo '<section class="rhs-card pr-mastodon-verification"><h2>' . esc_html__( 'Verify your profile', 'publishrank' ) . '</h2>';
+		echo '<p>' . esc_html__( 'There is no one-time verification code to copy from Mastodon. Add your site URL to a Mastodon profile field; PublishRank adds the reciprocal rel="me" link to your site.', 'publishrank' ) . '</p>';
+		echo '<label class="pr-mastodon-site-label" for="pr-mastodon-site-url">' . esc_html__( 'Website URL to paste into Mastodon', 'publishrank' ) . '</label>';
+		echo '<div class="pr-mastodon-copy-row"><input type="url" class="regular-text code" id="pr-mastodon-site-url" value="' . esc_attr( $home ) . '" readonly />';
+		echo '<button type="button" class="button button-secondary" data-pr-copy-target="pr-mastodon-site-url" data-pr-copy-done="' . esc_attr__( 'Copied', 'publishrank' ) . '" data-pr-copy-failed="' . esc_attr__( 'Select and copy the URL manually.', 'publishrank' ) . '">' . esc_html__( 'Copy site URL', 'publishrank' ) . '</button></div>';
+		echo '<p class="description" id="pr-mastodon-copy-status" role="status" aria-live="polite">' . esc_html__( 'In Mastodon, open Edit profile → Extra fields, add a field named Website, paste this URL, and save your profile.', 'publishrank' ) . '</p>';
+		echo '<label class="pr-mastodon-site-label" for="pr-mastodon-rel-code">' . esc_html__( 'HTML head code for your Mastodon profile', 'publishrank' ) . '</label>';
+		echo '<div class="pr-mastodon-copy-row pr-mastodon-copy-row--code"><textarea id="pr-mastodon-rel-code" class="large-text code" rows="2" readonly>' . esc_textarea( $rel_me_code ) . '</textarea>';
+		echo '<button type="button" class="button button-secondary" data-pr-copy-target="pr-mastodon-rel-code" data-pr-copy-done="' . esc_attr__( 'Copied', 'publishrank' ) . '" data-pr-copy-failed="' . esc_attr__( 'Select and copy the code manually.', 'publishrank' ) . '">' . esc_html__( 'Copy head code', 'publishrank' ) . '</button></div>';
+		echo '<p class="description">' . esc_html__( 'This code points back to your Mastodon profile. PublishRank inserts it automatically when the feature is enabled and the profile URL is saved; paste it into your theme’s HTML head only if you need a manual fallback.', 'publishrank' ) . '</p>';
+		echo '<ol><li>' . esc_html__( 'Make sure the Mastodon feature is enabled and your profile URL is saved below. PublishRank will publish a rel="me" link back to your Mastodon profile.', 'publishrank' ) . '</li>';
+		echo '<li>' . esc_html__( 'After saving the Website field on Mastodon, return here. If connected, press Check again to refresh the verification status.', 'publishrank' ) . '</li></ol>';
 		echo '<p class="description">' . esc_html__( 'Article pages also get a fediverse:creator tag, so Mastodon credits your account (or the author\'s, if they added theirs on their WordPress profile) under link previews.', 'publishrank' ) . '</p>';
 		echo '</section></div>';
 
@@ -90,8 +108,8 @@ final class MastodonPage {
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr><th scope="row">' . esc_html__( 'Mastodon feature', 'publishrank' ) . '</th><td><label><input type="checkbox" name="enabled" value="1" ' . checked( Mastodon::enabled(), true, false ) . ' /> ' . esc_html__( 'Turn on Mastodon verification and sharing', 'publishrank' ) . '</label></td></tr>';
 		echo '<tr><th scope="row"><label for="pr-mastodon-instance">' . esc_html__( 'Server', 'publishrank' ) . '</label></th><td><input type="text" class="regular-text" id="pr-mastodon-instance" name="instance" value="' . esc_attr( $s['instance'] ) . '" placeholder="mastodon.social" /></td></tr>';
-		echo '<tr><th scope="row"><label for="pr-mastodon-token">' . esc_html__( 'Access token', 'publishrank' ) . '</label></th><td><input type="password" class="regular-text" id="pr-mastodon-token" name="token" value="" autocomplete="off" placeholder="' . esc_attr( Mastodon::connected() ? __( 'Saved — leave empty to keep', 'publishrank' ) : '' ) . '" /><p class="description">' . esc_html__( 'Stored encrypted and never shown again.', 'publishrank' ) . '</p></td></tr>';
-		echo '<tr><th scope="row"><label for="pr-mastodon-profile">' . esc_html__( 'Profile to verify', 'publishrank' ) . '</label></th><td><input type="text" class="regular-text" id="pr-mastodon-profile" name="profile_url" value="' . esc_attr( $s['profile_url'] ) . '" placeholder="https://mastodon.social/@yourpublication" /><p class="description">' . esc_html__( 'Profile URL or @user@server. Filled in automatically after connecting. You can verify a profile without connecting a token.', 'publishrank' ) . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="pr-mastodon-token">' . esc_html__( 'Mastodon access token', 'publishrank' ) . '</label></th><td><input type="password" class="regular-text" id="pr-mastodon-token" name="token" value="" autocomplete="off" placeholder="' . esc_attr( Mastodon::connected() ? __( 'Saved — leave empty to keep', 'publishrank' ) : '' ) . '" /><p class="description">' . esc_html__( 'Paste the “Your access token” value from your Mastodon application. Stored encrypted and never shown again.', 'publishrank' ) . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="pr-mastodon-profile">' . esc_html__( 'Mastodon profile URL or handle', 'publishrank' ) . '</label></th><td><input type="text" class="regular-text" id="pr-mastodon-profile" name="profile_url" value="' . esc_attr( $s['profile_url'] ) . '" placeholder="https://mastodon.social/@yourpublication" /><p class="description">' . esc_html__( 'Paste your Mastodon profile URL or @user@server. This is the profile PublishRank links back to with rel="me". A read:accounts token is needed for the automatic Check again status.', 'publishrank' ) . '</p></td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Automatic sharing', 'publishrank' ) . '</th><td><label><input type="checkbox" name="auto_share" value="1" ' . checked( ! empty( $s['auto_share'] ), true, false ) . ' /> ' . esc_html__( 'Share new posts when they are published (can be changed per post)', 'publishrank' ) . '</label></td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Content types', 'publishrank' ) . '</th><td>';
 		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $type ) {

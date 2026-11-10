@@ -1,4 +1,4 @@
-# Features provided through PublishRank 2.19.1
+# Features provided through PublishRank 2.20.3
 
 This inventory documents every feature card and Technical Health check shown on the PublishRank dashboard in the current release. Names follow the dashboard labels. A feature may be optional, permission-gated, dependent on WordPress/theme configuration, or dependent on an external service; those conditions are noted where relevant.
 

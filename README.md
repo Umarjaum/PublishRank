@@ -10,7 +10,7 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 
 ## Current release
 
-- **Version:** 2.19.2
+- **Version:** 2.20.3
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
 - **Requires PHP:** 7.4 or newer
@@ -20,7 +20,7 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
 
-Version 2.19.2 keeps keyword editing in the PublishRank SEO box, saves keyword fields in the background, and refreshes dependent SEO values without a full editor reload.
+Version 2.20.3 adds a generated, copyable Mastodon `rel="me"` head snippet and refreshes WP Hide Login’s PublishRank-styled settings page. It also includes the 2.20.1 migration-screen contrast and mobile-usability fixes.
 
 ## Actual interface screenshots
 
@@ -48,7 +48,11 @@ See the [full official interface screenshot gallery](https://publishrankseo.verc
 - Locale-aware per-post SEO overrides for titles, descriptions, focus keywords, Open Graph data, and robots directives, with a broad LTR/RTL language catalog and arbitrary WPML, Polylang, or hreflang-map locales supported. Urdu (`ur` / `ur-PK`) is included.
 - Live Search, Website, Social, Meta, and JSON-LD previews.
 - Per-post and per-page overrides with capability and nonce checks.
-- Migration & Portability with preflight counts, merge/overwrite policies, source-data preservation, sanitized imports, and normalized JSON exports for compatible target plugins.
+- Migration & Portability with preflight counts, merge/overwrite policies, source-data preservation, sanitized imports, normalized JSON exports, and an improved contrast and mobile layout.
+
+### Mastodon verification and sharing
+
+PublishRank can add the website URL to a Mastodon profile field and emit the reciprocal `rel="me"` link in the website HTML head. The Mastodon settings page shows a copyable `<link rel="me" href="…">` snippet for manual use, plus token-based verification status and publishing controls. Mastodon checks the field after the profile is saved.
 
 ### Connected structured data
 
@@ -82,7 +86,8 @@ The sitemap index includes responsive cards, content-type badges, child-file cou
 - Robots.txt controls and crawl-budget hygiene.
 - Sitemap health checks and frontend diagnostics.
 - IndexNow and optional Baidu submission workflows.
-- Optional traffic controls and WordPress login protection.
+- Optional traffic controls.
+- WP Hide Login: change the login address and choose how blocked visitors are handled from a dedicated **PublishRank → Hide Login** settings page, separate from WordPress Settings.
 
 ### Publisher and newsroom workflows
 

@@ -142,6 +142,7 @@ final class AdminAssets {
 			'publishrank-baidu'              => 'fa-solid fa-globe',
 			'publishrank-google-preferred-sources' => 'fa-solid fa-star',
 			'publishrank-traffic-guard'      => 'fa-solid fa-shield-halved',
+			'publishrank-wp-hide-login'      => 'fa-solid fa-key',
 			'publishrank-seo-config-history' => 'fa-solid fa-clock-rotate-left',
 			'publishrank-llms-txt'           => 'fa-solid fa-code',
 			'publishrank-verification'       => 'fa-solid fa-circle-check',

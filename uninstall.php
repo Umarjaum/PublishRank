@@ -54,3 +54,13 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	} else {
 		$publishrank_cleanup();
 	}
+
+// PublishRank Hide Login settings.
+delete_option( 'whl_page' );
+delete_option( 'whl_redirect_admin' );
+delete_option( 'publishrank_wp_hide_login' );
+delete_option( 'publishrank_wp_hide_login_apache_rules_active' );
+if ( is_multisite() ) {
+	delete_site_option( 'whl_page' );
+	delete_site_option( 'whl_redirect_admin' );
+}
