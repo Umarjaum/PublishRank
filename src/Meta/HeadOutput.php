@@ -187,8 +187,8 @@ final class HeadOutput {
 			$creator = is_singular() ? PostMeta::get( get_queried_object_id(), PostMeta::TWITTER_CREATOR, '' ) : '';
 			if ( $creator ) {
 				echo '<meta name="twitter:creator" content="@' . esc_attr( ltrim( $creator, '@' ) ) . '" />' . "\n"; }
-			echo '<meta name="twitter:title" content="' . esc_attr( $this->social( PostMeta::OG_TITLE, $this->meta->title() ) ) . '" />' . "\n";
-			echo '<meta name="twitter:description" content="' . esc_attr( $this->social( PostMeta::OG_DESCRIPTION, $description ) ) . '" />' . "\n";
+			echo '<meta name="twitter:title" content="' . esc_attr( $this->social( array( PostMeta::X_TITLE, PostMeta::OG_TITLE ), $this->meta->title() ) ) . '" />' . "\n";
+			echo '<meta name="twitter:description" content="' . esc_attr( $this->social( array( PostMeta::X_DESCRIPTION, PostMeta::OG_DESCRIPTION ), $description ) ) . '" />' . "\n";
 			if ( $image ) {
 					echo '<meta name="twitter:image" content="' . esc_url( $image ) . '" />' . "\n";
 					$image_alt = $this->image_alt( $image );
@@ -216,13 +216,23 @@ final class HeadOutput {
 			echo \PublishRankSEO\Core\OutputSettings::source_markers() ? "<!-- end of SEO data Powered by PublishRank -->\n" : "<!-- PublishRank: end -->\n";
 	}
 
-	/** Per-post social text override, falling back to the generated value. */
+	/**
+	 * Social text for the current page. $meta_key may be a list: the first non-empty override wins
+	 * (for example the X override, then the Facebook / Open Graph override), then $fallback.
+	 *
+	 * @param string|string[] $meta_key Post meta key(s), most specific first.
+	 * @param string          $fallback Automatic value (SEO title or description).
+	 */
 	private function social( $meta_key, $fallback ) {
 		if ( is_singular() ) {
-			$override = PostMeta::get( get_queried_object_id(), $meta_key, '' );
-			if ( '' !== (string) $override ) {
+			$title_keys = array( PostMeta::OG_TITLE, PostMeta::X_TITLE, PostMeta::MASTODON_TITLE );
+			foreach ( (array) $meta_key as $key ) {
+				$override = PostMeta::get( get_queried_object_id(), $key, '' );
+				if ( '' === (string) $override ) {
+					continue;
+				}
 				// The override is a template: resolve %%variables%% (unknown ones are dropped) instead of printing raw tokens.
-				$field    = PostMeta::OG_TITLE === $meta_key ? 'title' : 'description';
+				$field    = in_array( $key, $title_keys, true ) ? 'title' : 'description';
 				$resolved = $this->meta->resolve_template( (string) $override, (int) get_queried_object_id(), $field );
 				if ( '' !== $resolved ) {
 					return $resolved;

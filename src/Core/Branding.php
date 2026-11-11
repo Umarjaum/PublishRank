@@ -9,6 +9,8 @@ final class Branding {
 	const WEBSITE_URL   = 'https://publishrankseo.vercel.app';
 	const DEVELOPER_URL = 'https://umarjaum.netlify.app';
 	const CONTACT_EMAIL = 'umarjaum@gmail.com';
+	/** Where people rate PublishRank on WordPress.org (the plugin slug is the text domain). */
+	const RATE_URL      = 'https://wordpress.org/support/plugin/publishrank/reviews/?rate=5#new-post';
 	/** The one official PublishRank logo (white mark on a transparent background) in assets/images. */
 	const LOGO_FILE     = 'publishrank-brand-mark.png';
 	/** Animated PublishRank logo used as the admin loader. */
@@ -41,8 +43,12 @@ final class Branding {
 		return trailingslashit( self::WEBSITE_URL );
 	}
 
+	public static function rate_url() {
+		return self::RATE_URL;
+	}
+
 	public static function version() {
-		return defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '2.20.4';
+		return defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '0.0.0'; // Defined from the plugin header in publishrank.php.
 	}
 
 	/** @param string $page Admin page slug. */

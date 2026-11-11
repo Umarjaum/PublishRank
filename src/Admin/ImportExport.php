@@ -55,9 +55,14 @@ final class ImportExport {
 			'publishrank_error_mode',
 			'publishrank_breadcrumb_style',
 			'publishrank_breadcrumb_size',
+			'publishrank_breadcrumb_align',
 			'publishrank_breadcrumb_text_color',
 			'publishrank_breadcrumb_link_color',
 			'publishrank_breadcrumb_bg_color',
+			'publishrank_breadcrumb_accent_color',
+			'publishrank_breadcrumb_offset',
+			'publishrank_breadcrumb_offset_y',
+			'publishrank_breadcrumb_icons',
 			'publishrank_breadcrumb_placement',
 			'publishrank_breadcrumb_hook',
 			'publishrank_breadcrumb_home_label',
@@ -96,8 +101,10 @@ final class ImportExport {
 			'publishrank_seo_404_monitor',
 			'publishrank_seo_404_log',
 			'publishrank_traffic_guard',
-			'publishrank_admin_access_mode',
-			'publishrank_admin_access_slug',
+			// Private login address. The Hide Login on/off switch is deliberately not exported, so an import
+			// can never hide the login on a site that has not set the address up.
+			'whl_page',
+			'whl_redirect_admin',
 		);
 
 		/** Register admin actions. */
@@ -142,7 +149,11 @@ final class ImportExport {
 				if ( '_schema' === $key || ! in_array( $key, $this->allowed, true ) ) {
 					continue;
 				}
-				update_option( $key, $this->sanitize( $key, $value ), false );
+				$clean = $this->sanitize( $key, $value );
+				if ( 'whl_page' === $key && '' === $clean ) {
+					continue; // Empty or reserved address: keep the one already saved.
+				}
+				update_option( $key, $clean, false );
 			}
 			update_option( 'publishrank_seo_cache_epoch', time(), false );
 			wp_safe_redirect( add_query_arg( 'publishrank_seo_imported', '1', admin_url( 'admin.php?page=publishrank' ) ) . '#pr-settings-portability' );
@@ -151,14 +162,6 @@ final class ImportExport {
 
 		/** @param string $key @param mixed $value @return mixed */
 		private function sanitize( $key, $value ) {
-			if ( 'publishrank_admin_access_mode' === $key ) {
-				$value = sanitize_key( is_scalar( $value ) ? (string) $value : '' );
-				return in_array( $value, array( 'custom', 'disabled' ), true ) ? $value : 'custom';
-			}
-			if ( 'publishrank_admin_access_slug' === $key ) {
-				$value = trim( sanitize_key( is_scalar( $value ) ? (string) $value : '' ), '/' );
-				return preg_match( '/^[a-z][a-z0-9_-]{5,63}$/', $value ) && ! in_array( $value, array( 'admin', 'login', 'wp-admin', 'wp-login', 'wp-json', 'wp-cron', 'xmlrpc', 'feed', 'sitemap' ), true ) ? $value : '';
-			}
 			if ( 'publishrank_traffic_guard' === $key ) {
 				if ( ! is_array( $value ) ) {
 					return array();
@@ -174,6 +177,12 @@ final class ImportExport {
 					'trusted_proxies'   => $proxies['valid'],
 					'blocked_countries' => $countries['valid'],
 				);
+			}
+			if ( 'whl_page' === $key ) {
+				return \PublishRankSEO\Security\WPHideLogin::clean_login_slug( $value );
+			}
+			if ( 'whl_redirect_admin' === $key ) {
+				return \PublishRankSEO\Security\WPHideLogin::clean_redirect_slug( $value );
 			}
 			if ( 'publishrank_indexnow_enabled' === $key ) {
 					return (bool) $value;

@@ -27,6 +27,20 @@ final class BreadcrumbsPage {
 		add_action( 'admin_menu', array( $this, 'menu' ), 12 );
 		add_action( 'admin_post_publishrank_breadcrumbs_save', array( $this, 'save' ) );
 		add_action( 'admin_post_publishrank_breadcrumbs_scan', array( $this, 'scan' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
+	}
+
+	/** Live designer assets (color picker, same stylesheet as the front end), only on this screen. */
+	public function assets() {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
+		if ( self::SLUG !== $page ) {
+			return;
+		}
+		$ver = Branding::version();
+		wp_enqueue_style( 'wp-color-picker' );
+		wp_enqueue_style( 'publishrank-breadcrumbs-front', Branding::asset_url( 'css/breadcrumbs.css' ), array(), $ver . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/breadcrumbs.css' ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		wp_enqueue_style( 'publishrank-breadcrumbs-admin', Branding::asset_url( 'css/breadcrumbs-admin.css' ), array( 'publishrank-breadcrumbs-front' ), $ver . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/breadcrumbs-admin.css' ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		wp_enqueue_script( 'publishrank-breadcrumbs-admin', Branding::asset_url( 'js/breadcrumbs-admin.js' ), array( 'jquery', 'wp-color-picker' ), $ver . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/js/breadcrumbs-admin.js' ), true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 	}
 
 	public function menu() {
@@ -41,6 +55,11 @@ final class BreadcrumbsPage {
 	/** Identify breadcrumb renderers in a page's HTML (see BreadcrumbDiagnostics::detect()). */
 	public static function detect( $html ) {
 		return BreadcrumbDiagnostics::detect( $html );
+	}
+
+	/** Notice asking site owners to switch off the theme's own breadcrumbs (Theme Options > Global) so only PublishRank's trail shows. */
+	public static function theme_notice_html() {
+		return '<div class="notice notice-warning inline publishrank-theme-bc-notice" style="margin:10px 0 8px;padding:10px 14px;border-left-color:#d63638"><p style="margin:0 0 6px"><strong>' . esc_html__( 'Important: turn off your theme’s breadcrumbs to use PublishRank breadcrumbs', 'publishrank' ) . '</strong></p><ol style="margin:0 0 6px 18px"><li>' . esc_html__( 'Open Appearance → Customize (or your theme’s Theme Options panel).', 'publishrank' ) . '</li><li>' . esc_html__( 'Go to the Global folder/section (sometimes called Global Settings, General or Layout).', 'publishrank' ) . '</li><li>' . esc_html__( 'Find Breadcrumbs and switch it OFF, then save/publish.', 'publishrank' ) . '</li><li>' . esc_html__( 'If you use Elementor or a page builder, also remove any Breadcrumbs widget from your header or single-post template.', 'publishrank' ) . '</li></ol><p style="margin:0">' . esc_html__( 'Otherwise two breadcrumb trails will appear on the same page. PublishRank cannot switch off theme-owned breadcrumbs automatically.', 'publishrank' ) . '</p></div>';
 	}
 
 	public function save() {
@@ -69,13 +88,20 @@ final class BreadcrumbsPage {
 				update_option( 'publishrank_breadcrumb_home_label', sanitize_text_field( (string) $post['publishrank_breadcrumb_home_label'] ) );
 			}
 			$style = isset( $post['publishrank_breadcrumb_style'] ) ? sanitize_key( $post['publishrank_breadcrumb_style'] ) : 'plain';
-			update_option( 'publishrank_breadcrumb_style', in_array( $style, array( 'plain', 'chips', 'bar', 'underline' ), true ) ? $style : 'plain' );
+			update_option( 'publishrank_breadcrumb_style', in_array( $style, array( 'plain', 'chips', 'bar', 'underline', 'arrows', 'minimal', 'steps', 'pills' ), true ) ? $style : 'plain' );
+			$align = isset( $post['publishrank_breadcrumb_align'] ) ? sanitize_key( $post['publishrank_breadcrumb_align'] ) : 'left';
+			update_option( 'publishrank_breadcrumb_align', in_array( $align, array( 'left', 'center', 'right' ), true ) ? $align : 'left' );
 			$size = isset( $post['publishrank_breadcrumb_size'] ) ? sanitize_key( $post['publishrank_breadcrumb_size'] ) : 'medium';
 			update_option( 'publishrank_breadcrumb_size', in_array( $size, array( 'small', 'medium', 'large' ), true ) ? $size : 'medium' );
-			foreach ( array( 'publishrank_breadcrumb_text_color', 'publishrank_breadcrumb_link_color', 'publishrank_breadcrumb_bg_color' ) as $color_key ) {
+			foreach ( array( 'publishrank_breadcrumb_text_color', 'publishrank_breadcrumb_link_color', 'publishrank_breadcrumb_bg_color', 'publishrank_breadcrumb_accent_color' ) as $color_key ) {
 				$color = isset( $post[ $color_key ] ) ? sanitize_hex_color( (string) $post[ $color_key ] ) : '';
 				update_option( $color_key, $color ? $color : '' );
 			}
+			$offset = isset( $post['publishrank_breadcrumb_offset'] ) && is_numeric( $post['publishrank_breadcrumb_offset'] ) ? (int) $post['publishrank_breadcrumb_offset'] : 0;
+			update_option( 'publishrank_breadcrumb_offset', max( -600, min( 600, $offset ) ) );
+			$offset_y = isset( $post['publishrank_breadcrumb_offset_y'] ) && is_numeric( $post['publishrank_breadcrumb_offset_y'] ) ? (int) $post['publishrank_breadcrumb_offset_y'] : 0;
+			update_option( 'publishrank_breadcrumb_offset_y', max( 0, min( 600, $offset_y ) ) );
+			update_option( 'publishrank_breadcrumb_icons', isset( $post['publishrank_breadcrumb_icons'] ) && '1' === (string) $post['publishrank_breadcrumb_icons'] ? 1 : 0 );
 			$error_mode = isset( $post['publishrank_breadcrumb_error_mode'] ) ? sanitize_key( (string) $post['publishrank_breadcrumb_error_mode'] ) : 'skip';
 			update_option( 'publishrank_breadcrumb_error_mode', in_array( $error_mode, array( 'skip', 'fallback', 'text', 'disable' ), true ) ? $error_mode : 'skip' );
 			if ( isset( $post['publishrank_breadcrumb_error_key'] ) ) {
@@ -186,7 +212,7 @@ final class BreadcrumbsPage {
 
 		echo '<tr><th scope="row">' . esc_html__( 'Visible breadcrumbs', 'publishrank' ) . '</th><td>';
 		$this->checkbox( 'publishrank_breadcrumbs_enabled', OutputSettings::visible_breadcrumbs(), __( 'Print the breadcrumb trail on the site', 'publishrank' ) );
-		echo '<div class="notice notice-warning inline" style="margin:10px 0 8px;padding:8px 12px"><p><strong>' . esc_html__( 'Recommended: turn off theme breadcrumbs', 'publishrank' ) . '</strong> ' . esc_html__( 'When PublishRank visible breadcrumbs are enabled, disable the theme or Elementor template’s own breadcrumb widget/function to prevent two trails appearing on the same page. PublishRank cannot safely switch off theme-owned breadcrumbs automatically. If you prefer the theme’s trail, turn off this PublishRank visibility option instead.', 'publishrank' ) . '</p></div>';
+		echo self::theme_notice_html();
 		echo '<br />';
 		$this->checkbox( 'publishrank_breadcrumb_frontend_override', OutputSettings::breadcrumb_override(), __( 'Frontend override: use the separator below in breadcrumb trails printed by supported plugins (Yoast SEO, Rank Math, WooCommerce, All in One SEO)', 'publishrank' ) );
 		echo '<p class="description">' . esc_html__( 'On by default. Turn it off to leave other plugins’ separators exactly as they are. A theme’s own hard-coded trail cannot be changed from here; use the site check below to see which renderer prints each trail.', 'publishrank' ) . '</p></td></tr>';
@@ -212,24 +238,59 @@ final class BreadcrumbsPage {
 
 				echo '<tr><th scope="row"><label for="pr-bc-home">' . esc_html__( 'First crumb label', 'publishrank' ) . '</label></th><td><input type="text" id="pr-bc-home" name="publishrank_breadcrumb_home_label" value="' . esc_attr( (string) get_option( 'publishrank_breadcrumb_home_label', '' ) ) . '" class="regular-text" placeholder="' . esc_attr__( 'Home', 'publishrank' ) . '" /><p class="description">' . esc_html__( 'Leave empty to use Home and the site homepage URL. Enter a custom label only when you intentionally want a different root label. The hierarchy follows the post’s primary category, parent pages, taxonomy ancestors and archives.', 'publishrank' ) . '</p></td></tr>';
 			$style = sanitize_key( (string) get_option( 'publishrank_breadcrumb_style', 'plain' ) );
+			$style = isset( BreadcrumbEngine::looks()[ $style ] ) ? $style : 'plain';
 			$size  = sanitize_key( (string) get_option( 'publishrank_breadcrumb_size', 'medium' ) );
-			echo '<tr><th scope="row">' . esc_html__( 'Appearance', 'publishrank' ) . '</th><td><label for="pr-bc-style">' . esc_html__( 'Look', 'publishrank' ) . '</label> <select id="pr-bc-style" name="publishrank_breadcrumb_style">';
-			foreach ( array( 'plain' => __( 'Plain text', 'publishrank' ), 'chips' => __( 'Rounded chips', 'publishrank' ), 'bar' => __( 'Soft background bar', 'publishrank' ), 'underline' => __( 'Underline', 'publishrank' ) ) as $value => $label ) {
-				echo '<option value="' . esc_attr( $value ) . '"' . selected( $style, $value, false ) . '>' . esc_html( $label ) . '</option>';
+			$align = sanitize_key( (string) get_option( 'publishrank_breadcrumb_align', 'left' ) );
+			$offset = max( -600, min( 600, (int) get_option( 'publishrank_breadcrumb_offset', 0 ) ) );
+			$offset_y = max( 0, min( 600, (int) get_option( 'publishrank_breadcrumb_offset_y', 0 ) ) );
+			$preview = $this->preview_items();
+			$looks   = array();
+			foreach ( BreadcrumbEngine::looks() as $value => $labels ) {
+				$looks[] = array(
+					'value' => $value,
+					'label' => $labels[0],
+					'short' => $labels[1],
+				);
 			}
-			echo '</select> <label for="pr-bc-size">' . esc_html__( 'Size', 'publishrank' ) . '</label> <select id="pr-bc-size" name="publishrank_breadcrumb_size">';
+			$names = array();
+			foreach ( $preview['items'] as $item ) {
+				$names[] = (string) $item['name'];
+			}
+			echo '<tr><th scope="row">' . esc_html__( 'Appearance', 'publishrank' ) . '</th><td><div id="pr-bc-designer" data-config="' . esc_attr( (string) wp_json_encode( array( 'items' => $names, 'looks' => $looks ) ) ) . '">';
+			echo '<p style="margin-top:0"><strong>' . esc_html__( 'Choose a look', 'publishrank' ) . '</strong></p><div class="pr-bc-gallery" id="pr-bc-gallery"></div>';
+			echo '<p><strong>' . esc_html__( 'Live preview', 'publishrank' ) . '</strong></p><div class="pr-bc-stage"><div id="pr-bc-live" aria-live="polite"></div></div>';
+			echo '<p class="description pr-bc-stage-note">' . esc_html( $preview['description'] ) . ' ' . esc_html__( 'The preview uses the same markup and stylesheet as your site and changes as you change any option below.', 'publishrank' ) . '</p>';
+			echo '<div class="pr-bc-grid">';
+			echo '<div><label for="pr-bc-style">' . esc_html__( 'Look', 'publishrank' ) . '</label><select id="pr-bc-style" name="publishrank_breadcrumb_style">';
+			foreach ( BreadcrumbEngine::looks() as $value => $labels ) {
+				echo '<option value="' . esc_attr( $value ) . '"' . selected( $style, $value, false ) . '>' . esc_html( $labels[0] ) . '</option>';
+			}
+			echo '</select></div>';
+			echo '<div><label for="pr-bc-size">' . esc_html__( 'Size', 'publishrank' ) . '</label><select id="pr-bc-size" name="publishrank_breadcrumb_size">';
 			foreach ( array( 'small' => __( 'Small', 'publishrank' ), 'medium' => __( 'Medium', 'publishrank' ), 'large' => __( 'Large', 'publishrank' ) ) as $value => $label ) {
 				echo '<option value="' . esc_attr( $value ) . '"' . selected( $size, $value, false ) . '>' . esc_html( $label ) . '</option>';
 			}
-			echo '</select><br /><label for="pr-bc-text-color">' . esc_html__( 'Text', 'publishrank' ) . '</label> <input id="pr-bc-text-color" name="publishrank_breadcrumb_text_color" type="text" class="small-text code" value="' . esc_attr( (string) get_option( 'publishrank_breadcrumb_text_color', '' ) ) . '" placeholder="#444444" /> <label for="pr-bc-link-color">' . esc_html__( 'Links', 'publishrank' ) . '</label> <input id="pr-bc-link-color" name="publishrank_breadcrumb_link_color" type="text" class="small-text code" value="' . esc_attr( (string) get_option( 'publishrank_breadcrumb_link_color', '' ) ) . '" placeholder="#0a58ca" /> <label for="pr-bc-bg-color">' . esc_html__( 'Background', 'publishrank' ) . '</label> <input id="pr-bc-bg-color" name="publishrank_breadcrumb_bg_color" type="text" class="small-text code" value="' . esc_attr( (string) get_option( 'publishrank_breadcrumb_bg_color', '' ) ) . '" placeholder="#eef2f7" /><p class="description">' . esc_html__( 'Colors accept hex values and are applied only to the PublishRank trail.', 'publishrank' ) . '</p></td></tr>';
-			$preview = $this->preview_items();
-			echo '<tr><th scope="row">' . esc_html__( 'Actual preview', 'publishrank' ) . '</th><td><div class="publishrank-breadcrumb-preview" style="padding:12px 14px;border:1px solid #dbe3ee;border-radius:8px;background:#fff;max-width:760px">';
-			echo '<p class="description" style="margin-top:0">' . esc_html( $preview['description'] ) . '</p><nav aria-label="' . esc_attr__( 'Breadcrumb preview', 'publishrank' ) . '"><ol style="display:flex;flex-wrap:wrap;gap:0;list-style:none;margin:0;padding:0;align-items:center">';
-			foreach ( $preview['items'] as $index => $item ) {
-				if ( $index > 0 ) { echo '<li aria-hidden="true" style="margin:0 8px">' . esc_html( $sep ) . '</li>'; }
-				echo '<li>' . ( $index < count( $preview['items'] ) - 1 ? '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['name'] ) . '</a>' : '<span aria-current="page">' . esc_html( $item['name'] ) . '</span>' ) . '</li>';
+			echo '</select></div>';
+			echo '<div><label for="pr-bc-align">' . esc_html__( 'Position', 'publishrank' ) . '</label><select id="pr-bc-align" name="publishrank_breadcrumb_align">';
+			foreach ( array( 'left' => __( 'Left', 'publishrank' ), 'center' => __( 'Center', 'publishrank' ), 'right' => __( 'Right', 'publishrank' ) ) as $value => $label ) {
+				echo '<option value="' . esc_attr( $value ) . '"' . selected( $align, $value, false ) . '>' . esc_html( $label ) . '</option>';
 			}
-			echo '</ol></nav><details style="margin-top:12px"><summary>' . esc_html__( 'Preview the exact BreadcrumbList JSON-LD items', 'publishrank' ) . '</summary><pre style="white-space:pre-wrap;max-height:220px;overflow:auto">' . esc_html( wp_json_encode( $preview['items'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ) . '</pre></details></div></td></tr>';
+			echo '</select></div>';
+			echo '<div><label for="pr-bc-offset">' . esc_html__( 'Horizontal position (px)', 'publishrank' ) . '</label><div class="pr-bc-offset"><input type="range" id="pr-bc-offset-range" min="-400" max="400" step="1" value="' . esc_attr( (string) $offset ) . '" aria-label="' . esc_attr__( 'Horizontal position in pixels', 'publishrank' ) . '" /><input type="number" id="pr-bc-offset" name="publishrank_breadcrumb_offset" min="-600" max="600" step="1" value="' . esc_attr( (string) $offset ) . '" /> px</div><p class="description">' . esc_html__( 'Moves the trail from left to right on top of the Position above. Negative values move it left. Ignored on small phones.', 'publishrank' ) . '</p></div>';
+			echo '<div><label for="pr-bc-offset-y">' . esc_html__( 'Vertical position (px)', 'publishrank' ) . '</label><div class="pr-bc-offset"><input type="range" id="pr-bc-offset-y-range" min="0" max="600" step="1" value="' . esc_attr( (string) $offset_y ) . '" aria-label="' . esc_attr__( 'Vertical position in pixels', 'publishrank' ) . '" /><input type="number" id="pr-bc-offset-y" name="publishrank_breadcrumb_offset_y" min="0" max="600" step="1" value="' . esc_attr( (string) $offset_y ) . '" /> px</div><p class="description">' . esc_html__( 'Moves the trail from top to bottom. Values are positive pixels and 0 keeps the normal flow position. Ignored on small phones.', 'publishrank' ) . '</p></div>';
+			echo '<div><label>' . esc_html__( 'Icons', 'publishrank' ) . '</label>';
+			$this->checkbox( 'publishrank_breadcrumb_icons', (bool) get_option( 'publishrank_breadcrumb_icons', 0 ), __( 'Show icons (home, folder, page)', 'publishrank' ) );
+			echo '</div>';
+			foreach ( array(
+				'publishrank_breadcrumb_text_color'   => array( 'pr-bc-text-color', __( 'Text', 'publishrank' ), '#8a8f98' ),
+				'publishrank_breadcrumb_link_color'   => array( 'pr-bc-link-color', __( 'Links', 'publishrank' ), '#0a58ca' ),
+				'publishrank_breadcrumb_bg_color'     => array( 'pr-bc-bg-color', __( 'Background', 'publishrank' ), '#ffffff' ),
+				'publishrank_breadcrumb_accent_color' => array( 'pr-bc-accent-color', __( 'Accent (current page, steps, hover)', 'publishrank' ), '#3b82e6' ),
+			) as $option => $meta ) {
+				echo '<div><label for="' . esc_attr( $meta[0] ) . '">' . esc_html( $meta[1] ) . '</label><input id="' . esc_attr( $meta[0] ) . '" name="' . esc_attr( $option ) . '" type="text" class="code" value="' . esc_attr( (string) get_option( $option, '' ) ) . '" data-default-color="' . esc_attr( $meta[2] ) . '" placeholder="' . esc_attr( $meta[2] ) . '" /></div>';
+			}
+			echo '</div><p class="description">' . esc_html__( 'Pick colors with the color picker or type a hex value. Leave a color empty to follow your theme. Colors apply only to the PublishRank trail; the block and the shortcode can override every option for a single page.', 'publishrank' ) . '</p>';
+			echo '<details style="margin-top:12px"><summary>' . esc_html__( 'Preview the exact BreadcrumbList JSON-LD items', 'publishrank' ) . '</summary><pre style="white-space:pre-wrap;max-height:220px;overflow:auto">' . esc_html( wp_json_encode( $preview['items'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ) . '</pre></details></div></td></tr>';
 
 		echo '<tr><th scope="row">' . esc_html__( 'Structured data', 'publishrank' ) . '</th><td>';
 		$this->checkbox( 'publishrank_breadcrumb_schema_enabled', OutputSettings::breadcrumb_schema(), __( 'Output BreadcrumbList JSON-LD (independent of the visible trail)', 'publishrank' ) );

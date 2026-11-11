@@ -152,6 +152,9 @@ a.prw-steps__link:hover .prw-steps__dot { border-color: color-mix(in srgb, var(-
 .prw-wrap .prw-field input:user-invalid { border-color: var(--prw-danger); }
 .prw-input--country { max-width: 120px !important; text-transform: uppercase; letter-spacing: .08em; }
 .prw-help { color: var(--prm-muted); font-size: 12px; line-height: 1.5; }
+.prw-count { display: block; min-height: 1.5em; font-size: 12px; line-height: 1.5; color: var(--prm-muted); }
+.prw-count.is-ok { color: #0a6b3d; }
+.prw-count.is-warn { color: #8a5300; }
 .prw-field-error { display: inline-flex; align-items: center; gap: 6px; color: var(--prw-danger); font-size: 12px; font-weight: 600; line-height: 1.4; animation: prw-shake .35s ease 1; }
 
 /* Organization / Person cards */
@@ -510,3 +513,43 @@ a.prw-steps__link:hover .prw-steps__dot { border-color: color-mix(in srgb, var(-
 	.prw-choice:hover,
 	.prw-recap__item:hover { transform: none; }
 }
+
+/* Google-style homepage preview (step 5). The card stays white like a real results page. */
+.prw-serp { margin-top: 22px; padding: 16px; border: 1px solid var(--prm-line, #dcdcde); border-radius: 14px; background: var(--prm-surface, #fff); }
+.prw-serp__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.prw-serp__head h3 { margin: 0; font-size: 14px; }
+.prw-serp__switch { display: inline-flex; border: 1px solid var(--prm-line, #dcdcde); border-radius: 999px; overflow: hidden; }
+.prw-serp__switch button { min-height: 32px; padding: 0 14px; border: 0; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+.prw-serp__switch button.is-active { background: #1a0dab; color: #fff; }
+.prw-serp__switch button:focus-visible { outline: 2px solid #1a0dab; outline-offset: -2px; }
+.prw-serp__card { max-width: 652px; padding: 16px 18px; border: 1px solid #dadce0; border-radius: 12px; background: #fff; font-family: Arial, sans-serif; transition: opacity .15s; }
+.prw-serp__card.is-mobile { max-width: 380px; }
+.prw-serp__card.is-loading { opacity: .6; }
+.prw-serp__top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.prw-serp__fav { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; overflow: hidden; background: #f1f3f4; }
+.prw-serp__fav img { width: 100%; height: 100%; object-fit: cover; }
+.prw-serp__fav.is-letter { font-size: 13px; color: #5f6368; }
+.prw-serp__who { min-width: 0; }
+.prw-serp__site { font-size: 14px; line-height: 18px; color: #202124; }
+.prw-serp__url { overflow: hidden; font-size: 12px; line-height: 16px; color: #4d5156; text-overflow: ellipsis; white-space: nowrap; }
+.prw-serp__title { margin: 2px 0 3px; font-size: 20px; line-height: 26px; color: #1a0dab; word-break: break-word; }
+.prw-serp__desc { font-size: 14px; line-height: 22px; color: #4d5156; word-break: break-word; }
+.prw-serp__desc.is-empty { min-height: 22px; }
+.prw-serp__notes { display: grid; gap: 4px; margin: 12px 0 8px; padding: 0; list-style: none; font-size: 12px; line-height: 1.5; color: var(--prm-muted); }
+.prw-serp__notes li::before { content: "\2022"; margin-right: 6px; }
+.prw-serp__notes li.is-warn { color: #8a5300; }
+@media (prefers-reduced-motion: reduce) { .prw-serp__card { transition: none; } }
+
+
+/* Hide Login step: private address composer and the Save & exit control. */
+.prw-slug{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 9px;border:1px solid #d9d0d4;border-radius:12px;background:#fff}
+.prw-slug:focus-within{border-color:#9b1245;box-shadow:0 0 0 3px rgba(155,18,69,.12)}
+.prw-slug__prefix,.prw-slug__suffix{flex:0 0 auto;color:#4d424b;font-size:12px;overflow-wrap:anywhere;background:transparent}
+.prw-slug input[type="text"]{flex:1 1 160px;min-width:0;min-height:40px;border:1px solid #e3dce0;border-radius:8px;color:#241c22;background:#fffefc}
+.prw-btn.prw-exit[disabled],.prw-btn.prw-exit:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:782px){.prw-slug{flex-wrap:wrap}.prw-slug__prefix{flex-basis:100%}.prw-slug input[type="text"]{flex-basis:100%;min-height:46px}.prw-slug__suffix{display:none}}
+.prw-loginurl{align-items:flex-start}
+.prw-loginurl p{margin:0 0 8px}
+.prw-loginurl__row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.prw-loginurl__row code{overflow-wrap:anywhere;padding:4px 8px;border-radius:8px;background:rgba(155,18,69,.08);color:#4d424b}
+.prw-loginurl__status{font-size:12px;color:#4d424b}

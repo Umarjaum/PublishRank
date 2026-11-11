@@ -11,6 +11,29 @@ final class BreadcrumbEngine {
 	const PLACEMENTS      = array( 'auto', 'content', 'hook', 'manual', 'schema_only' );
 	const STYLE_HANDLE    = 'publishrank-breadcrumbs';
 	const BLOCK_NAME      = 'publishrank/breadcrumbs';
+	const BLOCK_SCRIPT    = 'publishrank-breadcrumbs-block';
+	const BLOCK_EDITOR_CSS = 'publishrank-breadcrumbs-editor';
+	const SIZES           = array( 'small', 'medium', 'large' );
+	const ALIGNMENTS      = array( 'left', 'center', 'right' );
+
+	/**
+	 * Every look the visible trail can use: value => array( full label, short label ).
+	 * The four ribbon-style looks come first; the settings screen, the block and the renderer all read this list.
+	 *
+	 * @return array<string,array<int,string>>
+	 */
+	public static function looks() {
+		return array(
+			'arrows'    => array( __( 'Arrow ribbon (chevron steps)', 'publishrank' ), __( 'Arrows', 'publishrank' ) ),
+			'minimal'   => array( __( 'Minimal (lowercase, underlined current)', 'publishrank' ), __( 'Minimal', 'publishrank' ) ),
+			'steps'     => array( __( 'Progress steps (numbered circles)', 'publishrank' ), __( 'Steps', 'publishrank' ) ),
+			'pills'     => array( __( 'Pills (highlighted current page)', 'publishrank' ), __( 'Pills', 'publishrank' ) ),
+			'plain'     => array( __( 'Plain text', 'publishrank' ), __( 'Plain', 'publishrank' ) ),
+			'chips'     => array( __( 'Rounded chips', 'publishrank' ), __( 'Chips', 'publishrank' ) ),
+			'bar'       => array( __( 'Soft background bar', 'publishrank' ), __( 'Bar', 'publishrank' ) ),
+			'underline' => array( __( 'Underline', 'publishrank' ), __( 'Underline', 'publishrank' ) ),
+		);
+	}
 
 	/** Context keys (see context_key()) whose trail was already printed in this request, so one context never gets two trails. */
 	private static $printed = array();
@@ -215,14 +238,13 @@ final class BreadcrumbEngine {
 			}
 			return;
 		}
-		// Automatic: every supported integration point is registered; the per-context registry lets only the first one print.
+		// Automatic: block themes get a title/content-block insertion so the trail is below the header/menu
+		// and above the article headline. Classic themes use loop_start for the same position, with the_content
+		// retained as a fallback for templates that bypass the main loop.
 		if ( function_exists( 'wp_is_block_theme' ) && wp_is_block_theme() ) {
 			add_filter( 'render_block', array( $this, 'before_title_block' ), 10, 3 );
 			self::$registered[] = 'render_block';
-		} elseif ( $singular ) {
-			add_filter( 'the_content', array( $this, 'prepend' ), 20 );
-			self::$registered[] = 'the_content';
-		}
+		} else {
 			if ( ! $singular ) {
 				// Classic archives and the posts page: before the first post of the main loop.
 				add_action( 'loop_start', array( $this, 'on_loop_start' ), 5 );
@@ -236,6 +258,7 @@ final class BreadcrumbEngine {
 				add_filter( 'the_content', array( $this, 'prepend' ), 20 );
 				self::$registered[] = 'the_content';
 			}
+		}
 		// Elementor (documented hooks): title widgets of theme-builder templates, and the Canvas / Header-Footer page templates.
 		add_filter( 'elementor/widget/render_content', array( $this, 'before_elementor_title' ), 10, 2 );
 		add_action( 'elementor/page_templates/canvas/before_content', array( $this, 'echo_once' ), 5 );
@@ -245,7 +268,7 @@ final class BreadcrumbEngine {
 	}
 
 	public function register_style() {
-		wp_register_style( self::STYLE_HANDLE, \PublishRankSEO\Core\Branding::asset_url( 'css/breadcrumbs.css' ), array(), \PublishRankSEO\Core\Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/breadcrumbs.css' ) );
+		$this->register_style_asset();
 		if ( ! is_admin() && self::visible_enabled() && self::context_supported() ) {
 			wp_enqueue_style( self::STYLE_HANDLE ); }
 	}
@@ -253,17 +276,99 @@ final class BreadcrumbEngine {
 	public function register_block() {
 		if ( ! function_exists( 'register_block_type' ) ) {
 			return; }
-		wp_register_script( 'publishrank-breadcrumbs-block', \PublishRankSEO\Core\Branding::asset_url( 'js/breadcrumbs-block.js' ), array( 'wp-blocks', 'wp-element', 'wp-i18n' ), \PublishRankSEO\Core\Branding::version(), true );
+		$this->register_style_asset();
+		$script_path = PUBLISHRANK_SEO_PATH . 'assets/js/breadcrumbs-block.js';
+		wp_register_script(
+			self::BLOCK_SCRIPT,
+			\PublishRankSEO\Core\Branding::asset_url( 'js/breadcrumbs-block.js' ),
+			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-block-editor', 'wp-components', 'wp-data', 'wp-core-data' ),
+			\PublishRankSEO\Core\Branding::version() . '.' . (int) @filemtime( $script_path ), // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			true
+		);
+		wp_add_inline_script( self::BLOCK_SCRIPT, 'window.publishrankBreadcrumbsBlock = ' . wp_json_encode( $this->editor_data() ) . ';', 'before' );
 		if ( function_exists( 'wp_set_script_translations' ) ) {
 			// WordPress generates the wp.i18n.setLocaleData() bootstrap from the bundled MO catalog.
-			wp_set_script_translations( 'publishrank-breadcrumbs-block', 'publishrank', PUBLISHRANK_SEO_PATH . 'languages' );
+			wp_set_script_translations( self::BLOCK_SCRIPT, 'publishrank', PUBLISHRANK_SEO_PATH . 'languages' );
 		}
+		wp_register_style(
+			self::BLOCK_EDITOR_CSS,
+			\PublishRankSEO\Core\Branding::asset_url( 'css/breadcrumbs-editor.css' ),
+			array( self::STYLE_HANDLE ),
+			\PublishRankSEO\Core\Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/breadcrumbs-editor.css' ) // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		);
 		register_block_type(
 			self::BLOCK_NAME,
 			array(
-				'editor_script'   => 'publishrank-breadcrumbs-block',
-				'render_callback' => array( $this, 'shortcode' ),
+				'api_version'         => 2,
+				'editor_script'       => self::BLOCK_SCRIPT,
+				'style_handles'       => array( self::STYLE_HANDLE ),
+				'editor_style_handles' => array( self::STYLE_HANDLE, self::BLOCK_EDITOR_CSS ),
+				'attributes'          => array(
+					'look'        => array( 'type' => 'string' ),
+					'size'        => array( 'type' => 'string' ),
+					'position'    => array( 'type' => 'string' ), // Not "align": that name is reserved for the core wide/full alignment support.
+					'separator'   => array( 'type' => 'string' ),
+					'offsetX'     => array( 'type' => 'number' ),
+					'offsetY'     => array( 'type' => 'number' ),
+					'icons'       => array( 'type' => 'boolean' ),
+					'colorText'   => array( 'type' => 'string' ),
+					'colorLink'   => array( 'type' => 'string' ),
+					'colorBg'     => array( 'type' => 'string' ),
+					'colorAccent' => array( 'type' => 'string' ),
+				),
+				'render_callback'     => array( $this, 'render_block' ),
 			)
+		);
+	}
+
+	/** Registers the front-end stylesheet once; safe to call from several hooks. */
+	private function register_style_asset() {
+		if ( wp_style_is( self::STYLE_HANDLE, 'registered' ) ) {
+			return; }
+		wp_register_style( self::STYLE_HANDLE, \PublishRankSEO\Core\Branding::asset_url( 'css/breadcrumbs.css' ), array(), \PublishRankSEO\Core\Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/breadcrumbs.css' ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+	}
+
+	/**
+	 * Site-wide breadcrumb settings handed to the block editor, so the live preview of a block that keeps
+	 * "Site default" looks exactly like the front end.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function editor_data() {
+		$looks = array();
+		foreach ( self::looks() as $value => $labels ) {
+			$looks[] = array(
+				'value' => $value,
+				'label' => $labels[0],
+				'short' => $labels[1],
+			);
+		}
+		$colors = array();
+		foreach ( array( 'text' => 'publishrank_breadcrumb_text_color', 'link' => 'publishrank_breadcrumb_link_color', 'bg' => 'publishrank_breadcrumb_bg_color' ) as $key => $option ) {
+			$color          = sanitize_hex_color( (string) get_option( $option, '' ) );
+			$colors[ $key ] = $color ? $color : '';
+		}
+		$accent         = sanitize_hex_color( (string) get_option( 'publishrank_breadcrumb_accent_color', '' ) );
+		$colors['accent'] = $accent ? $accent : '';
+		$style = sanitize_key( (string) get_option( 'publishrank_breadcrumb_style', 'plain' ) );
+		$size  = sanitize_key( (string) get_option( 'publishrank_breadcrumb_size', 'medium' ) );
+		$align = sanitize_key( (string) get_option( 'publishrank_breadcrumb_align', 'left' ) );
+		$home  = trim( (string) get_option( 'publishrank_breadcrumb_home_label', '' ) );
+		return array(
+			'looks'       => $looks,
+			'defaults'    => array(
+				'look'      => isset( self::looks()[ $style ] ) ? $style : 'plain',
+				'size'      => in_array( $size, self::SIZES, true ) ? $size : 'medium',
+				'align'     => in_array( $align, self::ALIGNMENTS, true ) ? $align : 'left',
+				'separator' => BreadcrumbSeparators::current(),
+				'colors'    => $colors,
+				'home'      => '' !== $home ? $home : __( 'Home', 'publishrank' ),
+				'offset'    => max( -600, min( 600, (int) get_option( 'publishrank_breadcrumb_offset', 0 ) ) ),
+				'offsetY'   => max( 0, min( 600, (int) get_option( 'publishrank_breadcrumb_offset_y', 0 ) ) ),
+				'icons'     => (bool) get_option( 'publishrank_breadcrumb_icons', 0 ),
+			),
+			'visible'     => (bool) \PublishRankSEO\Core\OutputSettings::visible_breadcrumbs(),
+			'settingsUrl' => admin_url( 'admin.php?page=publishrank-breadcrumbs' ),
 		);
 	}
 
@@ -369,20 +474,70 @@ final class BreadcrumbEngine {
 	}
 
 	/**
-	 * Shortcode and block output: prints where the editor placed it, but only while visible breadcrumbs are switched on.
+	 * Shortcode output: prints where the editor placed it, but only while visible breadcrumbs are switched on.
 	 * (The "Structured data only" placement still allows a hand-placed trail, as before.)
+	 *
+	 * Optional attributes: separator, look, size, align (left, center or right), offset (pixels, -600 to 600), offset_y (positive pixels down), icons (1 or 0), text, link, bg, accent (colors are #hex values).
+	 * Example: [publishrank_breadcrumbs look="arrows" accent="#c9184a" link="#590d22"]
 	 */
 	public function shortcode( $atts = array() ) {
 		if ( ! \PublishRankSEO\Core\OutputSettings::visible_breadcrumbs() ) {
 			return ''; }
-		$atts = is_array( $atts ) ? $atts : array();
-		$args = array();
-		if ( isset( $atts['separator'] ) ) {
-			$args['separator'] = (string) $atts['separator']; } // Validated by BreadcrumbSeparators::normalize() in render().
-		$html = $this->render( $args );
+		$html = $this->render( $this->args_from_input( is_array( $atts ) ? $atts : array(), false ) );
 		if ( '' !== $html ) {
 			self::mark_printed(); }
 		return $html;
+	}
+
+	/** Block output. Blank attributes fall back to the site-wide Breadcrumbs settings. */
+	public function render_block( $attributes = array() ) {
+		if ( ! \PublishRankSEO\Core\OutputSettings::visible_breadcrumbs() ) {
+			return ''; }
+		$html = $this->render( $this->args_from_input( is_array( $attributes ) ? $attributes : array(), true ) );
+		if ( '' !== $html ) {
+			self::mark_printed(); }
+		return $html;
+	}
+
+	/**
+	 * Turn shortcode attributes or block attributes into render() arguments. Everything is validated again in render().
+	 *
+	 * @param array $input    Raw attributes.
+	 * @param bool  $is_block Blocks send an empty separator when it was never set, so only the shortcode treats "" as "no separator".
+	 * @return array
+	 */
+	private function args_from_input( $input, $is_block ) {
+		$args = array();
+		if ( isset( $input['separator'] ) && is_string( $input['separator'] ) && ( ! $is_block || '' !== $input['separator'] ) ) {
+			$args['separator'] = $input['separator']; // Validated by BreadcrumbSeparators::normalize() in render().
+		}
+		foreach ( array( 'look', 'size', 'align' ) as $key ) {
+			$raw = isset( $input[ $key ] ) ? $input[ $key ] : ( 'align' === $key && isset( $input['position'] ) ? $input['position'] : '' );
+			if ( is_string( $raw ) && '' !== $raw ) {
+				$args[ $key ] = sanitize_key( $raw );
+			}
+		}
+		$offset = isset( $input['offsetX'] ) ? $input['offsetX'] : ( isset( $input['offset'] ) ? $input['offset'] : null );
+		if ( is_numeric( $offset ) ) {
+			$args['offset'] = max( -600, min( 600, (int) $offset ) ); // Pixels; negative moves the trail left, positive moves it right.
+		}
+		$offset_y = isset( $input['offsetY'] ) ? $input['offsetY'] : ( isset( $input['offset_y'] ) ? $input['offset_y'] : null );
+		if ( is_numeric( $offset_y ) ) {
+			$args['offsetY'] = max( 0, min( 600, (int) $offset_y ) ); // Positive pixels move the trail down from its normal flow position.
+		}
+		if ( isset( $input['icons'] ) ) {
+			$args['icons'] = filter_var( $input['icons'], FILTER_VALIDATE_BOOLEAN ); // true, "1", "yes" and "true" turn the crumb icons on.
+		}
+		$colors = array();
+		foreach ( array( 'text' => 'colorText', 'link' => 'colorLink', 'bg' => 'colorBg', 'accent' => 'colorAccent' ) as $key => $block_key ) {
+			$raw = isset( $input[ $block_key ] ) ? $input[ $block_key ] : ( isset( $input[ $key ] ) ? $input[ $key ] : '' );
+			if ( is_string( $raw ) && '' !== $raw ) {
+				$colors[ $key ] = $raw; // Only #hex values survive sanitize_hex_color() in render().
+			}
+		}
+		if ( $colors ) {
+			$args['colors'] = $colors; }
+		return $args;
 	}
 
 	private function mode() {
@@ -610,7 +765,7 @@ final class BreadcrumbEngine {
 	/**
 	 * Visible trail. Built from the same items as the BreadcrumbList schema so the markup always matches the page.
 	 *
-	 * @param array $args Optional: separator.
+	 * @param array $args Optional: separator, look, size, align, offset (px), offsetY (positive px down), icons (bool), colors (text, link, bg, accent as #hex).
 	 */
 	public function render( $args = array() ) {
 		$items = $this->items();
@@ -622,24 +777,50 @@ final class BreadcrumbEngine {
 			$custom    = BreadcrumbSeparators::normalize( $args['separator'] );
 			$separator = null === $custom ? $separator : $custom;
 		}
+		// Keep spacing in CSS, not inside the separator text; this prevents doubled gaps when themes add flex spacing.
+		$separator = trim( (string) $separator );
 		$separator_class = 'publishrank-breadcrumb-separator' . ( BreadcrumbSeparators::is_directional( $separator ) ? ' publishrank-breadcrumb-separator--directional' : '' );
 		if ( wp_style_is( self::STYLE_HANDLE, 'registered' ) ) {
 			wp_enqueue_style( self::STYLE_HANDLE ); }
-		$style = sanitize_key( (string) get_option( 'publishrank_breadcrumb_style', 'plain' ) );
-		$style = in_array( $style, array( 'plain', 'chips', 'bar', 'underline' ), true ) ? $style : 'plain';
-		$size  = sanitize_key( (string) get_option( 'publishrank_breadcrumb_size', 'medium' ) );
-		$size  = in_array( $size, array( 'small', 'medium', 'large' ), true ) ? $size : 'medium';
-		$vars  = '';
+		$style = ! empty( $args['look'] ) ? sanitize_key( (string) $args['look'] ) : sanitize_key( (string) get_option( 'publishrank_breadcrumb_style', 'plain' ) );
+		$style = isset( self::looks()[ $style ] ) ? $style : 'plain';
+		$size  = ! empty( $args['size'] ) ? sanitize_key( (string) $args['size'] ) : sanitize_key( (string) get_option( 'publishrank_breadcrumb_size', 'medium' ) );
+		$size  = in_array( $size, self::SIZES, true ) ? $size : 'medium';
+		$align = ! empty( $args['align'] ) ? sanitize_key( (string) $args['align'] ) : sanitize_key( (string) get_option( 'publishrank_breadcrumb_align', 'left' ) );
+		$align = in_array( $align, self::ALIGNMENTS, true ) ? $align : 'left';
+		// Colors: the site-wide settings first, then any value set on this block/shortcode (accent only exists per trail).
+		$colors = array();
 		foreach ( array( 'text' => 'publishrank_breadcrumb_text_color', 'link' => 'publishrank_breadcrumb_link_color', 'bg' => 'publishrank_breadcrumb_bg_color' ) as $var => $option ) {
-			$color = sanitize_hex_color( (string) get_option( $option, '' ) );
+			$colors[ $var ] = sanitize_hex_color( (string) get_option( $option, '' ) );
+		}
+		$colors['accent'] = sanitize_hex_color( (string) get_option( 'publishrank_breadcrumb_accent_color', '' ) );
+		if ( ! empty( $args['colors'] ) && is_array( $args['colors'] ) ) {
+			foreach ( array( 'text', 'link', 'bg', 'accent' ) as $var ) {
+				$override = isset( $args['colors'][ $var ] ) ? sanitize_hex_color( (string) $args['colors'][ $var ] ) : '';
+				if ( $override ) {
+					$colors[ $var ] = $override; }
+			}
+		}
+		$vars = '';
+		foreach ( $colors as $var => $color ) {
 			if ( $color ) {
 				$vars .= '--pr-bc-' . $var . ':' . $color . ';'; }
 		}
-		$html = '<nav class="publishrank-breadcrumbs publishrank-breadcrumbs--' . esc_attr( $style ) . ' publishrank-breadcrumbs--size-' . esc_attr( $size ) . '"' . ( '' !== $vars ? ' style="' . esc_attr( $vars ) . '"' : '' ) . ' aria-label="' . esc_attr__( 'Breadcrumbs', 'publishrank' ) . '"><ol class="publishrank-breadcrumbs__list">';
+		$offset = isset( $args['offset'] ) && is_numeric( $args['offset'] ) ? (int) $args['offset'] : (int) get_option( 'publishrank_breadcrumb_offset', 0 );
+		$offset = max( -600, min( 600, $offset ) );
+		$offset_y = isset( $args['offsetY'] ) && is_numeric( $args['offsetY'] ) ? (int) $args['offsetY'] : (int) get_option( 'publishrank_breadcrumb_offset_y', 0 );
+		$offset_y = max( 0, min( 600, $offset_y ) );
+		$icons  = array_key_exists( 'icons', $args ) ? (bool) $args['icons'] : (bool) get_option( 'publishrank_breadcrumb_icons', 0 );
+		$icons  = $icons && 'steps' !== $style;
+		if ( 0 !== $offset ) {
+			$vars .= '--pr-bc-x:' . $offset . 'px;'; }
+		if ( 0 !== $offset_y ) {
+			$vars .= '--pr-bc-y:' . $offset_y . 'px;'; }
+		$html = '<nav class="publishrank-breadcrumbs publishrank-breadcrumbs--' . esc_attr( $style ) . ( 0 !== $offset ? ' publishrank-breadcrumbs--offset' : '' ) . ( 0 !== $offset_y ? ' publishrank-breadcrumbs--offset-y' : '' ) . ( $icons ? ' publishrank-breadcrumbs--icons' : '' ) . ' publishrank-breadcrumbs--size-' . esc_attr( $size ) . ' publishrank-breadcrumbs--align-' . esc_attr( $align ) . '"' . ( '' !== $vars ? ' style="' . esc_attr( $vars ) . '"' : '' ) . ' aria-label="' . esc_attr__( 'Breadcrumbs', 'publishrank' ) . '"><ol class="publishrank-breadcrumbs__list">';
 		$last = count( $items ) - 1;
 		foreach ( $items as $index => $item ) {
 			$is_link = $index < $last && ! empty( $item['url'] );
-			$html   .= '<li class="publishrank-breadcrumbs__item">';
+			$html   .= '<li class="publishrank-breadcrumbs__item' . ( $index === $last ? ' is-current' : ' is-done' ) . '" data-step="' . esc_attr( (string) ( $index + 1 ) ) . '">';
 			if ( $is_link ) {
 				$html .= '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['name'] ) . '</a>';
 			} else {

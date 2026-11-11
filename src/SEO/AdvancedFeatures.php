@@ -95,6 +95,10 @@ final class AdvancedFeatures {
 		PostMeta::CANONICAL      => isset( $seo['canonical'] ) ? $seo['canonical'] : '',
 		PostMeta::OG_TITLE       => isset( $seo['title'] ) ? $seo['title'] : '',
 		PostMeta::OG_DESCRIPTION => isset( $seo['description'] ) ? $seo['description'] : '',
+		PostMeta::X_TITLE        => isset( $seo['og_title'] ) ? $seo['og_title'] : '',
+		PostMeta::X_DESCRIPTION  => isset( $seo['og_description'] ) ? $seo['og_description'] : '',
+		PostMeta::MASTODON_TITLE => html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ),
+		PostMeta::MASTODON_DESCRIPTION => html_entity_decode( (string) ( has_excerpt( $post ) ? $post->post_excerpt : wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 35, '…' ) ), ENT_QUOTES, 'UTF-8' ),
 		PostMeta::OG_IMAGE       => isset( $seo_image['url'] ) ? $seo_image['url'] : '',
 		PostMeta::OG_IMAGE_ALT   => isset( $seo_image['alt'] ) ? $seo_image['alt'] : '',
 		);
@@ -126,9 +130,17 @@ final class AdvancedFeatures {
 		$cornerstone_help = 'pr-seo-cornerstone-help';
 		echo '<div class="pr-seo-field"><label><input type="checkbox" name="' . esc_attr( PostMeta::CORNERSTONE ) . '" value="1" aria-describedby="' . esc_attr( $cornerstone_help ) . '" ' . checked( PostMeta::get( $post->ID, PostMeta::CORNERSTONE, '0' ), '1', false ) . ' /> <strong>' . esc_html__( 'Mark as a cornerstone article', 'publishrank' ) . '</strong></label><p class="description" id="' . esc_attr( $cornerstone_help ) . '">' . esc_html__( 'Flag this as an important, long-term reference article on your site.', 'publishrank' ) . '</p></div></section>';
 
-		echo '<section class="pr-seo-group" aria-labelledby="pr-seo-social-title"><h3 id="pr-seo-social-title">' . esc_html__( '3. Social sharing', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Optional overrides for the preview card when this article is shared on social networks.', 'publishrank' ) . '</p>';
-		$this->render_seo_field( $post->ID, PostMeta::OG_TITLE, __( 'Social title', 'publishrank' ), __( 'The headline used on Facebook, LinkedIn, X and other previews. Dynamic variables are supported. Leave blank to use the SEO title.', 'publishrank' ), 'text', 255, $placeholders );
-		$this->render_seo_field( $post->ID, PostMeta::OG_DESCRIPTION, __( 'Social description', 'publishrank' ), __( 'The summary used on social preview cards. Dynamic variables are supported. Leave blank to use the meta description.', 'publishrank' ), 'textarea', 320, $placeholders );
+		echo '<section class="pr-seo-group" aria-labelledby="pr-seo-social-title"><h3 id="pr-seo-social-title">' . esc_html__( '3. Social sharing', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Optional overrides for each network. Blank fields stay automatic: the post title with the site name, and the post description.', 'publishrank' ) . '</p>';
+		echo '<h4>' . esc_html__( 'Facebook and other Open Graph networks', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'Facebook, LinkedIn, WhatsApp, Telegram, Slack, Discord, Threads, Bluesky and Mastodon link cards all read the same Open Graph tags. Leave blank to use the article title with the site name and the post description.', 'publishrank' ) . '</p>';
+		$this->render_seo_field( $post->ID, PostMeta::OG_TITLE, __( 'Facebook title', 'publishrank' ), __( 'The headline on Facebook and other Open Graph previews. Dynamic variables are supported. Leave blank to use the SEO title.', 'publishrank' ), 'text', 255, $placeholders );
+		$this->render_seo_field( $post->ID, PostMeta::OG_DESCRIPTION, __( 'Facebook description', 'publishrank' ), __( 'The summary on Facebook and other Open Graph previews. Dynamic variables are supported. Leave blank to use the meta description.', 'publishrank' ), 'textarea', 320, $placeholders );
+		echo '<h4>' . esc_html__( 'X (Twitter)', 'publishrank' ) . '</h4>';
+		$this->render_seo_field( $post->ID, PostMeta::X_TITLE, __( 'X title', 'publishrank' ), __( 'A separate headline for X cards. Leave blank to use the Facebook title, or the SEO title when that is blank too.', 'publishrank' ), 'text', 255, $placeholders );
+		$this->render_seo_field( $post->ID, PostMeta::X_DESCRIPTION, __( 'X description', 'publishrank' ), __( 'A separate summary for X cards. Leave blank to use the Facebook description, or the meta description when that is blank too.', 'publishrank' ), 'textarea', 320, $placeholders );
+		echo '<h4>' . esc_html__( 'Mastodon post', 'publishrank' ) . '</h4>';
+		$this->render_seo_field( $post->ID, PostMeta::MASTODON_TITLE, __( 'Mastodon title', 'publishrank' ), __( 'Replaces {title} in the Mastodon post that PublishRank shares. Leave blank to use the post title. Mastodon link cards still use the Facebook / Open Graph text.', 'publishrank' ), 'text', 255, $placeholders );
+		$this->render_seo_field( $post->ID, PostMeta::MASTODON_DESCRIPTION, __( 'Mastodon description', 'publishrank' ), __( 'Replaces {excerpt} in the Mastodon post. Leave blank to use the post description (excerpt).', 'publishrank' ), 'textarea', 320, $placeholders );
+		echo '<h4>' . esc_html__( 'Image and X layout', 'publishrank' ) . '</h4>';
 		$this->render_seo_field( $post->ID, PostMeta::OG_IMAGE, __( 'Social image URL', 'publishrank' ), __( 'An image URL for social cards. Leave blank to use the featured image or site default.', 'publishrank' ), 'url', 0, $placeholders );
 		$this->render_discover_image_tools( $post, isset( $seo_image['url'] ) ? $seo_image['url'] : '' );
 		$this->render_seo_field( $post->ID, PostMeta::OG_IMAGE_ALT, __( 'Social image alt text', 'publishrank' ), __( 'A concise description of the social image for people using assistive technology.', 'publishrank' ), 'text', 255, $placeholders );
@@ -454,6 +466,10 @@ final class AdvancedFeatures {
 			PostMeta::OG_TITLE       => 'title',
 			PostMeta::DESCRIPTION    => 'description',
 			PostMeta::OG_DESCRIPTION => 'description',
+			PostMeta::X_TITLE        => 'title',
+			PostMeta::X_DESCRIPTION  => 'description',
+			PostMeta::MASTODON_TITLE => 'title',
+			PostMeta::MASTODON_DESCRIPTION => 'description',
 		);
 		if ( isset( $variable_fields[ $key ] ) ) {
 			echo \PublishRankSEO\Admin\VariablePicker::slot( $id, $variable_fields[ $key ], 'post' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in slot().

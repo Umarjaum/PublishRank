@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PublishRank 2.9.111\n"
+"Project-Id-Version: PublishRank 2.20.10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 02:45+0000\n"
+"POT-Creation-Date: 2026-11-11 12:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12353,4 +12353,4047 @@ msgstr ""
 
 #: src/Sitemap/SitemapStylesheet.php:149
 msgid "The master list of every sitemap on this site"
+msgstr ""
+
+#: publishrank.php:198 src/Admin/SitemapHealthPage.php:35 src/Admin/SitemapHealthPage.php:164 src/Admin/SitemapHealthPage.php:207 src/Admin/AdminShell.php:55
+msgid "Sitemap Hub"
+msgstr ""
+
+#: publishrank.php:211
+msgid "Rate PublishRank on WordPress.org"
+msgstr ""
+
+#: publishrank.php:211
+msgid "★★★★★ Rate on WordPress.org"
+msgstr ""
+
+#: src/Admin/AdminShell.php:51
+msgid "Your PublishRank overview."
+msgstr ""
+
+#: src/Admin/AdminShell.php:52
+msgid "Turn PublishRank features on or off."
+msgstr ""
+
+#: src/Admin/AdminShell.php:53
+msgid "Hide login"
+msgstr ""
+
+#: src/Admin/AdminShell.php:53
+msgid "Move the WordPress login page to a private address, or switch it off."
+msgstr ""
+
+#: src/Admin/AdminShell.php:54
+msgid "Site-wide SEO defaults and preferences."
+msgstr ""
+
+#: src/Admin/AdminShell.php:55
+msgid "Choose what goes in your sitemap and check it is valid."
+msgstr ""
+
+#: src/Admin/AdminShell.php:61
+msgid "Configure publisher, article and media structured data for your site."
+msgstr ""
+
+#: src/Admin/AdminShell.php:62
+msgid "Connect Google Search Console and review search performance data."
+msgstr ""
+
+#: src/Admin/AdminShell.php:63
+msgid "Tell supported search engines the moment content changes."
+msgstr ""
+
+#: src/Admin/AdminShell.php:64
+msgid "Additional search-engine submission and discovery options."
+msgstr ""
+
+#: src/Admin/AdminShell.php:65
+msgid "Verify your Mastodon profile and share new posts to the fediverse."
+msgstr ""
+
+#: src/Admin/AdminShell.php:66
+msgid "Preferred Sources"
+msgstr ""
+
+#: src/Admin/AdminShell.php:66
+msgid "Create your Google Preferred Sources link and button."
+msgstr ""
+
+#: src/Admin/AdminShell.php:67
+msgid "Decide which crawlers may visit which parts of your site."
+msgstr ""
+
+#: src/Admin/AdminShell.php:68
+msgid "Clean up feeds, search pages and extra URLs crawlers do not need."
+msgstr ""
+
+#: src/Admin/AdminShell.php:69
+msgid "Show a navigation trail and its structured data."
+msgstr ""
+
+#: src/Admin/AdminShell.php:70
+msgid "Verification codes that prove you own the site."
+msgstr ""
+
+#: src/Admin/AdminShell.php:71
+msgid "Guidance for AI assistants and the llms.txt file."
+msgstr ""
+
+#: src/Admin/AdminShell.php:77
+msgid "Practical content and technical checks across the site."
+msgstr ""
+
+#: src/Admin/AdminShell.php:78
+msgid "Author credentials and expertise that build reader trust."
+msgstr ""
+
+#: src/Admin/AdminShell.php:79
+msgid "Your business location and local search details."
+msgstr ""
+
+#: src/Admin/AdminShell.php:80
+msgid "Media optimization tools and image delivery settings."
+msgstr ""
+
+#: src/Admin/AdminShell.php:81
+msgid "Bulk SEO editing and everyday newsroom utilities."
+msgstr ""
+
+#: src/Admin/AdminShell.php:82
+msgid "Find and add links between your related stories."
+msgstr ""
+
+#: src/Admin/AdminShell.php:83
+msgid "Link recommendations and relationship insights for publishers."
+msgstr ""
+
+#: src/Admin/AdminShell.php:89
+msgid "Story pitches, assignments and workflow stages."
+msgstr ""
+
+#: src/Admin/AdminShell.php:91
+msgid "Calendar"
+msgstr ""
+
+#: src/Admin/AdminShell.php:91
+msgid "Scheduled and planned stories by date."
+msgstr ""
+
+#: src/Admin/AdminShell.php:92
+msgid "Activity"
+msgstr ""
+
+#: src/Admin/AdminShell.php:92
+msgid "The editorial activity history."
+msgstr ""
+
+#: src/Admin/AdminShell.php:93
+msgid "Your newsroom notifications and alert preferences."
+msgstr ""
+
+#: src/Admin/AdminShell.php:94
+msgid "Newsroom settings"
+msgstr ""
+
+#: src/Admin/AdminShell.php:94
+msgid "Workflow stages and newsroom configuration."
+msgstr ""
+
+#: src/Admin/AdminShell.php:95
+msgid "Who can do what in the newsroom."
+msgstr ""
+
+#: src/Admin/AdminShell.php:101
+msgid "Local publishing trends and connected search performance."
+msgstr ""
+
+#: src/Admin/AdminShell.php:102
+msgid "Editorial and site-level signals that suggest next steps."
+msgstr ""
+
+#: src/Admin/AdminShell.php:103
+msgid "Send visitors from old addresses to the right page."
+msgstr ""
+
+#: src/Admin/AdminShell.php:104
+msgid "See which broken links people hit and fix them with a redirect."
+msgstr ""
+
+#: src/Admin/AdminShell.php:105
+msgid "Optional IP, proxy and country-based access rules."
+msgstr ""
+
+#: src/Admin/AdminShell.php:106
+msgid "Change history"
+msgstr ""
+
+#: src/Admin/AdminShell.php:106
+msgid "Recorded SEO setting changes and their earlier values."
+msgstr ""
+
+#: src/Admin/AdminShell.php:107
+msgid "Plugin health, compatibility notices and technical checks."
+msgstr ""
+
+#: src/Admin/AdminShell.php:113
+msgid "Help & docs"
+msgstr ""
+
+#: src/Admin/AdminShell.php:114
+msgid "Review your core site identity and SEO settings step by step."
+msgstr ""
+
+#: src/Admin/AdminShell.php:280
+msgid "PublishRank sections"
+msgstr ""
+
+#: src/Admin/AdminShell.php:292
+msgid "Unlocks when setup is finished"
+msgstr ""
+
+#: src/Admin/AdminShell.php:292
+msgid "(unlocks when setup is finished)"
+msgstr ""
+
+#: src/Admin/CrawlOptimizationPage.php:270
+msgid "Hide PublishRank credit comments and generator tag"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:261
+msgid "At a glance"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:262
+msgid "Your site today"
+msgstr ""
+
+#: src/Admin/DashboardPage.php:263
+msgid "Checks, coverage and the addresses search engines use to find your stories."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:55
+msgid "Excellent"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:56 src/SEO/Content/KeyphraseAnalyzer.php:814
+msgid "Good"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:59
+msgid "Your content is well optimized! Keep up the great work."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:60
+msgid "Looking good. A few small tweaks will make it even stronger."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:61
+msgid "You are on your way. Work through the items below."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:62
+msgid "Start with the items below to improve this article."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:64
+msgid "Updated just now"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:65
+msgid "Updates as you write"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:66
+msgid "Analysis failed. Save a draft and refresh."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:67
+msgid "Not set — pick one in the SEO Score box below"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:68
+msgid "Nothing to fix. Great job!"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:69
+msgid "No checks pass yet."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:73
+msgid "Fixing…"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:74
+msgid "Applied. Review it, then update the post."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:75
+msgid "No automatic fix could be derived. Open the full report."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:76
+msgid "Finding related articles…"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:77
+msgid "No related published articles found yet."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:79 src/Admin/EditorScoreCard.php:193
+#, php-format
+msgid "Fix: %s"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:136
+msgid "PublishRank SEO analysis"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:146
+msgid "SEO Analysis"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:148
+msgid "Re-analyze now"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:149
+msgid "Minimize SEO analysis"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:149
+msgid "Minimize"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:164
+msgid "Internal"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:164
+msgid "External"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:171
+msgid "Add internal links"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:175
+msgid "To improve"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:176
+msgid "Passed checks"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:180
+msgid "Full report"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:26 src/Admin/HelpDocumentationPage.php:326 src/Admin/HelpDocumentationPage.php:332
+msgid "Help & documentation"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:68
+#, php-format
+msgid "Showing %1$d of %2$d topics"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:70
+#, php-format
+msgid "%d topics"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:79
+msgid "Getting started"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:81
+msgid "Sitemaps & indexing"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:82
+msgid "Content & newsroom"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:83
+msgid "Maintenance & tools"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:98
+msgid "Turning features on or off"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:99
+msgid "Use the Features screen to choose which PublishRank tools run on your site."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:100
+msgid "Open PublishRank → Features (previously called SEO Modules). Each card is one feature, such as the XML sitemap, Google News sitemap, schema, social previews, breadcrumbs, redirects or IndexNow. The switch saves instantly: switch a feature off and its output stops straight away; switch it on again and your saved settings come back. Use the Settings link on a card to fine-tune that feature. The same switches appear in a compact form on the Dashboard."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:102 src/Admin/HelpDocumentationPage.php:340 src/Admin/SettingsPage.php:1195
+msgid "Open Features"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:107
+msgid "Everything PublishRank includes"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:109
+#, php-format
+msgid "A full list of the tools and health checks in version %s."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:111
+#, php-format
+msgid "This inventory for version %s covers every dashboard tool card and Technical Health check. Search & discovery includes Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt and Schema Aggregator. Content & publishing includes SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Internal links and Link intelligence. Measure & maintain includes Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, WP Hide Login, Configuration history and Diagnostics. Settings & help includes Setup wizard, Features, Settings, Titles & Meta, Import / Export and Help & documentation. Technical Health checks include SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility. Some features are optional or permission-gated and external integrations require their own configuration; this list describes what the package provides, not a guarantee that every optional service is active on every site."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:113
+msgid "Browse all tools"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:118
+msgid "Finding your way around"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:119
+msgid "Every PublishRank screen shares the same side menu, grouped by task."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:120
+msgid "Every PublishRank screen has the same layout: the page header on top, a side menu on the left and the tool itself on the right. The side menu lists Dashboard, Features, General Settings and Sitemap Hub first, followed by groups for Search & discovery, Content & publishing, Newsroom, Measure & maintain and Help. Select a group name to open or close it; the group of the screen you are on opens automatically. The WordPress sidebar keeps a short list of essentials, and the toolbar entry offers shortcuts to the Dashboard, Newsroom, Titles & Meta, Settings, Setup Wizard and this help screen. The PublishRank mark is the only logo the plugin uses."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:126
+msgid "How the search title and snippet are chosen, and when to set your own."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:135
+#, php-format
+msgid "Placeholders such as %%title%% and %%sitename%% that fill in automatically."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:142
+msgid "Which parts of the page PublishRank controls, and which belong to your theme."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:145
+msgid "Open General Settings"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:151
+msgid "Structured data that tells search engines who publishes each story."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:154
+msgid "Open Schema"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:160
+msgid "Pick the character shown between breadcrumb links."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:163
+msgid "Open Breadcrumbs"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:169
+msgid "The files that help search engines find every story you publish."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:170
+msgid "The sitemap index links to the enabled sitemap types. News sitemaps focus on eligible recent articles; image and video sitemaps help describe media attached to eligible content. Check Sitemap Hub after changing permalink, sitemap or cache settings. A sitemap is a discovery hint, not an indexing guarantee."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:172 src/Admin/HelpDocumentationPage.php:341 src/Admin/SettingsPage.php:1227 src/Admin/SEOScorePage.php:76
+msgid "Open Sitemap Hub"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:177
+msgid "Reading your sitemap in a browser"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:178
+msgid "What the friendly sitemap page shows and how to read it."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:179
+msgid "Open your sitemap index in a browser to see a readable overview. The top explains what the file is and gives you the one address to submit, with copy and Search Console shortcuts. Below it, a short three-step strip explains how sitemaps work, four totals show how many addresses, content types and files are listed and when the newest change happened, and the “What’s in your sitemap” list shows one row per content type with its icon, a plain description, the number of addresses, its share of the total and when it last changed. An empty row is normal: it fills up automatically when matching content is published. Open a row to see every address in that file, with filtering, paging and quick checks (URL limit, last-modified dates, HTTPS and news data). Search engines never use this view; they read the plain XML. Use View raw XML to see exactly what crawlers receive. Very large indexes skip per-file URL counts to stay fast."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:181
+msgid "Open your sitemap"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:188
+msgid "Decide what search engines may crawl and index."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:191
+msgid "Open Robots.txt"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:197
+msgid "Tell Bing and other IndexNow engines as soon as a story changes."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:200
+msgid "Open IndexNow"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:206
+msgid "Send new addresses to Baidu from a verified site."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:209
+msgid "Open Search engines"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:215
+msgid "Connect Search Console and read your publishing trends."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:224
+msgid "The live score and checks that help editors before publishing."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:233
+msgid "Live coverage markup and the built-in editorial workflow."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:242
+msgid "Keep images sharp, light and ready for Google Discover."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:245
+msgid "Open Image optimizer"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:251
+msgid "Fix broken links and send old addresses to the right page."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:254
+msgid "Open Redirects"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:260
+msgid "Check plugin health and spot clashes with other SEO plugins."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:269
+msgid "Back up your settings and see what changed and when."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:272
+msgid "Open Import / Export"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:278
+msgid "Where the version number appears and what to do after updating."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:279
+msgid "The plugin version appears on every PublishRank screen header, in the sitemap view footer, in the plugin header and in the readme stable tag; all of them always show the same number. After updating, clear your site, plugin, CDN and browser caches so you see the current admin styles and sitemap stylesheet. If something looks wrong, run Diagnostics and Sitemap Hub first, then check for conflicts with other SEO plugins."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:289
+msgid "My sitemap shows a blank page or plain text"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:290
+msgid "Open Settings › Permalinks in WordPress and select Save Changes without changing anything. This refreshes the address rules. Then reload your sitemap."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:293
+msgid "The sitemap page looks unstyled"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:294
+msgid "Purge your page, CDN and browser caches, then reload. The sitemap design is generated by WordPress at /publishrank-sitemap.xsl, so a caching layer that rewrites or blocks that address can break it."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:297
+msgid "The Google News sitemap is empty"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:298
+msgid "That is normal when nothing was published recently. It only lists eligible articles from the news window (48 hours by default), and an empty sitemap is still valid."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:301
+msgid "I see duplicate titles or schema in my page source"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:302
+msgid "Two plugins (or your theme and a plugin) are printing the same thing. Leave only one of them responsible for each output, then purge caches."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:305
+msgid "I changed a setting but my site still shows the old version"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:306
+msgid "Clear your site, plugin, CDN and browser caches. Cached pages keep showing the previous output until they are refreshed."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:309
+msgid "The PublishRank icon is missing from the menu or toolbar"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:310
+msgid "Purge caches and confirm that assets/images/publishrank-brand-mark.png exists inside the plugin folder and is readable."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:326 src/Admin/AdminShell.php:113
+msgid "Plain-language guides to every PublishRank feature."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:332 src/Admin/OnboardingPage.php:1633 src/Admin/AdminShell.php:111
+msgid "Help"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:334
+#, php-format
+msgid "Short answers first, details when you need them. Search for a feature or pick a topic below. This guide covers PublishRank %s."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:339
+msgid "Complete the Setup Wizard"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:339
+msgid "Add your publication name, logo and social profiles once."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:339
+msgid "Open the wizard"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:340
+msgid "Choose your features"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:340
+msgid "Switch on the tools you want, such as the News sitemap or redirects."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:341
+msgid "Submit your sitemap"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:341
+msgid "Copy one address into Google Search Console and Bing."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:343
+msgid "New here? Start with these three steps"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:353
+msgid "Filter topics"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:354
+msgid "All topics"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:362
+msgid "Search help"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:363
+msgid "Search help…"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:384
+msgid "Read more"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:393
+msgid "No topics match your search. Try a different word, or check the common problems below."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:396
+msgid "Common problems & quick fixes"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:404
+msgid "Good to know:"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:404
+msgid "Values you type yourself always win over automatic ones. Your theme, caching, multilingual plugins and other SEO plugins can also change what appears on a page, so keep only one plugin in charge of each output. Look for the blue “i” icons beside settings for quick explanations."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:405
+msgid "Still stuck?"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:405
+msgid "Online documentation and support are on the official website."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:405
+msgid "Visit the PublishRank website"
+msgstr ""
+
+#: src/Admin/LivePreview.php:50
+msgid "Social previews"
+msgstr ""
+
+#: src/Admin/LivePreview.php:138
+msgid "Google"
+msgstr ""
+
+#: src/Admin/LivePreview.php:139
+msgid "Facebook & LinkedIn"
+msgstr ""
+
+#: src/Admin/LivePreview.php:140 src/SEO/AdvancedFeatures.php:137
+msgid "X (Twitter)"
+msgstr ""
+
+#: src/Admin/LivePreview.php:141
+msgid "How this post appears when it shows up in Google or is shared on social networks. Updates as you edit."
+msgstr ""
+
+#: src/Admin/LivePreview.php:142
+msgid "Too long — may be cut off"
+msgstr ""
+
+#: src/Admin/LivePreview.php:143
+msgid "Could be longer"
+msgstr ""
+
+#: src/Admin/LivePreview.php:144
+msgid "Looks good"
+msgstr ""
+
+#: src/Admin/LivePreview.php:146
+msgid "Add a featured image or a social image (1200 × 630 px works everywhere)."
+msgstr ""
+
+#: src/Admin/LivePreview.php:147
+msgid "Small card layout (summary)"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:41 src/Admin/MastodonPage.php:51 src/Admin/MastodonPage.php:368 src/Admin/AdminShell.php:65 src/Core/ModuleSwitches.php:142
+msgid "Mastodon"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:51
+msgid "Verify your Mastodon profile and share new posts to the fediverse automatically."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:55
+msgid "The Mastodon feature is off. Turn it on below or under PublishRank → Features."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:59
+msgid "Account"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:69 src/Admin/MastodonPage.php:295
+msgid "Verified"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:69
+msgid "Mastodon shows a green check next to your website link."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:71
+msgid "Your website is on your profile but not verified yet. Mastodon re-checks when you save your profile — open Edit profile on Mastodon and click Save, then press \"Check again\"."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:73
+msgid "Not verified yet. Follow the steps under \"Verify your profile\"."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:76
+msgid "Check again"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:80
+msgid "Your token is saved, but the account has not been verified yet. Check the server URL and token permissions, then try again."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:82
+msgid "Verify connection"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:86
+msgid "Not connected."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:87
+msgid "On your Mastodon server open Preferences → Development → New application."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:88
+msgid "Name it \"PublishRank\", select read:accounts and write:statuses, and save. Add write:media only if you want to attach featured images."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:89
+msgid "Open the application, copy \"Your access token\" and paste it below with your server address."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:97
+msgid "Verify your profile"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:98
+msgid "There is no one-time verification code to copy from Mastodon. Add your site URL to a Mastodon profile field; PublishRank adds the reciprocal rel=\"me\" link to your site."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:99
+msgid "Website URL to paste into Mastodon"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:101
+msgid "Select and copy the URL manually."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:101
+msgid "Copy site URL"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:102
+msgid "In Mastodon, open Edit profile → Extra fields, add a field named Website, paste this URL, and save your profile."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:103
+msgid "HTML head code for your Mastodon profile"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:105
+msgid "Select and copy the code manually."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:105
+msgid "Copy head code"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:106
+msgid "This code points back to your Mastodon profile. PublishRank inserts it automatically when the feature is enabled and the profile URL is saved; paste it into your theme’s HTML head only if you need a manual fallback."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:107
+msgid "Make sure the Mastodon feature is enabled and your profile URL is saved below. PublishRank will publish a rel=\"me\" link back to your Mastodon profile."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:108
+msgid "After saving the Website field on Mastodon, return here. If connected, press Check again to refresh the verification status."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:109
+msgid "Article pages also get a fediverse:creator tag, so Mastodon credits your account (or the author's, if they added theirs on their WordPress profile) under link previews."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:118
+msgid "Connect your account"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:119
+msgid "Switch the feature on, then enter your server, access token and profile."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:121
+msgid "Mastodon feature"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:121
+msgid "Turn on Mastodon verification and sharing"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:122
+msgid "Mastodon server URL"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:122
+msgid "Enter the home address of the server that issued your token. Use the server domain only, for example https://mastodon.social."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:124
+msgid "Mastodon access token"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:125
+msgid "Show access token"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:125
+msgid "Hide access token"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:125
+msgid "Stored encrypted on this site. It is hidden by default; use the eye button to reveal it to administrators. Leave unchanged to keep the saved token."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:126
+msgid "Mastodon profile URL or handle"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:126
+msgid "Enter the profile PublishRank should link back to with rel=\"me\". A token with read:accounts permission is needed for the automatic profile verification check."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:128
+msgid "Choose what to share"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:129
+msgid "Decide which content is shared and whether it is shared automatically."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:131
+msgid "Automatic sharing"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:131
+msgid "Share new posts when they are published (can be changed per post)"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:132 src/Admin/SeoPortability.php:126 src/Admin/SeoPortability.php:132
+msgid "Content types"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:141
+msgid "Write the post"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:142
+msgid "Build the text of each Mastodon post and choose how it is presented."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:144
+msgid "Post message template"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:146
+msgid "Insert a variable"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:146
+msgid "Tap to insert:"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:150
+msgid "Reset to default"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:151
+msgid "What each variable does"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:156
+msgid "Your line breaks are kept; extra blank lines left by empty variables (for example a post with no tags) are tidied away. Long excerpts are shortened to fit your server’s post limit. A post can override this with its own custom message in the editor."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:157 src/Social/Mastodon.php:445
+msgid "Hashtags"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:157
+msgid "Turn the post's tags into hashtags (up to 5)"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:158
+msgid "Featured images"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:158
+msgid "Attach featured images to shared posts by default"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:158
+msgid "PublishRank sends the Media Library alt text as the image description for accessibility. This requires the optional write:media permission."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:159
+msgid "Who can see shared posts"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:160
+msgid "Public"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:160
+msgid "Unlisted"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:160
+msgid "Followers only"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:165
+msgid "Credit authors"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:166
+msgid "Tell Mastodon who wrote your articles, so link previews credit the right account."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:168
+msgid "Author credit"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:168
+msgid "Add the fediverse:creator tag to articles"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:168
+msgid "Credit each author's own Mastodon profile when they have added one"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:168
+msgid "Let authors verify their Mastodon profile (adds a rel=\"me\" link to each author page)"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:170
+msgid "Save Mastodon settings"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:182
+msgid "Recent shares"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:182 src/Admin/MastodonPage.php:184
+msgid "When"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:182 src/Admin/MastodonPage.php:184
+msgid "Post"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:186
+msgid "View on Mastodon"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:234
+msgid "Enter your Mastodon server address together with the token."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:237
+msgid "The token could not be stored securely: the OpenSSL PHP extension is required."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:241
+#, php-format
+msgid "The token was saved securely, but Mastodon could not verify the connection: %s. Check the server URL, token permissions, and network connection, then try again."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:244
+#, php-format
+msgid "Connected as @%s."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:246
+msgid "Mastodon settings saved."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:255
+msgid "Your Mastodon profile is verified."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:255
+msgid "Checked. Your profile is not verified yet — see the steps on this page."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:261
+msgid "Mastodon disconnected. The access token was deleted."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:288
+msgid "No Mastodon profile"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:292
+msgid "Not checked yet"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:296
+msgid "Waiting for Mastodon"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:297
+msgid "Link not added on Mastodon"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:298
+msgid "Profile not found"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:300
+msgid "Could not check"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:317
+msgid "Author verification"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:318
+msgid "Each author can get their own green check on Mastodon. The author adds their Mastodon profile on their WordPress profile screen, then adds their author page address to a field on their Mastodon profile (Edit profile → Extra fields). PublishRank puts the matching rel=\"me\" link on the author page."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:320
+msgid "Author verification is switched off under “Credit authors” below, so author pages do not publish the rel=\"me\" link yet."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:322 src/Admin/MastodonPage.php:328 src/Admin/MastodonPage.php:368
+msgid "Mastodon profile"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:322 src/Admin/MastodonPage.php:329
+msgid "Author page to add on Mastodon"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:333 src/Admin/OnboardingPage.php:1561
+msgid "Check"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:348
+msgid "You cannot check this author."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:370
+msgid "Your articles credit this account in Mastodon link previews, and your profile can be verified with a link to this site."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:372
+msgid "Verify on Mastodon"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:374
+msgid "Select and copy the address manually."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:374
+msgid "Copy author page"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:375
+msgid "Save your Mastodon profile above, then on Mastodon open Edit profile → Extra fields and paste this address into a field. This page links back to your profile, so Mastodon can show the green check."
+msgstr ""
+
+#: src/Admin/MastodonPage.php:377
+msgid "Check verification"
+msgstr ""
+
+#: src/Admin/MastodonPage.php:395
+msgid "You do not have permission to manage Mastodon settings."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:29 src/Admin/ModulesPage.php:116 src/Admin/ModulesPage.php:122 src/Admin/ModulesPage.php:151 src/Admin/OnboardingPage.php:1644 src/Admin/AdminShell.php:52
+msgid "Features"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:51 src/Admin/SettingsPage.php:37 src/Admin/OnboardingPage.php:790 src/SEO/AdvancedFeatures.php:386
+msgid "Saving…"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:53
+#, php-format
+msgid "%s turned on."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:55
+#, php-format
+msgid "%s turned off."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:56 src/Admin/SitemapHealthPage.php:59
+msgid "Could not save. Check your connection and try again."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:58 src/Admin/ModulesPage.php:124 src/Admin/ModulesPage.php:153
+#, php-format
+msgid "%1$d of %2$d on"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:59 src/Admin/ModulesPage.php:137
+msgid "No features match."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:74
+msgid "Unknown module."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:79
+#, php-format
+msgid "Locked until %s is installed and active."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:104
+msgid "Features saved."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:116
+msgid "Turn PublishRank features on or off. Changes save instantly."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:122 src/Admin/ModulesPage.php:151 src/Admin/SettingsPage.php:1086 src/Admin/SitemapHealthPage.php:207
+msgid "Control center"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:123
+msgid "Choose which PublishRank tools run on your site. Switch a feature off and its output stops right away; switch it back on at any time. Use Settings on a card to fine-tune that feature."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:127
+msgid "Show features"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:128
+msgid "All"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:132
+msgid "Search features"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:133
+msgid "Search features…"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:152
+msgid "Switch features on or off. Changes save instantly."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:154
+msgid "Manage features"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:185
+msgid "Save modules"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:210
+#, php-format
+msgid "Locked: %s is installed but not active. Activate it to unlock this feature."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:211
+msgid "Open Plugins"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:214
+#, php-format
+msgid "Locked: %s is not installed. Install and activate it to unlock this feature."
+msgstr ""
+
+#: src/Admin/ModulesPage.php:215
+msgid "Get the plugin"
+msgstr ""
+
+#: src/Admin/ModulesPage.php:219
+msgid "Locked"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:57
+msgid "Welcome"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:85 src/Core/ModuleSwitches.php:207
+msgid "Security"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:405
+msgid "Slogan / tagline"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:406
+msgid "Number of employees"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:407
+msgid "VAT ID"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:408
+msgid "Tax ID / NTN"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:409
+msgid "DUNS number"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:410
+msgid "LEI code"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:411
+msgid "ISO 6523 identifier"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:412
+msgid "NAICS code"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:413
+msgid "Newsroom / editorial email"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:414
+msgid "Advertising email"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:415
+msgid "News tips email"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:416
+msgid "Publishing principles page URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:417
+msgid "Ethics policy URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:418
+msgid "Corrections policy URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:419
+msgid "Masthead / team page URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:420
+msgid "Fact-checking policy URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:421
+msgid "Unnamed sources policy URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:422
+msgid "Actionable feedback policy URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:423
+msgid "Diversity policy URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:424
+msgid "Diversity staffing report URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:425
+msgid "Ownership & funding info URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:426
+msgid "No-bylines policy URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:427
+msgid "Mission & coverage priorities URL"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:515
+msgid "Plain text, written by you. Type the exact homepage title you want, usually your brand plus a few words on what you cover, or insert variables from the list. The grey text is only an example and is not saved. Leave empty to use the site name."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:526
+msgid "Trusted reporting on the latest national and world news, politics, business, sport and culture."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:527
+msgid "WordPress has no excerpt for the homepage, so this dedicated field is what search engines and social networks use to describe it. Write one or two plain sentences (about 120 to 160 characters) saying what your site covers, as news brands do on their own homepages, and avoid repeating the title. The grey text is only an example and is not saved. Leave empty to use the front page's own SEO description (static front page) or your publication description."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:604
+msgid "Your sign-in page moves here. wp-login.php and wp-admin are hidden from visitors who are not signed in. Bookmark the new address."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:770
+msgid "Finish setting up PublishRank"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:771
+msgid "Start setup"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:788
+msgid "You have unsaved changes on this step"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:789
+msgid "Each step saves when you continue"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:791
+msgid "Leave this step? Changes you made here have not been saved yet."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:795
+msgid "Updating preview…"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:796
+msgid "The preview could not be updated. Your settings are not affected."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:797
+msgid "Google will probably shorten this title. Put the most important words first."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:798
+msgid "The title field is empty, so your site name is used."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:799
+msgid "This description is longer than Google usually shows, so the end may be cut off."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:800
+msgid "This description is quite short. About 120 to 160 characters usually reads best."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:801
+msgid "No description is set, so Google will choose its own text from your page."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:803
+#, php-format
+msgid "Description used: %s"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:858
+msgid "your homepage description"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:859
+msgid "the front page's own SEO description"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:860
+msgid "the front page excerpt"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:861 src/Admin/OnboardingPage.php:862
+msgid "text taken from the front page content"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:863
+msgid "your publication description (the homepage description is empty)"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:895
+msgid "How your homepage looks in Google"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:896
+msgid "Preview size"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:899
+msgid "This is an estimate built from your fields as you type. Google may still rewrite titles and descriptions, and shows the title and description you set only when they match the page well."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:951
+#, php-format
+msgid "⚠️ Another SEO plugin is active: %s. Running two SEO plugins can print duplicate titles, canonicals and schema."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1224
+msgid "(required)"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1315
+msgid "Publisher · person"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1315
+msgid "Publisher · organization"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1318
+msgid "Social profiles"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1320
+msgid "Sitemaps"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1329
+#, php-format
+msgid "Edit %s"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1422
+msgid "completed"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1422
+msgid "current step"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1422
+msgid "not started"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1423
+#, php-format
+msgid "Step %1$d, %2$s"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1462
+msgid "Editing setup"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1465
+msgid "Update your publisher identity and core SEO settings. Every step saves on its own."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1465
+msgid "A few quick steps so search engines know exactly who publishes this site."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1484
+msgid "That login address cannot be used because it is empty or reserved by WordPress. Your previous address is unchanged. Please choose another one."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1494
+msgid "Required fields saved. You can exit any time."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1494
+msgid "Fill in the required fields (*) to unlock exit"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1500
+msgid "Saves this step and leaves the wizard. Available once every required field (*) is filled in."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1500
+msgid "Save & exit"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1502
+msgid "Skip for now"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1518
+#, php-format
+msgid "%s saved"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1526
+msgid "Welcome to PublishRank"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1526
+msgid "This one-time setup tells search engines who publishes this site. It takes about three minutes, and everything can be edited later."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1533
+msgid "Protect your sign-in page"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1533
+msgid "Choose a private address for the WordPress login. Fields marked * are required. You can change this any time in General Settings."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1534
+msgid "Check your configuration, then finish. Ongoing controls such as the News window, breadcrumbs and robots live in General Settings."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1542
+msgid "Publisher identity"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1542
+msgid "Your publication name, logo and country, used in schema, Open Graph and the News sitemap."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1543
+msgid "Homepage title, social profiles, verification codes and which content goes in your sitemaps."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1544
+msgid "Review & go live"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1544
+msgid "Check the summary and finish. Ongoing controls stay in General Settings."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1553
+msgid "Site readiness"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1553
+#, php-format
+msgid "%1$d of %2$d checks passed"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1561
+msgid "OK"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1606
+msgid "Your sign-in page has not moved yet. It moves to the address below when you save this step. After that, wp-login.php and wp-admin are hidden from visitors who are not signed in. Copy the address and keep it somewhere safe."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1608
+msgid "Hide Login is switched off under Features, so your address is saved but not active yet. When it is on, your sign-in page is the address below."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1610
+msgid "After you save, sign in at the address below. Visitors who are not signed in can no longer open wp-login.php or wp-admin. Copy the address before you continue."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1612
+msgid "Press Ctrl+C to copy"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1614
+msgid "Copy address"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1633
+msgid "Review your core site identity and SEO settings, and jump straight to any step to change it."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1634
+msgid "PublishRank is outputting your publisher identity"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1637
+#, php-format
+msgid "Completed on %s. One-time settings live in this wizard; ongoing controls are in General Settings."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1639
+msgid "One-time settings live in this wizard; ongoing controls are in General Settings."
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1642
+msgid "Your configuration"
+msgstr ""
+
+#: src/Admin/PublisherToolkitPage.php:62
+msgid "Editorial-scale SEO workflows inspired by publisher needs: bulk metadata, missing image alt text, and role-based access."
+msgstr ""
+
+#: src/Admin/PublisherToolkitPage.php:297
+msgid "Choose which WordPress roles can access PublishRank’s bulk SEO editor and image fallback settings. Administrator access is always retained. Grant access only to trusted editorial roles."
+msgstr ""
+
+#: src/Admin/RatingNotice.php:60
+msgid "Enjoying PublishRank?"
+msgstr ""
+
+#: src/Admin/RatingNotice.php:61
+msgid "A quick five-star review on WordPress.org helps other publishers find it and keeps the plugin free."
+msgstr ""
+
+#: src/Admin/RatingNotice.php:64
+msgid "Rate on WordPress.org ★★★★★"
+msgstr ""
+
+#: src/Admin/RatingNotice.php:66
+msgid "I already rated it"
+msgstr ""
+
+#: src/Admin/SEOScorePage.php:76
+msgid "Run the Sitemap Hub screen for XML validity, provider coverage and shard diagnostics."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:96 src/Admin/SeoPortability.php:121
+msgid "SEO Migration & Portability"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:96
+msgid "Migration & Portability"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:121
+msgid "Controlled SEO transfer"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:121
+msgid "Move post-level SEO data into PublishRank without deleting source data. Preview the impact, choose fields deliberately, and keep a rollback snapshot before production writes."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:123
+msgid "Compatibility check"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:123
+msgid "Detected SEO plugins"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:123
+msgid "Source data stays untouched"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:123
+msgid "Ready to import"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:123
+msgid "Not detected"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:124
+msgid "Step 1"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:124
+msgid "Import into PublishRank"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:124
+msgid "Start with Dry run to see posts, fields, and unmatched records before anything is written."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:124
+msgid "Rollback protected"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:126
+msgid "Source plugin"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:126
+msgid "Normalized JSON upload"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:126
+msgid "Import policy"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:126
+msgid "Merge — keep existing values"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:126
+msgid "Overwrite — replace matching values"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:126
+msgid "Comma-separated public post types; leave blank for all supported types."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:127
+msgid "Fields to migrate"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:128
+msgid "Import empty source fields too"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:128
+msgid "Dry run only"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:128
+msgid "Do not write anything"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:129
+msgid "Or import a normalized JSON export"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:129
+msgid "Use an export from another site for cross-site migration and URL matching."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:129
+msgid "Run migration"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:131
+msgid "Safety net"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:131
+msgid "Rollback snapshots"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:131
+msgid "Restore PublishRank metadata from a previous migration. Source plugin data is never removed."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:131
+msgid "Rollback"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:132
+msgid "Step 2"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:132
+msgid "Export normalized SEO data"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:132
+msgid "Create a versioned JSON backup or a compatible export for Yoast SEO, Rank Math, or another supported target."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:132
+msgid "Target format"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:132
+msgid "Download normalized export"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:132
+msgid "Coverage check"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:132
+msgid "Preflight scan"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:132
+msgid "Count source records before changing anything so you can choose the right source and policy."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:132
+msgid "Run preflight scan"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:141
+msgid "Preflight complete: "
+msgstr ""
+
+#: src/Admin/SeoPortability.php:150
+msgid "Unsupported source plugin."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:151
+msgid "Select a normalized JSON file when using JSON upload mode."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:152
+msgid "normalized JSON"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:180
+msgid "Dry run: "
+msgstr ""
+
+#: src/Admin/SeoPortability.php:181
+#, php-format
+msgid "%1$s%2$d fields across %3$d posts would change/changed from %4$s (%5$d unchanged, %6$d unmatched)."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:187
+msgid "Migration rollback completed."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:188
+msgid "Rollback snapshot not found."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:305
+msgid "Canonical"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:305 src/Meta/LocalizedSeoMeta.php:123
+msgid "Open Graph description"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:305
+msgid "Open Graph image"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:305 src/SEO/AdvancedFeatures.php:138
+msgid "X title"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:305 src/SEO/AdvancedFeatures.php:139
+msgid "X description"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:305
+msgid "Cornerstone"
+msgstr ""
+
+#: src/Admin/SeoPortability.php:318
+msgid "The JSON migration file is too large."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:320
+msgid "The normalized migration JSON is invalid."
+msgstr ""
+
+#: src/Admin/SeoPortability.php:377
+msgid "You are not allowed to use SEO portability."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:35
+msgid "You have unsaved changes"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:36
+msgid "All changes saved"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:39
+#, php-format
+msgid "%d matching settings"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:40 src/Admin/SettingsPage.php:1291
+msgid "No settings match your search."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:984
+msgid "The login address was not changed because it is empty or reserved by WordPress."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1002
+msgid "How page titles are built in search results."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1003
+msgid "Other names your publication is known by."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1004
+msgid "What PublishRank prints on your pages and what search engines may index."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1005
+msgid "Language and regional versions of your site."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1006
+msgid "Technical markers in your page source."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1007
+msgid "Your private sign-in address and where blocked visitors are sent."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1008
+msgid "The breadcrumb trail readers see and its structured data."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1009
+msgid "Optional media, CDN, video and API hosts."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1010
+msgid "Google News, XML sitemap content, media sitemaps and monitoring."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1011
+msgid "Copy these settings to another site, or restore a backup."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1019
+msgid "Identity"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1087 src/Admin/OnboardingPage.php:1644 src/Admin/AdminShell.php:54
+msgid "General Settings"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1102
+msgid "Find a setting"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1103
+msgid "Find a setting…"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1193 src/Admin/OnboardingPage.php:597 src/Admin/OnboardingPage.php:1322
+msgid "Private login address"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1193
+msgid "Your sign-in page lives here. wp-login.php and wp-admin are hidden from visitors who are not signed in. Bookmark the new address after saving."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1194 src/Admin/OnboardingPage.php:616
+msgid "Where visitors land if they open wp-login.php or wp-admin. Leave 404 to show your not-found page."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1195
+msgid "Hide Login is on"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1195 src/Admin/OnboardingPage.php:1322
+msgid "Hide Login is off"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1195
+msgid "Switch Hide Login on or off under Features."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1233 src/Admin/SitemapHealthPage.php:379
+msgid "Updated articles"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1233
+msgid "Also list articles that were edited recently"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1233
+msgid "An older article that you update appears in the News sitemap for the time set below. Its publication date stays the original one and its last-modified time shows the edit."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1234
+msgid "Updated articles window (hours)"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1234
+msgid "How long an edited article stays in the News sitemap after its last update. Default is 48 hours."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1237
+msgid "Exclude categories"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1248
+msgid "Articles in any selected category are left out of the News sitemap and counted as excluded in the diagnostics. Ctrl/Cmd-click to select several."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1249
+msgid "Stock tickers (legacy)"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1249
+msgid "Add an optional stock-ticker field to articles and output it in the News sitemap"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1249
+msgid "Off by default. Google no longer lists the stock_tickers tag in its News sitemap documentation, so it may be ignored. Only valid EXCHANGE:SYMBOL entries (max 5 per article) are output."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1250
+msgid "News genre (legacy)"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1254 src/Admin/SettingsPage.php:1260
+msgid "Google's current News sitemap documentation no longer lists this tag, so it is not written to the sitemap unless a developer enables it with the publishrank_news_emit_legacy_tags filter."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1260
+msgid "News keywords (legacy)"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1282
+msgid "Changes apply after you save."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1287
+msgid "Move metadata from Yoast SEO, Rank Math, AIOSEO, SEOPress, or The SEO Framework with field-aware safeguards."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:1287
+msgid "Open Migration & Portability"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:53 src/Admin/SitemapHealthPage.php:292
+msgid "Included"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:54 src/Admin/SitemapHealthPage.php:292
+msgid "Not included"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:56
+#, php-format
+msgid "%s added to your sitemap."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:58
+#, php-format
+msgid "%s removed from your sitemap."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:60
+msgid "Sitemap address copied."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:61
+msgid "Copy failed. Select the address and copy it manually."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:63 src/Admin/SitemapHealthPage.php:243
+#, php-format
+msgid "%1$d of %2$d"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:76
+msgid "Your published pages, such as About and Contact."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:77
+msgid "Public content types added by your theme or plugins."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:78 src/Sitemap/SitemapStylesheet.php:79
+msgid "Categories & tags"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:78
+msgid "Category, tag and other topic archive pages."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:79
+msgid "Author profile pages for people who have published."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:80
+msgid "Articles from the last few days, in the format Google News reads."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:81
+msgid "Images used in your content, for Google Images and Discover."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:82
+msgid "Videos embedded in your content."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:83 src/Sitemap/SitemapStylesheet.php:89
+msgid "Attachment pages"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:83
+msgid "Individual media attachment pages. Usually best left off."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:133
+msgid "Unknown sitemap content type."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:152
+msgid "Sitemap content saved."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:164
+msgid "Choose what goes in your sitemap, submit it to search engines and check that every file is valid."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:178
+msgid "PublishRank sitemaps are off"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:178
+msgid "Search engines are given the WordPress built-in sitemap at /wp-sitemap.xml instead. Turn the switch above back on to use PublishRank sitemaps, Google News and media sitemaps again."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:201
+msgid "Healthy"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:203
+msgid "Has errors"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:205
+msgid "Needs attention"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:208
+msgid "Your sitemap tells search engines which pages exist and when they changed. Choose what it lists, then submit its address once in Google Search Console and Bing Webmaster Tools."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:220
+msgid "Your sitemap address"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:221
+msgid "Sitemap address"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:223
+msgid "(opens in a new tab)"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:226
+msgid "Listed in your robots.txt, so crawlers can find it on their own."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:228
+msgid "Not listed in your robots.txt."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:228
+msgid "Robots.txt settings"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:231
+msgid "Submit to search engines"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:233
+msgid "Bing Webmaster Tools"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:241
+msgid "Unique URLs"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:242
+msgid "Sitemap files"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:243
+msgid "Content types included"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:244
+msgid "URLs with a last-updated date"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:258
+msgid "Things to check"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:272
+msgid "Posts"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:272
+msgid "Always included. Choose extra post types under Settings → News SEO and sitemaps."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:276
+msgid "What your sitemap includes"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:276
+msgid "Switch content types in or out. Changes save instantly and apply to the sitemap right away."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:277
+msgid "More sitemap settings"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:297
+msgid "Nothing to list yet"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:303
+msgid "Background preparation stalled; it restarts automatically on the next request."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:303
+msgid "WP-Cron looks overdue; sitemaps still advance on request, but consider a real server cron."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:310
+msgid "Always on"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:319
+msgid "Save sitemap content"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:327
+msgid "No URLs yet. Publish a post or page and it will appear here."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:374
+msgid "No. Switch on Google News above."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:375
+msgid "Sitemap status"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:375
+msgid "Empty: no new or updated articles in the time window"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:375
+#, php-format
+msgid "Has %1$d articles (%2$d new, %3$d updated)"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:379
+#, php-format
+msgid "Included for %d hours after an edit"
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:379
+msgid "Not included. Enable under Settings → News SEO and sitemaps."
+msgstr ""
+
+#: src/Admin/SitemapHealthPage.php:392
+#, php-format
+msgid "No eligible articles were published or updated in the time window (publication window: %d hours), so the News sitemap is empty. This is expected if nothing new has been published or edited. If you expect entries, check that the article is published (not scheduled or private), is not noindex, is not excluded in its News setting, and uses a post type listed under News post types."
+msgstr ""
+
+#: src/Compatibility/ConflictDetector.php:96
+msgid "active plugin file"
+msgstr ""
+
+#: src/Compatibility/ConflictDetector.php:98
+msgid "active plugin file (renamed folder)"
+msgstr ""
+
+#: src/Compatibility/ConflictDetector.php:122
+msgid "added by a filter"
+msgstr ""
+
+#: src/Compatibility/ConflictDetector.php:153
+#, php-format
+msgid "⚠️ %s is active and will print duplicate titles, canonicals, meta descriptions or schema alongside PublishRank. Keep only one SEO plugin responsible for output: import its data with Migration & Portability, then deactivate it, or enable the ownership handoff in PublishRank Settings."
+msgstr ""
+
+#: src/Compatibility/ConflictNotice.php:38
+msgid "Ownership handoff is on."
+msgstr ""
+
+#: src/Compatibility/ConflictNotice.php:38
+#, php-format
+msgid "%s is active, so PublishRank is not printing its overlapping title, meta and schema output."
+msgstr ""
+
+#: src/Compatibility/ConflictNotice.php:42
+msgid "⚠️ Warning: another SEO plugin is active."
+msgstr ""
+
+#: src/Compatibility/ConflictNotice.php:43
+#, php-format
+msgid "Detected: %s. Running two SEO plugins can print duplicate titles, meta descriptions, canonical tags, Open Graph tags, sitemaps and schema, which confuses search engines and can hurt how your pages appear. Use one plugin for SEO output."
+msgstr ""
+
+#: src/Compatibility/ConflictNotice.php:44
+msgid "Open Plugins to deactivate it"
+msgstr ""
+
+#: src/Compatibility/ConflictNotice.php:45
+msgid "Import its data first"
+msgstr ""
+
+#: src/Compatibility/ConflictNotice.php:46
+msgid "See what was detected"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:34
+msgid "XML Sitemap"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:35
+msgid "Generate XML sitemaps so search engines find and index your content. When off, the WordPress built-in sitemap is used instead."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:43
+msgid "Google News Sitemap"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:44
+msgid "List fresh articles from the last 48 hours in a dedicated News sitemap for Google News."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:52
+msgid "Schema Markup"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:53
+msgid "Add structured data to your pages so search results can show rich snippets."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:61
+msgid "Meta & Social Previews"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:62
+msgid "Output SEO titles, descriptions and Open Graph / X cards that control how posts look in Google, Facebook, X and LinkedIn."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:70
+msgid "Live SEO Score"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:71
+msgid "Score every article out of 100 while you write, with passed checks and clear fixes in the editor."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:80
+msgid "Get smart internal-link suggestions that help readers navigate and spread authority across your archive."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:89
+msgid "Show a breadcrumb trail on your pages so readers and search engines understand your site structure."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:98
+msgid "Manage 301 and 302 redirects to keep the value of moved pages and avoid broken links."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:107
+msgid "Log broken URLs visitors and crawlers hit, then fix them with a redirect in one click."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:115
+msgid "Robots.txt Manager"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:116
+msgid "Control which crawlers may visit which parts of your site, and list your sitemaps in robots.txt."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:125
+msgid "Publish an llms.txt file that helps AI assistants understand and cite your site."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:134
+msgid "Notify Bing, Yandex and other IndexNow engines the moment you publish or update a post."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:143
+msgid "Verify your Mastodon profile (green check), credit authors in link previews, and share new posts to Mastodon automatically."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:152
+msgid "Move the WordPress login page to a private address and hide wp-login.php and wp-admin from visitors who are not signed in. Switch off to restore the standard login."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:161
+msgid "bbPress Forums"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:162
+msgid "Forum and topic sitemap, discussion-forum rich results for topics, and noindex for thin forum pages (single replies, search, profile tabs). Needs the bbPress plugin."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:171
+msgid "BuddyPress Community"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:172
+msgid "Sitemap of public groups and member profiles, profile-page structured data, and noindex for activity, settings and messages screens. Needs the BuddyPress plugin."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:180
+msgid "Podcast SEO"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:181
+msgid "Podcast episode structured data, audio share tags and an episodes sitemap. Works with Seriously Simple Podcasting, PowerPress, Podlove, or any post with an audio file."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:190
+msgid "Web Stories sitemap, PublishRank titles, social tags and schema on story pages, and large image previews for Google Discover. Needs the Web Stories plugin."
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:206
+msgid "Content & social"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:208
+msgid "Maintenance"
+msgstr ""
+
+#: src/Core/ModuleSwitches.php:209
+msgid "Integrations"
+msgstr ""
+
+#: src/Integrations/BbPressIntegration.php:33 src/Integrations/BbPressIntegration.php:66
+msgid "Forums"
+msgstr ""
+
+#: src/Integrations/BbPressIntegration.php:67
+msgid "bbPress forums and discussion topics"
+msgstr ""
+
+#: src/Integrations/BbPressIntegration.php:182
+msgid "Anonymous"
+msgstr ""
+
+#: src/Integrations/BuddyPressIntegration.php:40
+msgid "Community"
+msgstr ""
+
+#: src/Integrations/BuddyPressIntegration.php:41
+msgid "BuddyPress public groups and member profiles"
+msgstr ""
+
+#: src/Integrations/BuddyPressIntegration.php:48
+msgid "Community (BuddyPress)"
+msgstr ""
+
+#: src/Integrations/PodcastIntegration.php:48
+msgid "Podcast episodes"
+msgstr ""
+
+#: src/Integrations/PodcastIntegration.php:70
+msgid "Podcast"
+msgstr ""
+
+#: src/Integrations/PodcastIntegration.php:71
+msgid "Podcast episodes with audio"
+msgstr ""
+
+#: src/Integrations/PodcastIntegration.php:305
+#, php-format
+msgid "Season %d"
+msgstr ""
+
+#: src/Integrations/WebStoriesIntegration.php:37 src/Integrations/WebStoriesIntegration.php:50 src/Core/ModuleSwitches.php:189
+msgid "Web Stories"
+msgstr ""
+
+#: src/Integrations/WebStoriesIntegration.php:51
+msgid "Tappable visual stories for Google Search and Discover"
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:252
+msgid "Automatic link checking saved."
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:486
+msgid "Automatic sitewide check"
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:488
+msgid "Check every published article"
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:489
+msgid "Daily"
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:489
+msgid "Weekly"
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:491
+msgid "Include external links"
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:491
+msgid "Save"
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:492
+msgid "Runs in the background in small batches. When on, each article is also re-checked for broken internal links as soon as it is published or updated."
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:492
+#, php-format
+msgid "Last full check finished: %s."
+msgstr ""
+
+#: src/InternalLinks/PublisherLinkIntelligence.php:492
+msgid "No automatic check has finished yet."
+msgstr ""
+
+#: src/Meta/HeadOutput.php:205
+msgid "Written by"
+msgstr ""
+
+#: src/Meta/HeadOutput.php:209
+msgid "Est. reading time"
+msgstr ""
+
+#: src/Meta/LocalizedSeoMeta.php:93
+msgid "PublishRank Multilingual SEO"
+msgstr ""
+
+#: src/Meta/LocalizedSeoMeta.php:106
+#, php-format
+msgid "The default language (%s) always uses the normal PublishRank fields. Tick a language below only if this article has its own version in it; each ticked language gets its own SEO fields and overrides the normal ones on that language only."
+msgstr ""
+
+#: src/Meta/LocalizedSeoMeta.php:117
+msgid "Unticking a language and updating the article removes that language's overrides."
+msgstr ""
+
+#: src/Meta/LocalizedSeoMeta.php:123
+msgid "Open Graph image URL"
+msgstr ""
+
+#: src/Meta/LocalizedSeoMeta.php:123
+msgid "Robots directives"
+msgstr ""
+
+#: src/Meta/PostMeta.php:132
+msgid "Product"
+msgstr ""
+
+#: src/Meta/PostMeta.php:133
+msgid "Book"
+msgstr ""
+
+#: src/Meta/PostMeta.php:134
+msgid "Movie"
+msgstr ""
+
+#: src/Meta/PostMeta.php:135
+msgid "TV series"
+msgstr ""
+
+#: src/Meta/PostMeta.php:136
+msgid "Music recording"
+msgstr ""
+
+#: src/Meta/PostMeta.php:137
+msgid "Music album"
+msgstr ""
+
+#: src/Meta/PostMeta.php:138
+msgid "Video game"
+msgstr ""
+
+#: src/Meta/PostMeta.php:139
+msgid "Software / app"
+msgstr ""
+
+#: src/Meta/PostMeta.php:140
+msgid "Mobile app"
+msgstr ""
+
+#: src/Meta/PostMeta.php:141
+msgid "Course"
+msgstr ""
+
+#: src/Meta/PostMeta.php:142
+msgid "Event"
+msgstr ""
+
+#: src/Meta/PostMeta.php:143
+msgid "Game"
+msgstr ""
+
+#: src/Meta/PostMeta.php:145
+msgid "Restaurant"
+msgstr ""
+
+#: src/Meta/PostMeta.php:146
+msgid "Hotel"
+msgstr ""
+
+#: src/Meta/PostMeta.php:148
+msgid "TV / series season"
+msgstr ""
+
+#: src/Meta/PostMeta.php:149
+msgid "Recipe"
+msgstr ""
+
+#: src/Meta/PostMeta.php:156
+msgid "Full time"
+msgstr ""
+
+#: src/Meta/PostMeta.php:157
+msgid "Part time"
+msgstr ""
+
+#: src/Meta/PostMeta.php:158
+msgid "Contractor"
+msgstr ""
+
+#: src/Meta/PostMeta.php:159
+msgid "Temporary"
+msgstr ""
+
+#: src/Meta/PostMeta.php:160
+msgid "Internship"
+msgstr ""
+
+#: src/Meta/PostMeta.php:161
+msgid "Volunteer"
+msgstr ""
+
+#: src/Meta/PostMeta.php:162
+msgid "Per diem"
+msgstr ""
+
+#: src/Meta/PostMeta.php:163
+msgid "Other"
+msgstr ""
+
+#: src/Meta/TemplateVariables.php:67 src/Social/Mastodon.php:451
+msgid "Site name"
+msgstr ""
+
+#: src/Meta/TemplateVariables.php:68
+msgid "The site title from Settings → General."
+msgstr ""
+
+#: src/Meta/TemplateVariables.php:69
+msgid "Empty when the site has no title."
+msgstr ""
+
+#: src/Meta/TemplateVariables.php:72
+msgid "Site tagline"
+msgstr ""
+
+#: src/Meta/TemplateVariables.php:73
+msgid "The tagline from Settings → General."
+msgstr ""
+
+#: src/Meta/TemplateVariables.php:74
+msgid "Empty when no tagline is set."
+msgstr ""
+
+#: src/Meta/TemplateVariables.php:88
+msgid "The post excerpt, or an automatic summary of the content when there is none. On archives it is the site tagline."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:114
+msgid "The main word or phrase this article should rank for. It powers the keyword checks in the SEO analysis. Use one phrase of one to four words."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:115
+msgid "Secondary keyphrases"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:115
+msgid "Other phrases this article should also cover. One per line, up to 10. Each one gets its own score; the focus keyword stays the main target."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:116
+msgid "Synonyms for the focus keyword"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:116
+msgid "Alternative wordings that count as the focus keyword. One per line."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:117
+msgid "Related keyphrases"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:117
+msgid "Supporting terms a thorough article would mention. One per line. They are checked for coverage, not scored as targets."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:133
+msgid "Optional overrides for each network. Blank fields stay automatic: the post title with the site name, and the post description."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:134
+msgid "Facebook and other Open Graph networks"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:134
+msgid "Facebook, LinkedIn, WhatsApp, Telegram, Slack, Discord, Threads, Bluesky and Mastodon link cards all read the same Open Graph tags. Leave blank to use the article title with the site name and the post description."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:135
+msgid "Facebook title"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:135
+msgid "The headline on Facebook and other Open Graph previews. Dynamic variables are supported. Leave blank to use the SEO title."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:136
+msgid "Facebook description"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:136
+msgid "The summary on Facebook and other Open Graph previews. Dynamic variables are supported. Leave blank to use the meta description."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:138
+msgid "A separate headline for X cards. Leave blank to use the Facebook title, or the SEO title when that is blank too."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:139
+msgid "A separate summary for X cards. Leave blank to use the Facebook description, or the meta description when that is blank too."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:140
+msgid "Mastodon post"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:141
+msgid "Mastodon title"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:141
+msgid "Replaces {title} in the Mastodon post that PublishRank shares. Leave blank to use the post title. Mastodon link cards still use the Facebook / Open Graph text."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:142
+msgid "Mastodon description"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:142
+msgid "Replaces {excerpt} in the Mastodon post. Leave blank to use the post description (excerpt)."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:143
+msgid "Image and X layout"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:163
+msgid "Dateline"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:163
+msgid "Where the story was filed, for example “LAHORE, Pakistan”. Recommended for Reportage and other news articles."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:164
+msgid "Reported from (location created)"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:164
+msgid "Place where the reporting was done. Used as locationCreated in news schema."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:165
+msgid "Story location (content location)"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:165
+msgid "Place the story is about, when it differs from where it was reported."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:166
+msgid "Backstory / how we reported this"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:166
+msgid "Optional note on sourcing and methods. Used as backstory in news schema."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:167
+msgid "Correction notice"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:167
+msgid "Describe any correction made after publication. Output as a CorrectionComment with the last modified date."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:168
+msgid "Paywalled section CSS class"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:168
+msgid "Only for subscriber-only articles (box above unticked). The CSS class that wraps the locked part, for example .paywall. Google needs this to tell a paywall from cloaking."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:169
+msgid "Fact-check (ClaimReview)"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:169
+msgid "Fill in only when this article checks one specific claim. The rating must match the verdict shown in the article."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:170
+msgid "Claim checked"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:170
+msgid "Short, neutral summary of the claim."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:171
+msgid "Who made the claim"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:172
+msgid "Where the claim appeared (URL)"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:173
+msgid "Date the claim was made (YYYY-MM-DD)"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:174
+msgid "Verdict shown to readers"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:174
+msgid "For example False, Misleading, Mostly true, True."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:175
+msgid "Verdict on a 1–5 scale"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:175
+msgid "1 = False, 2 = Mostly false, 3 = Half true, 4 = Mostly true, 5 = True."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:186
+msgid "Stock tickers (legacy, optional)"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:186
+msgid "Up to 5, as EXCHANGE:SYMBOL. Only for financial stories. Google no longer lists this tag in its News sitemap documentation, so it may be ignored; invalid entries are dropped."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:387
+msgid "Saved automatically"
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:388
+msgid "Could not save yet. Your next post update will save these fields."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:399
+msgid "You do not have permission to save these fields."
+msgstr ""
+
+#: src/SEO/AdvancedFeatures.php:426
+msgid "You do not have permission to refresh this summary."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:84
+msgid "PublishRank Fix Assistant & Full Report"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:123
+msgid "Related coverage:"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:125
+#, php-format
+msgid "%1$d link(s) placed in your text, %2$d added to a Related line. Review, then update the post."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:126
+msgid "All suggested articles are already linked."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:127
+msgid "Could not reach the editor. Copy the links instead."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:518
+msgid "Set a focus keyword to get keyword-specific checks."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:525
+msgid "The focus keyword length is good."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:525
+msgid "The focus keyword is long; aim for 1 to 4 words."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:528
+msgid "The focus keyword appears in the title."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:528
+msgid "Add the focus keyword to the headline or search title."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:531
+msgid "The focus keyword appears in the meta description."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:531
+msgid "Mention the focus keyword in the meta description."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:535
+msgid "The focus keyword appears in the URL slug."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:535
+msgid "Consider including the focus keyword in the URL slug."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:539
+msgid "The focus keyword appears in the opening paragraph."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:539
+msgid "State the focus keyword in the opening paragraph."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:553
+msgid "The focus keyword (or a variant) appears in a subheading."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:553
+msgid "Use the focus keyword in at least one subheading."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:563
+msgid "An image alt text includes the focus keyword."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:563
+msgid "Describe at least one image with the focus keyword where it fits naturally."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:578
+#, php-format
+msgid "The focus keyword appears %1$d times (%2$s%% density). Aim for 0.5%% to 3%%."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:591
+msgid "The focus keyword is spread across the article."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:591
+msgid "The focus keyword is bunched in one part of the article; mention it in the beginning, middle and end."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:957
+msgid "No other published article uses this focus keyword."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1003
+msgid "Spreading the subject through the article signals sustained relevance instead of a passing mention."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1004
+msgid "Subheadings that reflect the subject help readers and crawlers confirm topical focus."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1445
+msgid "Focus keyword length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1446
+msgid "Focus keyword in title"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1447
+msgid "Focus keyword in meta description"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1448
+msgid "Focus keyword in introduction"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1449
+msgid "Focus keyword density"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1450
+msgid "Focus keyword in URL"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1451
+msgid "Focus keyword in subheadings"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1452
+msgid "Focus keyword in image alt text"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1453
+msgid "Focus keyword distribution"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1454
+msgid "Headline"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1456
+msgid "Headline word count"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1457
+msgid "Headline tone"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1458
+msgid "Search title width"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1459
+msgid "Meta description length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1460
+msgid "Content length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1461
+msgid "Subheadings"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1462
+msgid "Paragraph length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1463
+msgid "Heading hierarchy"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1464
+msgid "Heading spacing"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1465
+msgid "Opening paragraph"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1466
+msgid "Readable content"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1467
+msgid "Readability language"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1469
+msgid "Sentence variety"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1470
+msgid "Sentence length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1471
+msgid "Transition words"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1479
+msgid "Link anchor text"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1480
+msgid "Link density"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1481
+msgid "Byline"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1482
+msgid "Freshness"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1483
+msgid "Unique headline"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1484
+msgid "Links from other articles"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1774
+msgid "Relevant published articles on this site. Insert adds the link on a matching phrase in your text (or a short \"Related\" line at the end). Review the result, then update the post."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1774
+msgid "Insert all internal links"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1776
+#, php-format
+msgid "Insert link to %s"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1776
+msgid "Insert"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:85
+msgid "Many secondary keyphrases spread one article thin. Keep the ones this article can answer fully and give the rest their own article."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:216
+#, php-format
+msgid "the phrase makes up %s%% of the text"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:219
+msgid "it repeats inside single sentences"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:221
+msgid "it appears in three or more sentences in a row"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:223
+msgid "it sits in a comma-separated list of keywords"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:225
+msgid "the same alt text repeats on several images"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:227
+msgid "most headings contain it"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:229
+msgid "most internal link anchors are this exact phrase"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:259
+msgid "The phrase length is focused."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:259
+msgid "The phrase is long. Shorter phrases are easier to use naturally."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:260
+msgid "Shorten the focus keyword to the core topic, then add the rest as secondary keyphrases."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:285
+msgid "A subheading reflects this phrase."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:285
+msgid "No subheading reflects this phrase."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:286
+msgid "If a section is genuinely about this topic, say so in its subheading. Do not add the phrase to unrelated headings."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:291
+msgid "The text is too short to judge how the phrase is used."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:291
+msgid "Write more of the article before relying on the keyphrase checks."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:294
+msgid "The words appear, but never as the phrase itself."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:294
+msgid "The phrase does not appear in the text."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:295
+msgid "Cover this topic in a section of the article and name it plainly where it fits."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:301
+msgid "The phrase is mentioned very lightly for an article this long. Use it where the sentence needs it, not more."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:308
+#, php-format
+msgid "The phrase appears in %d of 4 parts of the article."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:309
+msgid "The phrase is bunched together. Check that later sections still connect back to this topic."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:316
+msgid "An image alt text describes this topic."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:316
+msgid "No image alt text mentions this phrase."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:317
+msgid "Only where an image truly shows the topic, describe it in the alt text. Alt text is for people who cannot see the image."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:323
+msgid "An internal link uses this phrase or a variant as its anchor."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:323
+msgid "No internal link anchor uses this phrase."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:324
+msgid "When you link to a related article, a descriptive anchor that includes the topic helps readers and crawlers."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:331
+#, php-format
+msgid "This looks like keyword stuffing: %s."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:332
+msgid "Rewrite the repeated spots with pronouns, synonyms or simply the next point. Read it aloud; it should sound like a person wrote it."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:334
+msgid "The phrase is used often. That is fine if it reads naturally."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:334
+msgid "Replace a few mentions with synonyms or a pronoun."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:336
+msgid "No keyword stuffing detected."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:339
+msgid "The phrase is used in the same pattern each time."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:339
+msgid "Vary the sentences around it, or use a synonym or a related term."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:341
+msgid "The phrase fits naturally into the text."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:382
+msgid "You use this phrase often. Add synonyms in the settings and vary your wording with them."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:502
+msgid "Informational: readers want an answer or an explanation."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:503
+msgid "Commercial research: readers are comparing options before they decide."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:504
+msgid "Transactional: readers are ready to buy or sign up."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:505
+msgid "Navigational: readers are looking for a specific site or page."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:508
+msgid "Answer the question early, then use clear subheadings for the details."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:509
+msgid "Compare options fairly with criteria, pros and cons, and who each option suits."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:510
+msgid "Make price, availability and the next step easy to find."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:511
+msgid "Make sure the page clearly shows which site or page it is."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:516
+msgid "No clear intent signal in the phrase itself."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:558
+#, php-format
+msgid "\"%s\" is listed more than once, or is the same as the focus keyword. It was analyzed once."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:567
+#, php-format
+msgid "\"%s\" overlaps with the focus keyword. Make sure it covers a different angle, not the same one."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:784
+msgid "The phrase is in the title."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:784
+msgid "The words appear in the title, but not as the phrase."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:784
+msgid "The phrase is not in the title."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:785
+msgid "The phrase is in the meta description."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:785
+msgid "The words appear in the meta description, but not as the phrase."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:785
+msgid "The phrase is not in the meta description."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:786
+msgid "The phrase is in the URL slug."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:786
+msgid "The words appear in the URL slug, but not as the phrase."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:786
+msgid "The phrase is not in the URL slug."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:787
+msgid "The phrase is in the opening paragraph."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:787
+msgid "The words appear in the opening paragraph, but not as the phrase."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:787
+msgid "The phrase is not in the opening paragraph."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:797
+msgid "Work the phrase into the title, ideally near the start, without making it awkward."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:797
+msgid "A secondary phrase does not have to be in the title. Add it only if the title still reads well."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:798
+msgid "Mention the topic in the meta description so searchers see it echoed in the result."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:799
+msgid "Use the main words of the phrase in the URL slug. Change a published URL only with a redirect in place."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:800
+msgid "State the topic in the first paragraph so readers know right away they are in the right place."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:817
+msgid "Note"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:822
+msgid "URL slug"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:823
+msgid "First paragraph"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:824
+msgid "Headings"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:827
+msgid "Internal link anchors"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:830
+msgid "found"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:831
+msgid "partly"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:832
+msgid "not found"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:835
+msgid "Keyphrase scorecards"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:841
+#, php-format
+msgid "Combined score %1$d. The article score (%2$d) counts for 80%% and the average of your secondary keyphrases (%3$d) for 20%%. The focus keyword stays the main target."
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:849
+msgid "Check:"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:852
+msgid "Secondary"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:855
+#, php-format
+msgid "Score %1$d out of 100, %2$s"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:868
+msgid "Search intent:"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:874
+msgid "Synonyms used:"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:882
+msgid "Related keyphrases:"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:882
+#, php-format
+msgid "not yet mentioned: %s"
+msgstr ""
+
+#: src/SEO/Content/KeyphraseAnalyzer.php:882
+msgid "all are mentioned."
+msgstr ""
+
+#: src/Schema/LiveBlogSchema.php:61
+msgid "Live updates"
+msgstr ""
+
+#: src/Schema/LiveBlogSchema.php:62
+msgid "Live coverage has ended"
+msgstr ""
+
+#: src/Schema/LiveBlogSchema.php:72
+#, php-format
+msgid "By %s"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:118
+msgid "Job posting details"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:118
+msgid "Job markup is output only when the hiring organization, a closing date and either a location or remote country are filled in. The post title is the job title and the post content is the job description. Remove or expire the posting once the job is filled."
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:119
+msgid "Hiring organization"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:120
+msgid "Organization website (optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:121
+msgid "Organization logo URL (optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:122
+msgid "Applications close (YYYY-MM-DD)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:124
+msgid "Employment type"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:128
+msgid "Street address (optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:129
+msgid "City"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:132
+msgid "Country code (e.g. PK, US)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:133
+msgid "Fully remote job"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:134
+msgid "Remote: country applicants must live in (code)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:135
+msgid "Salary from (optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:136
+msgid "Salary to (optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:137
+msgid "Salary currency (e.g. PKR, USD)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:139
+msgid "Salary is per"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:140
+msgid "Hour"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:140
+msgid "Day"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:140
+msgid "Week"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:140
+msgid "Month"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:140
+msgid "Year"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:143
+msgid "Internal job reference (optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:144
+msgid "Applicants can apply directly on this page"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:145
+msgid "Use a genuine rating visible on the page. Google only shows review stars when the reviewed item has a specific type (Product, Book, Movie …), not a generic “Thing”."
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:147
+msgid "Type of item reviewed"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:147
+msgid "— Choose a type —"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:152
+msgid "Name of the item reviewed"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:154
+msgid "Official page of the item (optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:155
+msgid "Image of the item (optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:156
+msgid "Brand or maker (products, apps; optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:157
+msgid "Author / director / artist (books, films, music; optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:158
+msgid "Pros, one per line (optional)"
+msgstr ""
+
+#: src/Schema/SchemaSuite.php:159
+msgid "Cons, one per line (optional)"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:288
+msgid "Please upgrade to the latest version of WordPress to activate"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:288 src/Security/WPHideLogin.php:311
+msgid "PublishRank Hide Login"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:294
+msgid "PublishRank Hide Login conflicts with Rename wp-login.php. Please deactivate Rename wp-login.php."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:312
+msgid "This option allows you to set a networkwide default, which can be overridden by individual sites. Simply go to to the site’s permalink settings to change the url."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:313
+msgid "Need help? Visit the PublishRank website: <a href=\"https://publishrankseo.vercel.app/\" target=\"_blank\">publishrankseo.vercel.app</a>"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:316
+msgid "Networkwide default"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:318
+msgid "Redirection url default"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:387
+msgid "PublishRank Hide Login protects your website by moving the login page to a custom address and blocking wp-login.php and wp-admin for visitors who are not signed in."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:393
+#, php-format
+msgid "To set a networkwide default, go to <a href=\"%s\">Network Settings</a>."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:413 src/Security/WPHideLogin.php:858
+msgid "Protect your website by changing the login URL and preventing access to the wp-login.php page and the wp-admin directory to non-connected people."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:428
+msgid "Redirect URL when someone tries to access the wp-login.php page and the wp-admin directory while not logged in."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:516
+msgid "This has been disabled"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:769 src/Security/WPHideLogin.php:823 src/Security/WPHideLogin.php:826 src/Admin/SettingsPage.php:1007 src/Admin/SettingsPage.php:1023 src/Core/ModuleSwitches.php:151
+msgid "Hide Login"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:793
+msgid "No changes were saved. Please choose a different login address; this one is reserved by WordPress."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:799
+#, php-format
+msgid "Saved. Your login page is now %s — bookmark it!"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:823
+msgid "Move the WordPress login page to a private address and keep wp-login.php and wp-admin hidden from visitors."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:832
+msgid "Hide Login is disabled by wp-config.php."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:832
+msgid "The constant PUBLISHRANK_DISABLE_HIDE_LOGIN is set to true, so the standard WordPress login (wp-login.php and wp-admin) works as normal. Remove that line from wp-config.php to use your private login address again."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:837
+msgid "Hide Login is waiting for you."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:837
+#, php-format
+msgid "Your sign-in page has not moved yet. When you save below, it moves to %s. Copy that address first."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:842
+msgid "Hide Login is turned off."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:842
+msgid "The standard WordPress login (wp-login.php and wp-admin) works as normal. Your address below is saved but not in use."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:842
+msgid "Turn it on under Features"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:847
+msgid "Your login page is now here:"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:847
+msgid "Bookmark this address. Visitors who are not signed in can no longer open wp-login.php, wp-register.php or the wp-admin folder."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:855
+msgid "Login address"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:855
+msgid "Login URL"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:856
+msgid "Your private login address"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:861
+msgid "Blocked visitors"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:861
+msgid "Redirection URL"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:862 src/Admin/SettingsPage.php:1194 src/Admin/OnboardingPage.php:610
+msgid "Send blocked visitors to"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:864
+msgid "Redirect URL when someone tries to access the wp-login.php page and the wp-admin directory while not logged in. Leave 404 to show your not-found page."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:867
+msgid "What is protected"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:867
+msgid "Active protections"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:869
+msgid "wp-login.php and wp-register.php are hidden"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:870
+msgid "wp-admin redirects visitors who are not signed in"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:871
+msgid "wp-signup and wp-activate are blocked on single sites"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:872
+msgid "Login links in emails and menus use your new address"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:873
+msgid "The Customizer is blocked for visitors who are not signed in"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:875
+msgid "Hiding the login page is not a replacement for strong passwords and two-factor sign-in."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:878
+msgid "Save login settings"
+msgstr ""
+
+#: src/Security/WPHideLogin.php:990 src/Security/WPHideLogin.php:1000
+msgid "PublishRank Hide Login: Please note, if you check the comment_registration option \"Users must be registered and logged in to comment\", the login link will not be hidden on the comment block."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:1017 src/Security/WPHideLogin.php:1027
+msgid "PublishRank Hide Login: Please note that the comment_registration option “Users must be registered and logged in to comment” is activated on your site, the connection link will not be hidden on the comments block."
+msgstr ""
+
+#: src/Security/WPHideLogin.php:1075
+msgid "This feature is not enabled."
+msgstr ""
+
+#: src/Sitemap/Engine/SitemapAudit.php:109
+#, php-format
+msgid "Some sitemap URLs do not include lastmod values: %s. Open that sitemap and check that those items have a published or modified date."
+msgstr ""
+
+#: src/Sitemap/SitemapStylesheet.php:65
+msgid "Your published posts and news stories"
+msgstr ""
+
+#: src/Sitemap/SitemapStylesheet.php:75
+msgid "Extra content types added by your theme or plugins"
+msgstr ""
+
+#: src/Sitemap/SitemapStylesheet.php:80
+msgid "Category, tag and other topic archive pages"
+msgstr ""
+
+#: src/Sitemap/SitemapStylesheet.php:85
+msgid "Profile pages for people who have published"
+msgstr ""
+
+#: src/Sitemap/SitemapStylesheet.php:90
+msgid "Individual media attachment pages"
+msgstr ""
+
+#: src/Sitemap/SitemapStylesheet.php:95
+msgid "Your newest stories, in the format Google News reads"
+msgstr ""
+
+#: src/Sitemap/SitemapStylesheet.php:100
+msgid "Images used in your content, for Google Images and Discover"
+msgstr ""
+
+#: src/Sitemap/SitemapStylesheet.php:105
+msgid "Videos embedded or hosted in your content"
+msgstr ""
+
+#: src/Sitemap/SitemapStylesheet.php:149
+msgid "The main sitemap that links to every other sitemap file on this site"
+msgstr ""
+
+#: src/Social/Mastodon.php:168
+msgid "Mastodon is not connected."
+msgstr ""
+
+#: src/Social/Mastodon.php:194
+#, php-format
+msgid "Mastodon returned %1$d: %2$s"
+msgstr ""
+
+#: src/Social/Mastodon.php:304
+msgid "This author has not added a Mastodon profile yet."
+msgstr ""
+
+#: src/Social/Mastodon.php:309
+msgid "Use a profile address like https://mastodon.social/@name or @name@mastodon.social."
+msgstr ""
+
+#: src/Social/Mastodon.php:329
+msgid "Mastodon could not find that profile. Check the address."
+msgstr ""
+
+#: src/Social/Mastodon.php:332
+#, php-format
+msgid "The Mastodon server answered with HTTP %d, so the check could not be completed. Try again later."
+msgstr ""
+
+#: src/Social/Mastodon.php:337
+msgid "The author page is not in a Mastodon profile field yet."
+msgstr ""
+
+#: src/Social/Mastodon.php:347
+msgid "Verified: Mastodon shows a green check next to this author’s website link."
+msgstr ""
+
+#: src/Social/Mastodon.php:351
+msgid "The link is on the Mastodon profile but is not verified yet. Open Edit profile on Mastodon, press Save, then check again."
+msgstr ""
+
+#: src/Social/Mastodon.php:441
+msgid "The post title."
+msgstr ""
+
+#: src/Social/Mastodon.php:442
+msgid "The post excerpt, or the first words of the post. Shortened first when the post is too long."
+msgstr ""
+
+#: src/Social/Mastodon.php:443
+msgid "Link"
+msgstr ""
+
+#: src/Social/Mastodon.php:443
+msgid "The post address. Mastodon shows a link preview card from it and counts it as 23 characters."
+msgstr ""
+
+#: src/Social/Mastodon.php:444
+msgid "Attach the featured image to the Mastodon post, with its Media Library alt text. Mastodon shows images as attachments, so this tag is removed from the text. Needs the write:media permission."
+msgstr ""
+
+#: src/Social/Mastodon.php:445
+msgid "The post tags as hashtags (up to 5). Needs “Hashtags” switched on below."
+msgstr ""
+
+#: src/Social/Mastodon.php:446
+msgid "The name of the first category."
+msgstr ""
+
+#: src/Social/Mastodon.php:447
+msgid "Category hashtag"
+msgstr ""
+
+#: src/Social/Mastodon.php:447
+msgid "The first category as a hashtag."
+msgstr ""
+
+#: src/Social/Mastodon.php:448
+msgid "The author’s display name."
+msgstr ""
+
+#: src/Social/Mastodon.php:449
+msgid "Author @mention"
+msgstr ""
+
+#: src/Social/Mastodon.php:449
+msgid "The author’s Mastodon handle from their WordPress profile. Falls back to their name when they have not added one."
+msgstr ""
+
+#: src/Social/Mastodon.php:450
+msgid "Date"
+msgstr ""
+
+#: src/Social/Mastodon.php:450
+msgid "The publish date in your site’s date format."
+msgstr ""
+
+#: src/Social/Mastodon.php:451
+msgid "Your site name."
+msgstr ""
+
+#: src/Social/Mastodon.php:452
+msgid "Your @mention"
+msgstr ""
+
+#: src/Social/Mastodon.php:452
+msgid "Your own Mastodon handle from the profile field on this screen."
+msgstr ""
+
+#: src/Social/Mastodon.php:594
+msgid "The featured image file is not available on this server."
+msgstr ""
+
+#: src/Social/Mastodon.php:598
+msgid "The featured image must be smaller than 32 MB to attach it to a Mastodon post."
+msgstr ""
+
+#: src/Social/Mastodon.php:605
+msgid "The featured image must be a readable JPEG, PNG, GIF, or WebP file."
+msgstr ""
+
+#: src/Social/Mastodon.php:647
+#, php-format
+msgid "Mastodon could not upload the featured image: %s"
+msgstr ""
+
+#: src/Social/Mastodon.php:662
+msgid "Mastodon is still processing the featured image. Try sharing again shortly."
+msgstr ""
+
+#: src/Social/Mastodon.php:684
+msgid "Only published posts can be shared."
+msgstr ""
+
+#: src/Social/Mastodon.php:687
+msgid "Sharing is turned off for this post."
+msgstr ""
+
+#: src/Social/Mastodon.php:722
+msgid "Mastodon did not confirm that the post was created. Check Recent shares before trying again."
+msgstr ""
+
+#: src/Social/Mastodon.php:757
+msgid "Share to Mastodon"
+msgstr ""
+
+#: src/Social/Mastodon.php:764
+msgid "Connect your Mastodon account first under PublishRank → Mastodon."
+msgstr ""
+
+#: src/Social/Mastodon.php:769
+msgid "Shared on Mastodon."
+msgstr ""
+
+#: src/Social/Mastodon.php:771
+msgid "View post"
+msgstr ""
+
+#: src/Social/Mastodon.php:778
+msgid "Share when published"
+msgstr ""
+
+#: src/Social/Mastodon.php:781
+msgid "Attach featured image"
+msgstr ""
+
+#: src/Social/Mastodon.php:781
+msgid "Uses the image alt text from the Media Library as Mastodon’s accessible description."
+msgstr ""
+
+#: src/Social/Mastodon.php:783
+msgid "This featured image has no alt text yet. Add it in the Media Library so Mastodon receives an accessible image description."
+msgstr ""
+
+#: src/Social/Mastodon.php:785
+msgid "Custom message (optional)"
+msgstr ""
+
+#: src/Social/Mastodon.php:786
+msgid "Content warning (optional)"
+msgstr ""
+
+#: src/Social/Mastodon.php:786
+msgid "Adds a Mastodon content warning and marks the post as sensitive."
+msgstr ""
+
+#: src/Social/Mastodon.php:787
+msgid "Variables:"
+msgstr ""
+
+#: src/Social/Mastodon.php:787
+msgid "Add {image} to attach the featured image. Links count as 23; the status is fitted to your server’s character limit."
+msgstr ""
+
+#: src/Social/Mastodon.php:790
+msgid "Share again now"
+msgstr ""
+
+#: src/Social/Mastodon.php:790
+msgid "Share now"
+msgstr ""
+
+#: src/Social/Mastodon.php:821
+msgid "You cannot share this post."
+msgstr ""
+
+#: src/Social/Mastodon.php:826
+msgid "Shared to Mastodon."
 msgstr ""

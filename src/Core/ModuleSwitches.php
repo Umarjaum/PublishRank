@@ -16,7 +16,7 @@ final class ModuleSwitches {
 	const SITEMAP = 'publishrank_sitemap_enabled';
 
 	/** Modules whose switch changes public URLs, so rewrite rules are refreshed after a change. */
-	const REWRITE_MODULES = array( 'sitemap', 'news_sitemap', 'llms', 'bbpress', 'buddypress', 'podcast', 'web_stories' );
+	const REWRITE_MODULES = array( 'sitemap', 'news_sitemap', 'llms', 'bbpress', 'buddypress', 'podcast', 'web_stories', 'hide_login' );
 
 	/**
 	 * Module definitions in display order.
@@ -51,6 +51,15 @@ final class ModuleSwitches {
 				'page'        => 'publishrank-schema',
 				'title'       => __( 'Schema Markup', 'publishrank' ),
 				'description' => __( 'Add structured data to your pages so search results can show rich snippets.', 'publishrank' ),
+			),
+			'faq'            => array(
+				'option'      => OutputSettings::FAQ,
+				'default'     => true,
+				'icon'        => 'fa-circle-question',
+				'group'       => 'discovery',
+				'page'        => 'publishrank-schema',
+				'title'       => __( 'FAQ Schema', 'publishrank' ),
+				'description' => __( 'Add complete question-and-answer pairs, valid FAQPage structured data, and an accessible accordion with [publishrank_faq].', 'publishrank' ),
 			),
 			'social'         => array(
 				'option'      => OutputSettings::META,
@@ -142,12 +151,22 @@ final class ModuleSwitches {
 				'title'       => __( 'Mastodon', 'publishrank' ),
 				'description' => __( 'Verify your Mastodon profile (green check), credit authors in link previews, and share new posts to Mastodon automatically.', 'publishrank' ),
 			),
+			'hide_login'     => array(
+				'option'      => \PublishRankSEO\Security\WPHideLogin::OPTION,
+				'default'     => true,
+				'icon'        => 'fa-key',
+				'group'       => 'security',
+				'page'        => 'publishrank-wp-hide-login',
+				'title'       => __( 'Hide Login', 'publishrank' ),
+				'description' => __( 'Move the WordPress login page to a private address and hide wp-login.php and wp-admin from visitors who are not signed in. Switch off to restore the standard login.', 'publishrank' ),
+			),
 			'bbpress'        => array(
 				'option'      => 'publishrank_integration_bbpress',
 				'default'     => true,
 				'icon'        => 'fa-comments',
 				'group'       => 'integrations',
 				'page'        => 'publishrank-sitemap-health',
+				'requires'    => 'bbpress',
 				'title'       => __( 'bbPress Forums', 'publishrank' ),
 				'description' => __( 'Forum and topic sitemap, discussion-forum rich results for topics, and noindex for thin forum pages (single replies, search, profile tabs). Needs the bbPress plugin.', 'publishrank' ),
 			),
@@ -157,6 +176,7 @@ final class ModuleSwitches {
 				'icon'        => 'fa-users',
 				'group'       => 'integrations',
 				'page'        => 'publishrank-sitemap-health',
+				'requires'    => 'buddypress',
 				'title'       => __( 'BuddyPress Community', 'publishrank' ),
 				'description' => __( 'Sitemap of public groups and member profiles, profile-page structured data, and noindex for activity, settings and messages screens. Needs the BuddyPress plugin.', 'publishrank' ),
 			),
@@ -193,9 +213,78 @@ final class ModuleSwitches {
 		return array(
 			'discovery' => __( 'Search & discovery', 'publishrank' ),
 			'content'   => __( 'Content & social', 'publishrank' ),
+			'security'  => __( 'Security', 'publishrank' ),
 			'maintain'  => __( 'Maintenance', 'publishrank' ),
 			'integrations' => __( 'Integrations', 'publishrank' ),
 		);
+	}
+
+
+	/**
+	 * Host plugins that locked integrations need. Each entry: display name, detection, plugin file slugs to look for.
+	 *
+	 * @return array<string,array{name:string,files:string[]}>
+	 */
+	private static function requirements() {
+		return array(
+			'bbpress'    => array(
+				'name'  => 'bbPress',
+				'files' => array( 'bbpress/bbpress.php' ),
+			),
+			'buddypress' => array(
+				'name'  => 'BuddyPress',
+				'files' => array( 'buddypress/bp-loader.php' ),
+			),
+		);
+	}
+
+	/** Whether the host plugin of a requirement is active right now. */
+	private static function requirement_active( $need ) {
+		if ( 'bbpress' === $need ) {
+			return class_exists( 'bbPress' ) || function_exists( 'bbpress' );
+		}
+		if ( 'buddypress' === $need ) {
+			return function_exists( 'buddypress' ) || class_exists( 'BuddyPress' );
+		}
+		return true;
+	}
+
+	/**
+	 * Lock state of a module: empty when it is usable, otherwise why it is locked.
+	 *
+	 * @return array{plugin:string,installed:bool}|null Null when the module is not locked.
+	 */
+	public static function lock( $key ) {
+		$modules = self::definitions();
+		if ( ! is_string( $key ) || ! isset( $modules[ $key ] ) || empty( $modules[ $key ]['requires'] ) ) {
+			return null;
+		}
+		$need  = (string) $modules[ $key ]['requires'];
+		$known = self::requirements();
+		if ( ! isset( $known[ $need ] ) || self::requirement_active( $need ) ) {
+			return null;
+		}
+		$installed = false;
+		if ( ! function_exists( 'get_plugins' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/plugin.php' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		if ( function_exists( 'get_plugins' ) ) {
+			$plugins = get_plugins();
+			foreach ( $known[ $need ]['files'] as $file ) {
+				if ( isset( $plugins[ $file ] ) ) {
+					$installed = true;
+				}
+			}
+		}
+		return array(
+			'plugin'    => $known[ $need ]['name'],
+			'installed' => $installed,
+		);
+	}
+
+	/** Whether a module is locked because its host plugin is missing. */
+	public static function is_locked( $key ) {
+		return null !== self::lock( $key );
 	}
 
 	/** Whether a module id exists. */
@@ -229,6 +318,9 @@ final class ModuleSwitches {
 		$modules = self::definitions();
 		if ( ! is_string( $key ) || ! isset( $modules[ $key ] ) ) {
 			return false;
+		}
+		if ( self::is_locked( $key ) ) {
+			return false; // Locked until the host plugin is installed and active.
 		}
 		$on      = (bool) $on;
 		$changed = self::is_on( $key ) !== $on;
@@ -271,7 +363,7 @@ final class ModuleSwitches {
 	public static function active_count() {
 		$count = 0;
 		foreach ( array_keys( self::definitions() ) as $key ) {
-			if ( self::is_on( $key ) ) {
+			if ( self::is_on( $key ) && ! self::is_locked( $key ) ) {
 				++$count;
 			}
 		}

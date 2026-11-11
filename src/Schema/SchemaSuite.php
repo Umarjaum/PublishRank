@@ -91,17 +91,18 @@ final class SchemaSuite {
 			echo '<p><label><strong>' . esc_html__( 'Audio file URL (contentUrl)', 'publishrank' ) . '</strong><br /><input class="widefat" type="url" name="' . esc_attr( PostMeta::AUDIO_URL ) . '" value="' . esc_attr( PostMeta::get( $post->ID, PostMeta::AUDIO_URL ) ) . '" /></label></p>';
 			echo '<p><label><strong>' . esc_html__( 'Duration (ISO 8601, e.g. PT32M10S)', 'publishrank' ) . '</strong><br /><input class="widefat" type="text" name="' . esc_attr( PostMeta::AUDIO_DURATION ) . '" value="' . esc_attr( PostMeta::get( $post->ID, PostMeta::AUDIO_DURATION ) ) . '" /></label></p></div>';
 
-			echo '<div class="pr-schema-panel" data-types="FAQPage" style="display:none"><hr /><h4>' . esc_html__( 'FAQ questions and answers', 'publishrank' ) . '</h4>';
-			echo '<p class="description">' . esc_html__( 'Only filled-in pairs are published. If no complete question and answer exists, PublishRank outputs a standard web page instead of an empty FAQ Page.', 'publishrank' ) . '</p>';
-			$faq_items = get_post_meta( $post->ID, PostMeta::FAQ_ITEMS, true );
-			$faq_items = is_array( $faq_items ) ? array_values( $faq_items ) : array();
-			$rows      = max( 5, min( 20, count( $faq_items ) + 2 ) );
-			for ( $i = 0; $i < $rows; $i++ ) {
-				$q = isset( $faq_items[ $i ]['q'] ) ? (string) $faq_items[ $i ]['q'] : '';
-				$a = isset( $faq_items[ $i ]['a'] ) ? (string) $faq_items[ $i ]['a'] : '';
-				echo '<p><label><strong>' . esc_html( sprintf( /* translators: %d: question number */ __( 'Question %d', 'publishrank' ), $i + 1 ) ) . '</strong><br /><input class="widefat" type="text" name="publishrank_faq_items[' . (int) $i . '][q]" value="' . esc_attr( $q ) . '" /></label><br /><textarea class="widefat" rows="2" name="publishrank_faq_items[' . (int) $i . '][a]" placeholder="' . esc_attr__( 'Answer', 'publishrank' ) . '">' . esc_textarea( $a ) . '</textarea></p>';
-			}
-			echo '</div>';
+				echo '<div class="pr-schema-panel" data-types="FAQPage" style="display:none"><hr /><h4>' . esc_html__( 'FAQ questions and answers', 'publishrank' ) . '</h4>';
+				echo '<p class="description">' . esc_html__( 'Only filled-in pairs are published. Add up to 20 questions. Place [publishrank_faq] in the visible content so the FAQ schema matches what visitors can read.', 'publishrank' ) . '</p>';
+				$faq_items = get_post_meta( $post->ID, PostMeta::FAQ_ITEMS, true );
+				$faq_items = is_array( $faq_items ) ? array_values( $faq_items ) : array();
+				$rows      = max( 5, min( 20, count( $faq_items ) + 2 ) );
+				echo '<div class="publishrank-faq-repeater" data-faq-repeater data-next-index="' . (int) $rows . '" data-max="20">';
+				for ( $i = 0; $i < $rows; $i++ ) {
+					$q = isset( $faq_items[ $i ]['q'] ) ? (string) $faq_items[ $i ]['q'] : '';
+					$a = isset( $faq_items[ $i ]['a'] ) ? (string) $faq_items[ $i ]['a'] : '';
+					echo '<p class="publishrank-faq-row" data-faq-row><label><strong data-faq-label>' . esc_html( sprintf( /* translators: %d: question number */ __( 'Question %d', 'publishrank' ), $i + 1 ) ) . '</strong><br /><input class="widefat" type="text" name="publishrank_faq_items[' . (int) $i . '][q]" value="' . esc_attr( $q ) . '" /></label><br /><textarea class="widefat" rows="2" name="publishrank_faq_items[' . (int) $i . '][a]" placeholder="' . esc_attr__( 'Answer', 'publishrank' ) . '">' . esc_textarea( $a ) . '</textarea><button type="button" class="button-link-delete publishrank-faq-remove" data-faq-remove>' . esc_html__( 'Remove question', 'publishrank' ) . '</button></p>';
+				}
+				echo '</div><p><button type="button" class="button button-secondary" data-faq-add>' . esc_html__( 'Add question', 'publishrank' ) . '</button> <span class="description" data-faq-count>' . esc_html( sprintf( /* translators: 1: current row count, 2: maximum rows */ __( '%1$d of %2$d question slots', 'publishrank' ), $rows, 20 ) ) . '</span></p></div>';
 			echo '<div class="pr-schema-panel" data-types="Event" style="display:none"><hr /><h4>' . esc_html__( 'Event details', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'Event markup is emitted only when the start date, venue, city and two-letter country code are complete.', 'publishrank' ) . '</p>';
 			$this->schema_text_field( $post->ID, PostMeta::EVENT_START, __( 'Start date and time (ISO 8601)', 'publishrank' ), '2026-10-25T18:00:00-04:00' );
 			$this->schema_text_field( $post->ID, PostMeta::EVENT_LOCATION, __( 'Venue name', 'publishrank' ) );

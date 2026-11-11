@@ -339,3 +339,22 @@ body[class*="publishrank"] .wrap .postbox-header { border-color: var(--pr-border
 .prtg-wrap .prtg-form .submit .button-primary:focus-visible{outline:3px solid #C95B82;outline-offset:3px}
 @media(max-width:782px){.prtg-wrap .prtg-card{padding:19px}.prtg-wrap .prtg-url-composer{flex-wrap:wrap}.prtg-wrap .prtg-url-composer__prefix{flex-basis:100%;overflow-wrap:anywhere}.prtg-wrap .prtg-url-composer input{flex-basis:100%;min-height:46px}.prtg-wrap .prtg-url-composer__suffix{display:none}.prtg-wrap .prtg-form .submit .button-primary{width:100%;justify-content:center}}
 @media(prefers-reduced-motion:reduce){.prtg-wrap .prtg-card,.prtg-wrap .prtg-form .submit .button-primary{transition:none}.prtg-wrap .prtg-card:hover,.prtg-wrap .prtg-form .submit .button-primary:hover{transform:none}}
+
+
+/* Hide Login banner: the dark red surface must always carry light text, whatever other admin
+   styles (notice, link, strong, code, visited/hover states) try to inherit. */
+body .wrap.prtg-wrap .prtg-notice,
+body .wrap.prtg-wrap .prtg-notice div,
+body .wrap.prtg-wrap .prtg-notice strong,
+body .wrap.prtg-wrap .prtg-notice p,
+body .wrap.prtg-wrap .prtg-notice span:not(.prtg-notice__icon),
+body .wrap.prtg-wrap .prtg-notice a,
+body .wrap.prtg-wrap .prtg-notice a:visited,
+body .wrap.prtg-wrap .prtg-notice a:hover,
+body .wrap.prtg-wrap .prtg-notice a:focus,
+body .wrap.prtg-wrap .prtg-notice code{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none}
+body .wrap.prtg-wrap .prtg-notice p{color:#f6e9ee!important;-webkit-text-fill-color:#f6e9ee!important}
+body .wrap.prtg-wrap .prtg-notice code{background:rgba(255,255,255,.16)!important;padding:2px 6px;border-radius:6px}
+body .wrap.prtg-wrap .prtg-notice a{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;font-weight:700}
+body .wrap.prtg-wrap .prtg-notice a:focus-visible{outline:3px solid #f4d790;outline-offset:2px}
+body .wrap.prtg-wrap .prtg-notice__icon{color:#f4d790!important;-webkit-text-fill-color:#f4d790!important}

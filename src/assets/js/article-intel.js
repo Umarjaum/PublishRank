@@ -47,7 +47,7 @@
     try { if (window.wp && wp.data && wp.data.select) { return wp.data.select('core/editor').getEditedPostAttribute(name) || ''; } } catch (e) {}
     return '';
   }
-  /* Keyphrase fields: classic textareas when present, otherwise the block editor's meta (the sidebar fields). */
+  /* Keyphrase fields: classic textareas in the PublishRank SEO box, with block-editor meta as a fallback. */
   function metaValue(key) {
     try {
       var m = window.wp && wp.data && wp.data.select('core/editor').getEditedPostAttribute('meta');
@@ -110,7 +110,7 @@
     $('#pr-intel-status').text(publishrankIntel.analyzing);
     $('#pr-intel-refresh').prop('disabled', true).text(publishrankIntel.analyzing);
     $.post(publishrankIntel.ajaxUrl, payload())
-      .done(function (r) { if (seq !== analyzeSeq) { return; } if (r && r.success) { paint(r.data); } else { $('#pr-intel-status').text(publishrankIntel.failed); if (window.console) { console.warn('PublishRank analyzer rejected the request', r); } } })
+	      .done(function (r) { if (seq !== analyzeSeq) { return; } if (r && r.success) { paint(r.data); $(document).trigger('publishrank:analysis-updated'); } else { $('#pr-intel-status').text(publishrankIntel.failed); if (window.console) { console.warn('PublishRank analyzer rejected the request', r); } } })
       .fail(function (xhr) { if (seq === analyzeSeq) { $('#pr-intel-status').text(publishrankIntel.failed); if (window.console) { console.warn('PublishRank analyzer request failed', xhr.status); } } })
       .always(function () {
         if (seq !== analyzeSeq) { return; }
@@ -413,8 +413,8 @@
   });
 
   /* Live re-analysis with debounce */
-  $(document).on('input.prIntel change.prIntel',
-    '#title,.editor-post-title__input,#content,#excerpt,#publishrank_seo_title,#publishrank_meta_description,#publishrank_focus_keyword,[name="publishrank_seo_title"],[name="publishrank_seo_description"],[name="publishrank_focus_keyword"],[name="_publishrank_seo_title"],[name="_publishrank_seo_description"],[name="_publishrank_seo_focus_keyword"]',
+	  $(document).on('input.prIntel change.prIntel',
+	    '#title,.editor-post-title__input,#content,#excerpt,#publishrank_seo_title,#publishrank_meta_description,#publishrank_focus_keyword,#_publishrank_seo_secondary_keyphrases,#_publishrank_seo_keyphrase_synonyms,#_publishrank_seo_related_terms,[name="publishrank_seo_title"],[name="publishrank_seo_description"],[name="publishrank_focus_keyword"],[name="_publishrank_seo_title"],[name="_publishrank_seo_description"],[name="_publishrank_seo_focus_keyword"],[name="_publishrank_seo_secondary_keyphrases"],[name="_publishrank_seo_keyphrase_synonyms"],[name="_publishrank_seo_related_terms"]',
     schedule);
 
 })(jQuery);

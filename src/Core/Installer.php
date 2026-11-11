@@ -44,6 +44,7 @@ final class Installer {
 				'publishrank_schema_aggregator_custom' => '',
 				'publishrank_schema_enabled'              => 1,
 				'publishrank_org_website_schema_enabled'  => 1,
+				'publishrank_faq_enabled'                => 1,
 				'publishrank_external_seo_handoff'        => 0,
 				'publishrank_schema_default_page_type'    => 'WebPage',
 				'publishrank_twitter_card'                => 'summary_large_image',
@@ -75,10 +76,15 @@ final class Installer {
 				'publishrank_breadcrumb_frontend_override' => 1,
 				'publishrank_breadcrumbs_separator'       => '→',
 				'publishrank_breadcrumb_style' => 'plain',
+				'publishrank_breadcrumb_align' => 'left',
 				'publishrank_breadcrumb_size' => 'medium',
 				'publishrank_breadcrumb_text_color' => '',
 				'publishrank_breadcrumb_link_color' => '',
 				'publishrank_breadcrumb_bg_color' => '',
+					'publishrank_breadcrumb_accent_color' => '',
+					'publishrank_breadcrumb_offset' => 0,
+					'publishrank_breadcrumb_offset_y' => 0,
+					'publishrank_breadcrumb_icons' => 0,
 				'publishrank_breadcrumb_placement'        => 'auto',
 				'publishrank_breadcrumb_hook'             => '',
 				'publishrank_breadcrumb_home_label'       => '',
@@ -183,6 +189,12 @@ final class Installer {
 		// Fresh installs must complete the setup wizard once; sites that already finished it are left alone.
 		if ( ! get_option( 'publishrank_onboarding_completed_at', '' ) ) {
 			update_option( 'publishrank_setup_required', 1, false );
+			// A new install must not move the login before the owner has seen the new address (Setup Wizard, Security step).
+			// Sites that already saved or switched Hide Login are left exactly as they were.
+			if ( null === get_option( \PublishRankSEO\Security\WPHideLogin::OPTION, null ) && null === get_option( 'whl_page', null ) ) {
+				add_option( \PublishRankSEO\Security\WPHideLogin::OPTION, 0, '', false );
+				add_option( \PublishRankSEO\Security\WPHideLogin::DEFERRED_OPTION, 1, '', false );
+			}
 		}
 		\PublishRankSEO\InternalLinks\Store::install();
 		update_option( 'publishrank_seo_cache_epoch', time(), false );

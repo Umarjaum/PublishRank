@@ -31,7 +31,6 @@ use PublishRankSEO\Security\TraceIntegrity;
 use PublishRankSEO\Core\FrontendVisibility;
 use PublishRankSEO\Core\IdentityOverride;
 use PublishRankSEO\Security\IntegrityManager;
-use PublishRankSEO\Security\AdminAccess;
 use PublishRankSEO\Sitemap\SitemapStylesheet;
 use PublishRankSEO\Robots\RobotsTxt;
 use PublishRankSEO\Admin\AdminAssets;
@@ -87,7 +86,6 @@ final class Plugin {
 
 		$this->loader = new ModuleLoader();
 		$this->loader->register( IntegrityManager::class, false );
-		$this->loader->register( AdminAccess::class, false );
 			$this->loader->register( FrontendBranding::class, false );
 			$this->loader->register( FrontendVisibility::class, false );
 			$this->loader->register( IdentityOverride::class, false );
@@ -103,6 +101,7 @@ final class Plugin {
 		$this->loader->register( SchemaIndexEndpoint::class, false );
 		$this->loader->register( SchemaAggregator::class, false );
 		$this->loader->register( SchemaSuite::class, false );
+		$this->loader->register( \PublishRankSEO\Schema\FAQModule::class, false );
 		$this->loader->register( SitemapController::class, true );
 		$this->loader->register( SitemapStylesheet::class, false );
 			$this->loader->register( RobotsTxt::class, false );
@@ -174,6 +173,7 @@ final class Plugin {
 				$this->loader->register( ImageOptimizerPage::class, false );
 			$this->loader->register( IndexNowPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\MastodonPage::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\RatingNotice::class, false );
 			$this->loader->register( PublisherToolkitPage::class, false );
 			$this->loader->register( HelpDocumentationPage::class, false );
 				$this->loader->register( SchemaPage::class, false );

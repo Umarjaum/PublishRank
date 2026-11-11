@@ -6,6 +6,8 @@
  */
 namespace PublishRankSEO\Admin;
 
+defined( 'ABSPATH' ) || exit;
+
 use PublishRankSEO\Compatibility\ConflictDetector;
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Core\OutputRegistry;

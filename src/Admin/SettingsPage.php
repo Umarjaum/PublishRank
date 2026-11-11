@@ -98,6 +98,22 @@ final class SettingsPage {
 			)
 		);
 		$this->reg(
+			'whl_page',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_login_slug' ),
+				'default'           => 'login',
+			)
+		);
+		$this->reg(
+			'whl_redirect_admin',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_redirect_slug' ),
+				'default'           => '404',
+			)
+		);
+		$this->reg(
 			'publishrank_sitemap_aliases',
 			array(
 				'type'              => 'string',
@@ -258,22 +274,6 @@ final class SettingsPage {
 							'default'           => false,
 						)
 					);
-					$this->reg(
-						'publishrank_admin_access_mode',
-						array(
-							'type'              => 'string',
-							'sanitize_callback' => array( $this, 'sanitize_admin_access_mode' ),
-							'default'           => 'custom',
-						)
-					);
-					$this->reg(
-						'publishrank_admin_access_slug',
-						array(
-							'type'              => 'string',
-							'sanitize_callback' => array( $this, 'sanitize_admin_access_slug' ),
-							'default'           => '',
-						)
-					);
 			$this->reg(
 				'publishrank_seo_canonical_category_mode',
 				array(
@@ -410,6 +410,14 @@ final class SettingsPage {
 				'type'              => 'string',
 				'sanitize_callback' => array( $this, 'sanitize_breadcrumb_style' ),
 				'default'           => 'plain',
+			)
+		);
+		$this->reg(
+			'publishrank_breadcrumb_align',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_breadcrumb_align' ),
+				'default'           => 'left',
 			)
 		);
 		$this->reg(
@@ -702,24 +710,16 @@ final class SettingsPage {
 	public function sanitize_canonical_category_mode( $value ) {
 		$value = sanitize_key( $value );
 		return in_array( $value, array( 'permalink', 'primary_category' ), true ) ? $value : 'permalink'; }
-		/** @param mixed $value @return string */
-	public function sanitize_admin_access_slug( $value ) {
-		$value    = trim( sanitize_key( $value ), '/' );
-		$reserved = array( 'admin', 'login', 'wp-admin', 'wp-login', 'wp-json', 'wp-cron', 'xmlrpc', 'feed', 'sitemap' );
-		if ( '' === $value || strlen( $value ) < 6 || strlen( $value ) > 64 || ! preg_match( '/^[a-z][a-z0-9_-]+$/', $value ) || in_array( $value, $reserved, true ) ) {
-			return '';
-		}
-		return $value;
-	}
-		/** @param mixed $value @return string */
-	public function sanitize_admin_access_mode( $value ) {
-		$value = sanitize_key( $value );
-		return in_array( $value, array( 'custom', 'disabled' ), true ) ? $value : 'custom';
-	}
 	/** @param mixed $value @return string */
 	public function sanitize_breadcrumb_style( $value ) {
 		$value = sanitize_key( $value );
-		return in_array( $value, array( 'plain', 'chips', 'bar', 'underline' ), true ) ? $value : 'plain';
+		return in_array( $value, array( 'plain', 'chips', 'bar', 'underline', 'arrows', 'minimal', 'steps', 'pills' ), true ) ? $value : 'plain';
+	}
+
+	/** @param mixed $value @return string */
+	public function sanitize_breadcrumb_align( $value ) {
+		$value = sanitize_key( $value );
+		return in_array( $value, array( 'left', 'center', 'right' ), true ) ? $value : 'left';
 	}
 
 	/** @param mixed $value @return string */
@@ -991,6 +991,20 @@ final class SettingsPage {
 	}
 	public function sanitize_verification( $value ) {
 		return \PublishRankSEO\SEO\SiteConnections::normalize_token( $value ); }
+	/** Private login address: reserved or empty values keep the address already in use. @param mixed $value @return string */
+	public function sanitize_login_slug( $value ) {
+		$clean = \PublishRankSEO\Security\WPHideLogin::clean_login_slug( is_string( $value ) ? $value : '' );
+		if ( '' === $clean ) {
+			add_settings_error( 'whl_page', 'publishrank_login_slug', __( 'The login address was not changed because it is empty or reserved by WordPress.', 'publishrank' ), 'error' );
+			return \PublishRankSEO\Security\WPHideLogin::current_login_slug();
+		}
+		return $clean;
+	}
+
+	/** Where blocked visitors are sent; empty means the 404 page. @param mixed $value @return string */
+	public function sanitize_redirect_slug( $value ) {
+		return \PublishRankSEO\Security\WPHideLogin::clean_redirect_slug( is_string( $value ) ? $value : '' );
+	}
 	public function sanitize_sitemap_endpoint( $value ) {
 		return \PublishRankSEO\Sitemap\SitemapUrls::ENDPOINT; }
 	public function sanitize_sitemap_aliases( $value ) {
@@ -1004,6 +1018,7 @@ final class SettingsPage {
 			'output'         => array( 'fa-sliders', __( 'Output and indexing', 'publishrank' ), __( 'What PublishRank prints on your pages and what search engines may index.', 'publishrank' ) ),
 			'international'  => array( 'fa-globe', __( 'Multilingual and international SEO', 'publishrank' ), __( 'Language and regional versions of your site.', 'publishrank' ) ),
 			'attribution'    => array( 'fa-fingerprint', __( 'Attribution', 'publishrank' ), __( 'Technical markers in your page source.', 'publishrank' ) ),
+			'security'       => array( 'fa-user-shield', __( 'Hide Login', 'publishrank' ), __( 'Your private sign-in address and where blocked visitors are sent.', 'publishrank' ) ),
 			'breadcrumbs'    => array( 'fa-signs-post', __( 'Breadcrumbs', 'publishrank' ), __( 'The breadcrumb trail readers see and its structured data.', 'publishrank' ) ),
 			'infrastructure' => array( 'fa-server', __( 'Infrastructure domains', 'publishrank' ), __( 'Optional media, CDN, video and API hosts.', 'publishrank' ) ),
 			'news'           => array( 'fa-newspaper', __( 'News SEO and sitemaps', 'publishrank' ), __( 'Google News, XML sitemap content, media sitemaps and monitoring.', 'publishrank' ) ),
@@ -1019,6 +1034,7 @@ final class SettingsPage {
 			'output'         => __( 'Output & indexing', 'publishrank' ),
 			'international'  => __( 'International SEO', 'publishrank' ),
 			'attribution'    => __( 'Attribution', 'publishrank' ),
+			'security'       => __( 'Hide Login', 'publishrank' ),
 			'breadcrumbs'    => __( 'Breadcrumbs', 'publishrank' ),
 			'infrastructure' => __( 'Infrastructure', 'publishrank' ),
 			'news'           => __( 'News & sitemaps', 'publishrank' ),
@@ -1155,11 +1171,6 @@ final class SettingsPage {
 					</div></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'External link policy', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_links_enabled" value="0" /><label><input name="publishrank_links_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_links_enabled', true ) ); ?> /> <?php esc_html_e( 'Automatically add nofollow to external links', 'publishrank' ); ?></label><br /><label for="publishrank_links_follow_domains"><?php esc_html_e( 'Approved external domains (follow)', 'publishrank' ); ?></label><textarea id="publishrank_links_follow_domains" name="publishrank_links_follow_domains" class="large-text" rows="2" placeholder="example.org, partner.example"><?php echo esc_textarea( $val( 'publishrank_links_follow_domains', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'One domain per line or comma-separated. Your main domain and all subdomains remain index/follow.', 'publishrank' ); ?></p><input type="hidden" name="publishrank_links_sponsored" value="0" /><label><input name="publishrank_links_sponsored" type="checkbox" value="1" <?php checked( $val( 'publishrank_links_sponsored', false ) ); ?> /> <?php esc_html_e( 'Mark external links as sponsored', 'publishrank' ); ?></label></td></tr>
 					<tr><th scope="row"><?php esc_html_e( 'Output controls', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_meta_enabled" value="0" /><label><input name="publishrank_meta_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::meta() ); ?> /> <?php esc_html_e( 'Output PublishRank title, description, canonical, robots, Open Graph and X/Twitter metadata', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_schema_enabled" value="0" /><label><input name="publishrank_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::schema() ); ?> /> <?php esc_html_e( 'Output the connected JSON-LD schema graph (structured data)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_org_website_schema_enabled" value="0" /><label><input name="publishrank_org_website_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::org_website_schema() ); ?> /> <?php esc_html_e( 'Include Organization (or Person) and WebSite entities in the schema graph', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'All of these are enabled by default and each one controls only its own output: turning off structured data does not affect the SEO metadata above, and turning off Organization/WebSite keeps the page and article entities. Your Organization, logo and website details are read from the Setup Wizard on every page view, so a change appears on the whole site without editing individual posts. Disable an option only if another SEO plugin owns that output.', 'publishrank' ); ?></p><p class="description"><?php esc_html_e( 'What PublishRank can and cannot change: it controls its own head metadata, JSON-LD and breadcrumb trail. A logo, site title, breadcrumb trail or metadata that your theme or another plugin hard-codes is theme output and is not rewritten. If the theme prints its own breadcrumbs, choose "Structured data only" under Breadcrumb placement; if a theme prints a second title or description tag, switch that off in the theme.', 'publishrank' ); ?></p></td></tr>
-						<tr class="publishrank-new-security-feature"><th scope="row"><label for="publishrank_admin_access_mode"><?php esc_html_e( 'Custom login URL', 'publishrank' ); ?></label></th><td><select id="publishrank_admin_access_mode" name="publishrank_admin_access_mode"><option value="custom" <?php selected( $val( 'publishrank_admin_access_mode', 'custom' ), 'custom' ); ?>><?php esc_html_e( 'Enable custom login URL and hide standard login', 'publishrank' ); ?></option><option value="disabled" <?php selected( $val( 'publishrank_admin_access_mode', 'custom' ), 'disabled' ); ?>><?php esc_html_e( 'Disabled — use standard WordPress access URLs', 'publishrank' ); ?></option></select><p><label for="publishrank_admin_access_slug"><strong><?php esc_html_e( 'Private link key', 'publishrank' ); ?></strong></label><br /><code><?php echo esc_html( home_url( '/?publishrank_access=' ) ); ?></code><input id="publishrank_admin_access_slug" name="publishrank_admin_access_slug" type="text" value="<?php echo esc_attr( $val( 'publishrank_admin_access_slug' ) ); ?>" class="regular-text code" placeholder="newsroom-control" pattern="[a-z][a-z0-9_-]{5,63}" /></p><?php $admin_access_url = \PublishRankSEO\Security\AdminAccess::url(); ?>
-						<?php
-						if ( '' !== $admin_access_url ) :
-							?>
-							<p><strong><?php esc_html_e( 'Your custom login link:', 'publishrank' ); ?></strong> <a href="<?php echo esc_url( $admin_access_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $admin_access_url ); ?></a></p><?php endif; ?><p class="description"><strong><?php esc_html_e( 'How it works:', 'publishrank' ); ?></strong> <?php esc_html_e( 'Save a private key to use a query-based custom login link. Direct wp-login.php login requests are hidden, while password recovery, registration and logout remain available. Unauthenticated requests to /wp-admin/ are sent to the custom login link; after sign-in, WordPress returns the publisher to the requested administration page. PublishRank does not rename wp-admin or take over a public page slug. If needed, visiting /wp-admin/ while logged out will reveal the currently configured entry link.', 'publishrank' ); ?></p><p class="description"><strong><?php esc_html_e( 'Important:', 'publishrank' ); ?></strong> <?php esc_html_e( 'Hiding the login URL is only an extra obscurity measure, not a substitute for WordPress authentication or protection against vulnerabilities. Use HTTPS, strong unique passwords, multi-factor authentication, current software, backups and suitable server-side protections. Exclude the custom link from full-page caching; plugins or themes that hard-code wp-login.php may need compatibility changes. Disable this setting to restore the standard login route.', 'publishrank' ); ?></p></td></tr>
 				<tr><th scope="row"><label for="publishrank_seo_description_fallback"><?php esc_html_e( 'Pages with no description text', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_description_fallback" name="publishrank_seo_description_fallback"><option value="page_type" <?php selected( $val( 'publishrank_seo_description_fallback', 'page_type' ), 'page_type' ); ?>><?php esc_html_e( 'Describe the page by its title and publication (recommended)', 'publishrank' ); ?></option><option value="global" <?php selected( $val( 'publishrank_seo_description_fallback', 'page_type' ), 'global' ); ?>><?php esc_html_e( 'Use the publication-wide description', 'publishrank' ); ?></option></select><p class="description"><?php esc_html_e( 'Order used for every page: your own description, the excerpt, text extracted from the page or its page builder, then this fallback. Pages that only contain a form or a builder layout with no text use this setting, so each page can still get its own description.', 'publishrank' ); ?></p></td></tr>
 				<tr><th scope="row"><label for="publishrank_seo_canonical_category_mode"><?php esc_html_e( 'Canonical category path', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_canonical_category_mode" name="publishrank_seo_canonical_category_mode"><option value="permalink" <?php selected( $val( 'publishrank_seo_canonical_category_mode', 'permalink' ), 'permalink' ); ?>><?php esc_html_e( 'Use the normal post permalink', 'publishrank' ); ?></option><option value="primary_category" <?php selected( $val( 'publishrank_seo_canonical_category_mode', 'permalink' ), 'primary_category' ); ?>><?php esc_html_e( 'Use the primary category when supported', 'publishrank' ); ?></option></select><p class="description"><?php /* translators: %category% is a literal WordPress permalink token and should remain unchanged. */ esc_html_e( 'Category mode follows the selected primary category only when WordPress uses a %category% permalink structure; otherwise it safely uses the normal permalink.', 'publishrank' ); ?></p></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'Archive indexing', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_noindex_author_archives" value="0" /><label><input name="publishrank_noindex_author_archives" type="checkbox" value="1" <?php checked( $val( 'publishrank_noindex_author_archives', false ) ); ?> /> <?php esc_html_e( 'Noindex author archives', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_noindex_date_archives" value="0" /><label><input name="publishrank_noindex_date_archives" type="checkbox" value="1" <?php checked( $val( 'publishrank_noindex_date_archives', false ) ); ?> /> <?php esc_html_e( 'Noindex date archives', 'publishrank' ); ?></label></td></tr>
@@ -1185,6 +1196,18 @@ ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_h
 				<tr><th scope="row"><?php esc_html_e( 'Version provenance metadata', 'publishrank' ); ?></th><td><strong><?php esc_html_e( 'Always enabled', 'publishrank' ); ?></strong><p class="description"><?php esc_html_e( 'PublishRank adds technical brand, version, and fingerprint markers to public HTML source. These source markers cannot be disabled here and do not add a promotional link or visible footer credit.', 'publishrank' ); ?></p></td></tr>
 			</tbody></table>
 	
+			<?php
+			self::section_open( 'security' );
+			$hl_pretty = (bool) get_option( 'permalink_structure' );
+			$hl_prefix = trailingslashit( home_url() ) . ( $hl_pretty ? '' : '?' );
+			$hl_suffix = ( $hl_pretty && '/' === substr( (string) get_option( 'permalink_structure' ), -1 ) ) ? '/' : '';
+			$hl_on     = \PublishRankSEO\Security\WPHideLogin::enabled();
+			?>
+				<table class="form-table" role="presentation"><tbody>
+					<tr><th scope="row"><label for="whl_page"><?php esc_html_e( 'Private login address', 'publishrank' ); ?> <span class="pr-set-required" aria-hidden="true">*</span></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="whl_page" name="whl_page" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\Security\WPHideLogin::current_login_slug() ); ?>" required aria-required="true" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Your sign-in page lives here. wp-login.php and wp-admin are hidden from visitors who are not signed in. Bookmark the new address after saving.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><label for="whl_redirect_admin"><?php esc_html_e( 'Send blocked visitors to', 'publishrank' ); ?></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="whl_redirect_admin" name="whl_redirect_admin" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\Security\WPHideLogin::current_redirect_slug() ); ?>" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Where visitors land if they open wp-login.php or wp-admin. Leave 404 to show your not-found page.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><?php esc_html_e( 'Status', 'publishrank' ); ?></th><td><strong><?php echo esc_html( $hl_on ? __( 'Hide Login is on', 'publishrank' ) : __( 'Hide Login is off', 'publishrank' ) ); ?></strong><p class="description"><?php esc_html_e( 'Switch Hide Login on or off under Features.', 'publishrank' ); ?> <a href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( 'publishrank-modules' ) ); ?>"><?php esc_html_e( 'Open Features', 'publishrank' ); ?></a></p></td></tr>
+				</tbody></table>
 			<?php self::section_open( 'breadcrumbs' ); ?>
 				<table class="form-table" role="presentation"><tbody>
 					<tr><th scope="row"><?php esc_html_e( 'Frontend breadcrumbs', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_breadcrumbs_enabled" value="0" /><label><input name="publishrank_breadcrumbs_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::is_on( 'publishrank_breadcrumbs_enabled' ) ); ?> /> <?php esc_html_e( 'Show PublishRank breadcrumbs (posts, pages and category/tag/taxonomy archives)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_breadcrumb_schema_enabled" value="0" /><label><input name="publishrank_breadcrumb_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::is_on( 'publishrank_breadcrumb_schema_enabled' ) ); ?> /> <?php esc_html_e( 'Output BreadcrumbList structured data', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'These two switches are independent: you can show the visible trail without the structured data, or keep the structured data while your theme prints the visible trail. BreadcrumbList data is part of the JSON-LD graph, so it also needs "Output the connected JSON-LD schema graph" (Output controls above) to be on. Both are enabled by default and only change what PublishRank itself prints; a breadcrumb trail drawn by your theme or another plugin is not modified.', 'publishrank' ); ?></p></td></tr>
@@ -1200,7 +1223,9 @@ $pr_bc_is_preset = \PublishRankSEO\SEO\BreadcrumbSeparators::is_preset( $pr_bc_s
 <p class="description"><?php echo esc_html( sprintf( /* translators: %d: maximum number of characters. */ __( 'Pick a preset or type your own symbol or short text (up to %d characters). It is printed as plain text between crumbs, so HTML is not allowed. Leading and trailing spaces are kept; leave the field empty for no visible separator. The separator is a visual setting only and never appears in BreadcrumbList structured data.', 'publishrank' ), \PublishRankSEO\SEO\BreadcrumbSeparators::MAX_LENGTH ) ); ?></p>
 <p class="description"><?php esc_html_e( 'Preview:', 'publishrank' ); ?> <code id="publishrank_breadcrumb_sep_preview" style="white-space:pre-wrap" aria-live="polite"></code></p>
 <script>(function(){var s=document.getElementById('publishrank_breadcrumb_sep_preset'),i=document.getElementById('publishrank_breadcrumbs_separator'),p=document.getElementById('publishrank_breadcrumb_sep_preview');if(!s||!i){return;}function preview(){if(p){p.textContent='Home'+i.value+'News'+i.value+'Article';}}s.addEventListener('change',function(){var o=s.options[s.selectedIndex];if(o&&o.value!=='__custom'){i.value=o.getAttribute('data-sep');preview();}else{i.focus();}});i.addEventListener('input',function(){var m=false;for(var k=0;k<s.options.length;k++){if(s.options[k].value!=='__custom'&&s.options[k].getAttribute('data-sep')===i.value){s.selectedIndex=k;m=true;break;}}if(!m){s.value='__custom';}preview();});preview();}());</script><br />
-<label for="publishrank_breadcrumb_style"><?php esc_html_e( 'Look', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_style" name="publishrank_breadcrumb_style"><?php foreach ( array( 'plain' => __( 'Plain text (inherits theme)', 'publishrank' ), 'chips' => __( 'Chips (rounded pills)', 'publishrank' ), 'bar' => __( 'Bar (soft background strip)', 'publishrank' ), 'underline' => __( 'Underline (thin rule below)', 'publishrank' ) ) as $style_value => $style_label ) { ?><option value="<?php echo esc_attr( $style_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_style', 'plain' ), $style_value ); ?>><?php echo esc_html( $style_label ); ?></option><?php } ?></select>
+<label for="publishrank_breadcrumb_style"><?php esc_html_e( 'Look', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_style" name="publishrank_breadcrumb_style"><?php foreach ( array( 'plain' => __( 'Plain text (inherits theme)', 'publishrank' ), 'chips' => __( 'Chips (rounded pills)', 'publishrank' ), 'bar' => __( 'Bar (soft background strip)', 'publishrank' ), 'underline' => __( 'Underline (thin rule below)', 'publishrank' ), 'arrows' => __( 'Arrow ribbon (chevron steps)', 'publishrank' ), 'minimal' => __( 'Minimal (lowercase, underlined current)', 'publishrank' ), 'steps' => __( 'Progress steps (numbered circles)', 'publishrank' ), 'pills' => __( 'Pills (highlighted current page)', 'publishrank' ) ) as $style_value => $style_label ) { ?><option value="<?php echo esc_attr( $style_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_style', 'plain' ), $style_value ); ?>><?php echo esc_html( $style_label ); ?></option><?php } ?></select>
+<label for="publishrank_breadcrumb_align"><?php esc_html_e( 'Position', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_align" name="publishrank_breadcrumb_align"><?php foreach ( array( 'left' => __( 'Left', 'publishrank' ), 'center' => __( 'Center', 'publishrank' ), 'right' => __( 'Right', 'publishrank' ) ) as $align_value => $align_label ) { ?><option value="<?php echo esc_attr( $align_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_align', 'left' ), $align_value ); ?>><?php echo esc_html( $align_label ); ?></option><?php } ?></select>
+<?php echo \PublishRankSEO\Admin\BreadcrumbsPage::theme_notice_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 <label for="publishrank_breadcrumb_size"><?php esc_html_e( 'Size', 'publishrank' ); ?></label> <select id="publishrank_breadcrumb_size" name="publishrank_breadcrumb_size"><?php foreach ( array( 'small' => __( 'Small', 'publishrank' ), 'medium' => __( 'Medium', 'publishrank' ), 'large' => __( 'Large', 'publishrank' ) ) as $size_value => $size_label ) { ?><option value="<?php echo esc_attr( $size_value ); ?>" <?php selected( $val( 'publishrank_breadcrumb_size', 'medium' ), $size_value ); ?>><?php echo esc_html( $size_label ); ?></option><?php } ?></select><br />
 <label for="publishrank_breadcrumb_text_color"><?php esc_html_e( 'Text colour', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_text_color" name="publishrank_breadcrumb_text_color" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_text_color', '' ) ); ?>" class="small-text code" placeholder="#444444" />
 <label for="publishrank_breadcrumb_link_color"><?php esc_html_e( 'Link colour', 'publishrank' ); ?></label> <input id="publishrank_breadcrumb_link_color" name="publishrank_breadcrumb_link_color" type="text" value="<?php echo esc_attr( $val( 'publishrank_breadcrumb_link_color', '' ) ); ?>" class="small-text code" placeholder="#0a58ca" />

@@ -387,3 +387,58 @@ body[class*="publishrank"] #wpbody-content .notice-info,
 .pr-migration-page .pr-migration-notice.notice-info{background:#eef6ff!important;border-left-color:#1d5d91!important}
 .pr-migration-page .pr-migration-checks input[type="checkbox"],
 .pr-migration-page .pr-migration-options input[type="checkbox"]{accent-color:#9b1245}
+
+/* Mastodon screen: tidy desktop layout and a comfortable phone layout. */
+.publishrank-mastodon .rhs-card{min-width:0}
+.publishrank-mastodon .rhs-card h2{margin-top:0}
+.pr-mastodon-avatar{float:left;margin:0 12px 6px 0;border-radius:50%;object-fit:cover}
+.pr-mastodon-followers{clear:both}
+.pr-mastodon-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+.pr-mastodon-check{display:inline-flex;align-items:center;gap:6px;margin:0 16px 8px 0}
+.pr-mastodon-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.publishrank-mastodon .pr-mastodon-form .large-text,.publishrank-mastodon .pr-mastodon-form textarea{width:100%;box-sizing:border-box}
+.publishrank-mastodon .rhs-card a,.publishrank-mastodon .rhs-card code,.publishrank-mastodon .rhs-card .description{overflow-wrap:anywhere}
+@media(max-width:782px){
+	.publishrank-mastodon{padding-left:0;padding-right:0}
+	.publishrank-mastodon .rhs-grid{grid-template-columns:1fr;gap:14px}
+	.publishrank-mastodon .rhs-card{padding:16px}
+	.publishrank-mastodon .form-table,.publishrank-mastodon .form-table tbody,.publishrank-mastodon .form-table tr,.publishrank-mastodon .form-table th,.publishrank-mastodon .form-table td{display:block;width:100%;box-sizing:border-box}
+	.publishrank-mastodon .form-table th{padding:16px 0 4px}
+	.publishrank-mastodon .form-table td{padding:4px 0 8px}
+	.publishrank-mastodon .form-table input.regular-text,.publishrank-mastodon .form-table input[type=url],.publishrank-mastodon .form-table input[type=text],.publishrank-mastodon .form-table select{width:100%;max-width:100%;min-height:44px;font-size:16px}
+	.publishrank-mastodon .form-table textarea{width:100%;max-width:100%;font-size:16px}
+	.publishrank-mastodon .form-table label{display:block;line-height:1.5;padding:4px 0}
+	.publishrank-mastodon .form-table input[type=checkbox]{width:22px;height:22px;margin:0 8px 0 0;vertical-align:middle}
+	.pr-mastodon-check{display:flex;margin:0}
+	.pr-mastodon-actions{flex-direction:column;align-items:stretch}
+	.pr-mastodon-actions .button{width:100%;min-height:44px;line-height:42px;text-align:center}
+	.publishrank-mastodon p.submit{margin-top:8px}
+	.publishrank-mastodon p.submit .button,.publishrank-mastodon .pr-mastodon-form .button-primary{width:100%;min-height:46px;font-size:16px}
+	.pr-mastodon-history thead{display:none}
+	.pr-mastodon-history,.pr-mastodon-history tbody,.pr-mastodon-history tr,.pr-mastodon-history td{display:block;width:100%;box-sizing:border-box}
+	.pr-mastodon-history tr{padding:10px 12px;border-bottom:1px solid #dcdcde}
+	.pr-mastodon-history td{display:flex;gap:10px;justify-content:space-between;padding:4px 0;border:0;overflow-wrap:anywhere}
+	.pr-mastodon-history td::before{content:attr(data-label);flex:0 0 64px;font-weight:600;color:#50575e}
+}
+@media(max-width:380px){.pr-mastodon-avatar{width:40px;height:40px}.pr-mastodon-history td::before{flex-basis:52px}}
+
+/* Mastodon settings: numbered steps and the template variable chips. */
+.pr-mastodon-step{display:flex;align-items:center;gap:10px;margin:28px 0 2px;padding:0;font-size:1.15em}
+.pr-mastodon-step__num{display:inline-grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:#9B1245;color:#fff;font-size:14px;font-weight:700}
+.pr-mastodon-step__desc{margin:0 0 4px 38px;max-width:720px}
+.pr-mastodon-vars{display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:760px;margin-top:8px}
+.pr-mastodon-vars__label{font-weight:600;margin-right:2px}
+.pr-mastodon-var.button{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;min-height:30px}
+.pr-mastodon-reset{margin-left:auto;color:#9B1245;cursor:pointer}
+.pr-mastodon-vars-help{max-width:760px;margin-top:10px}
+.pr-mastodon-vars-help summary{cursor:pointer;font-weight:600}
+.pr-mastodon-vars-help dl{margin:8px 0 0}
+.pr-mastodon-vars-help dt{margin-top:8px;font-weight:600}
+.pr-mastodon-vars-help dd{margin:2px 0 0;color:#50575e;line-height:1.5}
+@media(max-width:782px){
+	.pr-mastodon-step__desc{margin-left:0}
+	.pr-mastodon-vars{gap:8px}
+	.pr-mastodon-var.button{min-height:40px;padding:0 12px;font-size:13px}
+	.pr-mastodon-reset{margin:4px 0 0;min-height:36px}
+	.pr-mastodon-vars-help summary{padding:8px 0}
+}

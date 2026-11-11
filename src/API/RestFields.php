@@ -62,6 +62,10 @@ final class RestFields {
 			'robots'               => isset( $seo['robots'] ) ? $seo['robots'] : '',
 			'og_title'             => isset( $seo['og_title'] ) ? $seo['og_title'] : '',
 			'og_description'       => isset( $seo['og_description'] ) ? $seo['og_description'] : '',
+			'x_title'              => isset( $seo['x_title'] ) ? $seo['x_title'] : '',
+			'x_description'        => isset( $seo['x_description'] ) ? $seo['x_description'] : '',
+			'mastodon_title'       => isset( $seo['mastodon_title'] ) ? $seo['mastodon_title'] : '',
+			'mastodon_description' => isset( $seo['mastodon_description'] ) ? $seo['mastodon_description'] : '',
 			'og_image'             => isset( $image['url'] ) ? $image['url'] : '',
 			'image'                => array(
 				'url'    => isset( $image['url'] ) ? $image['url'] : '',

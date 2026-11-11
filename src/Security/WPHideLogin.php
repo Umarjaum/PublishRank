@@ -14,6 +14,12 @@ final class WPHideLogin {
 
 	const META_SEEN = 'publishrank_hide_login_seen';
 
+	/** Features switch (Features screen). On by default so existing sites keep their protection. */
+	const OPTION = 'publishrank_hide_login_enabled';
+
+	/** Set on a fresh install: Hide Login stays off until the owner has seen the Security step or saved this screen. */
+	const DEFERRED_OPTION = 'publishrank_hide_login_deferred';
+
 	protected static $instance;
 
 	public static function get_instance() {
@@ -29,6 +35,48 @@ final class WPHideLogin {
 
 	/** Kept for the PublishRank module loader; hooks are registered in init(). */
 	public function register() {}
+
+	/** Whether Hide Login is switched on. Safe to call before WordPress has loaded every plugin. */
+	public static function enabled() {
+		// Emergency kill switch: define( 'PUBLISHRANK_DISABLE_HIDE_LOGIN', true ); in wp-config.php
+		// restores the standard WordPress login no matter what is saved in the database.
+		if ( self::disabled_by_constant() ) {
+			return false;
+		}
+		$value = get_option( self::OPTION, 1 );
+		if ( is_string( $value ) ) {
+			return ! in_array( strtolower( trim( $value ) ), array( '', '0', 'false', 'no', 'off' ), true );
+		}
+		return (bool) $value;
+	}
+
+	/** True while a fresh install is waiting for the owner to confirm the login address. */
+	public static function is_deferred() {
+		return (bool) get_option( self::DEFERRED_OPTION, false );
+	}
+
+	/**
+	 * The owner has seen the new login address (Security step, this screen or the Features switch):
+	 * turn Hide Login on if it was held back, and stop holding it back.
+	 */
+	public static function confirm_login_address() {
+		if ( ! self::is_deferred() ) {
+			return;
+		}
+		delete_option( self::DEFERRED_OPTION );
+		update_option( self::OPTION, 1 );
+		flush_rewrite_rules( true );
+	}
+
+	/** Called when the Features switch changes: an explicit choice ends the hold-back without overriding it. */
+	public static function forget_deferral() {
+		delete_option( self::DEFERRED_OPTION );
+	}
+
+	/** True when wp-config.php forces Hide Login off (lock-out recovery). */
+	public static function disabled_by_constant() {
+		return defined( 'PUBLISHRANK_DISABLE_HIDE_LOGIN' ) && PUBLISHRANK_DISABLE_HIDE_LOGIN;
+	}
 
 	private $wp_login_php;
 
@@ -58,6 +106,24 @@ final class WPHideLogin {
 			) );
 		}
 
+		// The settings screen stays reachable while the feature is off, so it can be reviewed and switched back on.
+		add_action( 'admin_menu', array( $this, 'publishrank_hide_login_menu_page' ), 11 );
+		add_action( 'admin_post_publishrank_hide_login_save', array( $this, 'save_settings' ) );
+		// One place flushes rewrite rules whenever the login address changes, wherever it was saved from
+		// (Hide Login screen, Setup Wizard or General Settings).
+		add_action( 'update_option_whl_page', array( __CLASS__, 'flush_after_change' ) );
+		add_action( 'add_option_whl_page', array( __CLASS__, 'flush_after_change' ) );
+		add_action( 'admin_init', array( $this, 'whl_template_redirect' ) );
+		add_filter( 'plugin_action_links_' . PUBLISHRANK_HIDE_LOGIN_BASENAME, array( $this, 'plugin_action_links' ) );
+
+		// An explicit change on the Features screen ends the fresh-install hold-back (it never overrides the choice made).
+		add_action( 'update_option_' . self::OPTION, array( __CLASS__, 'forget_deferral' ) );
+
+		if ( ! self::enabled() ) {
+			// Off: no login URL rewriting, no wp-login.php or wp-admin blocking. WordPress behaves as normal.
+			return;
+		}
+
 		if ( is_multisite() ) {
 			add_action( 'wp_before_admin_bar_render', array( $this, 'modify_mysites_menu' ), 999 );
 		}
@@ -70,7 +136,6 @@ final class WPHideLogin {
 		add_action( 'wp_loaded', array( $this, 'wp_loaded' ) );
 		add_action( 'setup_theme', array( $this, 'setup_theme' ), 1 );
 
-		add_filter( 'plugin_action_links_' . PUBLISHRANK_HIDE_LOGIN_BASENAME, array( $this, 'plugin_action_links' ) );
 		add_filter( 'site_url', array( $this, 'site_url' ), 10, 4 );
 		add_filter( 'network_site_url', array( $this, 'network_site_url' ), 10, 3 );
 		add_filter( 'wp_redirect', array( $this, 'wp_redirect' ), 10, 2 );
@@ -78,10 +143,6 @@ final class WPHideLogin {
 
 		remove_action( 'template_redirect', 'wp_redirect_admin_locations', 1000 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
-
-		add_action( 'admin_menu', array( $this, 'publishrank_hide_login_menu_page' ), 11 );
-		add_action( 'admin_post_publishrank_hide_login_save', array( $this, 'save_settings' ) );
-		add_action( 'admin_init', array( $this, 'whl_template_redirect' ) );
 
 		add_action( 'template_redirect', array( $this, 'redirect_export_data' ) );
 		add_filter( 'login_url', array( $this, 'login_url' ), 10, 3 );
@@ -264,23 +325,30 @@ final class WPHideLogin {
 	}
 
 	public function update_wpmu_options() {
-		if ( ! empty( $_POST ) && check_admin_referer( 'siteoptions' ) ) {
-			if ( ( $whl_page = sanitize_title_with_dashes( $_POST['whl_page'] ) )
-			     && strpos( $whl_page, 'wp-login' ) === false
-			     && ! in_array( $whl_page, $this->forbidden_slugs() ) ) {
+		if ( empty( $_POST ) || ! check_admin_referer( 'siteoptions' ) ) {
+			return;
+		}
+		if ( ! current_user_can( 'manage_network_options' ) ) {
+			return;
+		}
 
-				flush_rewrite_rules( true );
+		$changed = false;
+
+		if ( isset( $_POST['whl_page'] ) ) {
+			$whl_page = self::clean_login_slug( wp_unslash( $_POST['whl_page'] ) );
+			if ( '' !== $whl_page ) {
 				update_site_option( 'whl_page', $whl_page );
-
-
+				$changed = true;
 			}
-			if ( ( $whl_redirect_admin = sanitize_title_with_dashes( $_POST['whl_redirect_admin'] ) )
-			     && strpos( $whl_redirect_admin, '404' ) === false ) {
+		}
 
-				flush_rewrite_rules( true );
-				update_site_option( 'whl_redirect_admin', $whl_redirect_admin );
+		if ( isset( $_POST['whl_redirect_admin'] ) ) {
+			update_site_option( 'whl_redirect_admin', self::clean_redirect_slug( wp_unslash( $_POST['whl_redirect_admin'] ) ) );
+			$changed = true;
+		}
 
-			}
+		if ( $changed ) {
+			flush_rewrite_rules( true );
 		}
 	}
 
@@ -617,9 +685,68 @@ final class WPHideLogin {
 
 	public function forbidden_slugs() {
 
+		return self::reserved_slugs();
+
+	}
+
+	/** Query variables WordPress reserves; a login address may not use them. @return string[] */
+	public static function reserved_slugs() {
+
 		$wp = new \WP;
 
 		return array_merge( $wp->public_query_vars, $wp->private_query_vars );
+
+	}
+
+	/**
+	 * Validate and normalise a private login address.
+	 *
+	 * @param mixed $raw Submitted value.
+	 * @return string Clean slug, or '' when it is empty or reserved by WordPress.
+	 */
+	public static function clean_login_slug( $raw ) {
+
+		$slug = sanitize_title_with_dashes( is_string( $raw ) ? $raw : '' );
+
+		if ( '' === $slug || false !== strpos( $slug, 'wp-login' ) || false !== strpos( $slug, 'wp-admin' ) || in_array( $slug, self::reserved_slugs(), true ) ) {
+			return '';
+		}
+
+		return $slug;
+
+	}
+
+	/** Clean the redirect address for blocked visitors; an empty value means the 404 page. */
+	public static function clean_redirect_slug( $raw ) {
+
+		$slug = sanitize_title_with_dashes( is_string( $raw ) ? $raw : '' );
+
+		return '' === $slug ? '404' : $slug;
+
+	}
+
+	/** Current saved login slug (defaults to "login"). */
+	public static function current_login_slug() {
+
+		$slug = get_option( 'whl_page' );
+
+		return $slug ? (string) $slug : 'login';
+
+	}
+
+	/** Current saved redirect slug (defaults to "404"). */
+	public static function current_redirect_slug() {
+
+		$slug = get_option( 'whl_redirect_admin' );
+
+		return $slug ? (string) $slug : '404';
+
+	}
+
+	/** Rewrite rules are refreshed once after the login address changes. */
+	public static function flush_after_change() {
+
+		flush_rewrite_rules( true );
 
 	}
 
@@ -660,17 +787,14 @@ final class WPHideLogin {
 			wp_die( esc_html__( 'You do not have permission to do this.', 'publishrank' ), '', array( 'response' => 403 ) );
 		}
 		check_admin_referer( 'publishrank_hide_login_save' );
-		$page     = isset( $_POST['whl_page'] ) ? sanitize_title_with_dashes( wp_unslash( $_POST['whl_page'] ) ) : '';
-		$redirect = isset( $_POST['whl_redirect_admin'] ) ? sanitize_title_with_dashes( wp_unslash( $_POST['whl_redirect_admin'] ) ) : '';
-		if ( '' === $page || false !== strpos( $page, 'wp-login' ) || false !== strpos( $page, 'wp-admin' ) || in_array( $page, $this->forbidden_slugs(), true ) ) {
+		$page     = self::clean_login_slug( isset( $_POST['whl_page'] ) ? wp_unslash( $_POST['whl_page'] ) : '' );
+		$redirect = self::clean_redirect_slug( isset( $_POST['whl_redirect_admin'] ) ? wp_unslash( $_POST['whl_redirect_admin'] ) : '' );
+		if ( '' === $page ) {
 			$this->flash_and_return( 'error', __( 'No changes were saved. Please choose a different login address; this one is reserved by WordPress.', 'publishrank' ) );
-		}
-		if ( '' === $redirect ) {
-			$redirect = '404';
 		}
 		update_option( 'whl_page', $page );
 		update_option( 'whl_redirect_admin', $redirect );
-		flush_rewrite_rules( true );
+		self::confirm_login_address();
 		/* translators: %s: new login URL. */
 		$this->flash_and_return( 'success', sprintf( __( 'Saved. Your login page is now %s — bookmark it!', 'publishrank' ), $this->new_login_url() ) );
 	}
@@ -702,10 +826,27 @@ final class WPHideLogin {
 				echo '<h1>' . esc_html__( 'Hide Login', 'publishrank' ) . '</h1>';
 			}
 			?>
+			<?php if ( self::disabled_by_constant() ) : ?>
+			<div class="prtg-notice prtg-notice--off" role="alert">
+				<span class="prtg-notice__icon fa-solid fa-triangle-exclamation" aria-hidden="true"></span>
+				<div><strong><?php esc_html_e( 'Hide Login is disabled by wp-config.php.', 'publishrank' ); ?></strong><p><?php esc_html_e( 'The constant PUBLISHRANK_DISABLE_HIDE_LOGIN is set to true, so the standard WordPress login (wp-login.php and wp-admin) works as normal. Remove that line from wp-config.php to use your private login address again.', 'publishrank' ); ?></p></div>
+			</div>
+			<?php elseif ( self::is_deferred() ) : ?>
+			<div class="prtg-notice prtg-notice--off" role="note">
+				<span class="prtg-notice__icon fa-solid fa-hourglass-half" aria-hidden="true"></span>
+				<div><strong><?php esc_html_e( 'Hide Login is waiting for you.', 'publishrank' ); ?></strong><p><?php echo esc_html( sprintf( /* translators: %s: login URL. */ __( 'Your sign-in page has not moved yet. When you save below, it moves to %s. Copy that address first.', 'publishrank' ), $login_url ) ); ?></p></div>
+			</div>
+			<?php elseif ( ! self::enabled() ) : ?>
+			<div class="prtg-notice prtg-notice--off" role="note">
+				<span class="prtg-notice__icon fa-solid fa-toggle-off" aria-hidden="true"></span>
+				<div><strong><?php esc_html_e( 'Hide Login is turned off.', 'publishrank' ); ?></strong><p><?php esc_html_e( 'The standard WordPress login (wp-login.php and wp-admin) works as normal. Your address below is saved but not in use.', 'publishrank' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=publishrank-modules' ) ); ?>"><?php esc_html_e( 'Turn it on under Features', 'publishrank' ); ?></a></p></div>
+			</div>
+			<?php else : ?>
 			<div class="prtg-notice" role="note">
 				<span class="prtg-notice__icon fa-solid fa-key" aria-hidden="true"></span>
 				<div><strong><?php esc_html_e( 'Your login page is now here:', 'publishrank' ); ?> <a href="<?php echo esc_url( $login_url ); ?>"><?php echo esc_html( $login_url ); ?></a></strong><p><?php esc_html_e( 'Bookmark this address. Visitors who are not signed in can no longer open wp-login.php, wp-register.php or the wp-admin folder.', 'publishrank' ); ?></p></div>
 			</div>
+			<?php endif; ?>
 			<form class="prtg-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="publishrank_hide_login_save" />
 				<?php wp_nonce_field( 'publishrank_hide_login_save' ); ?>
@@ -785,14 +926,29 @@ final class WPHideLogin {
 	public function dismiss_admin_notice() {
 		check_ajax_referer( 'publishrank-hide-login-dismissible-notice' );
 
-		$option_name        = sanitize_text_field( $_POST['option_name'] );
-		$dismissible_length = sanitize_text_field( $_POST['dismissible_length'] );
-		$transient          = 0;
-		if ( 'forever' != $dismissible_length ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( '', '', array( 'response' => 403 ) );
+		}
+
+		// Only the notices this module actually shows may be dismissed.
+		$allowed = array(
+			'disable-notice-warning-comments',
+			'disable-notice-warning-comment-registration',
+		);
+
+		$option_name        = isset( $_POST['option_name'] ) ? sanitize_text_field( wp_unslash( $_POST['option_name'] ) ) : '';
+		$dismissible_length = isset( $_POST['dismissible_length'] ) ? sanitize_text_field( wp_unslash( $_POST['dismissible_length'] ) ) : '';
+
+		if ( ! in_array( $option_name, $allowed, true ) ) {
+			wp_die( '', '', array( 'response' => 400 ) );
+		}
+
+		$transient = 0;
+		if ( 'forever' !== $dismissible_length ) {
 			// If $dismissible_length is not an integer default to 1
-			$dismissible_length = ( 0 == absint( $dismissible_length ) ) ? 1 : $dismissible_length;
-			$transient          = absint( $dismissible_length ) * DAY_IN_SECONDS;
-			$dismissible_length = strtotime( absint( $dismissible_length ) . ' days' );
+			$days               = max( 1, absint( $dismissible_length ) );
+			$transient          = $days * DAY_IN_SECONDS;
+			$dismissible_length = strtotime( $days . ' days' );
 		}
 		set_site_transient( $option_name, $dismissible_length, $transient );
 		wp_die();

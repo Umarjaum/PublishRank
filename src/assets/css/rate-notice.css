@@ -1,0 +1,7 @@
+.publishrank-rate-notice{border-left-color:#650a24}
+.publishrank-rate-notice[hidden]{display:none!important}
+.publishrank-rate-notice__actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.publishrank-rate-notice .button-primary{background:#650a24;border-color:#650a24}
+.publishrank-rate-notice .button-primary:hover,.publishrank-rate-notice .button-primary:focus{background:#4b061a;border-color:#4b061a}
+.publishrank-rate-notice .button-link{text-decoration:underline}
+@media (max-width:600px){.publishrank-rate-notice__actions{flex-direction:column;align-items:stretch}.publishrank-rate-notice__actions .button{text-align:center;width:100%}}

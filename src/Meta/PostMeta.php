@@ -13,6 +13,10 @@ final class PostMeta {
 	const CANONICAL                = '_publishrank_seo_canonical';
 	const OG_TITLE                 = '_publishrank_seo_og_title';
 	const OG_DESCRIPTION           = '_publishrank_seo_og_description';
+	const X_TITLE                  = '_publishrank_seo_x_title';
+	const X_DESCRIPTION            = '_publishrank_seo_x_description';
+	const MASTODON_TITLE           = '_publishrank_seo_mastodon_title';
+	const MASTODON_DESCRIPTION     = '_publishrank_seo_mastodon_description';
 	const OG_IMAGE                 = '_publishrank_seo_og_image';
 	const OG_IMAGE_ALT             = '_publishrank_seo_og_image_alt';
 	const TWITTER_CARD             = '_publishrank_seo_twitter_card';
@@ -108,6 +112,10 @@ final class PostMeta {
 			self::CANONICAL      => 'url',
 			self::OG_TITLE       => 'text',
 			self::OG_DESCRIPTION => 'text',
+			self::X_TITLE        => 'text',
+			self::X_DESCRIPTION  => 'text',
+			self::MASTODON_TITLE => 'text',
+			self::MASTODON_DESCRIPTION => 'text',
 			self::OG_IMAGE       => 'public_url',
 			self::OG_IMAGE_ALT   => 'text',
 			self::ROBOTS         => 'robots',
@@ -347,6 +355,10 @@ final class PostMeta {
 			self::DESCRIPTION       => 320,
 			self::OG_TITLE          => 255,
 			self::OG_DESCRIPTION    => 320,
+			self::X_TITLE           => 255,
+			self::X_DESCRIPTION     => 320,
+			self::MASTODON_TITLE    => 255,
+			self::MASTODON_DESCRIPTION => 320,
 			self::OG_IMAGE_ALT      => 255,
 			self::TWITTER_CREATOR   => 15,
 			self::ENTITY_TOPIC      => 120,

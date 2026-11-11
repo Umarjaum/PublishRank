@@ -2,20 +2,21 @@
 .publishrank-breadcrumbs {
 	display: block;
 	box-sizing: border-box;
-	flex: 0 0 100%; /* Inside Elementor / flex containers the trail takes its own full row. */
-	width: 100%;
+	flex: 0 0 calc(100% - 5px); /* Inside Elementor / flex containers the trail takes its own full row. */
+	width: calc(100% - 5px);
 	max-width: 100%;
-	margin: 0 0 1em;
+	margin: 0 0 1em 5px;
 	font-size: .875em;
 	line-height: 1.5;
 	color: var(--pr-bc-text, inherit);
 }
-.publishrank-breadcrumbs .publishrank-breadcrumbs__list,
-.publishrank-breadcrumbs ol {
+	.publishrank-breadcrumbs .publishrank-breadcrumbs__list,
+	.publishrank-breadcrumbs ol {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: .25em .5em;
+	row-gap: .25em;
+	column-gap: 0;
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -23,7 +24,7 @@
 .publishrank-breadcrumbs li {
 	display: inline-flex;
 	align-items: center;
-	gap: .5em;
+	gap: 0;
 	min-width: 0;
 	margin: 0;
 	padding: 0;
@@ -51,8 +52,9 @@
 .publishrank-breadcrumb-separator {
 	display: inline-block;
 	opacity: .6;
-	/* Keep the spaces of spaced separators and the width of space-only separators. */
-	white-space: pre;
+	/* One controlled gap prevents doubled whitespace from text separators plus flex spacing. */
+	margin-inline: .45em;
+	white-space: nowrap;
 }
 /* Only directional separators (such as →) flip to point the reading direction; text separators are never mirrored. */
 [dir="rtl"] .publishrank-breadcrumb-separator--directional,
@@ -108,3 +110,220 @@
 .wp-site-blocks .publishrank-breadcrumbs {
 	text-align: start;
 }
+
+/* ===== Position: left / center / right ===== */
+.publishrank-breadcrumbs--align-left { text-align: left; }
+.publishrank-breadcrumbs--align-center { text-align: center; }
+.publishrank-breadcrumbs--align-right { text-align: right; }
+.publishrank-breadcrumbs--align-left .publishrank-breadcrumbs__list { justify-content: flex-start; }
+.publishrank-breadcrumbs--align-center .publishrank-breadcrumbs__list { justify-content: center; }
+.publishrank-breadcrumbs--align-right .publishrank-breadcrumbs__list { justify-content: flex-end; }
+.elementor .publishrank-breadcrumbs--align-center, .wp-site-blocks .publishrank-breadcrumbs--align-center { text-align: center; }
+.elementor .publishrank-breadcrumbs--align-right, .wp-site-blocks .publishrank-breadcrumbs--align-right { text-align: end; }
+
+/* Shared accent for the new looks (follows the Link colour setting). */
+.publishrank-breadcrumbs--arrows, .publishrank-breadcrumbs--minimal, .publishrank-breadcrumbs--steps, .publishrank-breadcrumbs--pills {
+	--pr-bc-accent: var(--pr-bc-link, #3b82e6);
+}
+
+/* ===== Style: arrows — chevron ribbon, current crumb filled ===== */
+.publishrank-breadcrumbs--arrows .publishrank-breadcrumbs__list { gap: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,.08)); }
+.publishrank-breadcrumbs--arrows .publishrank-breadcrumb-separator { display: none; }
+.publishrank-breadcrumbs--arrows li > a,
+.publishrank-breadcrumbs--arrows li > span:not(.publishrank-breadcrumb-separator) {
+	display: inline-flex; align-items: center;
+	padding: .65em 1.4em .65em 1.9em;
+	margin-right: -.55em;
+	background: var(--pr-bc-bg, #ffffff);
+	color: var(--pr-bc-text, #8a8f98);
+	text-decoration: none;
+	clip-path: polygon(0 0, calc(100% - .9em) 0, 100% 50%, calc(100% - .9em) 100%, 0 100%, .9em 50%);
+	opacity: 1;
+}
+.publishrank-breadcrumbs--arrows li:first-child > a,
+.publishrank-breadcrumbs--arrows li:first-child > span { padding-left: 1.2em; clip-path: polygon(0 0, calc(100% - .9em) 0, 100% 50%, calc(100% - .9em) 100%, 0 100%); }
+.publishrank-breadcrumbs--arrows li > a:hover,
+.publishrank-breadcrumbs--arrows li > a:focus-visible { color: var(--pr-bc-accent); }
+.publishrank-breadcrumbs--arrows [aria-current="page"] { background: var(--pr-bc-accent) !important; color: #fff !important; font-weight: 600; }
+
+/* ===== Style: minimal — lowercase card, underlined current ===== */
+.publishrank-breadcrumbs--minimal {
+	display: block; padding: .7em 1.2em; border-radius: 6px;
+	background: var(--pr-bc-bg, #ffffff); box-shadow: 0 1px 3px rgba(0,0,0,.06);
+	text-transform: lowercase;
+}
+.publishrank-breadcrumbs--minimal .publishrank-breadcrumbs__list { row-gap: .25em; column-gap: 0; }
+.publishrank-breadcrumbs--minimal li { gap: 0; }
+.publishrank-breadcrumbs--minimal a { color: var(--pr-bc-text, #222); text-decoration: none; }
+.publishrank-breadcrumbs--minimal a:hover { color: var(--pr-bc-accent); }
+.publishrank-breadcrumbs--minimal [aria-current="page"] { opacity: 1; color: var(--pr-bc-accent); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ===== Style: steps — numbered progress circles ===== */
+.publishrank-breadcrumbs--steps .publishrank-breadcrumbs__list { gap: 0; align-items: flex-start; }
+.publishrank-breadcrumbs--steps .publishrank-breadcrumb-separator { display: none; }
+.publishrank-breadcrumbs--steps li {
+	position: relative; flex-direction: column; gap: .45em;
+	min-width: 5.5em; text-align: center;
+}
+.publishrank-breadcrumbs--steps li::before {
+	content: attr(data-step);
+	display: grid; place-items: center;
+	width: 2.4em; height: 2.4em; border-radius: 50%;
+	border: 1.5px solid #b8bcc4; background: #fff; color: #8a8f98;
+	font-weight: 600; position: relative; z-index: 1;
+}
+.publishrank-breadcrumbs--steps li.is-done::before { content: "\2713"; background: var(--pr-bc-accent); border-color: var(--pr-bc-accent); color: #fff; }
+.publishrank-breadcrumbs--steps li.is-current::before { background: var(--pr-bc-accent); border-color: var(--pr-bc-accent); color: #fff; }
+.publishrank-breadcrumbs--steps li:not(:last-child)::after {
+	content: ""; position: absolute; top: 1.2em; left: 50%; width: 100%; height: 1.5px;
+	background: var(--pr-bc-accent);
+}
+.publishrank-breadcrumbs--steps a { color: var(--pr-bc-accent); text-decoration: none; }
+.publishrank-breadcrumbs--steps [aria-current="page"] { opacity: 1; color: var(--pr-bc-accent); max-width: 9em; }
+
+/* ===== Style: pills — grey pills, current crumb filled ===== */
+.publishrank-breadcrumbs--pills {
+	padding: .7em 1em; border-radius: 8px;
+	background: var(--pr-bc-bg, #ffffff); box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.publishrank-breadcrumbs--pills li > a,
+.publishrank-breadcrumbs--pills li > span:not(.publishrank-breadcrumb-separator) {
+	padding: .35em .95em; border-radius: 999px;
+	background: rgba(127,127,127,.14); color: var(--pr-bc-text, #8a8f98); text-decoration: none;
+}
+.publishrank-breadcrumbs--pills li > a:hover { color: var(--pr-bc-accent); }
+.publishrank-breadcrumbs--pills [aria-current="page"] { opacity: 1; background: var(--pr-bc-accent) !important; color: #fff !important; font-weight: 600; }
+
+/* ===== Responsive ===== */
+/* Keep the trail inside narrow theme containers even when a label is one long unbroken token. */
+.publishrank-breadcrumbs,
+.publishrank-breadcrumbs__list,
+.publishrank-breadcrumbs li { min-width: 0; }
+.publishrank-breadcrumbs { overflow: hidden; }
+
+@media (max-width: 1024px) {
+	.publishrank-breadcrumbs { font-size: .86em; }
+	.publishrank-breadcrumbs--arrows li > a,
+	.publishrank-breadcrumbs--arrows li > span:not(.publishrank-breadcrumb-separator) {
+		padding: .58em 1.15em .58em 1.55em;
+	}
+	.publishrank-breadcrumbs--steps li { min-width: 5em; }
+}
+
+@media (max-width: 768px) {
+	.publishrank-breadcrumbs {
+		font-size: .82em;
+		line-height: 1.4;
+	}
+	.publishrank-breadcrumbs .publishrank-breadcrumbs__list {
+		align-items: flex-start;
+	}
+	.publishrank-breadcrumbs li {
+		max-width: 100%;
+	}
+	.publishrank-breadcrumbs a {
+		overflow-wrap: anywhere;
+	}
+	.publishrank-breadcrumbs--bar,
+	.publishrank-breadcrumbs--minimal,
+	.publishrank-breadcrumbs--pills {
+		padding: .55em .75em;
+	}
+	.publishrank-breadcrumbs--arrows li > a,
+	.publishrank-breadcrumbs--arrows li > span:not(.publishrank-breadcrumb-separator) {
+		padding: .5em .9em .5em 1.25em;
+	}
+	.publishrank-breadcrumbs--steps li { min-width: 4.5em; }
+}
+
+@media (max-width: 480px) {
+	/* Ribbon and progress-step looks remain one usable row and scroll within the trail, never the page. */
+	.publishrank-breadcrumbs {
+		font-size: .8em;
+		margin-left: 5px;
+		width: calc(100% - 5px);
+	}
+	.publishrank-breadcrumbs--arrows .publishrank-breadcrumbs__list,
+	.publishrank-breadcrumbs--steps .publishrank-breadcrumbs__list {
+		flex-wrap: nowrap;
+		max-width: 100%;
+		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: thin;
+		justify-content: flex-start;
+		padding-bottom: .25em;
+	}
+	.publishrank-breadcrumbs--arrows li,
+	.publishrank-breadcrumbs--steps li { flex: 0 0 auto; }
+	.publishrank-breadcrumbs--arrows .publishrank-breadcrumbs__list::-webkit-scrollbar { height: 3px; }
+	.publishrank-breadcrumbs--steps .publishrank-breadcrumbs__list::-webkit-scrollbar { height: 3px; }
+	.publishrank-breadcrumbs--arrows .publishrank-breadcrumbs__list::-webkit-scrollbar-thumb,
+	.publishrank-breadcrumbs--steps .publishrank-breadcrumbs__list::-webkit-scrollbar-thumb {
+		background: currentColor;
+		opacity: .35;
+	}
+	.publishrank-breadcrumbs--arrows li > a,
+	.publishrank-breadcrumbs--arrows li > span:not(.publishrank-breadcrumb-separator) {
+		padding: .45em .75em .45em 1em;
+	}
+	.publishrank-breadcrumbs--minimal,
+	.publishrank-breadcrumbs--pills,
+	.publishrank-breadcrumbs--bar { padding: .5em .6em; }
+	.publishrank-breadcrumbs [aria-current="page"] { max-width: min(14em, 58vw); }
+}
+
+/* Horizontal offset in pixels (block "Position" slider): negative moves left, positive moves right. Ignored on small screens so it never causes sideways scrolling. */
+.publishrank-breadcrumbs--offset { transform: translateX(var(--pr-bc-x, 0px)); }
+/* Vertical offset in pixels: values are positive and move the trail down from its normal flow position. */
+.publishrank-breadcrumbs--offset-y { position: relative; top: var(--pr-bc-y, 0px); }
+@media (max-width: 600px) {
+	.publishrank-breadcrumbs--offset { transform: none; }
+	.publishrank-breadcrumbs--offset-y { top: 0; }
+}
+
+/* ===== Crumb icons (optional): home for the first crumb, folder for the trail, grid for the current page ===== */
+.publishrank-breadcrumbs--icons {
+	--pr-bc-icon-home: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3 2 12h3v8h5v-5h4v5h5v-8h3z'/%3E%3C/svg%3E");
+	--pr-bc-icon-folder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8z'/%3E%3C/svg%3E");
+	--pr-bc-icon-page: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/%3E%3C/svg%3E");
+}
+.publishrank-breadcrumbs--icons li > a,
+.publishrank-breadcrumbs--icons li > span:not(.publishrank-breadcrumb-separator) {
+	display: inline-flex;
+	align-items: center;
+}
+.publishrank-breadcrumbs--icons li > a::before,
+.publishrank-breadcrumbs--icons li > span:not(.publishrank-breadcrumb-separator)::before {
+	content: "";
+	flex: 0 0 auto;
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	margin-inline-end: .5em;
+	background-color: currentColor;
+	-webkit-mask: var(--pr-bc-icon-folder) center / contain no-repeat;
+	mask: var(--pr-bc-icon-folder) center / contain no-repeat;
+}
+.publishrank-breadcrumbs--icons li:first-child > a::before,
+.publishrank-breadcrumbs--icons li:first-child > span:not(.publishrank-breadcrumb-separator)::before {
+	-webkit-mask-image: var(--pr-bc-icon-home);
+	mask-image: var(--pr-bc-icon-home);
+}
+.publishrank-breadcrumbs--icons li.is-current:not(:first-child) > span::before {
+	-webkit-mask-image: var(--pr-bc-icon-page);
+	mask-image: var(--pr-bc-icon-page);
+}
+/* Numbered circles replace icons in the steps look. */
+.publishrank-breadcrumbs--steps.publishrank-breadcrumbs--icons li > a::before,
+.publishrank-breadcrumbs--steps.publishrank-breadcrumbs--icons li > span::before { display: none; }
+
+/* ===== Closer to the Daily UI #056 reference ===== */
+.publishrank-breadcrumbs--arrows .publishrank-breadcrumbs__list { filter: drop-shadow(0 2px 4px rgba(20, 30, 60, .10)); }
+.publishrank-breadcrumbs--arrows li > a,
+.publishrank-breadcrumbs--arrows li > span:not(.publishrank-breadcrumb-separator) { font-weight: 500; }
+.publishrank-breadcrumbs--minimal, .publishrank-breadcrumbs--pills { box-shadow: 0 2px 8px rgba(20, 30, 60, .07); }
+.publishrank-breadcrumbs--minimal .publishrank-breadcrumb-separator { opacity: .55; font-size: .9em; }
+.publishrank-breadcrumbs--pills .publishrank-breadcrumb-separator { opacity: .5; font-size: 1.2em; line-height: 1; }
+.publishrank-breadcrumbs--pills li > a, .publishrank-breadcrumbs--pills li > span:not(.publishrank-breadcrumb-separator) { font-weight: 500; }
+.publishrank-breadcrumbs--steps li > a, .publishrank-breadcrumbs--steps li > span:not(.publishrank-breadcrumb-separator) { font-weight: 500; }

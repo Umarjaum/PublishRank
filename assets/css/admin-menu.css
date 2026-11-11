@@ -159,3 +159,34 @@
 .notice.prw-setup-notice .button.prw-setup-notice__button:hover,
 .notice.prw-setup-notice .button.prw-setup-notice__button:focus { border-color: #650a24; background: #650a24; color: #fff; }
 @media (max-width: 600px) { .notice.prw-setup-notice .button.prw-setup-notice__button { width: 100%; justify-content: center; } }
+
+/* ===== 2.20.11: sidebar brand on tablet/mobile ===== */
+/* Auto-folded menu (783–960px) and manually folded: icon only, centred, never overlapping the name. */
+@media (min-width: 783px) and (max-width: 960px) {
+  .auto-fold #adminmenu #toplevel_page_publishrank-seo-dashboard > a { justify-content: center; padding-left: 0 !important; }
+  .auto-fold #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name { position: absolute !important; left: -1000em !important; }
+}
+.folded #adminmenu #toplevel_page_publishrank-seo-dashboard > a { justify-content: center; padding-left: 0 !important; }
+.folded #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name { position: absolute !important; left: -1000em !important; }
+/* Phone menu (≤782px): WordPress makes rows taller and text larger; keep logo + "PublishRank" on one tidy line. */
+@media (max-width: 782px) {
+  .auto-fold #adminmenu #toplevel_page_publishrank-seo-dashboard > a {
+    display: flex !important; align-items: center !important; justify-content: flex-start;
+    min-height: 44px; height: auto !important; padding: 0 8px 0 10px !important; box-sizing: border-box;
+  }
+  .auto-fold #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image {
+    position: static !important; float: none !important;
+    width: 28px !important; height: 28px !important; flex: 0 0 28px !important; margin: 0 !important;
+  }
+  .auto-fold #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-image img { width: 22px !important; height: 22px !important; min-width: 22px !important; max-width: 22px !important; max-height: 22px !important; }
+  .auto-fold #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name {
+    position: static !important; left: auto !important;
+    flex: 1 1 auto; min-width: 0; padding: 0 0 0 10px !important;
+    font-size: 14px; line-height: 44px !important;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .auto-fold #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name .awaiting-mod,
+  .auto-fold #adminmenu #toplevel_page_publishrank-seo-dashboard .wp-menu-name .update-plugins { vertical-align: middle; }
+  #adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li > a { min-height: 40px !important; font-size: 14px; white-space: normal; }
+  #adminmenu .pr-submenu-group-toggle { padding: 10px 12px 8px; font-size: 11px; }
+}

@@ -3,3 +3,4 @@
 .pr-var-select{max-width:100%;min-width:220px}
 .pr-var-help{margin:0!important;flex:1 1 220px}
 @media (max-width:600px){.pr-var-select{width:100%}}
+@media (max-width:480px){[class*="publishrank-variable"],[class*="pr-var"]{max-width:100%;box-sizing:border-box}}

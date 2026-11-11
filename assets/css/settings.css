@@ -273,3 +273,5 @@
 	.pr-set-wrap .pr-set-card input[type="checkbox"],
 	.pr-set-wrap .pr-set-card input[type="checkbox"]::before { transition: none; }
 }
+
+.pr-set-required{color:#b42318;font-weight:700}

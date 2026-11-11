@@ -18,11 +18,22 @@ defined( 'ABSPATH' ) || exit;
 
 final class OnboardingPage {
 	const SLUG        = 'publishrank-onboarding';
-	const TOTAL_STEPS = 8;
+	const TOTAL_STEPS = 9;
 	/** Set on fresh activation; while set and setup is incomplete, PublishRank screens are locked to the wizard. */
 	const REQUIRED_OPTION = 'publishrank_setup_required';
 
+	/** @var string[]|null Per-request cache for missing_required(); cleared whenever any option changes. */
+	private $missing_cache = null;
+
+	/** Drop the per-request cache so a value saved earlier in the same request is never read stale. */
+	public function clear_missing_cache() {
+		$this->missing_cache = null;
+	}
+
 	public function register() {
+		foreach ( array( 'updated_option', 'added_option', 'deleted_option' ) as $hook ) {
+			add_action( $hook, array( $this, 'clear_missing_cache' ) );
+		}
 		add_action( 'admin_menu', array( $this, 'menu' ), 12 );
 		add_action( 'admin_init', array( $this, 'maybe_redirect_after_activation' ), 1 );
 		add_action( 'admin_init', array( $this, 'maybe_lock_plugin_screens' ), 2 );
@@ -31,6 +42,7 @@ final class OnboardingPage {
 		add_action( 'admin_post_publishrank_onboarding_save', array( $this, 'save' ) );
 		add_action( 'admin_post_publishrank_onboarding_exit', array( $this, 'exit_wizard' ) );
 		add_action( 'admin_post_publishrank_onboarding_defaults', array( $this, 'restore_defaults' ) );
+		add_action( 'wp_ajax_publishrank_home_preview', array( $this, 'ajax_home_preview' ) );
 	}
 
 	/* ------------------------------------------------------------------
@@ -70,6 +82,10 @@ final class OnboardingPage {
 				'icon'  => 'fa-solid fa-location-dot',
 			),
 			8 => array(
+				'label' => __( 'Security', 'publishrank' ),
+				'icon'  => 'fa-solid fa-user-shield',
+			),
+			9 => array(
 				'label' => __( 'Ready', 'publishrank' ),
 				'icon'  => 'fa-solid fa-circle-check',
 			),
@@ -495,8 +511,8 @@ final class OnboardingPage {
 						array(
 							'wide'        => true,
 							'san'         => 'sanitize_home_text',
-							'placeholder' => '',
-							'help'        => __( 'Leave empty to use the site name.', 'publishrank' ),
+							'placeholder' => '%%sitename%% %%sep%% %%site_description%%',
+							'help'        => __( 'Plain text, written by you. Type the exact homepage title you want, usually your brand plus a few words on what you cover, or insert variables from the list. The grey text is only an example and is not saved. Leave empty to use the site name.', 'publishrank' ),
 						)
 					),
 					$f(
@@ -504,9 +520,11 @@ final class OnboardingPage {
 						'textarea',
 						__( 'Homepage meta description', 'publishrank' ),
 						array(
-							'wide'    => true,
-							'san'     => 'sanitize_home_text',
-							'default' => '',
+							'wide'        => true,
+							'san'         => 'sanitize_home_text',
+							'default'     => '',
+							'placeholder' => __( 'Trusted reporting on the latest national and world news, politics, business, sport and culture.', 'publishrank' ),
+							'help'        => __( 'WordPress has no excerpt for the homepage, so this dedicated field is what search engines and social networks use to describe it. Write one or two plain sentences (about 120 to 160 characters) saying what your site covers, as news brands do on their own homepages, and avoid repeating the title. The grey text is only an example and is not saved. Leave empty to use the front page\'s own SEO description (static front page) or your publication description.', 'publishrank' ),
 						)
 					),
 					$f(
@@ -571,6 +589,34 @@ final class OnboardingPage {
 						)
 					),
 				);
+			case 8:
+				return array(
+					$f(
+						'whl_page',
+						'slug',
+						__( 'Private login address', 'publishrank' ),
+						array(
+							'san'         => 'login_slug',
+							'required'    => true,
+							'wide'        => true,
+							'default'     => 'login',
+							'placeholder' => 'login',
+							'help'        => __( 'Your sign-in page moves here. wp-login.php and wp-admin are hidden from visitors who are not signed in. Bookmark the new address.', 'publishrank' ),
+						)
+					),
+					$f(
+						'whl_redirect_admin',
+						'slug',
+						__( 'Send blocked visitors to', 'publishrank' ),
+						array(
+							'san'         => 'redirect_slug',
+							'wide'        => true,
+							'default'     => '404',
+							'placeholder' => '404',
+							'help'        => __( 'Where visitors land if they open wp-login.php or wp-admin. Leave 404 to show your not-found page.', 'publishrank' ),
+						)
+					),
+				);
 		}
 		return array();
 	}
@@ -582,7 +628,7 @@ final class OnboardingPage {
 	 * @return string[]
 	 */
 	public static function setup_keys() {
-		$keep = array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_post_types', 'publishrank_sitemap_post_types', 'publishrank_seo_title_separator' ); // Also editable in Settings.
+		$keep = array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_post_types', 'publishrank_sitemap_post_types', 'publishrank_seo_title_separator', 'whl_page', 'whl_redirect_admin' ); // Also editable in Settings.
 		$keys = array( 'publishrank_social_profiles', 'publishrank_copyright', 'publishrank_identity_person_name', 'publishrank_identity_person_alternate_name', 'publishrank_identity_person_description', 'publishrank_identity_person_image', 'publishrank_identity_person_email' );
 		foreach ( array_keys( self::steps() ) as $step ) {
 			foreach ( self::fields( $step ) as $field ) {
@@ -610,7 +656,16 @@ final class OnboardingPage {
 
 	/** True when PublishRank screens are locked to the wizard (fresh installs only). */
 	public function is_locked() {
-		return ! $this->is_setup_complete() && (bool) get_option( self::REQUIRED_OPTION, false );
+		return ! $this->is_setup_complete() && (bool) get_option( self::REQUIRED_OPTION, false ) && array() !== $this->missing_required();
+	}
+
+	/** Mark setup as done. Called when the last step is finished, or when the user exits with every required field saved. */
+	private function complete_setup() {
+		update_option( 'publishrank_onboarding_complete', 1 );
+		update_option( 'publishrank_onboarding_version', Branding::version() );
+		update_option( 'publishrank_onboarding_completed_at', gmdate( 'c' ) );
+		delete_option( self::REQUIRED_OPTION );
+		$this->bump_cache();
 	}
 
 	/** Current stored value for a field, honouring legacy fallbacks and defaults. */
@@ -628,6 +683,9 @@ final class OnboardingPage {
 
 	/** Labels of required fields that are still empty. @return string[] */
 	private function missing_required() {
+		if ( null !== $this->missing_cache ) {
+			return $this->missing_cache;
+		}
 		$missing = array();
 		foreach ( array_keys( self::steps() ) as $step ) {
 			foreach ( self::fields( $step ) as $field ) {
@@ -636,7 +694,23 @@ final class OnboardingPage {
 				}
 			}
 		}
+		$this->missing_cache = $missing;
 		return $missing;
+	}
+
+	/** Whether a required field on a step other than $step is still empty. */
+	private function required_missing_outside( $step ) {
+		foreach ( array_keys( self::steps() ) as $other ) {
+			if ( (int) $other === (int) $step ) {
+				continue;
+			}
+			foreach ( self::fields( $other ) as $field ) {
+				if ( $field['required'] && '' === trim( (string) $this->value( $field ) ) ) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/* ------------------------------------------------------------------
@@ -715,17 +789,126 @@ final class OnboardingPage {
 				'clean'   => __( 'Each step saves when you continue', 'publishrank' ),
 				'saving'  => __( 'Saving…', 'publishrank' ),
 				'confirm' => __( 'Leave this step? Changes you made here have not been saved yet.', 'publishrank' ),
+				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+				'previewNonce' => wp_create_nonce( 'publishrank_home_preview' ),
+				'preview'      => array(
+					'updating'   => __( 'Updating preview…', 'publishrank' ),
+					'failed'     => __( 'The preview could not be updated. Your settings are not affected.', 'publishrank' ),
+					'titleLong'  => __( 'Google will probably shorten this title. Put the most important words first.', 'publishrank' ),
+					'titleFall'  => __( 'The title field is empty, so your site name is used.', 'publishrank' ),
+					'descLong'   => __( 'This description is longer than Google usually shows, so the end may be cut off.', 'publishrank' ),
+					'descShort'  => __( 'This description is quite short. About 120 to 160 characters usually reads best.', 'publishrank' ),
+					'descNone'   => __( 'No description is set, so Google will choose its own text from your page.', 'publishrank' ),
+					/* translators: %s: where the description comes from. */
+					'descFrom'   => __( 'Description used: %s', 'publishrank' ),
+				),
 			)
 		);
 		\PublishRankSEO\Admin\VariablePicker::enqueue( '' );
 	}
 
+	/** Resolved homepage title and description for the Google-style preview, using the real resolvers and the real fallbacks. */
+	public static function home_preview_data( $title_template, $description_template, $separator = null ) {
+		$title_template       = \PublishRankSEO\Meta\TemplateResolver::sanitize_template( (string) $title_template, 320 );
+		$description_template = \PublishRankSEO\Meta\TemplateResolver::sanitize_template( (string) $description_template, 320 );
+		$filter               = null;
+		if ( is_string( $separator ) && array_key_exists( $separator, self::title_separator_options() ) ) {
+			// The separator on screen may not be saved yet: preview with the value the publisher has chosen.
+			$filter = static function () use ( $separator ) {
+				return $separator;
+			};
+			add_filter( 'pre_option_publishrank_seo_title_separator', $filter );
+		}
+		$meta  = new \PublishRankSEO\Meta\MetaGenerator();
+		$front = 'page' === get_option( 'show_on_front' ) ? (int) get_option( 'page_on_front' ) : 0;
+		$name  = PublicationProfile::publication_name();
+		$extra = array( 'title' => $name );
+
+		$title        = $meta->resolve_template( $title_template, $front, 'title', $extra );
+		$custom_title = '' !== $title;
+		if ( ! $custom_title ) {
+			$fallback = \PublishRankSEO\Meta\TemplateResolver::sanitize_template( (string) get_option( 'publishrank_seo_title_template_home', '%%sitename%% %%page%%' ), 300 );
+			$title    = $meta->resolve_template( $fallback, $front, 'title', $extra );
+		}
+		$title = function_exists( 'mb_substr' ) ? mb_substr( $title, 0, 180 ) : substr( $title, 0, 180 );
+
+		$limit       = \PublishRankSEO\Meta\SeoData::DESCRIPTION_LENGTH;
+		$description = \PublishRankSEO\Meta\SeoData::clean( $meta->resolve_template( $description_template, $front, 'description' ) );
+		$source      = 'homepage';
+		if ( '' !== $description ) {
+			$description = \PublishRankSEO\Meta\SeoData::truncate( $description, $limit );
+		} else {
+			if ( $front ) {
+				$own = \PublishRankSEO\Meta\DescriptionResolver::for_post( $front, $limit );
+				if ( '' !== $own['text'] && ! in_array( $own['source'], array( 'page_type', 'global' ), true ) ) {
+					$description = $own['text'];
+					$source      = $own['source'];
+				}
+			}
+			if ( '' === $description ) {
+				$global      = \PublishRankSEO\Meta\DescriptionResolver::global_result( $limit );
+				$description = $global['text'];
+				$source      = $global['source'];
+			}
+		}
+		if ( $filter ) {
+			remove_filter( 'pre_option_publishrank_seo_title_separator', $filter );
+		}
+		$labels = array(
+			'homepage' => __( 'your homepage description', 'publishrank' ),
+			'override' => __( 'the front page\'s own SEO description', 'publishrank' ),
+			'excerpt'  => __( 'the front page excerpt', 'publishrank' ),
+			'content'  => __( 'text taken from the front page content', 'publishrank' ),
+			'builder'  => __( 'text taken from the front page content', 'publishrank' ),
+			'global'   => __( 'your publication description (the homepage description is empty)', 'publishrank' ),
+			'none'     => '',
+		);
+		return array(
+			'title'          => $title,
+			'title_custom'   => $custom_title,
+			'description'    => $description,
+			'source'         => $source,
+			'source_label'   => isset( $labels[ $source ] ) ? $labels[ $source ] : '',
+			'site_name'      => $name,
+			'url'            => home_url( '/' ),
+			'favicon'        => (string) get_site_icon_url( 32 ),
+		);
+	}
+
+	/** AJAX: Google-style homepage preview from the unsaved field values. Read-only; nothing is saved. */
+	public function ajax_home_preview() {
+		check_ajax_referer( 'publishrank_home_preview', 'nonce' );
+		if ( ! current_user_can( \PublishRank_Newsroom::CAP_SETUP ) ) {
+			wp_send_json_error( array( 'message' => 'forbidden' ), 403 );
+		}
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by check_ajax_referer() above.
+		$title = isset( $_POST['title'] ) ? (string) wp_unslash( $_POST['title'] ) : '';
+		$desc  = isset( $_POST['description'] ) ? (string) wp_unslash( $_POST['description'] ) : '';
+		$sep   = isset( $_POST['sep'] ) ? (string) wp_unslash( $_POST['sep'] ) : null;
+		// phpcs:enable
+		wp_send_json_success( self::home_preview_data( $title, $desc, $sep ) );
+	}
+
+	/** The Google-style preview card; filled in by assets/js/onboarding.js from the form's current values. */
+	private function render_home_preview() {
+		echo '<section class="prw-serp" data-prw-serp aria-labelledby="prw-serp-heading">';
+		echo '<div class="prw-serp__head"><h3 id="prw-serp-heading">' . esc_html__( 'How your homepage looks in Google', 'publishrank' ) . '</h3>';
+		echo '<div class="prw-serp__switch" role="group" aria-label="' . esc_attr__( 'Preview size', 'publishrank' ) . '"><button type="button" class="is-active" data-prw-serp-device="desktop" aria-pressed="true">' . esc_html__( 'Desktop', 'publishrank' ) . '</button><button type="button" data-prw-serp-device="mobile" aria-pressed="false">' . esc_html__( 'Mobile', 'publishrank' ) . '</button></div></div>';
+		echo '<div class="prw-serp__card" data-prw-serp-card aria-live="polite"><div class="prw-serp__top"><span class="prw-serp__fav" data-prw-serp-fav aria-hidden="true"></span><div class="prw-serp__who"><div class="prw-serp__site" data-prw-serp-site></div><div class="prw-serp__url" data-prw-serp-url></div></div></div><div class="prw-serp__title" data-prw-serp-title></div><div class="prw-serp__desc" data-prw-serp-desc></div></div>';
+		echo '<ul class="prw-serp__notes" data-prw-serp-notes></ul>';
+		echo '<p class="prw-help">' . esc_html__( 'This is an estimate built from your fields as you type. Google may still rewrite titles and descriptions, and shows the title and description you set only when they match the page well.', 'publishrank' ) . '</p>';
+		echo '</section>';
+	}
+
 	/** Leave the wizard without completing it. Not available while the wizard is locked. */
 	public function exit_wizard() {
 		AdminAssets::guard( 'publishrank_onboarding_exit', \PublishRank_Newsroom::CAP_SETUP );
-		if ( $this->is_locked() ) {
-			wp_safe_redirect( Branding::page_url( self::SLUG ) );
+		if ( array() !== $this->missing_required() ) {
+			wp_safe_redirect( Branding::page_url( self::SLUG ) . '&step=2&error=required' );
 			exit;
+		}
+		if ( ! $this->is_setup_complete() ) {
+			$this->complete_setup();
 		}
 		wp_safe_redirect( Branding::page_url( Branding::MENU_SLUG ) );
 		exit;
@@ -860,6 +1043,10 @@ final class OnboardingPage {
 			case 'country':
 				$code = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $raw ) );
 				return 2 === strlen( $code ) ? $code : '';
+			case 'login_slug':
+				return \PublishRankSEO\Security\WPHideLogin::clean_login_slug( (string) $raw );
+			case 'redirect_slug':
+				return \PublishRankSEO\Security\WPHideLogin::clean_redirect_slug( (string) $raw );
 		}
 		return method_exists( $settings, $san ) ? $settings->{$san}( $raw ) : sanitize_text_field( (string) $raw );
 	}
@@ -873,6 +1060,7 @@ final class OnboardingPage {
 		$settings = new SettingsPage();
 		$identity = PublicationProfile::identity_type();
 		$errors   = array();
+		$slug_error = false;
 
 		if ( 2 === $step && isset( $_POST['publishrank_identity_type'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$identity = $settings->sanitize_identity_type( sanitize_text_field( wp_unslash( $_POST['publishrank_identity_type'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -887,6 +1075,12 @@ final class OnboardingPage {
 			$clean = $this->clean( $field, $raw, $settings );
 			if ( 'publishrank_identity_person_url' === $field['key'] && '' === $clean ) {
 				$clean = esc_url_raw( home_url( '/' ) ); }
+			if ( 'whl_page' === $field['key'] && '' === $clean ) {
+				// Empty or reserved by WordPress: keep the address already in use and ask again.
+				$slug_error = true;
+				$errors[]   = $field['label'];
+				continue;
+			}
 			if ( $field['required'] && '' === trim( (string) $clean ) ) {
 				$errors[] = $field['label']; }
 			update_option( $field['key'], $clean );
@@ -894,6 +1088,11 @@ final class OnboardingPage {
 				update_option( $legacy, $clean ); }
 			if ( $is_person && $field['person_mirror'] ) {
 				update_option( $field['person_mirror'], $clean ); }
+		}
+
+		// Saving the Security step is the moment the owner has seen the new address: Hide Login may now switch on.
+		if ( 8 === $step && ! $slug_error ) {
+			\PublishRankSEO\Security\WPHideLogin::confirm_login_address();
 		}
 
 		if ( 7 === $step ) {
@@ -909,29 +1108,47 @@ final class OnboardingPage {
 			exit;
 		}
 
+		$err_kind = $slug_error ? 'slug' : 'required';
+
+		// Save & exit: whatever was typed on this step is already stored above. Leave as soon as every
+		// required field is filled in; the rest of the wizard can be finished or edited later.
+		$exit = isset( $_POST['prw_nav'] ) && 'exit' === sanitize_key( wp_unslash( $_POST['prw_nav'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( $exit ) {
+			$this->bump_cache();
+			if ( $errors ) {
+				wp_safe_redirect( Branding::page_url( self::SLUG ) . '&step=' . $step . '&error=' . $err_kind . $edit );
+				exit;
+			}
+			if ( array() !== $this->missing_required() ) {
+				wp_safe_redirect( Branding::page_url( self::SLUG ) . '&step=2&error=required' . $edit );
+				exit;
+			}
+			if ( ! $this->is_setup_complete() ) {
+				$this->complete_setup();
+			}
+			wp_safe_redirect( Branding::page_url( Branding::MENU_SLUG ) );
+			exit;
+		}
+
 		$next = min( self::TOTAL_STEPS, $step + 1 );
 		if ( $errors ) {
 			$next = $step; // Stay here until the required fields are filled in.
 		}
 
-		if ( 8 === $step ) {
+		if ( self::TOTAL_STEPS === $step ) {
 			$missing = $this->missing_required();
 			if ( $missing ) {
 				$this->bump_cache();
 				wp_safe_redirect( Branding::page_url( self::SLUG ) . '&step=2&error=required' . $edit );
 				exit;
 			}
-			update_option( 'publishrank_onboarding_complete', 1 );
-			update_option( 'publishrank_onboarding_version', Branding::version() );
-			update_option( 'publishrank_onboarding_completed_at', gmdate( 'c' ) );
-			delete_option( self::REQUIRED_OPTION );
-			$this->bump_cache();
+			$this->complete_setup();
 			wp_safe_redirect( Branding::page_url( self::SLUG ) . '&done=1' );
 			exit;
 		}
 
 		$this->bump_cache();
-		$query = '&step=' . $next . ( $errors ? '&error=required' : '&saved=1' ) . $edit;
+		$query = '&step=' . $next . ( $errors ? '&error=' . $err_kind : '&saved=1' ) . $edit;
 		wp_safe_redirect( Branding::page_url( self::SLUG ) . $query );
 		exit;
 	}
@@ -1011,6 +1228,7 @@ final class OnboardingPage {
 					echo '<textarea id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" rows="3" placeholder="' . esc_attr( $field['placeholder'] ) . '"' . $req . '>' . esc_textarea( (string) $value ) . '</textarea>'; // phpcs:ignore WordPress.Security.EscapeOutput
 					if ( 'publishrank_home_description' === $key ) {
 						echo \PublishRankSEO\Admin\VariablePicker::slot( $id, 'description', 'home' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in slot().
+						echo '<small class="prw-count" data-prw-count-for="' . esc_attr( $id ) . '" data-prw-count-min="120" data-prw-count-max="160" aria-live="polite"></small>';
 					}
 					break;
 				case 'select':
@@ -1045,6 +1263,12 @@ final class OnboardingPage {
 						echo '<label class="prw-chip"><input type="checkbox" name="' . esc_attr( $key ) . '[]" value="' . esc_attr( $type ) . '"' . checked( in_array( $type, $selected, true ), true, false ) . ( $applies ? '' : ' disabled' ) . ' /><span><i class="fa-solid fa-check" aria-hidden="true"></i>' . esc_html( $object->labels->name ) . '</span></label>';
 					}
 					echo '</div>';
+					break;
+				case 'slug':
+					$pretty = (bool) get_option( 'permalink_structure' );
+					$prefix = trailingslashit( home_url() ) . ( $pretty ? '' : '?' );
+					$tail   = ( $pretty && '/' === substr( (string) get_option( 'permalink_structure' ), -1 ) ) ? '/' : '';
+					echo '<div class="prw-slug"><code class="prw-slug__prefix">' . esc_html( $prefix ) . '</code><input type="text" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $value ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" autocomplete="off" autocapitalize="off" spellcheck="false"' . $req . ' />' . ( '' !== $tail ? '<code class="prw-slug__suffix">/</code>' : '' ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput
 					break;
 				default: // text, url, email.
 					$input = in_array( $field['type'], array( 'url', 'email' ), true ) ? $field['type'] : 'text';
@@ -1095,6 +1319,7 @@ final class OnboardingPage {
 			array( 5, 'fa-heading', __( 'Homepage SEO title', 'publishrank' ), $title, '' !== trim( (string) get_option( 'publishrank_home_title', '' ) ) ),
 			array( 6, 'fa-sitemap', __( 'Sitemaps', 'publishrank' ), ( $news ? __( 'News sitemap on', 'publishrank' ) : __( 'News sitemap off', 'publishrank' ) ) . ' · ' . str_replace( ',', ', ', (string) get_option( 'publishrank_seo_news_post_types', 'post' ) ), $news ),
 			array( 7, 'fa-location-dot', __( 'Local business', 'publishrank' ), ! empty( $local['enabled'] ) ? ( ! empty( $local['name'] ) ? (string) $local['name'] : __( 'Local business on', 'publishrank' ) ) : __( 'Local SEO off', 'publishrank' ), ! empty( $local['enabled'] ) ),
+			array( 8, 'fa-user-shield', __( 'Private login address', 'publishrank' ), \PublishRankSEO\Security\WPHideLogin::enabled() ? '/' . \PublishRankSEO\Security\WPHideLogin::current_login_slug() : __( 'Hide Login is off', 'publishrank' ), \PublishRankSEO\Security\WPHideLogin::enabled() ),
 		);
 		echo '<ul class="prw-recap">';
 		foreach ( $items as $item ) {
@@ -1231,6 +1456,9 @@ final class OnboardingPage {
 		$optional  = in_array( $step, self::optional_steps(), true );
 		$error     = isset( $_GET['error'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$saved     = isset( $_GET['saved'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$error_kind = isset( $_GET['error'] ) && ! is_array( $_GET['error'] ) ? sanitize_key( wp_unslash( $_GET['error'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$can_exit   = array() === $this->missing_required();
+		$elsewhere  = $this->required_missing_outside( $step );
 		$kicker    = ( $complete ? __( 'Editing setup', 'publishrank' ) : __( 'First-time setup', 'publishrank' ) ) . ' · ' . sprintf( /* translators: 1: step, 2: total. */ __( 'Step %1$d of %2$d', 'publishrank' ), $step, self::TOTAL_STEPS );
 
 		echo '<div class="wrap pr-modules-wrap pr-shell-wrap prw-wrap' . ( $locked ? ' is-locked' : '' ) . '" data-prw-wizard data-prw-step="' . (int) $step . '">';
@@ -1252,7 +1480,9 @@ final class OnboardingPage {
 				<input type="hidden" name="edit_mode" value="1" />
 			<?php endif; ?>
 			<?php wp_nonce_field( 'publishrank_onboarding_save' ); ?>
-			<?php if ( $error ) : ?>
+			<?php if ( $error && 'slug' === $error_kind ) : ?>
+				<div class="prw-alert prw-alert--error prw-validation-summary" id="prw-validation-summary" role="alert" tabindex="-1"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><p><?php esc_html_e( 'That login address cannot be used because it is empty or reserved by WordPress. Your previous address is unchanged. Please choose another one.', 'publishrank' ); ?></p></div>
+			<?php elseif ( $error ) : ?>
 				<div class="prw-alert prw-alert--error prw-validation-summary" id="prw-validation-summary" role="alert" tabindex="-1"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><p><?php echo esc_html( sprintf( /* translators: %s: field list. */ __( 'Please complete the required fields (*): %s', 'publishrank' ), ! empty( $this->missing_required() ) ? implode( ', ', $this->missing_required() ) : __( 'see highlighted fields', 'publishrank' ) ) ); ?></p></div>
 			<?php endif; ?>
 			<section class="prw-panel prw-panel--step-<?php echo (int) $step; ?>" aria-labelledby="prw-step-title">
@@ -1260,15 +1490,14 @@ final class OnboardingPage {
 			</section>
 			<div class="prw-actions" data-prw-actions>
 				<span class="prw-actions__status" data-prw-status>
-					<i class="fa-solid <?php echo esc_attr( $locked ? 'fa-lock' : 'fa-circle-check' ); ?>" aria-hidden="true"></i>
-					<span data-prw-status-text><?php echo esc_html( $locked ? __( 'Required one-time setup', 'publishrank' ) : __( 'Each step saves when you continue', 'publishrank' ) ); ?></span>
+					<i class="fa-solid <?php echo esc_attr( $can_exit ? 'fa-circle-check' : 'fa-lock' ); ?>" aria-hidden="true"></i>
+					<span data-prw-status-text><?php echo esc_html( $can_exit ? __( 'Required fields saved. You can exit any time.', 'publishrank' ) : __( 'Fill in the required fields (*) to unlock exit', 'publishrank' ) ); ?></span>
 				</span>
 				<span class="prw-actions__buttons">
-					<?php if ( ! $locked && ! $complete ) : ?>
-						<a class="prw-link prw-link--muted" href="<?php echo esc_url( $close_url ); ?>"><?php esc_html_e( 'Exit wizard', 'publishrank' ); ?></a>
-					<?php elseif ( $complete ) : ?>
+					<?php if ( $complete ) : ?>
 						<a class="prw-link prw-link--muted" href="<?php echo esc_url( $close_url ); ?>"><?php esc_html_e( 'Cancel', 'publishrank' ); ?></a>
 					<?php endif; ?>
+					<button class="button prw-btn prw-btn--ghost prw-exit" type="submit" name="prw_nav" value="exit" formnovalidate data-prw-exit data-prw-exit-elsewhere="<?php echo $elsewhere ? '1' : '0'; ?>" title="<?php echo esc_attr__( 'Saves this step and leaves the wizard. Available once every required field (*) is filled in.', 'publishrank' ); ?>"<?php disabled( ! $can_exit ); ?>><i class="fa-solid fa-door-open" aria-hidden="true"></i> <?php esc_html_e( 'Save & exit', 'publishrank' ); ?></button>
 					<?php if ( $optional ) : ?>
 						<a class="prw-link" href="<?php echo esc_url( $self . '&step=' . ( $step + 1 ) . $edit_qs ); ?>"><?php esc_html_e( 'Skip for now', 'publishrank' ); ?></a>
 					<?php endif; ?>
@@ -1301,7 +1530,8 @@ final class OnboardingPage {
 			5 => array( __( 'Search appearance and verification', 'publishrank' ), __( 'Homepage title and description, plus ownership verification for search engines.', 'publishrank' ) ),
 			6 => array( __( 'Content scope', 'publishrank' ), __( 'Choose which content types appear in your sitemaps.', 'publishrank' ) ),
 			7 => array( __( 'Local business (optional)', 'publishrank' ), __( 'Only enable this if the publication has a real, public-facing business location.', 'publishrank' ) ),
-			8 => array( __( 'Review and finish', 'publishrank' ), __( 'Check your configuration, then finish. Ongoing controls such as the News window, breadcrumbs and robots live in General Settings.', 'publishrank' ) ),
+			8 => array( __( 'Protect your sign-in page', 'publishrank' ), __( 'Choose a private address for the WordPress login. Fields marked * are required. You can change this any time in General Settings.', 'publishrank' ) ),
+			9 => array( __( 'Review and finish', 'publishrank' ), __( 'Check your configuration, then finish. Ongoing controls such as the News window, breadcrumbs and robots live in General Settings.', 'publishrank' ) ),
 		);
 		return $lead[ $step ];
 	}
@@ -1350,11 +1580,38 @@ final class OnboardingPage {
 			$this->recap( $edit_base );
 			return;
 		}
+		if ( 8 === (int) $step ) {
+			$this->render_login_url_notice();
+		}
 		echo '<div class="prw-fields">';
 		foreach ( self::fields( $step ) as $field ) {
 			$this->render_field( $field, $is_person );
 		}
 		echo '</div>';
+		if ( 5 === (int) $step ) {
+			$this->render_home_preview();
+		}
+	}
+
+	/** Security step: shows the exact new login address with a copy button before anything moves. */
+	private function render_login_url_notice() {
+		$hide     = \PublishRankSEO\Security\WPHideLogin::get_instance();
+		$url      = $hide->new_login_url();
+		$pretty   = (bool) get_option( 'permalink_structure' );
+		$prefix   = trailingslashit( home_url() ) . ( $pretty ? '' : '?' );
+		$tail     = ( $pretty && '/' === substr( (string) get_option( 'permalink_structure' ), -1 ) ) ? '/' : '';
+		$deferred = \PublishRankSEO\Security\WPHideLogin::is_deferred();
+		$off      = ! $deferred && ! \PublishRankSEO\Security\WPHideLogin::enabled();
+		if ( $deferred ) {
+			$text = __( 'Your sign-in page has not moved yet. It moves to the address below when you save this step. After that, wp-login.php and wp-admin are hidden from visitors who are not signed in. Copy the address and keep it somewhere safe.', 'publishrank' );
+		} elseif ( $off ) {
+			$text = __( 'Hide Login is switched off under Features, so your address is saved but not active yet. When it is on, your sign-in page is the address below.', 'publishrank' );
+		} else {
+			$text = __( 'After you save, sign in at the address below. Visitors who are not signed in can no longer open wp-login.php or wp-admin. Copy the address before you continue.', 'publishrank' );
+		}
+		echo '<div class="prw-alert prw-alert--info prw-loginurl" data-prw-loginurl data-prw-input="prw_whl_page" data-prw-prefix="' . esc_attr( $prefix ) . '" data-prw-tail="' . esc_attr( $tail ) . '" data-copied="' . esc_attr__( 'Copied', 'publishrank' ) . '" data-copy-failed="' . esc_attr__( 'Press Ctrl+C to copy', 'publishrank' ) . '">';
+		echo '<i class="fa-solid fa-user-shield" aria-hidden="true"></i><div><p>' . esc_html( $text ) . '</p>';
+		echo '<p class="prw-loginurl__row"><code data-prw-loginurl-text>' . esc_html( $url ) . '</code> <button type="button" class="button prw-btn prw-btn--ghost" data-prw-copy-url><i class="fa-regular fa-copy" aria-hidden="true"></i> ' . esc_html__( 'Copy address', 'publishrank' ) . '</button> <span class="prw-loginurl__status" data-prw-copy-status role="status" aria-live="polite"></span></p></div></div>';
 	}
 
 	/** The summary shown once setup is complete, inside the shared frame. */

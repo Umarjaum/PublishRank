@@ -96,7 +96,7 @@ final class SchemaBuilder {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function faq_entities( $post ) {
-		if ( ! $post instanceof \WP_Post ) {
+		if ( ! \PublishRankSEO\Core\OutputSettings::faq() || ! FAQModule::has_visible_faq( $post ) ) {
 			return array(); }
 		$items = get_post_meta( $post->ID, PostMeta::FAQ_ITEMS, true );
 		if ( ! is_array( $items ) ) {

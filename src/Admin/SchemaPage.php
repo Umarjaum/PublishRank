@@ -122,7 +122,7 @@ final class SchemaPage {
 				echo '<p class="description">' . esc_html( $row[4] ) . '</p>'; }
 			echo '</td></tr>';
 		}
-		echo '<tr><th scope="row">' . esc_html__( 'FAQ pages', 'publishrank' ) . '</th><td><p class="description">' . esc_html__( 'Choose FAQ Page in the schema box of any post or page and enter the questions there. Pages without complete questions fall back to a standard web page.', 'publishrank' ) . '</p></td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'FAQ pages', 'publishrank' ) . '</th><td><p class="description">' . esc_html__( 'Choose FAQ Page in the schema box, enter complete questions, and place [publishrank_faq] in the visible content. FAQPage structured data is emitted only when visitors can access the same questions and answers on the page; incomplete or hidden FAQs fall back to a standard web page.', 'publishrank' ) . '</p></td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Author schema', 'publishrank' ) . '</th><td><label><input type="checkbox" name="publishrank_schema_author_enabled" value="1" ' . checked( (bool) get_option( 'publishrank_schema_author_enabled', true ), true, false ) . ' /> ' . esc_html__( 'Output ProfilePage and Person connections on author archives', 'publishrank' ) . '</label></td></tr></table>';
 		submit_button();
 		echo '</form></div>';

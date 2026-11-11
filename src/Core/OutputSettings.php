@@ -28,6 +28,7 @@ final class OutputSettings {
 	const EXTERNAL_SEO_HANDOFF = 'publishrank_external_seo_handoff';
 	const BREADCRUMBS = 'publishrank_breadcrumbs_enabled';
 	const BREADCRUMB_SCHEMA = 'publishrank_breadcrumb_schema_enabled';
+	const FAQ         = 'publishrank_faq_enabled';
 	/** Not an output switch (not in keys()): lets PublishRank's separator replace the separator of other breadcrumb renderers. Default on. */
 	const BREADCRUMB_OVERRIDE = 'publishrank_breadcrumb_frontend_override';
 
@@ -107,6 +108,11 @@ final class OutputSettings {
 
 	public static function breadcrumb_schema() {
 		return self::is_on( self::BREADCRUMB_SCHEMA );
+	}
+
+	/** Whether FAQPage question/answer schema is available and may be emitted. */
+	public static function faq() {
+		return self::is_on( self::FAQ );
 	}
 
 	/**

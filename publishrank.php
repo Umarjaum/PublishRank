@@ -3,7 +3,7 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrankseo.vercel.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.20.4
+ * Version: 2.20.14
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -20,7 +20,10 @@ add_action( 'init', static function () {
 	load_plugin_textdomain( 'publishrank', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 }, 1 );
 
-define( 'PUBLISHRANK_SEO_VERSION', '2.20.4' );
+// The plugin header above is the single source of truth for the version number.
+$publishrank_header = get_file_data( __FILE__, array( 'Version' => 'Version' ), 'plugin' );
+define( 'PUBLISHRANK_SEO_VERSION', ! empty( $publishrank_header['Version'] ) ? $publishrank_header['Version'] : '0.0.0' );
+unset( $publishrank_header );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
@@ -202,6 +205,16 @@ function publishrank_seo_plugin_action_links( $links ) {
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'publishrank_seo_plugin_action_links' );
 add_filter( 'network_admin_plugin_action_links_' . plugin_basename( __FILE__ ), 'publishrank_seo_plugin_action_links' );
+
+/** Add a "Rate on WordPress.org" link to the plugin's row on the Installed Plugins screen. */
+function publishrank_seo_plugin_row_meta( $links, $file ) {
+	if ( plugin_basename( __FILE__ ) !== $file ) {
+		return $links;
+	}
+	$links[] = '<a href="' . esc_url( \PublishRankSEO\Core\Branding::rate_url() ) . '" target="_blank" rel="noopener noreferrer" aria-label="' . esc_attr__( 'Rate PublishRank on WordPress.org', 'publishrank' ) . '">' . esc_html__( '★★★★★ Rate on WordPress.org', 'publishrank' ) . '</a>';
+	return $links;
+}
+add_filter( 'plugin_row_meta', 'publishrank_seo_plugin_row_meta', 10, 2 );
 
 add_action(
 	'plugins_loaded',

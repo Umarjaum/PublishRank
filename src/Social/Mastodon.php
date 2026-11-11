@@ -25,6 +25,8 @@ final class Mastodon {
 	const META_IMAGE      = '_publishrank_mastodon_image';
 	const META_SPOILER    = '_publishrank_mastodon_spoiler';
 	const CRON_HOOK       = 'publishrank_mastodon_share_post';
+	const META_PROFILE    = '_publishrank_mastodon_profile';
+	const META_AUTHOR_CHECK = '_publishrank_mastodon_author_check';
 	const DEFAULT_TEMPLATE = "{title}\n\n{excerpt}\n\n{url}\n\n{hashtags}";
 
 	public function register() {
@@ -54,6 +56,7 @@ final class Mastodon {
 			'attach_image' => 0,
 			'creator_tag'  => 1,
 			'author_tags'  => 1,
+			'author_verify' => 1,
 		);
 	}
 
@@ -240,6 +243,122 @@ final class Mastodon {
 		return $account;
 	}
 
+	/* ------------------------------------------------------------------ author verification */
+
+	/** The author's saved Mastodon profile URL (https://server/@name), or ''. */
+	public static function author_profile( $user_id ) {
+		return self::normalize_profile( (string) get_user_meta( (int) $user_id, self::META_PROFILE, true ) );
+	}
+
+	/** The public author page an author pastes into a Mastodon profile field. */
+	public static function author_url( $user_id ) {
+		return (string) get_author_posts_url( (int) $user_id );
+	}
+
+	/** Last stored verification check for an author. */
+	public static function author_check( $user_id ) {
+		$check = get_user_meta( (int) $user_id, self::META_AUTHOR_CHECK, true );
+		return is_array( $check ) ? $check : array();
+	}
+
+	/** Every URL found in a Mastodon profile field (the field value is HTML with <a href>). */
+	private static function field_urls( $html ) {
+		$urls = array();
+		if ( preg_match_all( '/href\s*=\s*"([^"]+)"/i', (string) $html, $m ) ) {
+			foreach ( $m[1] as $href ) {
+				$urls[] = html_entity_decode( $href, ENT_QUOTES, 'UTF-8' );
+			}
+		}
+		$text = trim( wp_strip_all_tags( (string) $html ) );
+		if ( preg_match( '#^https?://\S+$#i', $text ) ) {
+			$urls[] = $text;
+		}
+		return $urls;
+	}
+
+	/** Compare two URLs ignoring scheme, "www.", case, query string and a trailing slash. */
+	private static function same_url( $a, $b ) {
+		$norm = static function ( $url ) {
+			$parts = wp_parse_url( strtolower( trim( (string) $url ) ) );
+			if ( empty( $parts['host'] ) ) {
+				return '';
+			}
+			return preg_replace( '/^www\./', '', $parts['host'] ) . rtrim( isset( $parts['path'] ) ? $parts['path'] : '', '/' );
+		};
+		$a = $norm( $a );
+		return '' !== $a && $a === $norm( $b );
+	}
+
+	/**
+	 * Ask the author's Mastodon server (public lookup, no token needed) whether the author page is
+	 * listed in a profile field and verified, and store the result on the user.
+	 *
+	 * @return array{time:int,state:string,field_url:string,message:string}
+	 */
+	public static function check_author( $user_id ) {
+		$user_id = (int) $user_id;
+		$result  = array( 'time' => time(), 'state' => 'error', 'field_url' => '', 'message' => '' );
+		$profile = self::author_profile( $user_id );
+		if ( '' === $profile ) {
+			$result['state']   = 'no_profile';
+			$result['message'] = __( 'This author has not added a Mastodon profile yet.', 'publishrank' );
+		} else {
+			$handle = self::handle_from_url( $profile ); // @name@server
+			$server = self::normalize_instance( (string) wp_parse_url( $profile, PHP_URL_HOST ) );
+			if ( '' === $handle || '' === $server ) {
+				$result['message'] = __( 'Use a profile address like https://mastodon.social/@name or @name@mastodon.social.', 'publishrank' );
+			} else {
+				$name     = ltrim( strstr( ltrim( $handle, '@' ), '@', true ), '@' );
+				$response = wp_safe_remote_get(
+					$server . '/api/v1/accounts/lookup?acct=' . rawurlencode( $name ),
+					array(
+						'timeout' => 10,
+						'headers' => array(
+							'Accept'     => 'application/json',
+							'User-Agent' => 'PublishRank/' . ( defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '1' ) . '; ' . home_url( '/' ),
+						),
+					)
+				);
+				if ( is_wp_error( $response ) ) {
+					$result['message'] = $response->get_error_message();
+				} else {
+					$code = (int) wp_remote_retrieve_response_code( $response );
+					$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+					if ( 404 === $code ) {
+						$result['state']   = 'not_found';
+						$result['message'] = __( 'Mastodon could not find that profile. Check the address.', 'publishrank' );
+					} elseif ( $code < 200 || $code >= 300 || ! is_array( $data ) ) {
+						/* translators: %d: HTTP status code. */
+						$result['message'] = sprintf( __( 'The Mastodon server answered with HTTP %d, so the check could not be completed. Try again later.', 'publishrank' ), $code );
+					} else {
+						$author_url = self::author_url( $user_id );
+						$home       = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+						$result['state']   = 'no_field';
+						$result['message'] = __( 'The author page is not in a Mastodon profile field yet.', 'publishrank' );
+						foreach ( (array) ( $data['fields'] ?? array() ) as $field ) {
+							foreach ( self::field_urls( $field['value'] ?? '' ) as $url ) {
+								$on_site = self::same_url( $url, $author_url ) || ( $home && self::same_url( $url, home_url( '/' ) ) );
+								if ( ! $on_site ) {
+									continue;
+								}
+								$result['field_url'] = esc_url_raw( $url );
+								if ( ! empty( $field['verified_at'] ) ) {
+									$result['state']   = 'verified';
+									$result['message'] = __( 'Verified: Mastodon shows a green check next to this author’s website link.', 'publishrank' );
+									break 2;
+								}
+								$result['state']   = 'pending';
+								$result['message'] = __( 'The link is on the Mastodon profile but is not verified yet. Open Edit profile on Mastodon, press Save, then check again.', 'publishrank' );
+							}
+						}
+					}
+				}
+			}
+		}
+		update_user_meta( $user_id, self::META_AUTHOR_CHECK, $result );
+		return $result;
+	}
+
 	/* ------------------------------------------------------------------ front end */
 
 	/** rel="me" links make Mastodon show the green verified check; fediverse:creator credits the author on link previews. */
@@ -251,6 +370,15 @@ final class Mastodon {
 		$profile = '' !== $s['profile_url'] ? $s['profile_url'] : (string) ( self::account()['url'] ?? '' );
 		if ( '' !== $profile ) {
 			echo '<link rel="me" href="' . esc_url( $profile ) . '" />' . "\n";
+		}
+		// Author verification: the author's page links back to their own Mastodon profile, so the
+		// author can put that page in a profile field on Mastodon and get the green check.
+		if ( is_author() && ! empty( $s['author_verify'] ) ) {
+			$author_profile = self::author_profile( (int) get_queried_object_id() );
+			if ( '' !== $author_profile && $author_profile !== $profile ) {
+				echo '<link rel="me" href="' . esc_url( $author_profile ) . '" />' . "\n";
+			}
+			return;
 		}
 		if ( ! is_singular() || empty( $s['creator_tag'] ) ) {
 			return;
@@ -303,12 +431,63 @@ final class Mastodon {
 		return 'yes' === $choice;
 	}
 
+	/**
+	 * Template variables, in the order they are shown to editors.
+	 *
+	 * @return array<string,array{label:string,hint:string}>
+	 */
+	public static function variables() {
+		return array(
+			'{title}'          => array( 'label' => __( 'Title', 'publishrank' ), 'hint' => __( 'The post title.', 'publishrank' ) ),
+			'{excerpt}'        => array( 'label' => __( 'Excerpt', 'publishrank' ), 'hint' => __( 'The post excerpt, or the first words of the post. Shortened first when the post is too long.', 'publishrank' ) ),
+			'{url}'            => array( 'label' => __( 'Link', 'publishrank' ), 'hint' => __( 'The post address. Mastodon shows a link preview card from it and counts it as 23 characters.', 'publishrank' ) ),
+			'{image}'          => array( 'label' => __( 'Image', 'publishrank' ), 'hint' => __( 'Attach the featured image to the Mastodon post, with its Media Library alt text. Mastodon shows images as attachments, so this tag is removed from the text. Needs the write:media permission.', 'publishrank' ) ),
+			'{hashtags}'       => array( 'label' => __( 'Hashtags', 'publishrank' ), 'hint' => __( 'The post tags as hashtags (up to 5). Needs “Hashtags” switched on below.', 'publishrank' ) ),
+			'{category}'       => array( 'label' => __( 'Category', 'publishrank' ), 'hint' => __( 'The name of the first category.', 'publishrank' ) ),
+			'{category_tag}'   => array( 'label' => __( 'Category hashtag', 'publishrank' ), 'hint' => __( 'The first category as a hashtag.', 'publishrank' ) ),
+			'{author}'         => array( 'label' => __( 'Author', 'publishrank' ), 'hint' => __( 'The author’s display name.', 'publishrank' ) ),
+			'{author_mention}' => array( 'label' => __( 'Author @mention', 'publishrank' ), 'hint' => __( 'The author’s Mastodon handle from their WordPress profile. Falls back to their name when they have not added one.', 'publishrank' ) ),
+			'{date}'           => array( 'label' => __( 'Date', 'publishrank' ), 'hint' => __( 'The publish date in your site’s date format.', 'publishrank' ) ),
+			'{site}'           => array( 'label' => __( 'Site name', 'publishrank' ), 'hint' => __( 'Your site name.', 'publishrank' ) ),
+			'{site_mention}'   => array( 'label' => __( 'Your @mention', 'publishrank' ), 'hint' => __( 'Your own Mastodon handle from the profile field on this screen.', 'publishrank' ) ),
+		);
+	}
+
+	/** Plain list of the variables, e.g. for short help text. */
+	public static function variables_list() {
+		return implode( ' ', array_keys( self::variables() ) );
+	}
+
+	/** Whether a message template asks for the featured image. */
+	public static function template_wants_image( $template ) {
+		return false !== strpos( (string) $template, '{image}' );
+	}
+
+	/** The message template that applies to a post: its own custom message or the global one. */
+	public static function template_for( \WP_Post $post ) {
+		$custom = trim( (string) get_post_meta( $post->ID, self::META_MESSAGE, true ) );
+		return '' !== $custom ? $custom : (string) self::settings()['template'];
+	}
+
 	/** Build the status text from the template. Mastodon counts any link as 23 characters. */
 	public static function compose( \WP_Post $post, $template = '' ) {
 		$s        = self::settings();
 		$custom   = trim( (string) get_post_meta( $post->ID, self::META_MESSAGE, true ) );
 		$template = '' !== $custom ? $custom : ( '' !== $template ? $template : (string) $s['template'] );
 		$excerpt  = has_excerpt( $post ) ? $post->post_excerpt : wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 35, '…' );
+		$title    = html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' );
+		// Separate Mastodon title / description from the editor replace {title} and {excerpt}; blank means the post's own.
+		$generator = new \PublishRankSEO\Meta\MetaGenerator();
+		$m_title   = trim( (string) get_post_meta( $post->ID, \PublishRankSEO\Meta\PostMeta::MASTODON_TITLE, true ) );
+		$m_desc    = trim( (string) get_post_meta( $post->ID, \PublishRankSEO\Meta\PostMeta::MASTODON_DESCRIPTION, true ) );
+		if ( '' !== $m_title ) {
+			$resolved = $generator->resolve_template( $m_title, (int) $post->ID, 'title' );
+			$title    = '' !== $resolved ? $resolved : $title;
+		}
+		if ( '' !== $m_desc ) {
+			$resolved = $generator->resolve_template( $m_desc, (int) $post->ID, 'description' );
+			$excerpt  = '' !== $resolved ? $resolved : $excerpt;
+		}
 		$tags     = array();
 		if ( ! empty( $s['hashtags'] ) ) {
 			foreach ( (array) wp_get_post_tags( $post->ID, array( 'fields' => 'names' ) ) as $name ) {
@@ -321,16 +500,36 @@ final class Mastodon {
 				}
 			}
 		}
+		$category = '';
+		$cat_tag  = '';
+		$terms    = get_the_category( $post->ID );
+		if ( is_array( $terms ) && $terms && ! is_wp_error( $terms ) ) {
+			$category = html_entity_decode( (string) $terms[0]->name, ENT_QUOTES, 'UTF-8' );
+			$slug     = preg_replace( '/[^\p{L}\p{N}_]+/u', '', ucwords( $category ) );
+			$cat_tag  = '' !== $slug ? '#' . $slug : '';
+		}
+		$author_name    = html_entity_decode( (string) get_the_author_meta( 'display_name', (int) $post->post_author ), ENT_QUOTES, 'UTF-8' );
+		$author_profile = self::normalize_profile( (string) get_user_meta( (int) $post->post_author, '_publishrank_mastodon_profile', true ) );
+		$author_handle  = self::handle_from_url( $author_profile );
+		$site_handle    = self::handle_from_url( '' !== $s['profile_url'] ? $s['profile_url'] : (string) ( self::account()['url'] ?? '' ) );
 		$text = strtr(
 			$template,
 			array(
-				'{title}'    => html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ),
-				'{excerpt}'  => html_entity_decode( (string) $excerpt, ENT_QUOTES, 'UTF-8' ),
-				'{url}'      => get_permalink( $post ),
-				'{hashtags}' => implode( ' ', $tags ),
-				'{site}'     => get_bloginfo( 'name' ),
+				'{title}'          => $title,
+				'{excerpt}'        => html_entity_decode( (string) $excerpt, ENT_QUOTES, 'UTF-8' ),
+				'{url}'            => get_permalink( $post ),
+				'{image}'          => '', // The image travels as a Mastodon attachment, never as text.
+				'{hashtags}'       => implode( ' ', $tags ),
+				'{category}'       => $category,
+				'{category_tag}'   => $cat_tag,
+				'{author}'         => $author_name,
+				'{author_mention}' => '' !== $author_handle ? $author_handle : $author_name,
+				'{date}'           => get_the_date( '', $post ),
+				'{site}'           => html_entity_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES, 'UTF-8' ),
+				'{site_mention}'   => $site_handle,
 			)
 		);
+		$text = preg_replace( '/[ \t]+\n/', "\n", $text );
 		$text = trim( preg_replace( "/\n{3,}/", "\n\n", $text ) );
 		return self::fit( $text, self::character_limit() );
 	}
@@ -490,6 +689,9 @@ final class Mastodon {
 		$s         = self::settings();
 		$image     = (string) get_post_meta( $post->ID, self::META_IMAGE, true );
 		$use_image = '' === $image ? ! empty( $s['attach_image'] ) : 'yes' === $image;
+		if ( self::template_wants_image( self::template_for( $post ) ) ) {
+			$use_image = true; // The {image} tag in the message asks for the featured image.
+		}
 		$media_id  = '';
 		if ( $use_image && has_post_thumbnail( $post ) ) {
 			$uploaded = self::upload_featured_image( $post );
@@ -582,7 +784,7 @@ final class Mastodon {
 		}
 		echo '<p><label for="publishrank_mastodon_message">' . esc_html__( 'Custom message (optional)', 'publishrank' ) . '</label><textarea class="widefat" rows="4" id="publishrank_mastodon_message" name="publishrank_mastodon_message" placeholder="' . esc_attr( self::DEFAULT_TEMPLATE ) . '">' . esc_textarea( (string) get_post_meta( $post->ID, self::META_MESSAGE, true ) ) . '</textarea></p>';
 		echo '<p><label for="publishrank_mastodon_spoiler">' . esc_html__( 'Content warning (optional)', 'publishrank' ) . '</label><input class="widefat" type="text" id="publishrank_mastodon_spoiler" name="publishrank_mastodon_spoiler" value="' . esc_attr( (string) get_post_meta( $post->ID, self::META_SPOILER, true ) ) . '" /><span class="description">' . esc_html__( 'Adds a Mastodon content warning and marks the post as sensitive.', 'publishrank' ) . '</span></p>';
-		echo '<p class="description">' . esc_html__( 'Variables: {title} {excerpt} {url} {hashtags} {site}. Links count as 23; the status is fitted to your server’s character limit.', 'publishrank' ) . '</p>';
+		echo '<p class="description">' . esc_html( __( 'Variables:', 'publishrank' ) . ' ' . self::variables_list() ) . '<br />' . esc_html__( 'Add {image} to attach the featured image. Links count as 23; the status is fitted to your server’s character limit.', 'publishrank' ) . '</p>';
 		if ( 'publish' === $post->post_status ) {
 			$url = wp_nonce_url( admin_url( 'admin-post.php?action=publishrank_mastodon_share_now&post_id=' . (int) $post->ID ), 'publishrank_mastodon_share_now_' . (int) $post->ID );
 			echo '<p><a class="button" href="' . esc_url( $url ) . '">' . esc_html( '' !== $status ? __( 'Share again now', 'publishrank' ) : __( 'Share now', 'publishrank' ) ) . '</a></p>';

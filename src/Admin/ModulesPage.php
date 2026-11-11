@@ -73,6 +73,11 @@ final class ModulesPage {
 		if ( ! ModuleSwitches::exists( $key ) ) {
 			wp_send_json_error( array( 'message' => __( 'Unknown module.', 'publishrank' ) ), 400 );
 		}
+		$lock = ModuleSwitches::lock( $key );
+		if ( $lock ) {
+			/* translators: %s: plugin name, e.g. bbPress. */
+			wp_send_json_error( array( 'message' => sprintf( __( 'Locked until %s is installed and active.', 'publishrank' ), $lock['plugin'] ) ), 409 );
+		}
 		ModuleSwitches::set( $key, $on );
 		wp_send_json_success(
 			array(
@@ -182,27 +187,42 @@ final class ModulesPage {
 	}
 
 	private static function card( $key, array $module, $compact ) {
-		$on      = ModuleSwitches::is_on( $key );
+		$lock    = ModuleSwitches::lock( $key );
+		$locked  = null !== $lock;
+		$on      = ! $locked && ModuleSwitches::is_on( $key );
 		$id      = 'pr-module-' . sanitize_html_class( $key ) . ( $compact ? '-dash' : '' );
 		$title   = isset( $module['title'] ) ? (string) $module['title'] : $key;
 		$desc    = isset( $module['description'] ) ? (string) $module['description'] : '';
 		$icon    = isset( $module['icon'] ) ? sanitize_html_class( (string) $module['icon'] ) : 'fa-puzzle-piece';
 		$page    = isset( $module['page'] ) ? (string) $module['page'] : '';
 		$search  = strtolower( $title . ' ' . $desc );
-		echo '<article class="pr-module' . ( $on ? ' is-on' : '' ) . '" data-pr-module-card="' . esc_attr( $key ) . '" data-search="' . esc_attr( $search ) . '">';
+		echo '<article class="pr-module' . ( $on ? ' is-on' : '' ) . ( $locked ? ' is-locked' : '' ) . '" data-pr-module-card="' . esc_attr( $key ) . '" data-search="' . esc_attr( $search ) . '">';
 		echo '<span class="pr-module__icon" aria-hidden="true"><i class="fa-solid ' . esc_attr( $icon ) . '"></i></span>';
 		echo '<div class="pr-module__body">';
 		echo '<h3 class="pr-module__title" id="' . esc_attr( $id ) . '-title">' . esc_html( $title ) . '</h3>';
 		if ( ! $compact && '' !== $desc ) {
 			echo '<p class="pr-module__desc" id="' . esc_attr( $id ) . '-desc">' . esc_html( $desc ) . '</p>';
 		}
-		echo '<div class="pr-module__meta"><span class="pr-module__state" data-pr-module-state>' . ( $on ? esc_html__( 'On', 'publishrank' ) : esc_html__( 'Off', 'publishrank' ) ) . '</span>';
-		if ( '' !== $page ) {
+		if ( $locked ) {
+			$plugin_name = (string) $lock['plugin'];
+			if ( ! empty( $lock['installed'] ) ) {
+				/* translators: %s: plugin name. */
+				$note = sprintf( __( 'Locked: %s is installed but not active. Activate it to unlock this feature.', 'publishrank' ), $plugin_name );
+				$link = current_user_can( 'activate_plugins' ) ? '<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">' . esc_html__( 'Open Plugins', 'publishrank' ) . '</a>' : '';
+			} else {
+				/* translators: %s: plugin name. */
+				$note = sprintf( __( 'Locked: %s is not installed. Install and activate it to unlock this feature.', 'publishrank' ), $plugin_name );
+				$link = current_user_can( 'install_plugins' ) ? '<a href="' . esc_url( admin_url( 'plugin-install.php?s=' . rawurlencode( $plugin_name ) . '&tab=search&type=term' ) ) . '">' . esc_html__( 'Get the plugin', 'publishrank' ) . '</a>' : '';
+			}
+			echo '<p class="pr-module__lock"><i class="fa-solid fa-lock" aria-hidden="true"></i><span>' . esc_html( $note ) . ' ' . $link . '</span></p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $link is built from escaped parts.
+		}
+		echo '<div class="pr-module__meta"><span class="pr-module__state" data-pr-module-state>' . ( $locked ? esc_html__( 'Locked', 'publishrank' ) : ( $on ? esc_html__( 'On', 'publishrank' ) : esc_html__( 'Off', 'publishrank' ) ) ) . '</span>';
+		if ( '' !== $page && ! $locked ) {
 			echo '<a class="pr-module__configure" href="' . esc_url( Branding::page_url( $page ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '<span class="screen-reader-text"> ' . esc_html( $title ) . '</span></a>';
 		}
 		echo '</div></div>';
 		echo '<label class="pr-switch" for="' . esc_attr( $id ) . '">';
-		echo '<input type="checkbox" role="switch" id="' . esc_attr( $id ) . '" name="modules[' . esc_attr( $key ) . ']" value="1" data-pr-module="' . esc_attr( $key ) . '" data-label="' . esc_attr( $title ) . '" aria-labelledby="' . esc_attr( $id ) . '-title"' . ( ! $compact && '' !== $desc ? ' aria-describedby="' . esc_attr( $id ) . '-desc"' : '' ) . checked( $on, true, false ) . ' />';
+		echo '<input type="checkbox" role="switch" id="' . esc_attr( $id ) . '" name="modules[' . esc_attr( $key ) . ']" value="1" data-pr-module="' . esc_attr( $key ) . '" data-label="' . esc_attr( $title ) . '" aria-labelledby="' . esc_attr( $id ) . '-title"' . ( ! $compact && '' !== $desc ? ' aria-describedby="' . esc_attr( $id ) . '-desc"' : '' ) . checked( $on, true, false ) . disabled( $locked, true, false ) . ' />';
 		echo '<span class="pr-switch__track" aria-hidden="true"><span class="pr-switch__thumb"></span></span>';
 		echo '</label>';
 		echo '</article>';

@@ -1,0 +1,30 @@
+/* PublishRank shared responsive rules for every plugin screen (loaded on PublishRank admin pages). */
+@media (max-width: 1024px) {
+  body[class*="publishrank"] .wrap { margin-right: 12px; }
+  body[class*="publishrank"] .wrap img, body[class*="publishrank"] .wrap video { max-width: 100%; height: auto; }
+  body[class*="publishrank"] .wrap pre, body[class*="publishrank"] .wrap code { white-space: pre-wrap; word-break: break-word; }
+}
+@media (max-width: 782px) {
+  body[class*="publishrank"] .wrap { margin: 10px 10px 0 0; }
+  body[class*="publishrank"] .wrap h1 { font-size: 20px; line-height: 1.3; }
+  body[class*="publishrank"] .form-table, body[class*="publishrank"] .form-table tbody,
+  body[class*="publishrank"] .form-table tr, body[class*="publishrank"] .form-table th,
+  body[class*="publishrank"] .form-table td { display: block; width: 100%; box-sizing: border-box; }
+  body[class*="publishrank"] .form-table th { padding: 12px 0 4px; }
+  body[class*="publishrank"] .form-table td { padding: 4px 0 12px; }
+  body[class*="publishrank"] .form-table input[type="text"], body[class*="publishrank"] .form-table input[type="url"],
+  body[class*="publishrank"] .form-table input[type="email"], body[class*="publishrank"] .form-table input[type="number"],
+  body[class*="publishrank"] .form-table select, body[class*="publishrank"] .form-table textarea,
+  body[class*="publishrank"] .regular-text, body[class*="publishrank"] .large-text { max-width: 100%; }
+  body[class*="publishrank"] .widefat, body[class*="publishrank"] .wp-list-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  body[class*="publishrank"] .rhs-card, body[class*="publishrank"] .postbox { padding: 14px !important; max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere; }
+  body[class*="publishrank"] .nav-tab-wrapper { display: flex; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+  body[class*="publishrank"] .nav-tab { flex: 0 0 auto; float: none; }
+  body[class*="publishrank"] .notice { margin-left: 0; margin-right: 0; }
+  body[class*="publishrank"] .publishrank-theme-bc-notice ol { margin-left: 16px !important; }
+}
+@media (max-width: 480px) {
+  body[class*="publishrank"] .wrap .button, body[class*="publishrank"] .wrap .button-primary { min-height: 40px; }
+  body[class*="publishrank"] .wrap p.submit .button-primary { width: 100%; text-align: center; }
+  body[class*="publishrank"] .wrap [style*="display:flex"], body[class*="publishrank"] .wrap [style*="display: flex"] { flex-wrap: wrap; }
+}

@@ -1,0 +1,76 @@
+.publishrank-faq {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 960px;
+	margin: 2rem auto;
+	padding: 0;
+	color: inherit;
+}
+.publishrank-faq__title {
+	margin: 0 0 1rem;
+	font-size: clamp(1.35rem, 2vw, 1.85rem);
+	line-height: 1.2;
+}
+.publishrank-faq__items {
+	display: grid;
+	gap: .75rem;
+}
+.publishrank-faq__item {
+	margin: 0;
+	border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+	border-radius: .65rem;
+	background: rgba(127, 127, 127, .04);
+	background: color-mix(in srgb, currentColor 3%, transparent);
+	overflow: hidden;
+}
+.publishrank-faq__item summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 1rem 1.15rem;
+	cursor: pointer;
+	font-weight: 650;
+	line-height: 1.4;
+	list-style: none;
+}
+.publishrank-faq__item summary::-webkit-details-marker { display: none; }
+.publishrank-faq__item summary:focus-visible {
+	outline: 3px solid currentColor;
+	outline-offset: -3px;
+}
+.publishrank-faq__icon {
+	position: relative;
+	flex: 0 0 1.15rem;
+	width: 1.15rem;
+	height: 1.15rem;
+	border: 1px solid currentColor;
+	border-radius: 50%;
+	opacity: .7;
+}
+.publishrank-faq__icon::before,
+.publishrank-faq__icon::after {
+	content: "";
+	position: absolute;
+	inset: 50% auto auto 50%;
+	width: .55rem;
+	height: 1px;
+	background: currentColor;
+	transform: translate(-50%, -50%);
+}
+.publishrank-faq__icon::after { transform: translate(-50%, -50%) rotate(90deg); }
+.publishrank-faq__item[open] .publishrank-faq__icon::after { transform: translate(-50%, -50%) rotate(0); }
+.publishrank-faq__answer {
+	padding: 0 1.15rem 1rem;
+	line-height: 1.7;
+}
+.publishrank-faq__answer p { margin: 0; }
+@media (max-width: 600px) {
+	.publishrank-faq { margin: 1.5rem auto; }
+	.publishrank-faq__item summary { padding: .85rem .9rem; }
+	.publishrank-faq__answer { padding: 0 .9rem .9rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+	.publishrank-faq__item { transition: border-color .2s ease, background-color .2s ease; }
+	.publishrank-faq__item[open] { border-color: color-mix(in srgb, currentColor 30%, transparent); }
+}

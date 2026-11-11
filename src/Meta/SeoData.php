@@ -46,6 +46,10 @@ final class SeoData {
 		$ogt_override   = (string) PostMeta::get( $id, PostMeta::OG_TITLE, '' );
 		$ogd_override   = (string) PostMeta::get( $id, PostMeta::OG_DESCRIPTION, '' );
 		$robots_set     = (string) PostMeta::get( $id, PostMeta::ROBOTS, '' );
+		$xt_override    = (string) PostMeta::get( $id, PostMeta::X_TITLE, '' );
+		$xd_override    = (string) PostMeta::get( $id, PostMeta::X_DESCRIPTION, '' );
+		$mt_override    = (string) PostMeta::get( $id, PostMeta::MASTODON_TITLE, '' );
+		$md_override    = (string) PostMeta::get( $id, PostMeta::MASTODON_DESCRIPTION, '' );
 
 		$title       = $meta->title_for_post( $id );
 		// One shared resolver decides the description and reports its source (override, excerpt, content, builder,
@@ -57,6 +61,12 @@ final class SeoData {
 		$og_title       = '' !== $og_title ? $og_title : $title;
 		$og_description = '' !== $ogd_override ? self::clean( $meta->resolve_template( $ogd_override, $id, 'description' ), 320 ) : '';
 		$og_description = '' !== $og_description ? $og_description : $description;
+		// X falls back to the Facebook / Open Graph text, then the automatic title and description. Mastodon posts
+		// default to the plain post title and excerpt, exactly as the share text did before these fields existed.
+		$x_title        = '' !== $xt_override ? self::clean( $meta->resolve_template( $xt_override, $id, 'title' ), 255 ) : '';
+		$x_title        = '' !== $x_title ? $x_title : $og_title;
+		$x_description  = '' !== $xd_override ? self::clean( $meta->resolve_template( $xd_override, $id, 'description' ), 320 ) : '';
+		$x_description  = '' !== $x_description ? $x_description : $og_description;
 		$canonical   = $meta->canonical_for_post( $id );
 		$image       = self::image_for_post( $id );
 
@@ -68,6 +78,10 @@ final class SeoData {
 			'robots'         => '' !== $robots_set ? $robots_set : (string) get_option( 'publishrank_seo_default_robots', 'index,follow' ),
 			'og_title'       => $og_title,
 			'og_description' => $og_description,
+			'x_title'        => $x_title,
+			'x_description'  => $x_description,
+			'mastodon_title' => '' !== $mt_override ? self::clean( $meta->resolve_template( $mt_override, $id, 'title' ), 255 ) : '',
+			'mastodon_description' => '' !== $md_override ? self::clean( $meta->resolve_template( $md_override, $id, 'description' ), 320 ) : '',
 			'image'          => $image,
 			'sources'        => array(
 				'title'       => '' !== $title_override ? 'override' : 'auto',

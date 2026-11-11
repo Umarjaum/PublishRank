@@ -2,6 +2,8 @@
 /** Database storage and shared queries for the internal-link content graph. */
 namespace PublishRankSEO\InternalLinks;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Store {
 	const DB_VERSION      = '2.5.0';
 	const SCAN_ID_OPTION  = 'publishrank_internal_links_scan_id';

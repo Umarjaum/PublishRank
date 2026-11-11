@@ -206,7 +206,7 @@ final class SeoPortability {
 
 	/** Canonical PublishRank field => post meta key. @return array<string,string> */
 	private function meta_map() {
-		return array( 'title' => PostMeta::TITLE, 'description' => PostMeta::DESCRIPTION, 'focus_keyword' => PostMeta::FOCUS_KEYWORD, 'canonical' => PostMeta::CANONICAL, 'og_title' => PostMeta::OG_TITLE, 'og_description' => PostMeta::OG_DESCRIPTION, 'og_image' => PostMeta::OG_IMAGE, 'robots' => PostMeta::ROBOTS, 'primary_category' => PostMeta::PRIMARY_CATEGORY, 'cornerstone' => PostMeta::CORNERSTONE );
+		return array( 'title' => PostMeta::TITLE, 'description' => PostMeta::DESCRIPTION, 'focus_keyword' => PostMeta::FOCUS_KEYWORD, 'canonical' => PostMeta::CANONICAL, 'og_title' => PostMeta::OG_TITLE, 'og_description' => PostMeta::OG_DESCRIPTION, 'og_image' => PostMeta::OG_IMAGE, 'twitter_title' => PostMeta::X_TITLE, 'twitter_description' => PostMeta::X_DESCRIPTION, 'robots' => PostMeta::ROBOTS, 'primary_category' => PostMeta::PRIMARY_CATEGORY, 'cornerstone' => PostMeta::CORNERSTONE );
 	}
 
 	/** @param array<string,mixed>|null $adapter @return array<string,string> */
@@ -302,7 +302,7 @@ final class SeoPortability {
 		return $exists;
 	}
 
-	private function field_labels() { return array( 'title' => __( 'Title', 'publishrank' ), 'description' => __( 'Description', 'publishrank' ), 'focus_keyword' => __( 'Focus keyword', 'publishrank' ), 'canonical' => __( 'Canonical', 'publishrank' ), 'og_title' => __( 'Open Graph title', 'publishrank' ), 'og_description' => __( 'Open Graph description', 'publishrank' ), 'og_image' => __( 'Open Graph image', 'publishrank' ), 'robots' => __( 'Robots', 'publishrank' ), 'primary_category' => __( 'Primary category', 'publishrank' ), 'cornerstone' => __( 'Cornerstone', 'publishrank' ) ); }
+	private function field_labels() { return array( 'title' => __( 'Title', 'publishrank' ), 'description' => __( 'Description', 'publishrank' ), 'focus_keyword' => __( 'Focus keyword', 'publishrank' ), 'canonical' => __( 'Canonical', 'publishrank' ), 'og_title' => __( 'Open Graph title', 'publishrank' ), 'og_description' => __( 'Open Graph description', 'publishrank' ), 'og_image' => __( 'Open Graph image', 'publishrank' ), 'twitter_title' => __( 'X title', 'publishrank' ), 'twitter_description' => __( 'X description', 'publishrank' ), 'robots' => __( 'Robots', 'publishrank' ), 'primary_category' => __( 'Primary category', 'publishrank' ), 'cornerstone' => __( 'Cornerstone', 'publishrank' ) ); }
 	private function selected_fields() { $fields = isset( $_POST['fields'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['fields'] ) ) : array_keys( $this->field_labels() ); return array_values( array_intersect( array_keys( $this->field_labels() ), $fields ) ); }
 	private function field_meta_key( $field ) { $map = $this->meta_map(); return isset( $map[ $field ] ) ? $map[ $field ] : ''; }
 	private function count_changes( $post_id, $row, $mode, $fields, $include_empty ) { $count = 0; foreach ( $fields as $field ) { $value = isset( $row[ $field ] ) ? trim( (string) $row[ $field ] ) : ''; if ( '' === $value && ! $include_empty ) { continue; } if ( 'merge' === $mode && '' !== (string) get_post_meta( $post_id, $this->field_meta_key( $field ), true ) ) { continue; } $count++; } return $count; }
@@ -361,6 +361,11 @@ final class SeoPortability {
 			'rank-math-options-titles' => array( 'homepage-title', 'homepage-description', 'pt_post_title', 'pt_post_description' ),
 		);
 		foreach ( $allow as $option => $keys ) { $value = get_option( $option, array() ); if ( ! is_array( $value ) ) { continue; } foreach ( $keys as $key ) { if ( array_key_exists( $key, $value ) ) { $out[ $option ][ $key ] = sanitize_textarea_field( (string) $value[ $key ] ); } } }
+		// PublishRank's own private login address (the on/off switch is left out on purpose).
+		$out['publishrank'] = array(
+			'whl_page'           => \PublishRankSEO\Security\WPHideLogin::current_login_slug(),
+			'whl_redirect_admin' => \PublishRankSEO\Security\WPHideLogin::current_redirect_slug(),
+		);
 		return $out;
 	}
 
