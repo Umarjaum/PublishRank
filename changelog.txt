@@ -1,6 +1,3 @@
-= 2.20.14 =
-* **Release bump.** Version 2.20.14 includes the synchronized runtime FAQ editor controls, up-to-20-question repeater, FAQ stylesheet, and breadcrumb spacing fixes.
-
 = 2.20.13 =
 * **FAQ editor controls fixed.** The Schema editor now loads the runtime repeater script correctly, so Add question and Remove question work reliably. The editor supports up to 20 FAQ entries with live numbering and slot count.
 * **Runtime assets synchronized.** The deployed assets directory now includes the current FAQ editor JavaScript, FAQ stylesheet and breadcrumb spacing fixes.
