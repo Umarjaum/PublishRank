@@ -449,8 +449,8 @@ final class Mastodon {
 		}
 		$media_id = (string) $data['id'];
 		if ( empty( $data['url'] ) ) {
-			for ( $attempt = 0; $attempt < 5; $attempt++ ) {
-				usleep( 400000 );
+			for ( $attempt = 0; $attempt < 8; $attempt++ ) {
+				usleep( 750000 );
 				$ready = self::request( 'GET', '/api/v1/media/' . rawurlencode( $media_id ) );
 				if ( is_wp_error( $ready ) ) {
 					return $ready;
@@ -506,19 +506,24 @@ final class Mastodon {
 			'language'     => substr( (string) get_locale(), 0, 2 ),
 			'spoiler_text' => $spoiler,
 			'sensitive'    => '' !== $spoiler,
-			'_key'         => 'publishrank-' . $post->ID . '-' . md5( (string) $post->post_date_gmt ),
-		);
+				'_key'         => 'publishrank-' . $post->ID . '-' . md5( (string) $post->post_date_gmt ),
+			);
 		if ( '' !== $media_id ) {
 			$body['media_ids'] = array( $media_id );
-		}
+			}
 		$result = self::request(
 			'POST',
 			'/api/v1/statuses',
 			$body
 		);
+		if ( ! is_wp_error( $result ) && empty( $result['id'] ) ) {
+			$result = new \WP_Error( 'publishrank_mastodon_invalid_status', __( 'Mastodon did not confirm that the post was created. Check Recent shares before trying again.', 'publishrank' ) );
+		}
 		self::log( $post, $result );
-		if ( ! is_wp_error( $result ) && ! empty( $result['url'] ) ) {
-			update_post_meta( $post->ID, self::META_STATUS, esc_url_raw( (string) $result['url'] ) );
+		if ( ! is_wp_error( $result ) ) {
+			// Private/unlisted servers may omit a public URL; the returned ID still prevents duplicate auto-shares.
+			$marker = ! empty( $result['url'] ) ? esc_url_raw( (string) $result['url'] ) : 'mastodon-status-id:' . sanitize_text_field( (string) $result['id'] );
+			update_post_meta( $post->ID, self::META_STATUS, $marker );
 		}
 		return $result;
 	}
@@ -559,7 +564,11 @@ final class Mastodon {
 		}
 		$status = (string) get_post_meta( $post->ID, self::META_STATUS, true );
 		if ( '' !== $status ) {
-			echo '<p>✅ ' . esc_html__( 'Shared on Mastodon.', 'publishrank' ) . ' <a href="' . esc_url( $status ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'View post', 'publishrank' ) . '</a></p>';
+			echo '<p>✅ ' . esc_html__( 'Shared on Mastodon.', 'publishrank' );
+			if ( 0 === strpos( $status, 'https://' ) ) {
+				echo ' <a href="' . esc_url( $status ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'View post', 'publishrank' ) . '</a>';
+			}
+			echo '</p>';
 		}
 		$choice  = (string) get_post_meta( $post->ID, self::META_SHARE, true );
 		$default = ! empty( self::settings()['auto_share'] );

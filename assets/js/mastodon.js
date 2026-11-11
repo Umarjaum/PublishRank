@@ -20,6 +20,24 @@
   });
   document.addEventListener("click", function(event){
     var target = event.target;
+    var toggle = target && target.closest ? target.closest(".pr-mastodon-token-toggle") : null;
+    if (toggle) {
+      var token = document.getElementById(toggle.getAttribute("aria-controls"));
+      if (!token) return;
+      var show = "password" === token.type;
+      token.type = show ? "text" : "password";
+      toggle.setAttribute("aria-pressed", show ? "true" : "false");
+      var label = show ? toggle.getAttribute("data-hide-label") : toggle.getAttribute("data-show-label");
+      toggle.setAttribute("aria-label", label);
+      var text = toggle.querySelector(".screen-reader-text");
+      if (text) text.textContent = label;
+      var icon = toggle.querySelector(".dashicons");
+      if (icon) {
+        icon.classList.toggle("dashicons-visibility", !show);
+        icon.classList.toggle("dashicons-hidden", show);
+      }
+      return;
+    }
     var button = target && target.closest ? target.closest("[data-pr-copy-target]") : null;
     if (!button) return;
     var input = document.getElementById(button.getAttribute("data-pr-copy-target"));

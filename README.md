@@ -10,7 +10,7 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 
 ## Current release
 
-- **Version:** 2.20.3
+- **Version:** 2.20.4 (local patch based on upstream v2.20.3)
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
 - **Requires PHP:** 7.4 or newer
@@ -20,7 +20,7 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
 
-Version 2.20.3 adds a generated, copyable Mastodon `rel="me"` head snippet and refreshes WP Hide Login’s PublishRank-styled settings page. It also includes the 2.20.1 migration-screen contrast and mobile-usability fixes.
+Upstream v2.20.3 adds a generated, copyable Mastodon `rel="me"` head snippet and refreshes WP Hide Login’s PublishRank-styled settings page. This local 2.20.4 patch adds clearer Mastodon connection settings, a default-hidden administrator token reveal control, saved-token retention after failed verification, and safer share confirmation.
 
 ## Actual interface screenshots
 
@@ -52,7 +52,7 @@ See the [full official interface screenshot gallery](https://publishrankseo.verc
 
 ### Mastodon verification and sharing
 
-PublishRank can add the website URL to a Mastodon profile field and emit the reciprocal `rel="me"` link in the website HTML head. The Mastodon settings page shows a copyable `<link rel="me" href="…">` snippet for manual use, plus token-based verification status and publishing controls. Mastodon checks the field after the profile is saved.
+PublishRank can add the website URL to a Mastodon profile field and emit the reciprocal `rel="me"` link in the website HTML head. The Mastodon settings page shows a copyable `<link rel="me" href="…">` snippet for manual use, plus token-based verification status and publishing controls. Mastodon checks the field after the profile is saved. The access token is encrypted at rest, hidden by default, and can be revealed by an administrator with the eye button. A failed connection check does not erase the saved token. Sharing is recorded as complete only after Mastodon returns a status ID, including when a private post has no public URL.
 
 ### Connected structured data
 
