@@ -1,5 +1,10 @@
 # PublishRank
 
+<p>
+  <a href="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-introduction.mp4"><img src="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-intro-preview.gif" width="280" alt="Autoplaying preview of the 15-second PublishRank introduction; click to open the original video with audio" /></a>
+</p>
+<p><a href="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-introduction.mp4">Play the full 15-second introduction with audio (MP4)</a></p>
+
 ![PublishRank](assets/images/publishrank-brand-mark.png)
 
 **Publisher-first technical SEO, structured data, sitemaps, and newsroom controls for WordPress.**
@@ -10,7 +15,7 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 
 ## Current release
 
-- **Version:** 2.20.4 (local patch based on upstream v2.20.3)
+- **Version:** 2.20.15
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
 - **Requires PHP:** 7.4 or newer
@@ -20,7 +25,7 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
 
-Upstream v2.20.3 adds a generated, copyable Mastodon `rel="me"` head snippet and refreshes WP Hide Login’s PublishRank-styled settings page. This local 2.20.4 patch adds clearer Mastodon connection settings, a default-hidden administrator token reveal control, saved-token retention after failed verification, and safer share confirmation.
+See the [v2.20.15 release notes](https://github.com/Umarjaum/PublishRank/releases/tag/v2.20.15) for the current plugin changes.
 
 ## Actual interface screenshots
 
