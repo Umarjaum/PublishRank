@@ -5,6 +5,12 @@
 </p>
 <p><a href="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-introduction.mp4">Play the full 15-second introduction with audio (MP4)</a></p>
 
+<p><strong>Second introduction · version 2</strong></p>
+<p>
+  <a href="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-introduction-v2.mp4"><img src="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-intro-v2-preview.gif" width="280" alt="Autoplaying preview of the 15-second PublishRank introduction, version 2; click to open the original video with audio" /></a>
+</p>
+<p><a href="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-introduction-v2.mp4">Open the full 15-second version 2 introduction (MP4)</a></p>
+
 ![PublishRank](assets/images/publishrank-brand-mark.png)
 
 **Publisher-first technical SEO, structured data, sitemaps, and newsroom controls for WordPress.**
