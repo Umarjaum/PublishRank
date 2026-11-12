@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.20.14
+Stable tag: 2.20.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -149,7 +149,22 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. PublishRank's source-provenance markers are technical metadata only; the plugin does not insert a visible footer credit or promotional link.
 
 == Changelog ==
+
+= 2.20.15 =
+* **SEO Analysis moved to the top of the editor.** The panel no longer floats over the bottom corner of your writing. In the block editor a live score badge now sits in the top toolbar next to Publish; it changes color and number as you write. Click it to open the PublishRank SEO sidebar, where the full analysis (score, metrics, focus keyword, items to fix with one-click Fix buttons) is docked at the top, followed by the SEO title and meta description.
+* **Dock or pop out — your choice.** A new button in the panel header pops the analysis out into a draggable floating panel and docks it back. Your choice is remembered.
+* **Classic editor.** The analysis is docked in the right column directly under the Publish box, so Publish is never pushed out of view.
+* **Faster access.** Open the analysis from the score badge, the editor Options menu, or the command palette (Ctrl/Cmd + K → "Open PublishRank SEO analysis"). The sidebar opens by itself the first time so writers find it.
+
 = 2.20.14 =
+* **Graph scan no longer reloads in a loop.** The Content Graph scan now runs inside the page with a live progress bar and Pause, Resume and Cancel buttons instead of reloading the screen after every batch. It starts only when you press Run graph scan, never just because a paused scan exists, and it stops on errors, expired sessions, or when a batch makes no progress. Without JavaScript, Resume graph scan processes one batch per click.
+* **Scan progress survives cache evictions.** Scan progress is kept in a transient plus a backup option, so an evicted transient can no longer silently lose or restart a scan.
+* **Help icons rebuilt.** Each setting gets one icon with its own explanation (the most specific match wins), icons no longer double up beside the same setting, and the popover is no longer clipped by cards or tables. It supports keyboard, screen readers, touch, Escape and click-outside to close.
+* **Features grouped by purpose.** The Features screen groups cards by purpose; bbPress and BuddyPress stay at the very bottom, and the settings link is now labelled Configure. Failed or mismatched toggles are reported as errors instead of success.
+* **Sitemap Hub.** Off-by-default content types (attachment pages) now explain why, and the instant-save switches report server-side failures or unchanged values instead of a false success.
+* **General Settings.** The unsaved-changes warning now ignores values adjusted by other scripts at load, notices list changes made with add/remove buttons, never stays disabled after a cancelled save, and blocks duplicate submissions.
+* **Navigation.** The Internal Links submenu is now labelled Content Graph to match its page title, sidebar and dashboard card.
+= 2.20.13 =
 * **Breadcrumbs block with live preview and color pickers.** The PublishRank Breadcrumbs block now has its own settings in the editor sidebar: a visual picker for the Arrows, Minimal, Steps and Pills looks (plus Plain, Chips, Bar and Underline), a built-in color picker for text, links, background and accent, size, position and separator. The preview in the editor updates as you change anything and uses the post's real title and first category. Anything left on "Site default" follows PublishRank → Breadcrumbs.
 * **Horizontal position in pixels.** A slider (-400 to 400 px) moves the trail from left to right; the shortcode uses `offset="40"`. It is ignored on small phones so the page never scrolls sideways.
 * **Live designer on PublishRank → Breadcrumbs.** The settings screen now shows a gallery of every look (Arrows, Minimal, Steps and Pills as in the Daily UI #056 design, plus Plain, Chips, Bar and Underline) and a live preview that uses the same markup and stylesheet as the site. It changes instantly with the look, size, position, horizontal position in pixels, separator, icons and colors.

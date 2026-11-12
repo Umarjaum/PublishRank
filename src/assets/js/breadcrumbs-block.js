@@ -42,10 +42,8 @@
 		var sep = ( typeof attrs.separator === 'string' && attrs.separator !== '' ) ? attrs.separator : ( typeof defaults.separator === 'string' ? defaults.separator : '→' );
 		var vars = {};
 		var offset = overrideLook ? 0 : ( typeof attrs.offsetX === 'number' ? attrs.offsetX : ( defaults.offset || 0 ) );
-		var offsetY = overrideLook ? 0 : ( typeof attrs.offsetY === 'number' ? attrs.offsetY : ( defaults.offsetY || 0 ) );
 		var icons = ! overrideLook && ( typeof attrs.icons === 'boolean' ? attrs.icons : !! defaults.icons ) && look !== 'steps';
 		if ( offset ) { vars[ '--pr-bc-x' ] = offset + 'px'; }
-		if ( offsetY ) { vars[ '--pr-bc-y' ] = offsetY + 'px'; }
 		if ( ! overrideLook ) {
 			COLOR_KEYS.forEach( function ( c ) {
 				var value = attrs[ c.attr ] || siteColors[ c.key ];
@@ -64,12 +62,12 @@
 			}
 			return el( 'li', {
 				key: i,
-			className: 'publishrank-breadcrumbs__item ' + ( isLast ? 'is-current' : 'is-done' ),
+				className: 'publishrank-breadcrumbs__item ' + ( isLast ? 'is-current' : 'is-done' ),
 				'data-step': String( i + 1 )
 			}, kids );
 		} );
 		return el( 'nav', {
-			className: 'publishrank-breadcrumbs publishrank-breadcrumbs--' + look + ' publishrank-breadcrumbs--size-' + size + ' publishrank-breadcrumbs--align-' + align + ( offset ? ' publishrank-breadcrumbs--offset' : '' ) + ( offsetY ? ' publishrank-breadcrumbs--offset-y' : '' ) + ( icons ? ' publishrank-breadcrumbs--icons' : '' ),
+			className: 'publishrank-breadcrumbs publishrank-breadcrumbs--' + look + ' publishrank-breadcrumbs--size-' + size + ' publishrank-breadcrumbs--align-' + align + ( offset ? ' publishrank-breadcrumbs--offset' : '' ) + ( icons ? ' publishrank-breadcrumbs--icons' : '' ),
 			style: vars,
 			'aria-label': __( 'Breadcrumbs', 'publishrank' )
 		}, el( 'ol', { className: 'publishrank-breadcrumbs__list' }, lis ) );
@@ -163,11 +161,11 @@
 		var setAttributes = props.setAttributes;
 		var blockProps = be.useBlockProps( { className: 'publishrank-bc-editor' } );
 		var items = usePreviewItems();
-		var hasOverride = !! ( attrs.look || attrs.size || attrs.position || typeof attrs.offsetX === 'number' || typeof attrs.offsetY === 'number' || typeof attrs.icons === 'boolean' || attrs.separator || attrs.colorText || attrs.colorLink || attrs.colorBg || attrs.colorAccent );
+		var hasOverride = !! ( attrs.look || attrs.size || attrs.position || typeof attrs.offsetX === 'number' || typeof attrs.icons === 'boolean' || attrs.separator || attrs.colorText || attrs.colorLink || attrs.colorBg || attrs.colorAccent );
 		var sepValue = typeof attrs.separator === 'string' ? attrs.separator : '';
 
 		function reset() {
-			setAttributes( { look: undefined, size: undefined, position: undefined, offsetX: undefined, offsetY: undefined, icons: undefined, separator: undefined, colorText: undefined, colorLink: undefined, colorBg: undefined, colorAccent: undefined } );
+			setAttributes( { look: undefined, size: undefined, position: undefined, offsetX: undefined, icons: undefined, separator: undefined, colorText: undefined, colorLink: undefined, colorBg: undefined, colorAccent: undefined } );
 		}
 
 		var quick = QUICK_SEPARATORS.map( function ( s ) {
@@ -226,18 +224,6 @@
 					withInputField: true,
 					onChange: function ( value ) { setAttributes( { offsetX: typeof value === 'number' ? value : undefined } ); }
 				} ),
-				el( cmp.RangeControl, {
-					label: __( 'Vertical position (px)', 'publishrank' ),
-					help: __( 'Moves the trail from top to bottom. Use a positive value for pixels down; 0 keeps the normal flow position. Ignored on small phones.', 'publishrank' ),
-					value: typeof attrs.offsetY === 'number' ? attrs.offsetY : ( defaults.offsetY || 0 ),
-					min: 0,
-					max: 600,
-					step: 1,
-					allowReset: true,
-					resetFallbackValue: 0,
-					withInputField: true,
-					onChange: function ( value ) { setAttributes( { offsetY: typeof value === 'number' ? value : undefined } ); }
-				} ),
 				el( 'p', { style: { margin: '0 0 6px', fontWeight: 600 } }, __( 'Separator', 'publishrank' ) ),
 				el( 'div', { className: 'publishrank-bc-quick-seps' }, quick ),
 				el( cmp.TextControl, {
@@ -277,7 +263,6 @@
 			position: { type: 'string' },
 			separator: { type: 'string' },
 			offsetX: { type: 'number' },
-			offsetY: { type: 'number' },
 			icons: { type: 'boolean' },
 			colorText: { type: 'string' },
 			colorLink: { type: 'string' },

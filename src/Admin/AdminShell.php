@@ -79,8 +79,8 @@ final class AdminShell {
 					'publishrank-local-seo'          => array( 'icon' => 'fa-location-dot', 'label' => __( 'Local SEO', 'publishrank' ), 'desc' => __( 'Your business location and local search details.', 'publishrank' ) ),
 					'publishrank-image-optimizer'    => array( 'icon' => 'fa-images', 'label' => __( 'Image optimizer', 'publishrank' ), 'desc' => __( 'Media optimization tools and image delivery settings.', 'publishrank' ) ),
 					'publishrank-publisher-toolkit'  => array( 'icon' => 'fa-toolbox', 'label' => __( 'Publisher toolkit', 'publishrank' ), 'desc' => __( 'Bulk SEO editing and everyday newsroom utilities.', 'publishrank' ) ),
-					'publishrank-seo-internal-links' => array( 'icon' => 'fa-link', 'label' => __( 'Internal links', 'publishrank' ), 'desc' => __( 'Find and add links between your related stories.', 'publishrank' ) ),
-					'publishrank-link-intelligence'  => array( 'icon' => 'fa-diagram-project', 'label' => __( 'Link intelligence', 'publishrank' ), 'desc' => __( 'Link recommendations and relationship insights for publishers.', 'publishrank' ) ),
+					'publishrank-seo-internal-links' => array( 'icon' => 'fa-link', 'label' => __( 'Content Graph', 'publishrank' ), 'desc' => __( 'Find orphaned stories and review relevant internal-link opportunities.', 'publishrank' ) ),
+					'publishrank-link-intelligence'  => array( 'icon' => 'fa-shield-halved', 'label' => __( 'Link Health Audit', 'publishrank' ), 'desc' => __( 'Find broken links, redirecting links and redirect-chain problems.', 'publishrank' ) ),
 				),
 			),
 			'newsroom'   => array(
@@ -277,33 +277,48 @@ final class AdminShell {
 	public static function nav( $current, $locked = false ) {
 		$current    = isset( self::KEYS[ $current ] ) ? self::KEYS[ $current ] : (string) $current;
 		$registered = self::registered();
-		echo '<nav class="pr-modules-nav' . ( $locked ? ' is-locked' : '' ) . '" aria-label="' . esc_attr__( 'PublishRank sections', 'publishrank' ) . '">';
-		foreach ( self::groups() as $group_id => $group ) {
-			$links = '';
-			$has   = false;
+		$groups     = self::groups();
+		$all        = array();
+		foreach ( $groups as $group ) {
 			foreach ( $group['items'] as $slug => $item ) {
-				// Only list screens that exist on this site and that the current user may open.
-				if ( $registered && ( ! isset( $registered[ $slug ] ) || ! current_user_can( $registered[ $slug ] ) ) ) {
+				$all[ $slug ] = $item;
+			}
+		}
+		$primary = array( 'publishrank-seo-dashboard', 'publishrank-seo-score', 'publishrank-sitemap-health', 'uj-newsroom', 'publishrank-analytics', 'publishrank' );
+		$render_link = static function ( $slug, $item ) use ( $current, $locked ) {
+			$is = $slug === $current;
+			if ( $locked && ! $is ) {
+				return '<li><span class="pr-nav-locked" aria-disabled="true"><i class="fa-solid ' . esc_attr( $item['icon'] ) . '" aria-hidden="true"></i><span>' . esc_html( $item['label'] ) . '</span><i class="fa-solid fa-lock pr-nav-locked__lock" aria-hidden="true"></i></span></li>';
+			}
+			return '<li><a href="' . esc_url( Branding::page_url( $slug ) ) . '"' . ( $is ? ' class="is-current" aria-current="page"' : '' ) . '><i class="fa-solid ' . esc_attr( $item['icon'] ) . '" aria-hidden="true"></i><span>' . esc_html( $item['label'] ) . '</span></a></li>';
+		};
+		$visible = static function ( $slug ) use ( $registered ) {
+			return ! $registered || ( isset( $registered[ $slug ] ) && current_user_can( $registered[ $slug ] ) );
+		};
+		echo '<nav class="pr-modules-nav pr-simple-nav' . ( $locked ? ' is-locked' : '' ) . '" aria-label="' . esc_attr__( 'PublishRank navigation', 'publishrank' ) . '">';
+		echo '<p class="pr-simple-nav__label">' . esc_html__( 'WORKSPACE', 'publishrank' ) . '</p><ul class="pr-nav-main">';
+		foreach ( $primary as $slug ) {
+			if ( isset( $all[ $slug ] ) && $visible( $slug ) ) {
+				echo $render_link( $slug, $all[ $slug ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+		}
+		echo '</ul>';
+		$more = '';
+		foreach ( $groups as $group_id => $group ) {
+			$items = '';
+			foreach ( $group['items'] as $slug => $item ) {
+				if ( in_array( $slug, $primary, true ) || ! $visible( $slug ) ) {
 					continue;
 				}
-				$is  = $slug === $current;
-				$has = $has || $is;
-				if ( $locked && ! $is ) {
-					$links .= '<li><span class="pr-nav-locked" aria-disabled="true" title="' . esc_attr__( 'Unlocks when setup is finished', 'publishrank' ) . '"><i class="fa-solid ' . esc_attr( $item['icon'] ) . '" aria-hidden="true"></i><span>' . esc_html( $item['label'] ) . '</span><i class="fa-solid fa-lock pr-nav-locked__lock" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html__( '(unlocks when setup is finished)', 'publishrank' ) . '</span></span></li>';
-					continue;
-				}
-				$links .= '<li><a href="' . esc_url( Branding::page_url( $slug ) ) . '"' . ( $is ? ' class="is-current" aria-current="page"' : '' ) . '><i class="fa-solid ' . esc_attr( $item['icon'] ) . '" aria-hidden="true"></i><span>' . esc_html( $item['label'] ) . '</span></a></li>';
+				$items .= $render_link( $slug, $item );
 			}
-			if ( '' === $links ) {
-				continue;
+			if ( '' !== $items ) {
+				$more .= '<li class="pr-simple-nav__group-label">' . esc_html( $group['label'] ? $group['label'] : __( 'Getting started', 'publishrank' ) ) . '</li>' . $items;
 			}
-			if ( '' === $group['label'] ) {
-				echo '<ul class="pr-nav-main">' . $links . '</ul>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
-				continue;
-			}
-			echo '<details class="pr-nav-group" data-group="' . esc_attr( (string) $group_id ) . '"' . ( $has ? ' open' : '' ) . '>';
-			echo '<summary>' . esc_html( $group['label'] ) . '</summary>';
-			echo '<ul>' . $links . '</ul></details>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
+		}
+		if ( '' !== $more ) {
+			$advanced_current = isset( $all[ $current ] ) && ! in_array( $current, $primary, true );
+			echo '<details class="pr-simple-nav__more"' . ( $advanced_current ? ' open' : '' ) . '><summary><i class="fa-solid fa-ellipsis" aria-hidden="true"></i><span>' . esc_html__( 'More tools', 'publishrank' ) . '</span><i class="fa-solid fa-chevron-down pr-simple-nav__chevron" aria-hidden="true"></i></summary><ul>' . $more . '</ul></details>';
 		}
 		echo '</nav>';
 	}

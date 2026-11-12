@@ -1,12 +1,20 @@
-/* PublishRank floating SEO Analysis panel.
+/* PublishRank SEO Analysis panel.
  * Mirrors every run of the PublishRank SEO analysis (meta box), keeps it live while typing in the block
  * editor, and can run on its own when the meta box is not on the page. All server text is set with
- * textContent. */
+ * textContent.
+ *
+ * Placement modes (remembered per browser):
+ * - docked (default): lives at the top of the editor sidebar. The block editor sidebar hands over a slot
+ *   via PublishRankScoreCard.dock(); the classic editor gets a slot at the top of the right column.
+ *   While docked and no slot is visible (block editor sidebar closed) the panel is parked (hidden) and
+ *   the live score badge in the top toolbar is the summary.
+ * - floating: draggable panel over the editor, can be minimized to a pill.
+ * Every repaint dispatches a `publishrank:score` event; mode changes dispatch `publishrank:mode`. */
 (function ($) {
 	'use strict';
 	var cfg = window.publishrankScoreCard || {}, t = cfg.i18n || {};
 	var CIRC = 2 * Math.PI * 44;
-	var STORE_POS = 'publishrank-editor-score-position', STORE_MIN = 'publishrank-editor-score-minimized';
+	var STORE_POS = 'publishrank-editor-score-position', STORE_MIN = 'publishrank-editor-score-minimized', STORE_MODE = 'publishrank-editor-score-mode';
 	var reduceMotion = false;
 	try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 
@@ -90,12 +98,14 @@
 			renderList(card, 'pass', data.checks.filter(function (c) { return c.status === 'good'; }));
 		}
 		paintLengths();
+		emit('publishrank:score', { score: score, band: b, label: label });
 		setStatus(t.updated || '');
 		card.classList.remove('is-busy');
 		card.classList.add('is-pulse');
 		window.setTimeout(function () { card.classList.remove('is-pulse'); }, 700);
 	}
 
+	function emit(name, detail) { try { document.dispatchEvent(new CustomEvent(name, { detail: detail })); } catch (e) {} }
 	function setStatus(text) { var s = document.querySelector('[data-pr-esc-status]'); if (s) { s.textContent = text; } }
 	function busy() { var c = document.getElementById('publishrank-editor-score'); if (c) { c.classList.add('is-busy'); } setStatus(t.analyzing || ''); }
 
@@ -236,12 +246,86 @@
 	});
 
 	/* ---------- panel behaviour: minimize, drag, full report ---------- */
-	function setMinimized(card, min) {
+	function setMinimized(card, min, persist) {
 		card.classList.toggle('is-minimized', min);
 		var c = card.querySelector('[data-pr-esc-collapse]'), x = card.querySelector('[data-pr-esc-expand]');
 		if (c) { c.setAttribute('aria-expanded', min ? 'false' : 'true'); }
 		if (x) { x.setAttribute('aria-expanded', min ? 'false' : 'true'); }
-		try { window.localStorage.setItem(STORE_MIN, min ? '1' : '0'); } catch (e) {}
+		if (persist !== false) { try { window.localStorage.setItem(STORE_MIN, min ? '1' : '0'); } catch (e) {} }
+	}
+
+	/* ---------- placement: docked (sidebar) or floating ---------- */
+	var dockSlot = null;
+	function getCard() { return document.getElementById('publishrank-editor-score'); }
+	function isBlockEditor() { return document.body.classList.contains('block-editor-page'); }
+	function getMode() {
+		var m = null; try { m = window.localStorage.getItem(STORE_MODE); } catch (e) {}
+		return m === 'floating' ? 'floating' : 'docked';
+	}
+	function clearPosition(card) { card.style.left = card.style.top = card.style.right = card.style.bottom = ''; }
+	function restoreFloating(card) {
+		clearPosition(card);
+		var min = false; try { min = window.localStorage.getItem(STORE_MIN) === '1'; } catch (e) {}
+		setMinimized(card, min, false);
+		var saved = null; try { saved = JSON.parse(window.localStorage.getItem(STORE_POS) || 'null'); } catch (e) {}
+		if (saved && typeof saved.left === 'number' && typeof saved.top === 'number' && window.innerWidth > 782) {
+			card.style.left = saved.left + 'px'; card.style.top = saved.top + 'px'; card.style.right = 'auto'; card.style.bottom = 'auto';
+			window.requestAnimationFrame(function () { clampInto(card); });
+		}
+	}
+	function applyMode() {
+		var card = getCard();
+		if (!card) { return; }
+		var mode = getMode(), wasFloating = card.classList.contains('is-floating');
+		card.classList.toggle('is-floating', mode === 'floating');
+		card.classList.toggle('is-docked', mode === 'docked' && !!dockSlot);
+		card.classList.toggle('is-parked', mode === 'docked' && !dockSlot);
+		if (mode === 'docked' && dockSlot) {
+			if (card.parentNode !== dockSlot) { dockSlot.appendChild(card); }
+			clearPosition(card);
+			setMinimized(card, false, false);
+		} else {
+			if (card.parentNode !== document.body) { document.body.appendChild(card); }
+			if (mode === 'floating' && !wasFloating) { restoreFloating(card); }
+		}
+		var btn = card.querySelector('[data-pr-esc-mode]');
+		if (btn) {
+			var label = mode === 'floating' ? (t.dock || 'Dock to the sidebar') : (t.popOut || 'Pop out as a floating panel');
+			btn.setAttribute('aria-label', label); btn.setAttribute('title', label);
+		}
+		emit('publishrank:mode', { mode: mode, docked: card.classList.contains('is-docked') });
+	}
+	function setMode(mode) {
+		try { window.localStorage.setItem(STORE_MODE, mode === 'floating' ? 'floating' : 'docked'); } catch (e) {}
+		applyMode();
+		/* Docking from the block editor with its sidebar closed: ask the sidebar to open and take the panel. */
+		if (mode === 'docked' && !dockSlot && isBlockEditor()) { emit('publishrank:open-sidebar', {}); }
+		var card = getCard();
+		var focusEl = card && card.querySelector('[data-pr-esc-mode]');
+		if (focusEl && !card.classList.contains('is-parked')) { window.requestAnimationFrame(function () { focusEl.focus(); }); }
+	}
+	/* Public hooks used by the block editor sidebar (block-editor-sidebar.js). */
+	window.PublishRankScoreCard = {
+		mode: getMode,
+		setMode: setMode,
+		dock: function (slot) { if (slot) { dockSlot = slot; applyMode(); } },
+		release: function (slot) { if (!slot || dockSlot === slot) { dockSlot = null; applyMode(); } },
+		score: function () {
+			var c = getCard(), n = c ? Math.max(0, Math.min(100, parseInt(c.getAttribute('data-score'), 10) || 0)) : 0;
+			return { score: n, band: band(n), label: t[LABEL[band(n)]] || '' };
+		},
+		analyze: function () { busy(); analyzeNow(); }
+	};
+	function classicSlot() {
+		if (isBlockEditor()) { return null; }
+		var side = document.getElementById('postbox-container-1');
+		if (!side) { return null; }
+		var slot = document.createElement('div');
+		slot.className = 'pr-esc-dock pr-esc-dock--classic';
+		/* Directly under the Publish box so the Publish button is never pushed out of view. */
+		var publish = document.getElementById('submitdiv');
+		if (publish && side.contains(publish)) { publish.parentNode.insertBefore(slot, publish.nextSibling); } else { side.insertBefore(slot, side.firstChild); }
+		return slot;
 	}
 
 	function clampInto(card) {
@@ -253,19 +337,14 @@
 	$(function () {
 		var card = document.getElementById('publishrank-editor-score');
 		if (!card) { return; }
-		document.body.appendChild(card);
-		var min = false; try { min = window.localStorage.getItem(STORE_MIN) === '1'; } catch (e) {}
-		setMinimized(card, min);
-		var saved = null; try { saved = JSON.parse(window.localStorage.getItem(STORE_POS) || 'null'); } catch (e) {}
-		if (saved && typeof saved.left === 'number' && typeof saved.top === 'number' && window.innerWidth > 782) {
-			card.style.left = saved.left + 'px'; card.style.top = saved.top + 'px'; card.style.right = 'auto'; card.style.bottom = 'auto';
-			window.requestAnimationFrame(function () { clampInto(card); });
-		}
+		if (!dockSlot) { dockSlot = classicSlot(); }
+		applyMode();
 
 		card.addEventListener('click', function (e) {
 			if (e.target.closest('[data-pr-esc-expand]')) { setMinimized(card, false); var r = card.querySelector('[data-pr-esc-refresh]'); if (r) { r.focus(); } return; }
 			if (e.target.closest('[data-pr-esc-collapse]')) { setMinimized(card, true); var p = card.querySelector('[data-pr-esc-expand]'); if (p) { p.focus(); } return; }
 			if (e.target.closest('[data-pr-esc-refresh]')) { e.preventDefault(); busy(); analyzeNow(); return; }
+			if (e.target.closest('[data-pr-esc-mode]')) { e.preventDefault(); setMode(getMode() === 'floating' ? 'docked' : 'floating'); return; }
 			var link = e.target.closest('.pr-esc__report');
 			if (link) {
 				var box = document.getElementById('publishrank_article_intelligence');
@@ -281,7 +360,7 @@
 		var head = card.querySelector('[data-pr-esc-drag]'), drag = null;
 		if (head) {
 			head.addEventListener('pointerdown', function (e) {
-				if (window.innerWidth <= 782 || (e.button !== undefined && e.button !== 0) || e.target.closest('button,a')) { return; }
+				if (!card.classList.contains('is-floating') || window.innerWidth <= 782 || (e.button !== undefined && e.button !== 0) || e.target.closest('button,a')) { return; }
 				var rect = card.getBoundingClientRect();
 				drag = { x: e.clientX, y: e.clientY, left: rect.left, top: rect.top };
 				card.classList.add('is-dragging');
@@ -303,12 +382,12 @@
 			};
 			head.addEventListener('pointerup', end); head.addEventListener('pointercancel', end);
 			head.addEventListener('dblclick', function (e) {
-				if (e.target.closest('button,a')) { return; }
+				if (!card.classList.contains('is-floating') || e.target.closest('button,a')) { return; }
 				card.style.left = card.style.top = card.style.right = card.style.bottom = '';
 				try { window.localStorage.removeItem(STORE_POS); } catch (err) {}
 			});
 		}
-		window.addEventListener('resize', function () { if (card.style.left) { clampInto(card); } });
+		window.addEventListener('resize', function () { if (card.classList.contains('is-floating') && card.style.left) { clampInto(card); } });
 
 		watchBlockEditor();
 		/* No meta box on the page (hidden by a filter or post type): run one analysis so the panel is current. */

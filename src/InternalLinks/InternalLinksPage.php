@@ -17,13 +17,17 @@ final class InternalLinksPage {
 		add_action( 'admin_post_publishrank_internal_links_settings', array( $this, 'handle_settings' ) );
 		add_action( 'admin_post_publishrank_internal_links_scan', array( $this, 'handle_scan' ) );
 		add_action( 'admin_post_publishrank_internal_links_batch', array( $this, 'handle_batch' ) );
+		add_action( 'admin_post_publishrank_internal_links_cancel', array( $this, 'handle_cancel' ) );
+		add_action( 'wp_ajax_publishrank_internal_links_batch', array( $this, 'ajax_batch' ) );
+		add_action( 'wp_ajax_publishrank_internal_links_cancel', array( $this, 'ajax_cancel' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ), 1000 );
 		add_action( 'admin_post_publishrank_internal_links_approve', array( $this, 'handle_approve' ) );
 		add_action( 'admin_post_publishrank_internal_links_insert', array( $this, 'handle_insert' ) );
 		add_action( 'admin_post_publishrank_internal_links_dismiss', array( $this, 'handle_dismiss' ) );
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Internal Links', 'publishrank' ), __( 'Internal Links', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Content Graph', 'publishrank' ), __( 'Content Graph', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function settings() {
@@ -120,8 +124,8 @@ final class InternalLinksPage {
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page' => self::SLUG,
-					'scan' => 1,
+					'page'  => self::SLUG,
+					'start' => 1,
 				),
 				admin_url( 'admin.php' )
 			)
@@ -129,6 +133,92 @@ final class InternalLinksPage {
 		exit;
 	}
 
+	/** Enqueue the scan runner on the Content Graph screen only. */
+	public function enqueue( $hook = '' ) {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
+		if ( self::SLUG !== $page || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$file = PUBLISHRANK_SEO_PATH . 'assets/js/internal-links-scan.js';
+		wp_enqueue_script( 'publishrank-internal-links-scan', Branding::asset_url( 'js/internal-links-scan.js' ), array(), Branding::version() . '.' . ( file_exists( $file ) ? (string) filemtime( $file ) : '0' ), true );
+		wp_localize_script(
+			'publishrank-internal-links-scan',
+			'publishrankGraphScan',
+			array(
+				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+				'batchNonce'  => wp_create_nonce( 'publishrank_internal_links_batch' ),
+				'cancelNonce' => wp_create_nonce( 'publishrank_internal_links_cancel' ),
+				'i18n'        => array(
+					'running'      => __( 'Scanning…', 'publishrank' ),
+					'paused'       => __( 'Scan paused. Select Resume to continue from where it stopped.', 'publishrank' ),
+					'done'         => __( 'Content graph and internal-link recommendations are up to date.', 'publishrank' ),
+					'cancelled'    => __( 'Scan cancelled. The graph built so far has been kept.', 'publishrank' ),
+					'failed'       => __( 'The scan could not continue. Check your connection and select Resume to try again.', 'publishrank' ),
+					'expired'      => __( 'Your session expired. Reload the page, then run the scan again.', 'publishrank' ),
+					'notRunning'   => __( 'No scan is in progress. Select Run graph scan to start one.', 'publishrank' ),
+					'pause'        => __( 'Pause', 'publishrank' ),
+					'resume'       => __( 'Resume', 'publishrank' ),
+					'confirmCancel' => __( 'Cancel the scan? Content already analyzed is kept, but recommendations will not be refreshed.', 'publishrank' ),
+					'phaseNodes'   => __( 'Analyzing published content', 'publishrank' ),
+					'phaseRecs'    => __( 'Generating recommendations', 'publishrank' ),
+				),
+			)
+		);
+	}
+
+	private function scan_payload( $state ) {
+		$state = is_array( $state ) ? $state : array();
+		return array(
+			'active'    => empty( $state['done'] ) && empty( $state['error'] ) && ! empty( $state['phase'] ),
+			'done'      => ! empty( $state['done'] ),
+			'error'     => ! empty( $state['error'] ) ? (string) $state['error'] : '',
+			'phase'     => isset( $state['phase'] ) ? (string) $state['phase'] : '',
+			'percent'   => Scanner::percent( $state ),
+			'processed' => (int) ( $state['processed'] ?? 0 ),
+			'total'     => (int) ( $state['total'] ?? 0 ),
+		);
+	}
+
+	/** AJAX: run one batch and report progress. The browser calls this until done, so no page reloads are needed. */
+	public function ajax_batch() {
+		if ( ! check_ajax_referer( 'publishrank_internal_links_batch', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Your session expired. Reload the page and try again.', 'publishrank' ) ), 403 );
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to rebuild the content graph.', 'publishrank' ) ), 403 );
+		}
+		$result = Scanner::run_batch();
+		if ( null === $result ) {
+			wp_send_json_success(
+				array(
+					'active'  => false,
+					'done'    => false,
+					'idle'    => true,
+					'error'   => '',
+					'percent' => 0,
+				)
+			);
+		}
+		if ( ! empty( $result['done'] ) ) {
+			AdminAssets::flash( 'success', __( 'Content graph and internal-link recommendations are up to date.', 'publishrank' ) );
+		}
+		wp_send_json_success( $this->scan_payload( $result ) );
+	}
+
+	public function ajax_cancel() {
+		if ( ! check_ajax_referer( 'publishrank_internal_links_cancel', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Your session expired. Reload the page and try again.', 'publishrank' ) ), 403 );
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to rebuild the content graph.', 'publishrank' ) ), 403 );
+		}
+		Scanner::cancel();
+		Store::invalidate_cache();
+		AdminAssets::flash( 'success', __( 'Scan cancelled. The graph built so far has been kept.', 'publishrank' ) );
+		wp_send_json_success( array( 'cancelled' => true ) );
+	}
+
+	/** No-JavaScript fallback: run a single batch per click. It never loops on its own. */
 	public function handle_batch() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to rebuild the content graph.', 'publishrank' ), '', array( 'response' => 403 ) );
@@ -138,16 +228,21 @@ final class InternalLinksPage {
 		if ( $result && ! empty( $result['done'] ) ) {
 			AdminAssets::done( self::SLUG, 'success', __( 'Content graph and internal-link recommendations are up to date.', 'publishrank' ) );
 		}
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page' => self::SLUG,
-					'scan' => 1,
-				),
-				admin_url( 'admin.php' )
-			)
-		);
+		if ( $result && ! empty( $result['error'] ) ) {
+			AdminAssets::done( self::SLUG, 'error', $result['error'] );
+		}
+		if ( null === $result ) {
+			AdminAssets::done( self::SLUG, 'error', __( 'No scan is in progress. Select Run graph scan to start one.', 'publishrank' ) );
+		}
+		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG ), admin_url( 'admin.php' ) ) );
 		exit;
+	}
+
+	public function handle_cancel() {
+		AdminAssets::guard( 'publishrank_internal_links_cancel' );
+		Scanner::cancel();
+		Store::invalidate_cache();
+		AdminAssets::done( self::SLUG, 'success', __( 'Scan cancelled. The graph built so far has been kept.', 'publishrank' ) );
 	}
 
 	private function recommendation_from_request( $action ) {
@@ -226,7 +321,7 @@ final class InternalLinksPage {
 		$recs        = Store::recommendations( array( 'pending', 'approved', 'inserted' ), $rec_page, self::PER_PAGE );
 
 		echo '<div class="wrap">';
-		AdminAssets::header( __( 'Content Graph / Internal Link Intelligence', 'publishrank' ), __( 'Find orphaned content and approve relevant internal links without automatic content changes.', 'publishrank' ) );
+		AdminAssets::header( __( 'Content Graph', 'publishrank' ), __( 'Map relationships across your articles, find orphaned content and review relevant internal-link opportunities. Links are never inserted without your approval.', 'publishrank' ) );
 		AdminAssets::render_flash();
 		$this->render_scan_progress();
 
@@ -243,20 +338,46 @@ final class InternalLinksPage {
 		echo '</div>';
 	}
 
+	/** Nonce + referer as plain hidden inputs without id attributes, so several forms on one page never repeat the same HTML id. */
+	private function nonce_inputs( $action ) {
+		echo '<input type="hidden" name="_wpnonce" value="' . esc_attr( wp_create_nonce( $action ) ) . '" />';
+		echo '<input type="hidden" name="_wp_http_referer" value="' . esc_attr( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) ) . '" />';
+	}
+
 	private function render_scan_progress() {
 		$state = Scanner::state();
 		if ( ! $state ) {
 			return;
 		}
-		$phase = 'nodes' === $state['phase'] ? __( 'Analyzing published content', 'publishrank' ) : __( 'Generating recommendations', 'publishrank' );
-		$total = max( 1, (int) $state['total'] );
-		$done  = 'nodes' === $state['phase'] ? min( 100, (int) ( ( (int) $state['processed'] / $total ) * 100 ) ) : 100;
-		echo '<div class="notice notice-info rhs-ilink-progress"><p><strong>' . esc_html( $phase ) . '</strong> — ' . esc_html( $done ) . '%</p></div>';
-		echo '<form class="rhs-internal-links-autosubmit" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		// Only auto-start right after the user pressed "Run graph scan". A stale or paused scan waits for an explicit Resume.
+		$autostart = isset( $_GET['start'] ) && '1' === (string) wp_unslash( $_GET['start'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only flag; the scan itself is nonce-protected.
+		$payload   = $this->scan_payload( $state );
+		$phase     = 'nodes' === $state['phase'] ? __( 'Analyzing published content', 'publishrank' ) : __( 'Generating recommendations', 'publishrank' );
+		$percent   = (int) $payload['percent'];
+		$error     = $payload['error'];
+
+		echo '<div class="rhs-card rhs-ilink-progress" id="publishrank-graph-scan" data-autostart="' . ( $autostart && ! $error ? '1' : '0' ) . '" data-percent="' . esc_attr( $percent ) . '">';
+		echo '<h2>' . esc_html__( 'Graph scan', 'publishrank' ) . '</h2>';
+		echo '<p class="rhs-scan-phase" id="publishrank-graph-scan-phase" role="status" aria-live="polite"><strong>' . esc_html( $phase ) . '</strong> &mdash; <span class="rhs-scan-percent">' . esc_html( $percent ) . '%</span></p>';
+		echo '<div class="rhs-scan-bar" role="progressbar" aria-label="' . esc_attr__( 'Graph scan progress', 'publishrank' ) . '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr( $percent ) . '"><span style="width:' . esc_attr( $percent ) . '%"></span></div>';
+		echo '<p class="description rhs-scan-message" id="publishrank-graph-scan-message">' . esc_html( $error ? $error : __( 'A scan is waiting. Resume it to continue where it stopped, or cancel it.', 'publishrank' ) ) . '</p>';
+		echo '<div class="rhs-scan-actions">';
+
+		// Resume/continue: a normal form submit that processes ONE batch (works without JavaScript; JavaScript upgrades it to an in-page runner).
+		echo '<form class="rhs-scan-continue" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-pr-no-loader="1">';
 		echo '<input type="hidden" name="action" value="publishrank_internal_links_batch" />';
-		wp_nonce_field( 'publishrank_internal_links_batch' );
-		submit_button( __( 'Continue graph scan', 'publishrank' ), 'primary', 'publishrank_continue_scan', false );
+		$this->nonce_inputs( 'publishrank_internal_links_batch' );
+		submit_button( __( 'Resume graph scan', 'publishrank' ), 'primary', 'publishrank_continue_scan', false, array( 'id' => 'publishrank-scan-resume' ) );
 		echo '</form>';
+
+		echo '<button type="button" class="button" id="publishrank-scan-pause" hidden>' . esc_html__( 'Pause', 'publishrank' ) . '</button>';
+
+		echo '<form class="rhs-scan-cancel" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="publishrank_internal_links_cancel" />';
+		$this->nonce_inputs( 'publishrank_internal_links_cancel' );
+		submit_button( __( 'Cancel scan', 'publishrank' ), 'secondary', 'publishrank_cancel_scan', false, array( 'id' => 'publishrank-scan-cancel' ) );
+		echo '</form>';
+		echo '</div></div>';
 	}
 
 	private function render_settings() {
@@ -274,6 +395,7 @@ final class InternalLinksPage {
 		echo '<form class="rhs-internal-links-confirm" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-confirm="' . esc_attr__( 'Rebuild the content graph and regenerate pending recommendations?', 'publishrank' ) . '">';
 		echo '<input type="hidden" name="action" value="publishrank_internal_links_scan" />';
 		wp_nonce_field( 'publishrank_internal_links_scan' );
+		echo '<p class="description">' . esc_html__( 'Rebuilds the content graph in small batches and shows progress here. Keep this tab open until it finishes; you can pause or cancel at any time and the graph built so far is kept.', 'publishrank' ) . '</p>';
 		submit_button( __( 'Run graph scan', 'publishrank' ), 'secondary', 'publishrank_run_scan', false );
 		echo '</form></div>';
 	}

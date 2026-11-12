@@ -358,3 +358,70 @@ body .wrap.prtg-wrap .prtg-notice code{background:rgba(255,255,255,.16)!importan
 body .wrap.prtg-wrap .prtg-notice a{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;font-weight:700}
 body .wrap.prtg-wrap .prtg-notice a:focus-visible{outline:3px solid #f4d790;outline-offset:2px}
 body .wrap.prtg-wrap .prtg-notice__icon{color:#f4d790!important;-webkit-text-fill-color:#f4d790!important}
+
+/* PublishRank UI polish: clearer hierarchy, consistent controls and responsive rhythm. */
+body[class*="publishrank"] #wpbody-content { color: var(--pr-text); font-size: 14px; line-height: 1.55; }
+body[class*="publishrank"] #wpbody-content > .wrap { max-width: 1600px; }
+body[class*="publishrank"] .wrap :is(h1,h2,h3,h4) { letter-spacing: -.018em; }
+body[class*="publishrank"] .wrap h1 { margin-block: 8px 18px; font-size: clamp(22px,2vw,29px); line-height: 1.2; font-weight: 700; }
+body[class*="publishrank"] .wrap h2 { font-size: 19px; line-height: 1.3; }
+body[class*="publishrank"] .wrap :is(p,li) { line-height: 1.6; }
+body[class*="publishrank"] .wrap :is(.description,.howto) { color: var(--pr-muted); font-size: 12px; line-height: 1.55; }
+
+/* Comfortable, predictable form controls. */
+body[class*="publishrank"] .wrap :is(input[type="text"],input[type="url"],input[type="email"],input[type="number"],input[type="search"],input[type="password"],select,textarea) {
+  min-height: 38px; padding: 7px 10px; border-color: var(--pr-border-strong); border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(31,27,30,.035); transition: border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+body[class*="publishrank"] .wrap textarea { min-height: 92px; }
+body[class*="publishrank"] .wrap :is(input,select,textarea):disabled { background: #f0eee9; color: #77747a; cursor: not-allowed; }
+body[class*="publishrank"] .wrap .form-table { border-collapse: separate; border-spacing: 0; }
+body[class*="publishrank"] .wrap .form-table th { width: 230px; padding: 18px 18px 18px 0; font-weight: 650; vertical-align: top; }
+body[class*="publishrank"] .wrap .form-table td { padding: 14px 0; vertical-align: top; }
+body[class*="publishrank"] .wrap .form-table tr + tr :is(th,td) { border-top: 1px solid rgba(200,190,177,.48); }
+body[class*="publishrank"] .wrap .form-table .description { max-width: 720px; margin-top: 6px; }
+
+/* Clear button hierarchy and accessible touch targets. */
+body[class*="publishrank"] .wrap :is(.button,.button-primary,.page-title-action) {
+  min-height: 38px; padding-inline: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  line-height: 1.25; transition: transform .15s ease,box-shadow .15s ease,background .15s ease;
+}
+body[class*="publishrank"] .wrap .button-primary:hover { transform: translateY(-1px); box-shadow: 0 7px 17px rgba(76,39,62,.2); }
+body[class*="publishrank"] .wrap :is(.button,.button-primary):active { transform: translateY(0); }
+body[class*="publishrank"] .wrap :is(.button,.button-primary):disabled,
+body[class*="publishrank"] .wrap :is(.button,.button-primary).disabled { opacity: .58; cursor: not-allowed; transform: none; box-shadow: none; }
+body[class*="publishrank"] .wrap p.submit { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--pr-border); }
+
+/* More scannable data tables. */
+body[class*="publishrank"] .wrap :is(.widefat,.wp-list-table) { border: 1px solid var(--pr-border); border-radius: 10px; border-collapse: separate; border-spacing: 0; background: var(--pr-surface); }
+body[class*="publishrank"] .wrap :is(.widefat,.wp-list-table) th { padding: 11px 12px; font-weight: 650; }
+body[class*="publishrank"] .wrap :is(.widefat,.wp-list-table) td { padding: 12px; vertical-align: middle; }
+body[class*="publishrank"] .wrap :is(.widefat,.wp-list-table) tbody tr { transition: background .12s ease; }
+body[class*="publishrank"] .wrap :is(.widefat,.wp-list-table) tbody tr:hover { background: #F5F0F1; }
+body[class*="publishrank"] .wrap .tablenav { min-height: 42px; margin-block: 10px; }
+body[class*="publishrank"] .wrap .tablenav .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+body[class*="publishrank"] .wrap .notice { padding: 12px 16px; margin-block: 12px 16px; }
+body[class*="publishrank"] .wrap :is(.rhs-card,.postbox,.card) { padding: 18px; }
+body[class*="publishrank"] .wrap :is(.rhs-card,.postbox) > :first-child { margin-top: 0; }
+body[class*="publishrank"] .wrap :is(.rhs-card,.postbox,.card) > :last-child { margin-bottom: 0; }
+body[class*="publishrank"] .wrap .nav-tab-wrapper { border-bottom-color: var(--pr-border); margin-bottom: 18px; }
+body[class*="publishrank"] .wrap :is(td,th,p,li,label,.description) { overflow-wrap: anywhere; }
+body[class*="publishrank"] .wrap pre { max-width: 100%; overflow: auto; border-radius: 8px; }
+body[class*="publishrank"] .wrap :is(.notice a,.description a) { text-underline-offset: 2px; }
+
+@media (max-width: 782px) {
+  body[class*="publishrank"] .wrap .form-table th { width: auto; padding: 14px 0 4px; }
+  body[class*="publishrank"] .wrap .form-table td { padding: 4px 0 14px; }
+  body[class*="publishrank"] .wrap .form-table tr + tr th { border-top: 1px solid rgba(200,190,177,.48); }
+  body[class*="publishrank"] .wrap p.submit { position: relative; padding-bottom: 8px; }
+  body[class*="publishrank"] .wrap .tablenav .actions { margin-bottom: 8px; }
+}
+@media (max-width: 480px) {
+  body[class*="publishrank"] .wrap :is(.button,.button-primary) { min-height: 42px; }
+  body[class*="publishrank"] .wrap p.submit .button-primary { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[class*="publishrank"] .wrap *, body[class*="publishrank"] .wrap *::before, body[class*="publishrank"] .wrap *::after {
+    scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+  }
+}

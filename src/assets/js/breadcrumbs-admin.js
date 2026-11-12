@@ -16,7 +16,6 @@
 		size: field( 'publishrank_breadcrumb_size' ),
 		align: field( 'publishrank_breadcrumb_align' ),
 		offset: field( 'publishrank_breadcrumb_offset' ),
-		offsetY: field( 'publishrank_breadcrumb_offset_y' ),
 		sep: field( 'publishrank_breadcrumbs_separator' ),
 		icons: form.querySelector( 'input[type="checkbox"][name="publishrank_breadcrumb_icons"]' ),
 		text: field( 'publishrank_breadcrumb_text_color' ),
@@ -25,7 +24,6 @@
 		accent: field( 'publishrank_breadcrumb_accent_color' )
 	};
 	var range = document.getElementById( 'pr-bc-offset-range' );
-	var rangeY = document.getElementById( 'pr-bc-offset-y-range' );
 	var stage = document.getElementById( 'pr-bc-live' );
 	var gallery = document.getElementById( 'pr-bc-gallery' );
 	if ( ! stage || ! f.look ) { return; }
@@ -39,16 +37,14 @@
 		var list = opts.items || items;
 		var style = [];
 		var offset = opts.offset !== undefined ? opts.offset : ( parseInt( f.offset && f.offset.value, 10 ) || 0 );
-		var offsetY = opts.offsetY !== undefined ? opts.offsetY : ( parseInt( f.offsetY && f.offsetY.value, 10 ) || 0 );
 		var colors = opts.plain ? {} : { text: hex( f.text && f.text.value ), link: hex( f.link && f.link.value ), bg: hex( f.bg && f.bg.value ), accent: hex( f.accent && f.accent.value ) };
 		Object.keys( colors ).forEach( function ( k ) { if ( colors[ k ] ) { style.push( '--pr-bc-' + k + ':' + colors[ k ] ); } } );
 		if ( offset ) { style.push( '--pr-bc-x:' + offset + 'px' ); }
-		if ( offsetY ) { style.push( '--pr-bc-y:' + offsetY + 'px' ); }
 		var icons = ! opts.plain && f.icons && f.icons.checked && look !== 'steps';
 		var cls = 'publishrank-breadcrumbs publishrank-breadcrumbs--' + look +
 			' publishrank-breadcrumbs--size-' + ( opts.size || ( f.size ? f.size.value : 'medium' ) ) +
 			' publishrank-breadcrumbs--align-' + ( opts.align || ( f.align ? f.align.value : 'left' ) ) +
-			( offset ? ' publishrank-breadcrumbs--offset' : '' ) + ( offsetY ? ' publishrank-breadcrumbs--offset-y' : '' ) + ( icons ? ' publishrank-breadcrumbs--icons' : '' );
+			( offset ? ' publishrank-breadcrumbs--offset' : '' ) + ( icons ? ' publishrank-breadcrumbs--icons' : '' );
 		var sepCls = 'publishrank-breadcrumb-separator' + ( DIRECTIONAL.test( sep ) ? ' publishrank-breadcrumb-separator--directional' : '' );
 		var last = list.length - 1;
 		var html = '<nav class="' + cls + '" style="' + esc( style.join( ';' ) ) + '" aria-label="Breadcrumb preview"><ol class="publishrank-breadcrumbs__list">';
@@ -63,7 +59,6 @@
 	function draw() {
 		stage.innerHTML = trail( f.look.value );
 		if ( range && f.offset ) { range.value = f.offset.value || 0; }
-		if ( rangeY && f.offsetY ) { rangeY.value = f.offsetY.value || 0; }
 		if ( gallery ) {
 			gallery.querySelectorAll( '.pr-bc-card' ).forEach( function ( card ) {
 				card.classList.toggle( 'is-active', card.getAttribute( 'data-look' ) === f.look.value );
@@ -75,7 +70,7 @@
 		var sample = [ 'Home', 'Profile', 'Projects', 'DailyUI' ];
 		gallery.innerHTML = LOOKS.map( function ( l ) {
 			return '<button type="button" class="pr-bc-card" data-look="' + esc( l.value ) + '" title="' + esc( l.label ) + '"><span class="pr-bc-card__view" aria-hidden="true">' +
-				trail( l.value, { plain: true, items: sample, sep: LOOK_SEPARATORS[ l.value ] || '›', offset: 0, offsetY: 0, align: 'left', size: 'medium' } ) +
+				trail( l.value, { plain: true, items: sample, sep: LOOK_SEPARATORS[ l.value ] || '›', offset: 0, align: 'left', size: 'medium' } ) +
 				'</span><span class="pr-bc-card__name">' + esc( l.short ) + '</span></button>';
 		} ).join( '' );
 		gallery.addEventListener( 'click', function ( e ) {
@@ -93,7 +88,7 @@
 		} );
 	}
 
-	[ 'look', 'size', 'align', 'offset', 'offsetY', 'sep', 'icons' ].forEach( function ( k ) {
+	[ 'look', 'size', 'align', 'offset', 'sep', 'icons' ].forEach( function ( k ) {
 		if ( f[ k ] ) {
 			f[ k ].addEventListener( 'input', draw );
 			f[ k ].addEventListener( 'change', draw );
@@ -103,9 +98,6 @@
 	if ( preset ) { preset.addEventListener( 'change', function () { setTimeout( draw, 0 ); } ); }
 	if ( range && f.offset ) {
 		range.addEventListener( 'input', function () { f.offset.value = range.value; draw(); } );
-	}
-	if ( rangeY && f.offsetY ) {
-		rangeY.addEventListener( 'input', function () { f.offsetY.value = rangeY.value; draw(); } );
 	}
 
 	// Built-in WordPress color picker (Iris) on the four color fields.

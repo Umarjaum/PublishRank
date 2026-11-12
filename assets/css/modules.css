@@ -262,3 +262,9 @@
 .pr-module__lock i { margin-top: 2px; }
 .pr-module__lock a { font-weight: 600; white-space: nowrap; }
 .pr-module.is-locked .pr-module__state::before { background: #b8a25e; box-shadow: none; }
+
+/* Feature groups */
+.pr-modules-group{margin:0 0 24px}
+.pr-modules-group[hidden]{display:none}
+.pr-modules-group__title{margin:0 0 10px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#50575e}
+.pr-module__state{font-weight:600}

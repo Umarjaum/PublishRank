@@ -33,21 +33,33 @@
 		body.append('part', key);
 		body.append('enabled', on ? '1' : '0');
 		fetch(cfg.ajaxUrl, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: body.toString() })
-			.then(function (r) { return r.json(); })
-			.then(function (res) {
-				if (!res || !res.success) { throw new Error('rejected'); }
+			.then(function (r) {
+				return r.json().then(function (json) { return { ok: r.ok, json: json }; });
+			})
+			.then(function (result) {
+				var res = result.json;
+				if (!result.ok || !res || !res.success || !res.data) {
+					var err = new Error('rejected');
+					err.serverMessage = res && res.data && res.data.message ? String(res.data.message) : '';
+					throw err;
+				}
 				var saved = !!res.data.enabled;
 				input.checked = saved;
 				paint(row, saved);
 				document.querySelectorAll('[data-pr-hub-included]').forEach(function (el) {
 					el.textContent = String(t.count || '%1$d of %2$d').replace('%1$d', res.data.included).replace('%2$d', res.data.total);
 				});
+				if (saved !== on) {
+					// The server kept a different value than requested: never report a change that did not happen.
+					toast(t.notChanged || 'This setting could not be changed.', true);
+					return;
+				}
 				toast(String(saved ? t.enabled : t.disabled).replace('%s', input.getAttribute('data-label') || key));
 			})
-			.catch(function () {
+			.catch(function (err) {
 				input.checked = !on;
 				paint(row, !on);
-				toast(t.failed || 'Could not save.', true);
+				toast((err && err.serverMessage) || t.failed || 'Could not save.', true);
 			})
 			.then(function () {
 				input.disabled = false;

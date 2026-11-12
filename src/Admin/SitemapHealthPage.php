@@ -59,6 +59,7 @@ final class SitemapHealthPage {
 					'failed'  => __( 'Could not save. Check your connection and try again.', 'publishrank' ),
 					'copied'  => __( 'Sitemap address copied.', 'publishrank' ),
 					'copyFailed' => __( 'Copy failed. Select the address and copy it manually.', 'publishrank' ),
+					'notChanged' => __( 'This setting could not be changed. Reload the page to see its current state.', 'publishrank' ),
 					/* translators: 1: content types included, 2: total content types. */
 					'count'   => __( '%1$d of %2$d', 'publishrank' ),
 				),
@@ -80,7 +81,7 @@ final class SitemapHealthPage {
 			'news'       => array( 'option' => 'publishrank_seo_news_enabled', 'default' => true, 'icon' => 'fa-newspaper', 'label' => __( 'Google News', 'publishrank' ), 'description' => __( 'Articles from the last few days, in the format Google News reads.', 'publishrank' ) ),
 			'image'      => array( 'option' => 'publishrank_seo_image_sitemap', 'default' => true, 'icon' => 'fa-image', 'label' => __( 'Images', 'publishrank' ), 'description' => __( 'Images used in your content, for Google Images and Discover.', 'publishrank' ) ),
 			'video'      => array( 'option' => 'publishrank_seo_video_sitemap', 'default' => true, 'icon' => 'fa-video', 'label' => __( 'Videos', 'publishrank' ), 'description' => __( 'Videos embedded in your content.', 'publishrank' ) ),
-			'attachment' => array( 'option' => 'publishrank_sitemap_attachments_enabled', 'default' => false, 'icon' => 'fa-paperclip', 'label' => __( 'Attachment pages', 'publishrank' ), 'description' => __( 'Individual media attachment pages. Usually best left off.', 'publishrank' ) ),
+			'attachment' => array( 'option' => 'publishrank_sitemap_attachments_enabled', 'default' => false, 'icon' => 'fa-paperclip', 'label' => __( 'Attachment pages', 'publishrank' ), 'description' => __( 'Individual media attachment pages. Usually best left off.', 'publishrank' ), 'why' => __( 'Off by default on purpose: attachment pages are thin, near-duplicate URLs that can compete with your articles in search. Turn this on only if you intentionally index them. You can switch it back off at any time.', 'publishrank' ) ),
 		);
 	}
 
@@ -289,6 +290,10 @@ final class SitemapHealthPage {
 			echo '<span class="pr-hub-row__icon" aria-hidden="true"><i class="fa-solid ' . esc_attr( $row['icon'] ) . '"></i></span>';
 			echo '<div class="pr-hub-row__body"><span class="pr-hub-row__title" id="' . esc_attr( $id ) . '-title">' . esc_html( $row['label'] ) . '</span>';
 			echo '<span class="pr-hub-row__desc" id="' . esc_attr( $id ) . '-desc">' . esc_html( $row['description'] ) . '</span>';
+			$why = ( ! $always && empty( $row['default'] ) && ! empty( $row['why'] ) ) ? (string) $row['why'] : '';
+			if ( '' !== $why ) {
+				echo '<span class="pr-hub-row__why" id="' . esc_attr( $id ) . '-why"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ' . esc_html( $why ) . '</span>';
+			}
 			echo '<span class="pr-hub-row__meta"><span class="pr-hub-row__state" data-pr-hub-state>' . ( $on ? esc_html__( 'Included', 'publishrank' ) : esc_html__( 'Not included', 'publishrank' ) ) . '</span>';
 			if ( $enabled && $on && $provider ) {
 				if ( $files > 0 ) {
@@ -310,7 +315,7 @@ final class SitemapHealthPage {
 				echo '<span class="pr-hub-row__lock"><i class="fa-solid fa-lock" aria-hidden="true"></i> ' . esc_html__( 'Always on', 'publishrank' ) . '</span>';
 			} else {
 				echo '<label class="pr-switch" for="' . esc_attr( $id ) . '">';
-				echo '<input type="checkbox" role="switch" id="' . esc_attr( $id ) . '" name="parts[' . esc_attr( $key ) . ']" value="1" data-pr-sitemap-part="' . esc_attr( $key ) . '" data-label="' . esc_attr( $row['label'] ) . '" aria-labelledby="' . esc_attr( $id ) . '-title" aria-describedby="' . esc_attr( $id ) . '-desc"' . checked( $on, true, false ) . ' />';
+				echo '<input type="checkbox" role="switch" id="' . esc_attr( $id ) . '" name="parts[' . esc_attr( $key ) . ']" value="1" data-pr-sitemap-part="' . esc_attr( $key ) . '" data-label="' . esc_attr( $row['label'] ) . '" aria-labelledby="' . esc_attr( $id ) . '-title" aria-describedby="' . esc_attr( $id ) . '-desc' . ( '' !== $why ? ' ' . esc_attr( $id ) . '-why' : '' ) . '"' . checked( $on, true, false ) . ' />';
 				echo '<span class="pr-switch__track" aria-hidden="true"><span class="pr-switch__thumb"></span></span></label>';
 			}
 			echo '</li>';

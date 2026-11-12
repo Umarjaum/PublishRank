@@ -34,7 +34,7 @@ final class PublisherLinkIntelligence {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Publisher Link Intelligence', 'publishrank' ), __( 'Link Intelligence', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Link Health Audit', 'publishrank' ), __( 'Link Health Audit', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
 	}
 
 	private function guard( $action ) {
@@ -445,7 +445,7 @@ final class PublisherLinkIntelligence {
 		$results = is_array( $results ) ? array_values( $results ) : array();
 		$state   = get_transient( self::STATE_KEY );
 		echo '<div class="wrap">';
-		AdminAssets::header( __( 'Publisher Link Intelligence', 'publishrank' ), __( 'Audit broken internal links, identify links that point through redirects, review redirect chains, and optionally check external URLs. Uses local content analysis; no AI API required.', 'publishrank' ) );
+		AdminAssets::header( __( 'Link Health Audit', 'publishrank' ), __( 'Check internal and external URLs for broken links, redirects and redirect chains. This is a link-maintenance audit; use Content Graph for orphaned content and new internal-link opportunities.', 'publishrank' ) );
 		if ( isset( $_GET['pr_message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 			$type = isset( $_GET['pr_type'] ) ? sanitize_key( wp_unslash( $_GET['pr_type'] ) ) : 'success'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
 			echo '<div class="notice notice-' . esc_attr( in_array( $type, array( 'error', 'success', 'warning' ), true ) ? $type : 'success' ) . ' is-dismissible"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['pr_message'] ) ) ) . '</p></div>'; } // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.

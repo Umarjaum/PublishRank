@@ -85,8 +85,8 @@ final class ModuleSwitches {
 				'icon'        => 'fa-link',
 				'group'       => 'content',
 				'page'        => 'publishrank-seo-internal-links',
-				'title'       => __( 'Internal Links', 'publishrank' ),
-				'description' => __( 'Get smart internal-link suggestions that help readers navigate and spread authority across your archive.', 'publishrank' ),
+				'title'       => __( 'Content Graph', 'publishrank' ),
+				'description' => __( 'Map article relationships, find orphaned content and review internal-link opportunities before approving them.', 'publishrank' ),
 			),
 			'breadcrumbs'    => array(
 				'option'      => OutputSettings::BREADCRUMBS,
@@ -160,6 +160,25 @@ final class ModuleSwitches {
 				'title'       => __( 'Hide Login', 'publishrank' ),
 				'description' => __( 'Move the WordPress login page to a private address and hide wp-login.php and wp-admin from visitors who are not signed in. Switch off to restore the standard login.', 'publishrank' ),
 			),
+
+			'podcast'        => array(
+				'option'      => 'publishrank_integration_podcast',
+				'default'     => true,
+				'icon'        => 'fa-podcast',
+				'group'       => 'integrations',
+				'page'        => 'publishrank-schema',
+				'title'       => __( 'Podcast SEO', 'publishrank' ),
+				'description' => __( 'Podcast episode structured data, audio share tags and an episodes sitemap. Works with Seriously Simple Podcasting, PowerPress, Podlove, or any post with an audio file.', 'publishrank' ),
+			),
+			'web_stories'    => array(
+				'option'      => 'publishrank_integration_web_stories',
+				'default'     => true,
+				'icon'        => 'fa-mobile-screen',
+				'group'       => 'integrations',
+				'page'        => 'publishrank-sitemap-health',
+				'title'       => __( 'Web Stories', 'publishrank' ),
+				'description' => __( 'Web Stories sitemap, PublishRank titles, social tags and schema on story pages, and large image previews for Google Discover. Needs the Web Stories plugin.', 'publishrank' ),
+			),
 			'bbpress'        => array(
 				'option'      => 'publishrank_integration_bbpress',
 				'default'     => true,
@@ -179,24 +198,6 @@ final class ModuleSwitches {
 				'requires'    => 'buddypress',
 				'title'       => __( 'BuddyPress Community', 'publishrank' ),
 				'description' => __( 'Sitemap of public groups and member profiles, profile-page structured data, and noindex for activity, settings and messages screens. Needs the BuddyPress plugin.', 'publishrank' ),
-			),
-			'podcast'        => array(
-				'option'      => 'publishrank_integration_podcast',
-				'default'     => true,
-				'icon'        => 'fa-podcast',
-				'group'       => 'integrations',
-				'page'        => 'publishrank-schema',
-				'title'       => __( 'Podcast SEO', 'publishrank' ),
-				'description' => __( 'Podcast episode structured data, audio share tags and an episodes sitemap. Works with Seriously Simple Podcasting, PowerPress, Podlove, or any post with an audio file.', 'publishrank' ),
-			),
-			'web_stories'    => array(
-				'option'      => 'publishrank_integration_web_stories',
-				'default'     => true,
-				'icon'        => 'fa-mobile-screen',
-				'group'       => 'integrations',
-				'page'        => 'publishrank-sitemap-health',
-				'title'       => __( 'Web Stories', 'publishrank' ),
-				'description' => __( 'Web Stories sitemap, PublishRank titles, social tags and schema on story pages, and large image previews for Google Discover. Needs the Web Stories plugin.', 'publishrank' ),
 			),
 		);
 		/**

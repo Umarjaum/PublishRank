@@ -49,19 +49,32 @@
 		body.append('module', key);
 		body.append('enabled', on ? '1' : '0');
 		fetch(cfg.ajaxUrl, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: body.toString() })
-			.then(function (r) { return r.json(); })
-			.then(function (res) {
-				if (!res || !res.success) { throw new Error('rejected'); }
+			.then(function (r) {
+				return r.json().then(function (json) { return { ok: r.ok, json: json }; });
+			})
+			.then(function (result) {
+				var res = result.json;
+				if (!result.ok || !res || !res.success || !res.data) {
+					var err = new Error('rejected');
+					err.serverMessage = res && res.data && res.data.message ? String(res.data.message) : '';
+					throw err;
+				}
 				var saved = !!res.data.enabled;
 				syncTwins(key, saved, input);
 				input.checked = saved;
+				paint(card, saved);
 				updateCounts(res.data.active, res.data.total);
+				if (saved !== on) {
+					// The server kept a different state than requested: report that instead of a false success.
+					toast(root, t.failed || 'Could not save.', true);
+					return;
+				}
 				toast(root, fmt(saved ? t.enabled : t.disabled, input.getAttribute('data-label') || key));
 			})
-			.catch(function () {
+			.catch(function (err) {
 				input.checked = !on;
 				paint(card, !on);
-				toast(root, t.failed || 'Could not save.', true);
+				toast(root, (err && err.serverMessage) || t.failed || 'Could not save.', true);
 			})
 			.then(function () {
 				input.disabled = false;
@@ -83,6 +96,9 @@
 			var ok = (filter === 'all' || (filter === 'on' && on) || (filter === 'off' && !on)) && (!q || (card.getAttribute('data-search') || '').indexOf(q) !== -1);
 			card.hidden = !ok;
 			if (ok) { shown++; }
+		});
+		document.querySelectorAll('.pr-modules-wrap [data-pr-modules-group]').forEach(function (group) {
+			group.hidden = !group.querySelector('[data-pr-module-card]:not([hidden])');
 		});
 		var empty = document.querySelector('[data-pr-modules-empty]');
 		if (empty) { empty.hidden = shown !== 0; }

@@ -120,7 +120,7 @@ final class ModulesPage {
 
 		echo '<div class="pr-modules-main">';
 		echo '<div class="pr-modules-intro"><div><p class="pr-shell-kicker">' . esc_html__( 'Control center', 'publishrank' ) . '</p><h2 class="pr-modules-title">' . esc_html__( 'Features', 'publishrank' ) . '</h2>';
-		echo '<p class="pr-modules-lead">' . esc_html__( 'Choose which PublishRank tools run on your site. Switch a feature off and its output stops right away; switch it back on at any time. Use Settings on a card to fine-tune that feature.', 'publishrank' ) . '</p></div>';
+		echo '<p class="pr-modules-lead">' . esc_html__( 'Choose which PublishRank tools run on your site. Switch a feature off and its output stops right away; switch it back on at any time. Use Configure on a card to fine-tune that feature once it is on.', 'publishrank' ) . '</p></div>';
 		echo '<span class="pr-modules-count" data-pr-modules-count data-total="' . esc_attr( (string) $total ) . '">' . esc_html( sprintf( /* translators: 1: features switched on, 2: total features. */ __( '%1$d of %2$d on', 'publishrank' ), $active, $total ) ) . '</span></div>';
 
 		echo '<div class="pr-modules-toolbar">';
@@ -177,13 +177,58 @@ final class ModulesPage {
 		foreach ( array_keys( $modules ) as $key ) {
 			echo '<input type="hidden" name="scope[]" value="' . esc_attr( (string) $key ) . '" />';
 		}
-		echo '<div class="pr-modules-grid' . ( $compact ? ' pr-modules-grid--compact' : '' ) . '">';
-		foreach ( $modules as $key => $module ) {
-			self::card( (string) $key, $module, $compact );
+		if ( $compact ) {
+			echo '<div class="pr-modules-grid pr-modules-grid--compact">';
+			foreach ( $modules as $key => $module ) {
+				self::card( (string) $key, $module, $compact );
+			}
+			echo '</div>';
+		} else {
+			self::render_groups( $modules );
 		}
-		echo '</div>';
 		echo '<p class="pr-modules-save hide-if-js"><button type="submit" class="button button-primary">' . esc_html__( 'Save modules', 'publishrank' ) . '</button></p>';
 		echo '</form>';
+	}
+
+	/**
+	 * Full Features screen: cards grouped by purpose. Integrations come last, and the ones that depend on another plugin (bbPress, BuddyPress) sit at the very bottom.
+	 *
+	 * @param array<string,array> $modules Module definitions.
+	 */
+	private static function render_groups( array $modules ) {
+		$labels  = ModuleSwitches::groups();
+		$buckets = array();
+		foreach ( $modules as $key => $module ) {
+			$group = isset( $module['group'] ) && isset( $labels[ $module['group'] ] ) ? (string) $module['group'] : 'other';
+			$buckets[ $group ][ $key ] = $module;
+		}
+		$labels['other'] = __( 'Other', 'publishrank' );
+		foreach ( $labels as $group => $label ) {
+			if ( empty( $buckets[ $group ] ) ) {
+				continue;
+			}
+			$items = $buckets[ $group ];
+			if ( 'integrations' === $group ) {
+				$free  = array();
+				$bound = array();
+				foreach ( $items as $key => $module ) {
+					if ( in_array( (string) $key, array( 'bbpress', 'buddypress' ), true ) ) {
+						$bound[ $key ] = $module;
+					} else {
+						$free[ $key ] = $module;
+					}
+				}
+				$items = $free + $bound; // bbPress, then BuddyPress, always last.
+			}
+			$heading_id = 'pr-modules-group-' . sanitize_html_class( $group );
+			echo '<section class="pr-modules-group" data-pr-modules-group aria-labelledby="' . esc_attr( $heading_id ) . '">';
+			echo '<h3 class="pr-modules-group__title" id="' . esc_attr( $heading_id ) . '">' . esc_html( $label ) . '</h3>';
+			echo '<div class="pr-modules-grid">';
+			foreach ( $items as $key => $module ) {
+				self::card( (string) $key, $module, false );
+			}
+			echo '</div></section>';
+		}
 	}
 
 	private static function card( $key, array $module, $compact ) {
@@ -218,7 +263,7 @@ final class ModulesPage {
 		}
 		echo '<div class="pr-module__meta"><span class="pr-module__state" data-pr-module-state>' . ( $locked ? esc_html__( 'Locked', 'publishrank' ) : ( $on ? esc_html__( 'On', 'publishrank' ) : esc_html__( 'Off', 'publishrank' ) ) ) . '</span>';
 		if ( '' !== $page && ! $locked ) {
-			echo '<a class="pr-module__configure" href="' . esc_url( Branding::page_url( $page ) ) . '">' . esc_html__( 'Settings', 'publishrank' ) . '<span class="screen-reader-text"> ' . esc_html( $title ) . '</span></a>';
+			echo '<a class="pr-module__configure" href="' . esc_url( Branding::page_url( $page ) ) . '">' . esc_html__( 'Configure', 'publishrank' ) . '<span class="screen-reader-text"> ' . esc_html( $title ) . '</span></a>';
 		}
 		echo '</div></div>';
 		echo '<label class="pr-switch" for="' . esc_attr( $id ) . '">';

@@ -8,26 +8,55 @@
 	/* ---------- unsaved changes ---------- */
 	var bar = document.querySelector('[data-pr-set-savebar]');
 	var status = bar ? bar.querySelector('[data-pr-set-status] span') : null;
-	var dirty = false, submitting = false;
+	var dirty = false, submitting = false, touched = false;
 	function snapshot() {
 		var out = [];
 		new FormData(form).forEach(function (v, k) { out.push(k + '=' + (typeof v === 'string' ? v : '')); });
 		return out.join('&');
 	}
 	var initial = snapshot();
-	function check() {
-		var now = snapshot() !== initial;
+	function setDirty(now) {
 		if (now === dirty) { return; }
 		dirty = now;
 		if (bar) { bar.classList.toggle('is-dirty', dirty); }
 		if (status) { status.textContent = dirty ? (t.dirty || 'You have unsaved changes') : (t.clean || 'All changes saved'); }
 	}
+	function check() {
+		setDirty(snapshot() !== initial);
+	}
+	// Other scripts (repeaters, pickers, defaults) may adjust fields right after load. Until the person actually edits
+	// something, treat the current values as the saved state so the warning never appears without a real change.
+	function rebaseline() {
+		if (!touched && !dirty) { initial = snapshot(); }
+	}
+	window.addEventListener('load', function () { window.setTimeout(rebaseline, 150); });
 	if (status) { status.textContent = t.clean || 'All changes saved'; }
-	form.addEventListener('input', check);
-	form.addEventListener('change', check);
-	form.addEventListener('submit', function () {
+	function onEdit(event) {
+		if (event && event.isTrusted) { touched = true; }
+		check();
+	}
+	form.addEventListener('input', onEdit);
+	form.addEventListener('change', onEdit);
+	// Buttons that add or remove list items change the form without firing input/change.
+	form.addEventListener('click', function (event) {
+		if (event.target.closest && event.target.closest('button, .button, [data-pr-repeater-add], [data-pr-repeater-remove]')) {
+			window.setTimeout(check, 0);
+		}
+	});
+	form.addEventListener('submit', function (event) {
+		if (submitting) { event.preventDefault(); return; } // Ignore a second click while the first save is running.
 		submitting = true;
-		if (status) { status.textContent = t.saving || 'Saving…'; }
+		window.setTimeout(function () {
+			if (event.defaultPrevented) {
+				submitting = false; // Another handler or validation cancelled the save: keep protecting unsaved edits.
+				return;
+			}
+			if (status) { status.textContent = t.saving || 'Saving…'; }
+			if (bar) { bar.classList.add('is-saving'); }
+		}, 0);
+	});
+	window.addEventListener('pageshow', function (event) {
+		if (event.persisted) { submitting = false; if (bar) { bar.classList.remove('is-saving'); } check(); }
 	});
 	window.addEventListener('beforeunload', function (e) {
 		if (dirty && !submitting) { e.preventDefault(); e.returnValue = ''; }
@@ -94,6 +123,8 @@
 			});
 			if (!rows.length) { hits = (q === '' || headHit || text(sec).indexOf(q) !== -1) ? 1 : 0; }
 			sec.hidden = hits === 0;
+			if (q !== '' && hits > 0) { sec.open = true; }
+			if (q === '' && sec.id !== 'pr-settings-titles') { sec.open = false; }
 			if (chips[sec.id]) { chips[sec.id].classList.toggle('is-hidden', hits === 0); }
 			if (q !== '') { total += rows.length ? hits : (hits ? 1 : 0); }
 		});

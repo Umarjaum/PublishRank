@@ -1,8 +1,13 @@
 <?php
 /**
- * Floating "SEO Analysis" panel in the post editor: live score ring out of 100, rating, passed checks,
+ * "SEO Analysis" panel in the post editor: live score ring out of 100, rating, passed checks,
  * items to improve, focus keyword and content metrics. It mirrors the PublishRank SEO Score meta box and
  * updates whenever that analysis runs (including while typing in the block editor).
+ *
+ * Placement: by default the panel is docked at the top of the editor sidebar (block editor: the
+ * PublishRank sidebar, opened from the live score badge in the top toolbar; classic editor: right under
+ * the Publish box). Editors can pop it out into a draggable floating panel and dock it back; the
+ * choice is remembered per browser.
  *
  * @package PublishRankSEO
  */
@@ -77,6 +82,8 @@ final class EditorScoreCard {
 			'noLinks'       => __( 'No related published articles found yet.', 'publishrank' ),
 			/* translators: %s: check title. */
 			'fixAria'       => __( 'Fix: %s', 'publishrank' ),
+			'popOut'        => __( 'Pop out as a floating panel', 'publishrank' ),
+			'dock'          => __( 'Dock to the sidebar', 'publishrank' ),
 		);
 	}
 
@@ -133,7 +140,7 @@ final class EditorScoreCard {
 			return isset( $stats[ $key ] ) ? (int) $stats[ $key ] : 0;
 		};
 
-		echo '<aside id="publishrank-editor-score" class="pr-esc pr-esc--' . esc_attr( $band ) . '" data-score="' . esc_attr( (string) $score ) . '" data-post-id="' . esc_attr( (string) $id ) . '" aria-label="' . esc_attr__( 'PublishRank SEO analysis', 'publishrank' ) . '">';
+		echo '<aside id="publishrank-editor-score" class="pr-esc is-parked pr-esc--' . esc_attr( $band ) . '" data-score="' . esc_attr( (string) $score ) . '" data-post-id="' . esc_attr( (string) $id ) . '" aria-label="' . esc_attr__( 'PublishRank SEO analysis', 'publishrank' ) . '">';
 
 		// Minimized pill.
 		echo '<button type="button" class="pr-esc__pill" data-pr-esc-expand aria-expanded="false" aria-controls="publishrank-editor-score-panel">';
@@ -146,6 +153,7 @@ final class EditorScoreCard {
 		echo '<strong class="pr-esc__title">' . esc_html__( 'SEO Analysis', 'publishrank' ) . '</strong>';
 		echo '<span class="pr-esc__live" aria-hidden="true"><i></i>' . esc_html__( 'Live', 'publishrank' ) . '</span>';
 		echo '<button type="button" class="pr-esc__icon-btn" data-pr-esc-refresh aria-label="' . esc_attr__( 'Re-analyze now', 'publishrank' ) . '" title="' . esc_attr__( 'Re-analyze now', 'publishrank' ) . '"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M10 3a7 7 0 0 1 6.32 4H14v2h5V4h-2v1.76A9 9 0 1 0 19 10h-2a7 7 0 1 1-7-7z"/></svg></button>';
+		echo '<button type="button" class="pr-esc__icon-btn" data-pr-esc-mode aria-label="' . esc_attr( $s['popOut'] ) . '" title="' . esc_attr( $s['popOut'] ) . '"><svg class="pr-esc__ico-pop" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M11 3h6v6h-2V6.41l-5.29 5.3-1.42-1.42L13.59 5H11V3zM3 5h6v2H5v8h8v-4h2v6H3V5z"/></svg><svg class="pr-esc__ico-dock" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M2 3h16v14H2V3zm2 2v10h7V5H4zm9 0v10h3V5h-3z"/></svg></button>';
 		echo '<button type="button" class="pr-esc__icon-btn" data-pr-esc-collapse aria-expanded="true" aria-controls="publishrank-editor-score-panel" aria-label="' . esc_attr__( 'Minimize SEO analysis', 'publishrank' ) . '" title="' . esc_attr__( 'Minimize', 'publishrank' ) . '"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M4 9h12v2H4z"/></svg></button>';
 		echo '</header>';
 

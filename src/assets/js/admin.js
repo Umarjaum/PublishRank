@@ -319,10 +319,6 @@
 	});
 
 	$(function () {
-		$('.rhs-internal-links-autosubmit').each(function () {
-			var form = this;
-			setTimeout(function () { HTMLFormElement.prototype.submit.call(form); }, 500);
-		});
 		$('.rhs-repeater').each(function () { updateRepeaterLabels($(this)); });
 	});
 

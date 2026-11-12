@@ -29,33 +29,49 @@ final class HelpDocumentationPage {
 	public function assets( $hook ) {
 		if ( false === strpos( (string) $hook, 'publishrank' ) ) {
 			return; }
-		wp_register_style( 'publishrank-inline-help', false, array(), PUBLISHRANK_SEO_VERSION );
-		wp_enqueue_style( 'publishrank-inline-help' );
-		wp_add_inline_style( 'publishrank-inline-help', '.pr-help-icon{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;margin-left:5px;border:1px solid #2271b1;border-radius:50%;background:#fff;color:#2271b1;font-size:11px;font-weight:700;line-height:1;cursor:help;vertical-align:middle}.pr-help-pop{display:none;position:absolute;z-index:10000;max-width:300px;padding:10px 12px;border:1px solid #c3c4c7;border-radius:6px;background:#fff;color:#1d2327;box-shadow:0 3px 12px #0002;font-size:12px;font-weight:400;line-height:1.5}.pr-help-icon:focus+.pr-help-pop,.pr-help-icon:hover+.pr-help-pop{display:block}' );
-		wp_register_script( 'publishrank-inline-help', '', array(), PUBLISHRANK_SEO_VERSION, true );
-		wp_enqueue_script( 'publishrank-inline-help' );
+		$css_file = PUBLISHRANK_SEO_PATH . 'assets/css/help-icons.css';
+		$js_file  = PUBLISHRANK_SEO_PATH . 'assets/js/help-icons.js';
+		$ver_css  = PUBLISHRANK_SEO_VERSION . '.' . ( file_exists( $css_file ) ? (string) filemtime( $css_file ) : '0' );
+		$ver_js   = PUBLISHRANK_SEO_VERSION . '.' . ( file_exists( $js_file ) ? (string) filemtime( $js_file ) : '0' );
+		wp_enqueue_style( 'publishrank-inline-help', Branding::asset_url( 'css/help-icons.css' ), array(), $ver_css );
+		wp_enqueue_script( 'publishrank-inline-help', Branding::asset_url( 'js/help-icons.js' ), array(), $ver_js, true );
+		// Keys are matched against on-screen setting names (longest match wins); each text explains that specific setting.
 		$map = array(
-			'SEO title'        => 'The title search engines may show for this page. A custom value takes priority over the generated fallback.',
-			'Meta description' => 'A concise summary for search snippets and social previews. Leave blank to let PublishRank derive a fallback from the content.',
-			'Canonical URL'    => 'The preferred URL for this content. Use only when you intentionally need to consolidate duplicate or alternate URLs.',
-			'Robots'           => 'Controls whether search engines may index or follow links on eligible pages. Avoid noindex on pages you want searchable.',
-			'News sitemap'     => 'Lists recently published eligible news articles for discovery. Inclusion does not guarantee Google News placement or indexing.',
-			'Image sitemap'    => 'Adds discoverable image URLs associated with eligible public content.',
-			'Video sitemap'    => 'Provides metadata for eligible embedded or hosted videos when the required video details are available.',
-			'Schema'           => 'Structured data describing your organization, articles, authors, breadcrumbs and related entities. Validate the rendered output after theme changes.',
-			'Breadcrumbs'      => 'A hierarchical navigation trail. Check your theme before enabling visible output to avoid duplicate breadcrumbs.',
-			'Redirect'         => 'Sends visitors and crawlers from an old URL to a new destination or returns a selected gone status. Check for loops before saving.',
-			'IndexNow'         => 'Notifies participating search engines about URL changes. It does not guarantee indexing and is not a Google indexing API.',
-			'Publisher'        => 'Your publication identity, logo, locale and social profiles used by relevant metadata and structured data.',
-			'Cache'            => 'Clears or refreshes generated SEO/sitemap data. Site, plugin, CDN and host caches may also need to be purged.',
-			'404'              => 'Records a privacy-conscious, bounded history of normalized not-found paths. It groups browser, mobile and crawler hits, removes query strings from referrers, ignores common asset and infrastructure probes, applies rate limiting and a short write lock, and retains at most 500 entries for 90 days.',
-			'Import'           => 'Loads supported PublishRank settings. Review imported values before applying them; secrets may be deliberately excluded.',
-			'Export'           => 'Downloads supported configuration for backup or migration. Keep exported files private because they may contain site configuration.',
-			'Keyphrase'        => 'An editorial focus phrase used by content analysis. It is a writing aid, not a ranking guarantee.',
-			'Schema type'      => 'Selects the structured-data type that best represents the content. Do not mark up content that is not actually present.',
+			'SEO title'                    => __( 'The title search engines may show for this page. A custom value takes priority over the generated fallback.', 'publishrank' ),
+			'Meta description'             => __( 'A concise summary for search snippets and social previews. Leave blank to let PublishRank derive a fallback from the content.', 'publishrank' ),
+			'Canonical URL'                => __( 'The preferred URL for this content. Use only when you intentionally need to consolidate duplicate or alternate URLs.', 'publishrank' ),
+			'Robots'                       => __( 'Controls whether search engines may index or follow links on eligible pages. Avoid noindex on pages you want searchable.', 'publishrank' ),
+			'News sitemap'                 => __( 'Lists recently published eligible news articles for discovery. Inclusion does not guarantee Google News placement or indexing.', 'publishrank' ),
+			'Image sitemap'                => __( 'Adds discoverable image URLs associated with eligible public content.', 'publishrank' ),
+			'Video sitemap'                => __( 'Provides metadata for eligible embedded or hosted videos when the required video details are available.', 'publishrank' ),
+			'Schema type'                  => __( 'Selects the structured-data type that best represents the content. Do not mark up content that is not actually present.', 'publishrank' ),
+			'Schema'                       => __( 'Structured data describing your organization, articles, authors, breadcrumbs and related entities. Validate the rendered output after theme changes.', 'publishrank' ),
+			'Breadcrumbs'                  => __( 'A hierarchical navigation trail. Check your theme before enabling visible output to avoid duplicate breadcrumbs.', 'publishrank' ),
+			'Redirect'                     => __( 'Sends visitors and crawlers from an old URL to a new destination or returns a selected gone status. Check for loops before saving.', 'publishrank' ),
+			'IndexNow'                     => __( 'Notifies participating search engines about URL changes. It does not guarantee indexing and is not a Google indexing API.', 'publishrank' ),
+			'Publisher'                    => __( 'Your publication identity, logo, locale and social profiles used by relevant metadata and structured data.', 'publishrank' ),
+			'Cache'                        => __( 'Clears or refreshes generated SEO/sitemap data. Site, plugin, CDN and host caches may also need to be purged.', 'publishrank' ),
+			'404'                          => __( 'Records a privacy-conscious, bounded history of normalized not-found paths. It groups browser, mobile and crawler hits, removes query strings from referrers, ignores common asset and infrastructure probes, applies rate limiting and a short write lock, and retains at most 500 entries for 90 days.', 'publishrank' ),
+			'Import'                       => __( 'Loads supported PublishRank settings. Review imported values before applying them; secrets may be deliberately excluded.', 'publishrank' ),
+			'Export'                       => __( 'Downloads supported configuration for backup or migration. Keep exported files private because they may contain site configuration.', 'publishrank' ),
+			'Keyphrase'                    => __( 'An editorial focus phrase used by content analysis. It is a writing aid, not a ranking guarantee.', 'publishrank' ),
+			'Orphan threshold'             => __( 'Content with this many inbound internal links or fewer is reported as an orphan. 0 reports only pages nothing links to; 1 also reports pages with a single link.', 'publishrank' ),
+			'Language / regional URL map'  => __( 'One locale=URL per line. PublishRank uses it to output hreflang alternates, so search engines can show the right language or regional version.', 'publishrank' ),
+			'Mirror map on every page'     => __( 'Repeats the same language map on every page instead of only on matching pages. Use it when your translated site has no page-by-page equivalents.', 'publishrank' ),
+			'Multilingual and international SEO' => __( 'Turns on hreflang output for language and regional versions of your site. This is separate from internal linking and link health tools.', 'publishrank' ),
+			'SEO plugin ownership handoff' => __( 'Lets another SEO plugin keep control of overlapping output (metadata, hreflang, page JSON-LD) so PublishRank does not print it twice.', 'publishrank' ),
 		);
-		// Headings that belong to the shared frame, the help screen and its navigation never get a help icon.
-		wp_add_inline_script( 'publishrank-inline-help', '(()=>{const help=' . wp_json_encode( $map ) . ';const add=(el,msg)=>{if(el.dataset.prHelpAdded)return;el.dataset.prHelpAdded="1";const b=document.createElement("button");b.type="button";b.className="pr-help-icon";b.textContent="i";b.setAttribute("aria-label","Help: "+msg);b.title=msg;b.style.position="relative";const pop=document.createElement("span");pop.className="pr-help-pop";pop.textContent=msg;el.appendChild(b);el.appendChild(pop)};document.querySelectorAll(".wrap label, .wrap h2, .wrap h3, .wrap legend, .wrap th").forEach(el=>{if(el.closest(".pr-docs, .pr-modules-nav, .pr-shell-intro, .rhs-header"))return;const t=(el.innerText||el.textContent||"").replace(/\\s+/g," ").trim();for(const [k,v] of Object.entries(help)){if(t.length<100&&t.toLowerCase().includes(k.toLowerCase())){add(el,v);break}}});})();' );
+		wp_localize_script(
+			'publishrank-inline-help',
+			'publishrankHelp',
+			array(
+				'map'  => $map,
+				'i18n' => array(
+					/* translators: %s: setting name. */
+					'about' => __( 'More information about %s', 'publishrank' ),
+				),
+			)
+		);
 
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( self::SLUG === $page ) {
@@ -108,7 +124,7 @@ final class HelpDocumentationPage {
 				/* translators: %s: PublishRank version number. */
 				'summary' => sprintf( __( 'A full list of the tools and health checks in version %s.', 'publishrank' ), $version ),
 				/* translators: %s: PublishRank version number. */
-				'body'    => sprintf( __( 'This inventory for version %s covers every dashboard tool card and Technical Health check. Search & discovery includes Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt and Schema Aggregator. Content & publishing includes SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Internal links and Link intelligence. Measure & maintain includes Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, WP Hide Login, Configuration history and Diagnostics. Settings & help includes Setup wizard, Features, Settings, Titles & Meta, Import / Export and Help & documentation. Technical Health checks include SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility. Some features are optional or permission-gated and external integrations require their own configuration; this list describes what the package provides, not a guarantee that every optional service is active on every site.', 'publishrank' ), $version ),
+				'body'    => sprintf( __( 'This inventory for version %s covers every dashboard tool card and Technical Health check. Search & discovery includes Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt and Schema Aggregator. Content & publishing includes SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Content Graph and Link Health Audit. Measure & maintain includes Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, WP Hide Login, Configuration history and Diagnostics. Settings & help includes Setup wizard, Features, Settings, Titles & Meta, Import / Export and Help & documentation. Technical Health checks include SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility. Some features are optional or permission-gated and external integrations require their own configuration; this list describes what the package provides, not a guarantee that every optional service is active on every site.', 'publishrank' ), $version ),
 				'url'     => Branding::page_url( Branding::MENU_SLUG ) . '#pr-dashboard-workspace-title',
 				'link'    => __( 'Browse all tools', 'publishrank' ),
 			),

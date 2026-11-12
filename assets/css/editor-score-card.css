@@ -1,4 +1,4 @@
-/* PublishRank floating SEO Analysis panel (post editor). */
+/* PublishRank SEO Analysis panel (post editor): docked in the sidebar by default, or floating. */
 .pr-esc {
 	--esc-primary: var(--pr-primary, #9b1245);
 	--esc-text: #1e2230;
@@ -51,7 +51,7 @@
 }
 .pr-esc.is-dragging .pr-esc__head { cursor: grabbing; }
 .pr-esc__logo { width: 22px; height: 22px; padding: 3px; border-radius: 6px; background: var(--esc-primary); }
-.pr-esc__title { font-size: 14px; font-weight: 650; }
+.pr-esc__title { font-size: 14px; font-weight: 650; white-space: nowrap; }
 .pr-esc__live {
 	display: inline-flex;
 	align-items: center;
@@ -202,3 +202,62 @@
 
 .pr-esc__lengths{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0;font-size:12px;color:#50575e}
 .pr-esc__lengths b.is-ok{color:#00a32a}.pr-esc__lengths b.is-short{color:#996800}.pr-esc__lengths b.is-over{color:#d63638}
+
+/* ---------- placement modes ---------- */
+/* Header button: pop out (when docked) / dock (when floating). */
+.pr-esc .pr-esc__ico-dock { display: none; }
+.pr-esc.is-floating .pr-esc__ico-dock { display: block; }
+.pr-esc.is-floating .pr-esc__ico-pop { display: none; }
+
+/* Parked: docked mode while no sidebar slot is visible. The toolbar badge carries the score. */
+.pr-esc.is-parked { display: none; }
+
+/* Docked into a sidebar slot (block editor PublishRank sidebar or classic editor right column). */
+.pr-esc.is-docked { position: static; right: auto; bottom: auto; z-index: auto; }
+.pr-esc.is-docked .pr-esc__panel { width: auto; max-height: none; border: 0; border-radius: 0; box-shadow: none; animation: none; }
+.pr-esc.is-docked .pr-esc__head { cursor: default; touch-action: auto; padding: 10px 8px 10px 16px; }
+.pr-esc.is-docked .pr-esc__scroll { overflow: visible; }
+.pr-esc.is-docked [data-pr-esc-collapse],
+.pr-esc.is-docked .pr-esc__pill { display: none !important; }
+
+.pr-esc-dock--sidebar { border-bottom: 1px solid #e0e0e0; }
+.pr-esc-dock--sidebar .pr-esc.is-docked .pr-esc__head { background: var(--esc-soft); }
+.pr-esc-dock--sidebar .pr-esc__logo,
+.pr-esc-dock--sidebar .pr-esc__title { display: none; }
+.pr-esc-dock--sidebar .pr-esc__foot { background: transparent; }
+.pr-esc-dock-note { margin: 0; padding: 16px; border-bottom: 1px solid #e0e0e0; color: #50575e; font-size: 13px; }
+.pr-esc-dock-note p { margin: 0 0 10px; }
+
+.pr-esc-dock--classic { margin-bottom: 20px; }
+.pr-esc-dock--classic .pr-esc.is-docked .pr-esc__panel { border: 1px solid #c3c4c7; border-radius: 4px; box-shadow: 0 1px 1px rgba(0, 0, 0, .04); }
+
+/* ---------- live score badge in the block editor top toolbar ---------- */
+.pr-esc-badge {
+	--pr-esc-score: 0;
+	--esc-tone: #16a34a;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	background: conic-gradient(var(--esc-tone) calc(var(--pr-esc-score) * 1%), #e6e8ee 0);
+	transition: background .4s ease;
+}
+.pr-esc-badge.is-ok { --esc-tone: #c27c0e; }
+.pr-esc-badge.is-bad { --esc-tone: #d1343e; }
+.pr-esc-badge b {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #fff;
+	color: #1e2230;
+	font: 700 9.5px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	letter-spacing: -.02em;
+}
+@media (prefers-reduced-motion: reduce) {
+	.pr-esc-badge { transition: none; }
+}

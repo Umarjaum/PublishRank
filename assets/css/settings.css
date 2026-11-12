@@ -275,3 +275,21 @@
 }
 
 .pr-set-required{color:#b42318;font-weight:700}
+
+/* Progressive disclosure: publishers see the common title controls first. */
+.pr-set-card{overflow:hidden}
+.pr-set-card>.pr-set-card__head{display:flex;align-items:center;gap:14px;cursor:pointer;list-style:none;position:relative}
+.pr-set-card>.pr-set-card__head::-webkit-details-marker{display:none}
+.pr-set-card>.pr-set-card__head:focus-visible{outline:2px solid var(--pr-accent,#9b1245);outline-offset:-3px;border-radius:10px}
+.pr-set-card__toggle{margin-left:auto;flex:0 0 auto;color:var(--pr-muted,#777);transition:transform .16s ease}
+.pr-set-card[open]>.pr-set-card__head .pr-set-card__toggle{transform:rotate(180deg)}
+.pr-set-card__body{padding-top:16px}
+.pr-set-card:not([open])>.pr-set-card__head{margin-bottom:0}
+.pr-set-card>.pr-set-card__head:hover{background:rgba(120,90,110,.035)}
+/* A single search field is calmer than a row of nine section tabs. */
+.pr-set-chips{display:none!important}
+.pr-set-toolbar{justify-content:flex-end}
+@media(max-width:782px){.pr-set-card>.pr-set-card__head{gap:10px}.pr-set-card__body{padding-top:10px}}
+
+/* Saving state: the save button cannot be pressed twice */
+.pr-set-savebar.is-saving .button-primary{opacity:.7;pointer-events:none}
