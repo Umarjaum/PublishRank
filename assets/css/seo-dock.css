@@ -1,0 +1,116 @@
+/* PublishRank SEO fields dock (classic editor under the title, block editor inside the PublishRank sidebar). */
+.pr-seodock-off{display:none!important}
+.postbox.pr-seodock-moved{display:none!important}
+.pr-seodock-marker{display:none}
+
+/* ---- classic editor ---- */
+#publishrank-seo-dock{margin:14px 0 6px;background:#fff;border:1px solid #c3c4c7;border-radius:6px;box-shadow:0 1px 1px rgba(0,0,0,.04);box-sizing:border-box;max-width:100%}
+.pr-seodock__head{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;min-height:44px;box-sizing:border-box}
+.pr-seodock__logo,.pr-seofloat__logo{flex:none;box-sizing:content-box;width:18px;height:18px;padding:4px;border-radius:7px;background:#9B1245;background:var(--pr-primary,#9B1245);object-fit:contain}
+.pr-seodock__title{flex:1 1 auto;min-width:0;font-size:14px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-seodock__tabbar{padding:0 12px 10px;box-sizing:border-box}
+.pr-seodock__tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.pr-seodock__tab{appearance:none;background:#f0f0f1;border:1px solid transparent;border-radius:999px;padding:6px 12px;margin:0;cursor:pointer;font:inherit;font-size:12.5px;color:#2c3338;line-height:1.3;white-space:nowrap;transition:background-color .12s,color .12s}
+.pr-seodock__tab:hover{color:#9B1245;background:#FCEBF2}
+.pr-seodock__tab:focus-visible{outline:2px solid #9B1245;outline-offset:1px}
+.pr-seodock__tab.is-active{color:#fff;background:#9B1245;background:var(--pr-primary,#9B1245);font-weight:600}
+.pr-seodock__toggle,.pr-seodock__pop{flex:none;appearance:none;background:none;border:0;border-radius:6px;cursor:pointer;width:34px;height:34px;padding:0;color:#50575e;display:inline-flex;align-items:center;justify-content:center}
+.pr-seodock__toggle:hover,.pr-seodock__pop:hover{background:#f0f0f1}
+.pr-seodock__toggle:focus-visible,.pr-seodock__pop:focus-visible{outline:2px solid #9B1245}
+.pr-seodock__chev{display:inline-block;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-2px) rotate(45deg);transition:transform .15s}
+.pr-seodock.is-open .pr-seodock__chev{transform:translateY(2px) rotate(-135deg)}
+.pr-seodock--classic .pr-seodock__panes{padding:4px 16px 14px;border-top:1px solid #dcdcde;max-height:70vh;overflow:auto}
+.pr-seodock--classic .pr-seodock__panes[hidden]{display:none}
+.pr-seodock--classic:not(.is-enhanced) .pr-seodock__tabbar,.pr-seodock--classic:not(.is-enhanced) .pr-seodock__toggle,.pr-seodock--classic:not(.is-enhanced) .pr-seodock__pop{display:none}
+
+/* ---- shared field styling ---- */
+.pr-seodock .pr-seo-group{margin:0;padding:4px 0;border:0;border-radius:0;background:none}
+.pr-seodock .pr-seo-group>h3{display:none}
+.pr-seodock .pr-seo-group h4{margin:14px 0 4px}
+.pr-seodock .pr-seo-field{margin:0;padding:10px 0}
+.pr-seodock .pr-seo-field>label{display:block;margin-bottom:4px}
+.pr-seodock .pr-seo-field .widefat,.pr-seodock .pr-seo-field .large-text{box-sizing:border-box;width:100%;max-width:100%}
+.pr-seodock .pr-seo-field .description,.pr-seodock .pr-seo-group>.description{margin:4px 0 0}
+.pr-seodock-count{margin:3px 0 0;font-size:12px;color:#50575e}
+.pr-seodock-count.is-ok{color:#007017}
+.pr-seodock-count.is-short{color:#8a5a00}
+.pr-seodock-count.is-over{color:#b32d2e}
+.pr-seodock-restored{margin:8px 0}
+.pr-seodock .notice.inline{margin:10px 0;padding:6px 12px}
+.pr-seodock .notice.inline p{margin:4px 0}
+
+/* ---- "What will be published" summary table ---- */
+.pr-seodock table{width:100%;border-collapse:collapse;table-layout:fixed}
+.pr-seodock table th,.pr-seodock table td{width:auto!important;padding:7px 8px;vertical-align:top;overflow-wrap:anywhere;word-break:normal;font-size:12.5px;line-height:1.45;border-bottom:1px solid #f0f0f1}
+.pr-seodock table th{width:26%!important;font-weight:600;text-align:left}
+.pr-seodock table td:last-child{width:30%!important}
+.pr-seodock table tr:last-child th,.pr-seodock table tr:last-child td{border-bottom:0}
+
+/* ---- block editor sidebar ---- */
+.pr-seodock-slot{border-top:1px solid #e0e0e0}
+.pr-seodock-slot__head{display:flex;align-items:center;gap:8px;margin:0;padding:14px 16px 6px;font-size:13px;font-weight:600}
+.pr-seodock-slot__note{margin:0;padding:6px 16px 14px;font-size:12px;color:#50575e}
+.pr-seodock--sidebar .pr-seodock__tabs{background:#fff;padding:10px 16px;border-bottom:1px solid #e0e0e0;gap:5px}
+.pr-seodock--sidebar .pr-seodock__tab{padding:5px 10px;font-size:12px}
+.pr-seodock--sidebar .pr-seodock__panes{padding:12px 16px 24px}
+.pr-seodock--sidebar .pr-seodock__panes input[type=text],.pr-seodock--sidebar .pr-seodock__panes input[type=url],.pr-seodock--sidebar .pr-seodock__panes input[type=number],.pr-seodock--sidebar .pr-seodock__panes textarea,.pr-seodock--sidebar .pr-seodock__panes select{width:100%;max-width:100%;box-sizing:border-box}
+.pr-seodock--sidebar .pr-discover-image-preview{max-width:100%;height:auto}
+.pr-seodock--sidebar .pr-seo-editor-intro{font-size:12px}
+/* The sidebar is too narrow for a three-column table: show each published value as a small card. */
+.pr-seodock--sidebar table,.pr-seodock--sidebar table tbody,.pr-seodock--sidebar table tr,.pr-seodock--sidebar table th,.pr-seodock--sidebar table td{display:block;width:auto!important}
+.pr-seodock--sidebar table thead{display:none}
+.pr-seodock--sidebar table tr{padding:8px 0;border-bottom:1px solid #f0f0f1}
+.pr-seodock--sidebar table tr:last-child{border-bottom:0}
+.pr-seodock--sidebar table th,.pr-seodock--sidebar table td{padding:1px 0;border:0;background:none}
+.pr-seodock--sidebar table th,.pr-seodock--sidebar table td,.pr-seodock--sidebar table td:last-child{width:auto!important}
+.pr-seodock--sidebar table td:last-child{font-size:11.5px;opacity:.85}
+.pr-seodock--sidebar .notice.inline{margin:0 0 10px;padding:6px 10px}
+
+/* ---- movable classic panel ---- */
+.pr-seodock__pop{cursor:grab}
+.pr-seodock__pop[aria-pressed=true]{color:#9B1245;background:#FCEBF2}
+.pr-seodock--classic.is-floating{position:fixed;top:96px;right:24px;width:480px;max-width:calc(100vw - 16px);z-index:100001;margin:0;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.pr-seodock--classic.is-floating .pr-seodock__head{cursor:move}
+.pr-seodock--classic.is-floating .pr-seodock__panes{max-height:62vh}
+
+@media (max-width:782px){
+#publishrank-seo-dock{margin:12px 0 8px}
+.pr-seodock__head{padding:6px 6px 6px 10px}
+.pr-seodock__pop{display:none}
+/* One scrollable row of tabs instead of a tall wrapped block. */
+.pr-seodock__tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:4px}
+.pr-seodock__tab{flex:none;padding:8px 12px;font-size:13px}
+.pr-seodock--classic .pr-seodock__panes{padding:4px 12px 12px;max-height:none}
+.pr-seodock--classic.is-floating{position:static;width:auto;box-shadow:none}
+.pr-seodock table th{width:34%!important}
+.pr-seodock--classic table,.pr-seodock--classic table tbody,.pr-seodock--classic table tr,.pr-seodock--classic table th,.pr-seodock--classic table td{display:block;width:auto!important}
+.pr-seodock--classic table thead{display:none}
+.pr-seodock--classic table tr{padding:8px 0;border-bottom:1px solid #f0f0f1}
+.pr-seodock--classic table th,.pr-seodock--classic table td,.pr-seodock--classic table td:last-child{width:auto!important;padding:1px 8px;border:0}
+}
+
+/* ---- PublishRank colours inside the editor panels ----
+ * WordPress paints buttons, focus rings, toggles and checkboxes with its own admin accent (blue by default).
+ * Inside PublishRank's own panels the plugin's crimson theme is used instead; the rest of the editor keeps
+ * the WordPress colours. */
+#publishrank-seo-dock,.pr-seodock,.pr-seodock-slot,.pr-esc,.pr-esc-sidebar,.pr-intel,.pr-studio,#publishrank-live-preview,#publishrank-mastodon,
+.interface-pinned-items [aria-controls*="publishrank"],.interface-pinned-items [aria-label*="PublishRank"]{
+	--wp-admin-theme-color:#9B1245;--wp-admin-theme-color--rgb:155,18,69;
+	--wp-admin-theme-color-darker-10:#7D0E38;--wp-admin-theme-color-darker-10--rgb:125,14,56;
+	--wp-admin-theme-color-darker-20:#650A24;--wp-admin-theme-color-darker-20--rgb:101,10,36;
+	--wp-components-color-accent:#9B1245;--wp-components-color-accent-darker-10:#7D0E38;--wp-components-color-accent-darker-20:#650A24;
+}
+.pr-seodock .button-primary,.pr-esc .button-primary,.pr-esc-sidebar .button-primary,#publishrank-mastodon .button-primary{background:#9B1245;border-color:#7D0E38;color:#fff;text-shadow:none;box-shadow:none}
+.pr-seodock .button-primary:hover,.pr-seodock .button-primary:focus,.pr-esc .button-primary:hover,.pr-esc .button-primary:focus,.pr-esc-sidebar .button-primary:hover,.pr-esc-sidebar .button-primary:focus,#publishrank-mastodon .button-primary:hover,#publishrank-mastodon .button-primary:focus{background:#7D0E38;border-color:#650A24;color:#fff}
+.pr-seodock .button:not(.button-primary):not(.button-link),.pr-esc .button:not(.button-primary):not(.button-link),.pr-esc-sidebar .button:not(.button-primary):not(.button-link),#publishrank-mastodon .button:not(.button-primary):not(.button-link){border-color:#C9A2B2;color:#7D0E38;background:#fff}
+.pr-seodock .button:not(.button-primary):not(.button-link):hover,.pr-esc .button:not(.button-primary):not(.button-link):hover,.pr-esc-sidebar .button:not(.button-primary):not(.button-link):hover,#publishrank-mastodon .button:not(.button-primary):not(.button-link):hover{border-color:#9B1245;color:#650A24;background:#FCEBF2}
+.pr-seodock .button:focus,.pr-esc .button:focus,.pr-esc-sidebar .button:focus,#publishrank-mastodon .button:focus{box-shadow:0 0 0 1px #fff,0 0 0 3px rgba(155,18,69,.45);outline:0}
+.pr-seodock a:not(.button),.pr-esc a:not(.button),.pr-esc-sidebar a:not(.button):not(.components-button),#publishrank-mastodon a:not(.button){color:#9B1245}
+.pr-seodock a:not(.button):hover,.pr-esc a:not(.button):hover,#publishrank-mastodon a:not(.button):hover{color:#650A24}
+.pr-seodock input[type=text]:focus,.pr-seodock input[type=url]:focus,.pr-seodock input[type=number]:focus,.pr-seodock input[type=search]:focus,.pr-seodock textarea:focus,.pr-seodock select:focus,
+#publishrank-mastodon input:focus,#publishrank-mastodon textarea:focus{border-color:#9B1245;box-shadow:0 0 0 1px #9B1245;outline:2px solid transparent}
+.pr-seodock input[type=checkbox]:checked,#publishrank-mastodon input[type=checkbox]:checked{border-color:#9B1245;background:#9B1245}
+.pr-seodock input[type=checkbox]:checked::before,#publishrank-mastodon input[type=checkbox]:checked::before{content:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20d%3D%27M14.83%204.89l1.34.94-5.81%208.38H9.02L5.78%209.67l1.34-1.25%202.57%202.4z%27%20fill%3D%27%23ffffff%27%2F%3E%3C%2Fsvg%3E")}
+.pr-seodock input[type=radio]:checked,#publishrank-mastodon input[type=radio]:checked{border-color:#9B1245}
+.pr-seodock input[type=radio]:checked::before,#publishrank-mastodon input[type=radio]:checked::before{background-color:#9B1245}
+.pr-seodock input[type=checkbox]:focus,.pr-seodock input[type=radio]:focus,#publishrank-mastodon input[type=checkbox]:focus{border-color:#9B1245;box-shadow:0 0 0 2px rgba(155,18,69,.25)}

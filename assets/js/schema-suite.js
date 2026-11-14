@@ -2,7 +2,7 @@
 	'use strict';
 
 	var select = document.getElementById('_publishrank_seo_schema_type');
-	var panels = document.querySelectorAll('#publishrank-schema .pr-schema-panel');
+	var panels = document.querySelectorAll('.publishrank-schema-suite .pr-schema-panel');
 	function togglePanels() {
 		if (!select) { return; }
 		for (var i = 0; i < panels.length; i++) {

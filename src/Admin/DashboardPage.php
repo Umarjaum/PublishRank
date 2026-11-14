@@ -95,7 +95,7 @@ final class DashboardPage {
 			),
 			array(
 				'label' => __( 'Measure & maintain', 'publishrank' ),
-				'items' => array( 'publishrank-analytics', 'publishrank-insights', 'publishrank-seo-redirects', 'publishrank-seo-404', 'publishrank-traffic-guard', 'publishrank-wp-hide-login', 'publishrank-seo-config-history', 'publishrank-seo-diagnostics' ),
+				'items' => array( 'publishrank-analytics', 'publishrank-insights', 'publishrank-seo-redirects', 'publishrank-seo-404', 'publishrank-traffic-guard', 'publishrank-private-login', 'publishrank-seo-config-history', 'publishrank-seo-diagnostics' ),
 			),
 			array(
 				'label' => __( 'Settings & support', 'publishrank' ),
@@ -366,7 +366,7 @@ final class DashboardPage {
 									array( 'slug' => 'publishrank-seo-redirects', 'icon' => 'fa-arrow-right-arrow-left', 'tone' => 'ink', 'kicker' => __( 'Link maintenance', 'publishrank' ), 'title' => __( 'Redirects', 'publishrank' ), 'description' => __( 'Create and review permanent or temporary redirects for changed URLs.', 'publishrank' ), 'button' => __( 'Manage redirects', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-404', 'icon' => 'fa-triangle-exclamation', 'tone' => 'rose', 'kicker' => __( 'Broken links', 'publishrank' ), 'title' => __( '404 monitor', 'publishrank' ), 'description' => __( 'Review not-found requests and decide which URLs need redirects.', 'publishrank' ), 'button' => __( 'Review 404s', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-traffic-guard', 'icon' => 'fa-shield-halved', 'tone' => 'rose', 'kicker' => __( 'Access policy', 'publishrank' ), 'title' => __( 'Traffic Guard', 'publishrank' ), 'description' => __( 'Review optional IP, proxy, and country-based access rules.', 'publishrank' ), 'button' => __( 'Configure Traffic Guard', 'publishrank' ) ),
-									array( 'slug' => 'publishrank-wp-hide-login', 'icon' => 'fa-key', 'tone' => 'ink', 'kicker' => __( 'Login & access', 'publishrank' ), 'title' => __( 'WP Hide Login', 'publishrank' ), 'description' => __( 'Review the optional custom login and administration URL settings.', 'publishrank' ), 'button' => __( 'Review login settings', 'publishrank' ), 'new' => ! get_user_meta( get_current_user_id(), \PublishRankSEO\Security\WPHideLogin::META_SEEN, true ) ),
+									array( 'slug' => 'publishrank-private-login', 'icon' => 'fa-key', 'tone' => 'ink', 'kicker' => __( 'Login & access', 'publishrank' ), 'title' => __( 'Private Login', 'publishrank' ), 'description' => __( 'Review the optional custom login and administration URL settings.', 'publishrank' ), 'button' => __( 'Review login settings', 'publishrank' ), 'new' => ! get_user_meta( get_current_user_id(), \PublishRankSEO\Security\PrivateLogin::META_SEEN, true ) ),
 									array( 'slug' => 'publishrank-seo-config-history', 'icon' => 'fa-clock-rotate-left', 'tone' => 'ink', 'kicker' => __( 'Change control', 'publishrank' ), 'title' => __( 'Configuration history', 'publishrank' ), 'description' => __( 'Review recorded SEO configuration changes and prior values.', 'publishrank' ), 'button' => __( 'View configuration history', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-diagnostics', 'icon' => 'fa-stethoscope', 'tone' => 'brass', 'kicker' => __( 'Troubleshooting', 'publishrank' ), 'title' => __( 'Diagnostics', 'publishrank' ), 'description' => __( 'Check plugin health, compatibility notices, and technical configuration.', 'publishrank' ), 'button' => __( 'Run diagnostics', 'publishrank' ) ),
 								),

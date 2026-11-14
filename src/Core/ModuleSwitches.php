@@ -16,7 +16,7 @@ final class ModuleSwitches {
 	const SITEMAP = 'publishrank_sitemap_enabled';
 
 	/** Modules whose switch changes public URLs, so rewrite rules are refreshed after a change. */
-	const REWRITE_MODULES = array( 'sitemap', 'news_sitemap', 'llms', 'bbpress', 'buddypress', 'podcast', 'web_stories', 'hide_login' );
+	const REWRITE_MODULES = array( 'sitemap', 'news_sitemap', 'llms', 'bbpress', 'buddypress', 'podcast', 'web_stories', 'private_login' );
 
 	/**
 	 * Module definitions in display order.
@@ -151,13 +151,13 @@ final class ModuleSwitches {
 				'title'       => __( 'Mastodon', 'publishrank' ),
 				'description' => __( 'Verify your Mastodon profile (green check), credit authors in link previews, and share new posts to Mastodon automatically.', 'publishrank' ),
 			),
-			'hide_login'     => array(
-				'option'      => \PublishRankSEO\Security\WPHideLogin::OPTION,
+			'private_login'  => array(
+				'option'      => \PublishRankSEO\Security\PrivateLogin::OPTION,
 				'default'     => true,
 				'icon'        => 'fa-key',
 				'group'       => 'security',
-				'page'        => 'publishrank-wp-hide-login',
-				'title'       => __( 'Hide Login', 'publishrank' ),
+				'page'        => 'publishrank-private-login',
+				'title'       => __( 'Private Login', 'publishrank' ),
 				'description' => __( 'Move the WordPress login page to a private address and hide wp-login.php and wp-admin from visitors who are not signed in. Switch off to restore the standard login.', 'publishrank' ),
 			),
 

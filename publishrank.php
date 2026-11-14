@@ -3,7 +3,7 @@
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrankseo.vercel.app/
  * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.20.15
+ * Version: 2.20.19
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -27,12 +27,11 @@ unset( $publishrank_header );
 define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
-define( 'PUBLISHRANK_HIDE_LOGIN_BASENAME', plugin_basename( __FILE__ ) );
 
-// PublishRank Hide Login: custom login URL, blocks wp-login.php and wp-admin for visitors.
+// PublishRank Private Login: private sign-in address; wp-login.php and wp-admin are hidden from visitors.
 // Booted early on plugins_loaded so its own plugins_loaded (9999) handler still runs.
-require_once __DIR__ . '/src/Security/WPHideLogin.php';
-add_action( 'plugins_loaded', array( '\\PublishRankSEO\\Security\\WPHideLogin', 'get_instance' ), 1 );
+require_once __DIR__ . '/src/Security/PrivateLogin.php';
+add_action( 'plugins_loaded', array( '\\PublishRankSEO\\Security\\PrivateLogin', 'get_instance' ), 1 );
 
 // Built-in PublishRank Newsroom editorial workflow module.
 require_once __DIR__ . '/src/Newsroom/advanced.php';

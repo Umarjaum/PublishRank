@@ -24,11 +24,9 @@
 			post_id: target.getAttribute('data-post-id') || cfg.postId || 0
 		}).done(function (response) {
 			if (response && response.success && response.data && typeof response.data.html === 'string') {
-				var replacement = document.createElement('div');
-				replacement.setAttribute('data-publishrank-resolved-summary', '');
-				replacement.setAttribute('data-post-id', target.getAttribute('data-post-id') || '');
-				replacement.innerHTML = response.data.html;
-				target.replaceWith(replacement);
+				// Update in place: replacing the node dropped the SEO dock tab state
+				// (pr-seodock-off) and showed the summary on every tab.
+				target.innerHTML = response.data.html;
 			}
 		});
 	}

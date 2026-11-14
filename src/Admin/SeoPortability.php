@@ -363,8 +363,8 @@ final class SeoPortability {
 		foreach ( $allow as $option => $keys ) { $value = get_option( $option, array() ); if ( ! is_array( $value ) ) { continue; } foreach ( $keys as $key ) { if ( array_key_exists( $key, $value ) ) { $out[ $option ][ $key ] = sanitize_textarea_field( (string) $value[ $key ] ); } } }
 		// PublishRank's own private login address (the on/off switch is left out on purpose).
 		$out['publishrank'] = array(
-			'whl_page'           => \PublishRankSEO\Security\WPHideLogin::current_login_slug(),
-			'whl_redirect_admin' => \PublishRankSEO\Security\WPHideLogin::current_redirect_slug(),
+			'publishrank_login_slug'           => \PublishRankSEO\Security\PrivateLogin::current_login_slug(),
+			'publishrank_login_redirect' => \PublishRankSEO\Security\PrivateLogin::current_redirect_slug(),
 		);
 		return $out;
 	}

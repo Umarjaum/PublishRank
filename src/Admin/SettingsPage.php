@@ -98,7 +98,7 @@ final class SettingsPage {
 			)
 		);
 		$this->reg(
-			'whl_page',
+			'publishrank_login_slug',
 			array(
 				'type'              => 'string',
 				'sanitize_callback' => array( $this, 'sanitize_login_slug' ),
@@ -106,7 +106,7 @@ final class SettingsPage {
 			)
 		);
 		$this->reg(
-			'whl_redirect_admin',
+			'publishrank_login_redirect',
 			array(
 				'type'              => 'string',
 				'sanitize_callback' => array( $this, 'sanitize_redirect_slug' ),
@@ -631,6 +631,17 @@ final class SettingsPage {
 				'default'           => false,
 			)
 		);
+		// Speed (preconnect / preload / prefetch) and feed syndication switches. All on by default.
+		foreach ( array( 'publishrank_resource_hints', 'publishrank_preload_lcp_image', 'publishrank_speculative_prefetch', 'publishrank_feed_attribution', 'publishrank_feed_images' ) as $field ) {
+			$this->reg(
+				$field,
+				array(
+					'type'              => 'boolean',
+					'sanitize_callback' => 'rest_sanitize_boolean',
+					'default'           => true,
+				)
+			);
+		}
 		// News sitemap category exclusions: accepts the legacy comma-separated text or the category picker array; always stored as "3, 7".
 		$this->reg(
 			'publishrank_seo_news_exclude_categories',
@@ -891,9 +902,10 @@ final class SettingsPage {
 	}
 
 		/** @param mixed $value @return string */
-	/** @param mixed $value @return string page_type|global */
+	/** @param mixed $value @return string page_type|none */
 	public function sanitize_description_fallback( $value ) {
-		return 'global' === sanitize_key( (string) $value ) ? 'global' : 'page_type';
+		// 'global' (copy the site description to every page) was removed: it duplicated the same description site-wide.
+		return 'none' === sanitize_key( (string) $value ) ? 'none' : 'page_type';
 	}
 
 	public function sanitize_robots( $value ) {
@@ -993,17 +1005,17 @@ final class SettingsPage {
 		return \PublishRankSEO\SEO\SiteConnections::normalize_token( $value ); }
 	/** Private login address: reserved or empty values keep the address already in use. @param mixed $value @return string */
 	public function sanitize_login_slug( $value ) {
-		$clean = \PublishRankSEO\Security\WPHideLogin::clean_login_slug( is_string( $value ) ? $value : '' );
+		$clean = \PublishRankSEO\Security\PrivateLogin::clean_login_slug( is_string( $value ) ? $value : '' );
 		if ( '' === $clean ) {
-			add_settings_error( 'whl_page', 'publishrank_login_slug', __( 'The login address was not changed because it is empty or reserved by WordPress.', 'publishrank' ), 'error' );
-			return \PublishRankSEO\Security\WPHideLogin::current_login_slug();
+			add_settings_error( 'publishrank_login_slug', 'publishrank_login_slug', __( 'The login address was not changed because it is empty or reserved by WordPress.', 'publishrank' ), 'error' );
+			return \PublishRankSEO\Security\PrivateLogin::current_login_slug();
 		}
 		return $clean;
 	}
 
 	/** Where blocked visitors are sent; empty means the 404 page. @param mixed $value @return string */
 	public function sanitize_redirect_slug( $value ) {
-		return \PublishRankSEO\Security\WPHideLogin::clean_redirect_slug( is_string( $value ) ? $value : '' );
+		return \PublishRankSEO\Security\PrivateLogin::clean_redirect_slug( is_string( $value ) ? $value : '' );
 	}
 	public function sanitize_sitemap_endpoint( $value ) {
 		return \PublishRankSEO\Sitemap\SitemapUrls::ENDPOINT; }
@@ -1018,8 +1030,8 @@ final class SettingsPage {
 			'output'         => array( 'fa-sliders', __( 'Output and indexing', 'publishrank' ), __( 'What PublishRank prints on your pages and what search engines may index.', 'publishrank' ) ),
 			'international'  => array( 'fa-globe', __( 'Multilingual and international SEO', 'publishrank' ), __( 'Language and regional versions of your site.', 'publishrank' ) ),
 			'attribution'    => array( 'fa-fingerprint', __( 'Attribution', 'publishrank' ), __( 'Technical markers in your page source.', 'publishrank' ) ),
-			'security'       => array( 'fa-user-shield', __( 'Hide Login', 'publishrank' ), __( 'Your private sign-in address and where blocked visitors are sent.', 'publishrank' ) ),
-			'infrastructure' => array( 'fa-server', __( 'Infrastructure domains', 'publishrank' ), __( 'Optional media, CDN, video and API hosts.', 'publishrank' ) ),
+			'security'       => array( 'fa-user-shield', __( 'Private Login', 'publishrank' ), __( 'Your private sign-in address and where blocked visitors are sent.', 'publishrank' ) ),
+			'infrastructure' => array( 'fa-server', __( 'Infrastructure, speed and syndication', 'publishrank' ), __( 'Media, CDN, video and API hosts, preloading, prefetching and RSS syndication.', 'publishrank' ) ),
 			'news'           => array( 'fa-newspaper', __( 'News SEO and sitemaps', 'publishrank' ), __( 'Google News, XML sitemap content, media sitemaps and monitoring.', 'publishrank' ) ),
 			'portability'    => array( 'fa-file-export', __( 'Settings portability', 'publishrank' ), __( 'Copy these settings to another site, or restore a backup.', 'publishrank' ) ),
 		);
@@ -1033,7 +1045,7 @@ final class SettingsPage {
 			'output'         => __( 'Output & indexing', 'publishrank' ),
 			'international'  => __( 'International SEO', 'publishrank' ),
 			'attribution'    => __( 'Attribution', 'publishrank' ),
-			'security'       => __( 'Hide Login', 'publishrank' ),
+			'security'       => __( 'Private Login', 'publishrank' ),
 			'infrastructure' => __( 'Infrastructure', 'publishrank' ),
 			'news'           => __( 'News & sitemaps', 'publishrank' ),
 			'portability'    => __( 'Portability', 'publishrank' ),
@@ -1189,7 +1201,7 @@ final class SettingsPage {
 					</div></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'External link policy', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_links_enabled" value="0" /><label><input name="publishrank_links_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_links_enabled', true ) ); ?> /> <?php esc_html_e( 'Automatically add nofollow to external links', 'publishrank' ); ?></label><br /><label for="publishrank_links_follow_domains"><?php esc_html_e( 'Approved external domains (follow)', 'publishrank' ); ?></label><textarea id="publishrank_links_follow_domains" name="publishrank_links_follow_domains" class="large-text" rows="2" placeholder="example.org, partner.example"><?php echo esc_textarea( $val( 'publishrank_links_follow_domains', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'One domain per line or comma-separated. Your main domain and all subdomains remain index/follow.', 'publishrank' ); ?></p><input type="hidden" name="publishrank_links_sponsored" value="0" /><label><input name="publishrank_links_sponsored" type="checkbox" value="1" <?php checked( $val( 'publishrank_links_sponsored', false ) ); ?> /> <?php esc_html_e( 'Mark external links as sponsored', 'publishrank' ); ?></label></td></tr>
 					<tr><th scope="row"><?php esc_html_e( 'Output controls', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_meta_enabled" value="0" /><label><input name="publishrank_meta_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::meta() ); ?> /> <?php esc_html_e( 'Output PublishRank title, description, canonical, robots, Open Graph and X/Twitter metadata', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_schema_enabled" value="0" /><label><input name="publishrank_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::schema() ); ?> /> <?php esc_html_e( 'Output the connected JSON-LD schema graph (structured data)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_org_website_schema_enabled" value="0" /><label><input name="publishrank_org_website_schema_enabled" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::org_website_schema() ); ?> /> <?php esc_html_e( 'Include Organization (or Person) and WebSite entities in the schema graph', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'All of these are enabled by default and each one controls only its own output: turning off structured data does not affect the SEO metadata above, and turning off Organization/WebSite keeps the page and article entities. Your Organization, logo and website details are read from the Setup Wizard on every page view, so a change appears on the whole site without editing individual posts. Disable an option only if another SEO plugin owns that output.', 'publishrank' ); ?></p><p class="description"><?php esc_html_e( 'What PublishRank can and cannot change: it controls its own head metadata, JSON-LD and breadcrumb trail. A logo, site title, breadcrumb trail or metadata that your theme or another plugin hard-codes is theme output and is not rewritten. If the theme prints its own breadcrumbs, choose "Structured data only" under Breadcrumb placement; if a theme prints a second title or description tag, switch that off in the theme.', 'publishrank' ); ?></p></td></tr>
-				<tr><th scope="row"><label for="publishrank_seo_description_fallback"><?php esc_html_e( 'Pages with no description text', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_description_fallback" name="publishrank_seo_description_fallback"><option value="page_type" <?php selected( $val( 'publishrank_seo_description_fallback', 'page_type' ), 'page_type' ); ?>><?php esc_html_e( 'Describe the page by its title and publication (recommended)', 'publishrank' ); ?></option><option value="global" <?php selected( $val( 'publishrank_seo_description_fallback', 'page_type' ), 'global' ); ?>><?php esc_html_e( 'Use the publication-wide description', 'publishrank' ); ?></option></select><p class="description"><?php esc_html_e( 'Order used for every page: your own description, the excerpt, text extracted from the page or its page builder, then this fallback. Pages that only contain a form or a builder layout with no text use this setting, so each page can still get its own description.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="publishrank_seo_description_fallback"><?php esc_html_e( 'Pages with no description text', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_description_fallback" name="publishrank_seo_description_fallback"><option value="page_type" <?php selected( $val( 'publishrank_seo_description_fallback', 'page_type' ), 'page_type' ); ?>><?php esc_html_e( 'Describe the page by its title and publication (recommended)', 'publishrank' ); ?></option><option value="none" <?php selected( $val( 'publishrank_seo_description_fallback', 'page_type' ), 'none' ); ?>><?php esc_html_e( 'Leave the description out (search engines pick a snippet)', 'publishrank' ); ?></option></select><p class="description"><?php esc_html_e( 'Order used for every page: your own description, the excerpt, text extracted from the page or its page builder, then this fallback. The site description is used only on the home page and is never copied into posts, pages or archives, so no two pages share the same meta or social description.', 'publishrank' ); ?></p></td></tr>
 				<tr><th scope="row"><label for="publishrank_seo_canonical_category_mode"><?php esc_html_e( 'Canonical category path', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_canonical_category_mode" name="publishrank_seo_canonical_category_mode"><option value="permalink" <?php selected( $val( 'publishrank_seo_canonical_category_mode', 'permalink' ), 'permalink' ); ?>><?php esc_html_e( 'Use the normal post permalink', 'publishrank' ); ?></option><option value="primary_category" <?php selected( $val( 'publishrank_seo_canonical_category_mode', 'permalink' ), 'primary_category' ); ?>><?php esc_html_e( 'Use the primary category when supported', 'publishrank' ); ?></option></select><p class="description"><?php /* translators: %category% is a literal WordPress permalink token and should remain unchanged. */ esc_html_e( 'Category mode follows the selected primary category only when WordPress uses a %category% permalink structure; otherwise it safely uses the normal permalink.', 'publishrank' ); ?></p></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'Archive indexing', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_noindex_author_archives" value="0" /><label><input name="publishrank_noindex_author_archives" type="checkbox" value="1" <?php checked( $val( 'publishrank_noindex_author_archives', false ) ); ?> /> <?php esc_html_e( 'Noindex author archives', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_noindex_date_archives" value="0" /><label><input name="publishrank_noindex_date_archives" type="checkbox" value="1" <?php checked( $val( 'publishrank_noindex_date_archives', false ) ); ?> /> <?php esc_html_e( 'Noindex date archives', 'publishrank' ); ?></label></td></tr>
 					<tr><th scope="row"><label for="publishrank_seo_default_robots"><?php esc_html_e( 'Default robots directives', 'publishrank' ); ?></label></th><td><input id="publishrank_seo_default_robots" name="publishrank_seo_default_robots" type="text" class="large-text" value="<?php echo esc_attr( $val( 'publishrank_seo_default_robots', 'index,follow' ) ); ?>" placeholder="index,follow,max-image-preview:large" /><p class="description"><?php esc_html_e( 'Comma-separated defaults for pages without a specific override. Supported directives include index, noindex, follow, nofollow, noarchive, nosnippet, noimageindex, notranslate, max-snippet, max-image-preview and max-video-preview. A post-level robots setting takes precedence. Be careful: setting noindex globally can remove your public pages from search results.', 'publishrank' ); ?></p></td></tr>
@@ -1219,12 +1231,12 @@ ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_h
 			$hl_pretty = (bool) get_option( 'permalink_structure' );
 			$hl_prefix = trailingslashit( home_url() ) . ( $hl_pretty ? '' : '?' );
 			$hl_suffix = ( $hl_pretty && '/' === substr( (string) get_option( 'permalink_structure' ), -1 ) ) ? '/' : '';
-			$hl_on     = \PublishRankSEO\Security\WPHideLogin::enabled();
+			$hl_on     = \PublishRankSEO\Security\PrivateLogin::enabled();
 			?>
 				<table class="form-table" role="presentation"><tbody>
-					<tr><th scope="row"><label for="whl_page"><?php esc_html_e( 'Private login address', 'publishrank' ); ?> <span class="pr-set-required" aria-hidden="true">*</span></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="whl_page" name="whl_page" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\Security\WPHideLogin::current_login_slug() ); ?>" required aria-required="true" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Your sign-in page lives here. wp-login.php and wp-admin are hidden from visitors who are not signed in. Bookmark the new address after saving.', 'publishrank' ); ?></p></td></tr>
-					<tr><th scope="row"><label for="whl_redirect_admin"><?php esc_html_e( 'Send blocked visitors to', 'publishrank' ); ?></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="whl_redirect_admin" name="whl_redirect_admin" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\Security\WPHideLogin::current_redirect_slug() ); ?>" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Where visitors land if they open wp-login.php or wp-admin. Leave 404 to show your not-found page.', 'publishrank' ); ?></p></td></tr>
-					<tr><th scope="row"><?php esc_html_e( 'Status', 'publishrank' ); ?></th><td><strong><?php echo esc_html( $hl_on ? __( 'Hide Login is on', 'publishrank' ) : __( 'Hide Login is off', 'publishrank' ) ); ?></strong><p class="description"><?php esc_html_e( 'Switch Hide Login on or off under Features.', 'publishrank' ); ?> <a href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( 'publishrank-modules' ) ); ?>"><?php esc_html_e( 'Open Features', 'publishrank' ); ?></a></p></td></tr>
+					<tr><th scope="row"><label for="publishrank_login_slug"><?php esc_html_e( 'Private login address', 'publishrank' ); ?> <span class="pr-set-required" aria-hidden="true">*</span></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="publishrank_login_slug" name="publishrank_login_slug" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\Security\PrivateLogin::current_login_slug() ); ?>" required aria-required="true" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Your sign-in page lives here. wp-login.php and wp-admin are hidden from visitors who are not signed in. Bookmark the new address after saving.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><label for="publishrank_login_redirect"><?php esc_html_e( 'Send blocked visitors to', 'publishrank' ); ?></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="publishrank_login_redirect" name="publishrank_login_redirect" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\Security\PrivateLogin::current_redirect_slug() ); ?>" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Where visitors land if they open wp-login.php or wp-admin. Leave 404 to show your not-found page.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><?php esc_html_e( 'Status', 'publishrank' ); ?></th><td><strong><?php echo esc_html( $hl_on ? __( 'Private Login is on', 'publishrank' ) : __( 'Private Login is off', 'publishrank' ) ); ?></strong><p class="description"><?php esc_html_e( 'Switch Private Login on or off under Features.', 'publishrank' ); ?> <a href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( 'publishrank-modules' ) ); ?>"><?php esc_html_e( 'Open Features', 'publishrank' ); ?></a></p></td></tr>
 				</tbody></table>
 			<?php self::section_open( 'infrastructure' ); ?>
 			<table class="form-table" role="presentation"><tbody>
@@ -1232,6 +1244,15 @@ ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_h
 				<tr><th scope="row"><label for="publishrank_cdn_host"><?php esc_html_e( 'CDN host', 'publishrank' ); ?></label></th><td><input id="publishrank_cdn_host" name="publishrank_cdn_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_cdn_host' ) ); ?>" class="large-text" /><input type="hidden" name="publishrank_cdn_enabled" value="0" /><label><input id="publishrank_cdn_enabled" name="publishrank_cdn_enabled" type="checkbox" value="1" <?php checked( $val( 'publishrank_cdn_enabled', false ) ); ?> /> <?php esc_html_e( 'Enable CDN URL generation', 'publishrank' ); ?></label></td></tr>
 				<tr><th scope="row"><label for="publishrank_video_host"><?php esc_html_e( 'Video host', 'publishrank' ); ?></label></th><td><input id="publishrank_video_host" name="publishrank_video_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_video_host' ) ); ?>" class="large-text" /></td></tr>
 				<tr><th scope="row"><label for="publishrank_api_host"><?php esc_html_e( 'API host', 'publishrank' ); ?></label></th><td><input id="publishrank_api_host" name="publishrank_api_host" type="url" value="<?php echo esc_attr( $val( 'publishrank_api_host' ) ); ?>" class="large-text" /></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Faster page loads', 'publishrank' ); ?></th><td>
+					<input type="hidden" name="publishrank_resource_hints" value="0" /><label><input name="publishrank_resource_hints" type="checkbox" value="1" <?php checked( $val( 'publishrank_resource_hints', true ) ); ?> /> <?php esc_html_e( 'Connect early to the media, CDN, video and API hosts above (preconnect and dns-prefetch)', 'publishrank' ); ?></label><br />
+					<input type="hidden" name="publishrank_preload_lcp_image" value="0" /><label><input name="publishrank_preload_lcp_image" type="checkbox" value="1" <?php checked( $val( 'publishrank_preload_lcp_image', true ) ); ?> /> <?php esc_html_e( 'Preload the featured image of articles and pages so the main picture appears sooner', 'publishrank' ); ?></label><br />
+					<input type="hidden" name="publishrank_speculative_prefetch" value="0" /><label><input name="publishrank_speculative_prefetch" type="checkbox" value="1" <?php checked( $val( 'publishrank_speculative_prefetch', true ) ); ?> /> <?php esc_html_e( 'Prefetch an article when a reader hovers or taps its link, so it opens almost instantly', 'publishrank' ); ?></label>
+					<p class="description"><?php esc_html_e( 'Prefetching uses the browser Speculation Rules standard and skips the admin, login, cart, checkout and links with query strings. Logged-in editors are never prefetched for.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Feed syndication', 'publishrank' ); ?></th><td>
+					<input type="hidden" name="publishrank_feed_attribution" value="0" /><label><input name="publishrank_feed_attribution" type="checkbox" value="1" <?php checked( $val( 'publishrank_feed_attribution', true ) ); ?> /> <?php esc_html_e( 'Add a "The post … appeared first on …" source link to every RSS item', 'publishrank' ); ?></label><br />
+					<input type="hidden" name="publishrank_feed_images" value="0" /><label><input name="publishrank_feed_images" type="checkbox" value="1" <?php checked( $val( 'publishrank_feed_images', true ) ); ?> /> <?php esc_html_e( 'Include the featured image in RSS items (media:content and at the top of the item)', 'publishrank' ); ?></label>
+					<p class="description"><?php esc_html_e( 'News apps and partners that republish your feed then link back to the original article and show its picture. For an article you republished from another outlet, put the original URL in the post\'s Canonical URL field.', 'publishrank' ); ?></p></td></tr>
 			</tbody></table>
 			<?php self::section_open( 'news', '<a class="pr-set-card__link" href="' . esc_url( \PublishRankSEO\Core\Branding::page_url( 'publishrank-sitemap-health' ) ) . '"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> ' . esc_html__( 'Open Sitemap Hub', 'publishrank' ) . '</a>' ); ?>
 <table class="form-table" role="presentation"><tbody>

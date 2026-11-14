@@ -201,6 +201,7 @@
 .pr-esc__actions .button { width: 100%; justify-content: center; text-align: center; }
 
 .pr-esc__lengths{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0;font-size:12px;color:#50575e}
+.pr-esc__auto{margin-left:4px;padding:0 5px;border-radius:999px;background:#f0f0f1;color:#50575e;font-size:10.5px;line-height:1.6}.pr-esc__auto[hidden]{display:none}
 .pr-esc__lengths b.is-ok{color:#00a32a}.pr-esc__lengths b.is-short{color:#996800}.pr-esc__lengths b.is-over{color:#d63638}
 
 /* ---------- placement modes ---------- */

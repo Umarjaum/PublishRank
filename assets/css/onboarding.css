@@ -541,7 +541,7 @@ a.prw-steps__link:hover .prw-steps__dot { border-color: color-mix(in srgb, var(-
 @media (prefers-reduced-motion: reduce) { .prw-serp__card { transition: none; } }
 
 
-/* Hide Login step: private address composer and the Save & exit control. */
+/* Private Login step: private address composer and the Save & exit control. */
 .prw-slug{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 9px;border:1px solid #d9d0d4;border-radius:12px;background:#fff}
 .prw-slug:focus-within{border-color:#9b1245;box-shadow:0 0 0 3px rgba(155,18,69,.12)}
 .prw-slug__prefix,.prw-slug__suffix{flex:0 0 auto;color:#4d424b;font-size:12px;overflow-wrap:anywhere;background:transparent}

@@ -150,6 +150,7 @@ final class Plugin {
 			$this->loader->register( SettingsPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\ModulesPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\AdminShell::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\EditorPlacement::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\EditorScoreCard::class, false );
 			$this->loader->register( SiteVerificationPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\VariablePicker::class, false );

@@ -10,8 +10,11 @@
  *  2. excerpt   – the hand-written WordPress excerpt.
  *  3. content   – text extracted from the post content (blocks and classic content; shortcodes unwrapped).
  *  4. builder   – text extracted from page-builder data stored outside post_content.
- *  5. page_type – "{Page title} — {Publication}. {Publication description}" (can be switched off).
- *  6. global    – the publication-wide description, as a last resort.
+ *  5. page_type – "{Page title} — {Publication}" (can be switched off).
+ *
+ * The publication-wide (site) description is used ONLY for the home page. It is never copied into the
+ * description of a post, page or archive, so no two pages end up with the same meta / og:description.
+ * (Before 2.20.18 the page-type fallback appended it to every page, and the "global" mode used it everywhere.)
  *
  * @package PublishRankSEO
  */
@@ -24,7 +27,8 @@ defined( 'ABSPATH' ) || exit;
 final class DescriptionResolver {
 	const OPTION_FALLBACK = 'publishrank_seo_description_fallback';
 	const MODE_PAGE_TYPE  = 'page_type';
-	const MODE_GLOBAL     = 'global';
+	const MODE_GLOBAL     = 'global'; // Legacy value: now treated like MODE_PAGE_TYPE (never duplicate the site description).
+	const MODE_NONE       = 'none';   // Print no description when a page has no text of its own.
 	/** Smallest amount of extracted text that is treated as a real description. */
 	const MIN_CHARS = 25;
 
@@ -66,7 +70,7 @@ final class DescriptionResolver {
 	/** Which fallback the site uses when a page has no usable text of its own. */
 	public static function fallback_mode() {
 		$mode = (string) get_option( self::OPTION_FALLBACK, self::MODE_PAGE_TYPE );
-		return self::MODE_GLOBAL === $mode ? self::MODE_GLOBAL : self::MODE_PAGE_TYPE;
+		return self::MODE_NONE === $mode ? self::MODE_NONE : self::MODE_PAGE_TYPE;
 	}
 
 	/**
@@ -192,7 +196,8 @@ final class DescriptionResolver {
 				return array( 'text' => SeoData::truncate( $text, $length ), 'source' => 'page_type' );
 			}
 		}
-		return self::global_result( $length );
+		// Never fall back to the site description here: it would give every text-less page the same description.
+		return array( 'text' => '', 'source' => 'none' );
 	}
 
 	/** @return array{text:string,source:string} */
@@ -204,7 +209,8 @@ final class DescriptionResolver {
 	}
 
 	/**
-	 * "{Subject} — {Publication}. {Publication description}": specific to the page, never blank.
+	 * "{Subject} — {Publication}": specific to the page. The site description is deliberately not appended,
+	 * otherwise every page using this fallback would share the same text.
 	 *
 	 * @param string $subject Page, term or author name.
 	 * @return string Empty when there is no subject.
@@ -220,8 +226,7 @@ final class DescriptionResolver {
 			/* translators: 1: page title, 2: publication name. */
 			$head = sprintf( _x( '%1$s — %2$s', 'page-type meta description fallback', 'publishrank' ), $subject, $name );
 		}
-		$tail = SeoData::clean( PublicationProfile::publication_description() );
-		$text = '' !== $tail ? rtrim( $head, ". \t" ) . '. ' . $tail : $head;
+		$text = $head;
 		/**
 		 * Filter the page-type fallback description.
 		 *

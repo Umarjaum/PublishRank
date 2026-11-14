@@ -166,6 +166,7 @@ final class ArticleIntelligence {
 					'needsWork' => __( 'Needs work', 'publishrank' ),
 					'analysisComplete' => __( 'Analysis complete. SEO score: %1$d out of 100. %2$s.', 'publishrank' ),
 					'characterCountSingle' => __( '%d character (target 70–160)', 'publishrank' ),
+					/* translators: %d: number of characters in the meta description. */
 					'characterCountPlural' => __( '%d characters (target 70–160)', 'publishrank' ),
 				),
 			)
@@ -500,7 +501,21 @@ final class ArticleIntelligence {
 		$title                 = trim( wp_strip_all_tags( (string) $d['title'] ) );
 		$seo_title             = trim( (string) $d['seo_title'] );
 		$serp_title            = '' !== $seo_title ? $seo_title : $title;
-		$description           = trim( (string) $d['description'] );
+		$written_description   = trim( (string) $d['description'] );
+		$description           = $written_description;
+		// Nothing written: the published page still gets an automatic description (excerpt, then the opening text),
+		// so the checks score that text instead of reporting a missing description that the page does have.
+		$auto_description      = false;
+		if ( '' === $description ) {
+			$candidate = \PublishRankSEO\Meta\DescriptionResolver::plain( (string) $d['excerpt'] );
+			if ( '' === $candidate && $paragraphs ) {
+				$candidate = \PublishRankSEO\Meta\DescriptionResolver::plain( implode( ' ', array_slice( $paragraphs, 0, 3 ) ) );
+			}
+			if ( \PublishRankSEO\Meta\DescriptionResolver::is_usable( $candidate ) ) {
+				$description      = \PublishRankSEO\Meta\SeoData::truncate( $candidate, \PublishRankSEO\Meta\SeoData::DESCRIPTION_LENGTH );
+				$auto_description = true;
+			}
+		}
 
 		$checks = array();
 		$add    = static function ( $id, $group, $status, $weight, $message ) use ( &$checks ) {
@@ -619,6 +634,9 @@ final class ArticleIntelligence {
 		$dlen = self::len( $description );
 		if ( 0 === $dlen ) {
 			$add( 'snippet_description', 'snippet', 'bad', 2, __( 'Write a 70–160 character meta description; without one, search engines choose a snippet for you.', 'publishrank' ) );
+		} elseif ( $auto_description ) {
+			/* translators: %d: number of characters. */
+			$add( 'snippet_description', 'snippet', $dlen >= 70 ? 'ok' : 'bad', 2, sprintf( __( 'No meta description written, so an automatic one is taken from the article (%d characters). Write your own 70–160 character description to control the search snippet.', 'publishrank' ), $dlen ) );
 		} elseif ( $dlen >= 70 && $dlen <= 160 ) {
 			$add( 'snippet_description', 'snippet', 'good', 2, __( 'The meta description length is good.', 'publishrank' ) );
 		} else {
@@ -902,7 +920,7 @@ final class ArticleIntelligence {
 			),
 			'suggestions' => array(
 				'keyphrases'  => $word_count >= 80 ? self::suggest_keyphrases( $title, $words, $headings, (string) $d['terms'] ) : array(),
-				'description' => '' === $description ? self::suggest_description( $paragraphs, (string) $d['excerpt'] ) : '',
+				'description' => '' === $written_description ? self::suggest_description( $paragraphs, (string) $d['excerpt'] ) : '',
 				'headline'    => self::suggest_headline( $title, $keyphrase ),
 				'alt'         => $site ? self::suggest_alt_texts( $html, (int) $d['post_id'] ) : array(),
 				'links'       => ( $site && $word_count >= 80 ) ? self::suggest_internal_links( (int) $d['post_id'], $title, $words ) : array(),
@@ -910,7 +928,7 @@ final class ArticleIntelligence {
 			),
 			'current'     => array(
 				'keyphrase'   => $keyphrase,
-				'description' => $description,
+				'description' => $written_description,
 				'seo_title'   => $seo_title,
 				'title'       => $title,
 			),

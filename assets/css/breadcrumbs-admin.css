@@ -12,8 +12,8 @@
 	border: 1px solid #dcdcde; border-radius: 8px; background: #fff; overflow: hidden;
 }
 .pr-bc-card:hover { border-color: #949494; }
-.pr-bc-card:focus-visible { outline: 2px solid var(--wp-admin-theme-color, #2271b1); outline-offset: 1px; }
-.pr-bc-card.is-active { border-color: var(--wp-admin-theme-color, #2271b1); box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #2271b1); }
+.pr-bc-card:focus-visible { outline: 2px solid var(--pr-primary,#9B1245); outline-offset: 1px; }
+.pr-bc-card.is-active { border-color: var(--pr-primary,#9B1245); box-shadow: 0 0 0 1px var(--pr-primary,#9B1245); }
 .pr-bc-card__view { display: block; font-size: 8px; pointer-events: none; overflow: hidden; min-height: 4em; }
 .pr-bc-card__view .publishrank-breadcrumbs__list { flex-wrap: nowrap; }
 .pr-bc-card__view .publishrank-breadcrumbs li { flex: 0 0 auto; }

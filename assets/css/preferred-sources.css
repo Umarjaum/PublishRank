@@ -26,7 +26,7 @@
 .publishrank-preferred-sources .pr-ps-modes{margin:0 0 12px;padding:0;border:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .publishrank-preferred-sources .pr-ps-mode{display:block;padding:12px 14px;border:1px solid #c3c4c7;border-radius:8px;background:#fff;cursor:pointer}
 .publishrank-preferred-sources .pr-ps-mode span{display:block;margin:4px 0 0 24px;color:#50575e;font-size:13px}
-.publishrank-preferred-sources .pr-ps-mode:has(input:checked){border-color:#2271b1;box-shadow:0 0 0 1px #2271b1}
+.publishrank-preferred-sources .pr-ps-mode:has(input:checked){border-color:#9B1245;box-shadow:0 0 0 1px #9B1245}
 .publishrank-preferred-sources .pr-ps-panel[hidden]{display:none}
 .publishrank-preferred-sources .pr-ps-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .publishrank-preferred-sources .pr-ps-cols fieldset{margin:0;padding:0;border:0}

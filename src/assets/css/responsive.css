@@ -28,3 +28,20 @@
   body[class*="publishrank"] .wrap p.submit .button-primary { width: 100%; text-align: center; }
   body[class*="publishrank"] .wrap [style*="display:flex"], body[class*="publishrank"] .wrap [style*="display: flex"] { flex-wrap: wrap; }
 }
+
+/* Phones: the PublishRank navigation becomes compact chips so each screen's content starts near the top. */
+@media (max-width:782px){
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav{padding:10px 10px 8px;gap:4px}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav__label{display:none}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav .pr-nav-main{position:relative;display:flex;flex-wrap:nowrap;gap:6px;margin:0;padding:0 0 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav .pr-nav-main>li{flex:0 0 auto;margin:0}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav .pr-nav-main>li>a{min-height:40px;padding:8px 13px;border:1px solid var(--pr-border,#DFD9CF);border-radius:999px;background:#fff;white-space:nowrap}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav .pr-nav-main>li>a.is-current{border-color:#9B1245}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav__more{margin-top:4px;padding-top:6px}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav__more>summary{min-height:40px}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav__more ul{display:flex;flex-wrap:wrap;gap:6px}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav__more li{margin:0}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav__more li.pr-simple-nav__group-label{flex:0 0 100%;padding:8px 2px 0}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav__more li:not(.pr-simple-nav__group-label)>a{min-height:38px;padding:6px 12px;border:1px solid var(--pr-border,#DFD9CF);border-radius:999px;background:#fff;white-space:nowrap}
+	:is(.pr-modules-wrap,.pr-shell-wrap) .pr-simple-nav__more li:not(.pr-simple-nav__group-label)>a.is-current{border-color:#9B1245;background:#FCEBF2}
+}

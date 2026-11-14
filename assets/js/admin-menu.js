@@ -38,7 +38,7 @@
 		'publishrank-seo-redirects': ['dashicons-randomize'],
 		'publishrank-seo-404': ['dashicons-warning'],
 		'publishrank-traffic-guard': ['dashicons-lock'],
-		'publishrank-wp-hide-login': ['dashicons-hidden'],
+		'publishrank-private-login': ['dashicons-hidden'],
 		'publishrank-seo-config-history': ['dashicons-backup'],
 		'publishrank-seo-diagnostics': ['dashicons-heart'],
 		'publishrank': ['dashicons-admin-settings'],
@@ -131,4 +131,17 @@
 	} else {
 		init();
 	}
+}());
+
+/* Phones: scroll the PublishRank navigation chip row so the current screen's chip is visible. */
+(function () {
+	'use strict';
+	function reveal() {
+		if (!window.matchMedia || !window.matchMedia('(max-width: 782px)').matches) { return; }
+		var current = document.querySelector('.pr-simple-nav .pr-nav-main a.is-current');
+		var row = current ? current.closest('.pr-nav-main') : null;
+		if (!row || row.scrollWidth <= row.clientWidth) { return; }
+		row.scrollLeft = Math.max(0, current.parentNode.offsetLeft - 12);
+	}
+	if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', reveal); } else { reveal(); }
 }());

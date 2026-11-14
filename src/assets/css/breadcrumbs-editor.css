@@ -9,10 +9,10 @@
 	text-align: left; cursor: pointer; overflow: hidden;
 }
 .publishrank-bc-look:hover { border-color: #949494; }
-.publishrank-bc-look:focus-visible { outline: 2px solid var(--wp-admin-theme-color, #3858e9); outline-offset: 1px; }
+.publishrank-bc-look:focus-visible { outline: 2px solid var(--pr-primary,#9B1245); outline-offset: 1px; }
 .publishrank-bc-look.is-active {
-	border-color: var(--wp-admin-theme-color, #3858e9);
-	box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #3858e9);
+	border-color: var(--pr-primary,#9B1245);
+	box-shadow: 0 0 0 1px var(--pr-primary,#9B1245);
 }
 .publishrank-bc-look--site { grid-column: 1 / -1; }
 .publishrank-bc-look__preview { display: block; min-height: 2.6em; font-size: 9px; pointer-events: none; overflow: hidden; }

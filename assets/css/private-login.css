@@ -1,0 +1,38 @@
+/* PublishRank Private Login screen. */
+.pr-plogin{max-width:1320px}
+.pr-plogin-state{display:flex;gap:14px;align-items:flex-start;margin:18px 0;padding:18px 20px;border:1px solid rgba(255,255,255,.22);border-left:5px solid #E7B95C;border-radius:16px;background:linear-gradient(120deg,#4B0820 0%,#741035 58%,#4D1645 100%);box-shadow:0 12px 28px rgba(65,8,32,.16);color:#fff}
+.pr-plogin-state--off{border-left-color:#C9C2C6;background:linear-gradient(120deg,#2E2A30 0%,#46404A 100%)}
+.pr-plogin-state__icon{display:grid;flex:0 0 40px;width:40px;height:40px;place-items:center;border-radius:12px;background:rgba(255,255,255,.13);color:#F4D790;font-size:17px}
+.pr-plogin-state strong{color:#fff;font-size:15px;line-height:1.45}
+.pr-plogin-state p{margin:5px 0 0;color:rgba(255,255,255,.85);line-height:1.6}
+.wrap.pr-plogin .pr-plogin-state a,.pr-shell-wrap .pr-plogin .pr-plogin-state a{color:#fff;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;overflow-wrap:anywhere}
+.pr-plogin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:16px 0;align-items:stretch}
+.pr-plogin-panel{min-width:0;padding:24px;border:1px solid #DFD9CF;border-radius:18px;background:#FFFEFC;box-shadow:0 8px 25px rgba(41,22,35,.07)}
+.pr-plogin-panel--primary{border-top:3px solid #9B1245;background:linear-gradient(135deg,#FFFEFC 0%,#FAF3F6 62%,#F0F4F1 100%)}
+.pr-plogin-panel__head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.pr-plogin-panel__head h2{margin:0;color:#252833;font-size:20px;letter-spacing:-.02em}
+.pr-plogin-panel__kicker{margin:0 0 3px;color:#650A24;font-size:10px;font-weight:750;letter-spacing:.1em;text-transform:uppercase}
+.pr-plogin-panel__icon{display:grid;flex:0 0 42px;width:42px;height:42px;place-items:center;border:1px solid #E3D4DD;border-radius:12px;background:#FCEBF2;color:#650A24;font-size:17px}
+.pr-plogin-panel--rose .pr-plogin-panel__icon{border-color:#E9D0CE;background:#F6E8E6;color:#8E3941}
+.pr-plogin-panel--sage .pr-plogin-panel__icon{border-color:#D1E1D8;background:#E8F1EC;color:#275748}
+.pr-plogin-panel label{display:block;margin:4px 0 7px;color:#252833}
+.pr-plogin-address{display:flex;align-items:center;gap:8px;min-width:0;margin:8px 0 10px;padding:7px 9px;border:1px solid #D9D0D4;border-radius:12px;background:#fff;box-shadow:inset 0 1px 2px rgba(30,20,25,.035)}
+.pr-plogin-address:focus-within{border-color:#9B1245;box-shadow:0 0 0 3px rgba(155,18,69,.12)}
+.pr-plogin-address code{flex:0 0 auto;padding:4px 6px;border-radius:6px;background:#F7F1F3;color:#655964;font-size:12px;overflow-wrap:anywhere}
+.pr-plogin .pr-plogin-address input[type=text]{flex:1 1 200px;min-width:0;min-height:42px;padding:7px 10px;border:1px solid #E3DCE0;border-radius:8px;background:#FFFEFC;color:#241C22;font-size:14px;box-shadow:none}
+.pr-plogin .pr-plogin-address input[type=text]:focus{border-color:#9B1245;outline:2px solid rgba(155,18,69,.18);outline-offset:1px;box-shadow:none}
+.pr-plogin-panel .description{margin-top:10px;color:#605863;line-height:1.65}
+.pr-plogin-list{display:grid;gap:9px;margin:4px 0 18px;padding:0;list-style:none}
+.pr-plogin-list li{display:flex;gap:9px;align-items:flex-start;margin:0;color:#302630;line-height:1.5}
+.pr-plogin-list .fa-check{margin-top:3px;color:#34735B}
+.pr-plogin-actions{margin:20px 0 30px;padding-top:16px;border-top:1px solid #E8E1E4}
+.pr-plogin .pr-plogin-actions .button-primary{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 22px;border:0;border-radius:999px;background:linear-gradient(110deg,#650A24,#9B1245);box-shadow:0 6px 15px rgba(101,10,36,.22);color:#fff;font-weight:700}
+.pr-plogin .pr-plogin-actions .button-primary:hover,.pr-plogin .pr-plogin-actions .button-primary:focus{background:linear-gradient(110deg,#4B061A,#7D0E38);color:#fff}
+@media (max-width:782px){
+	.pr-plogin-grid{grid-template-columns:1fr;gap:14px}
+	.pr-plogin-panel{padding:18px}
+	.pr-plogin-address{flex-wrap:wrap}
+	.pr-plogin-address code{flex:1 1 100%;font-size:12.5px}
+	.pr-plogin .pr-plogin-address input[type=text]{min-height:46px;font-size:16px}
+	.pr-plogin .pr-plogin-actions .button-primary{width:100%;justify-content:center;min-height:48px}
+}

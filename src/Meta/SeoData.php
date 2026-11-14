@@ -86,7 +86,7 @@ final class SeoData {
 			'sources'        => array(
 				'title'       => '' !== $title_override ? 'override' : 'auto',
 				'description' => $resolved['source'],
-				'canonical'   => '' !== $canon_override && self::same_host( $canon_override ) ? 'override' : 'auto',
+				'canonical'   => '' !== $canon_override && untrailingslashit( (string) \PublishRankSEO\Core\PublicationProfile::normalize_url( $canon_override ) ) === untrailingslashit( (string) $canonical ) ? ( self::same_host( $canon_override ) ? 'override' : 'syndicated' ) : 'auto',
 				'robots'      => '' !== $robots_set ? 'override' : 'auto',
 				'image'       => isset( $image['source'] ) ? $image['source'] : 'none',
 				'image_alt'   => isset( $image['alt_source'] ) ? $image['alt_source'] : 'none',

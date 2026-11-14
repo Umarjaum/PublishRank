@@ -81,7 +81,7 @@ final class MetaGenerator {
 	 *
 	 * Order: homepage setting, then (single posts and pages) override, excerpt, extracted content,
 	 * page-builder text; (archives) the term, author or post-type description; then a page-type fallback
-	 * built from the page's own name; and only then the publication-wide description.
+	 * built from the page's own name. The publication-wide description is used on the home page only.
 	 *
 	 * @return array{text:string,source:string}
 	 */
@@ -101,10 +101,11 @@ final class MetaGenerator {
 		if ( $post_id ) {
 			$resolved = DescriptionResolver::for_post( $post_id, $limit );
 			// The front page is the publication itself: its fallback is the publication description, not a page-type sentence.
-			if ( ! ( $is_home && in_array( $resolved['source'], array( 'page_type', 'global' ), true ) ) && '' !== $resolved['text'] ) {
+			if ( ! ( $is_home && in_array( $resolved['source'], array( 'page_type', 'global', 'none' ), true ) ) && '' !== $resolved['text'] ) {
 				return $resolved;
 			}
-			return DescriptionResolver::global_result( $limit );
+			// Only the home page may use the site description; any other page keeps its own (possibly empty) result.
+			return $is_home ? DescriptionResolver::global_result( $limit ) : $resolved;
 		}
 		$text = $this->archive_description();
 		if ( '' !== $text ) {
@@ -116,7 +117,8 @@ final class MetaGenerator {
 				return array( 'text' => SeoData::truncate( $fallback, $limit ), 'source' => 'page_type' );
 			}
 		}
-		return DescriptionResolver::global_result( $limit );
+		// The site description belongs to the home page only, so archives, search and 404 pages never duplicate it.
+		return $is_home ? DescriptionResolver::global_result( $limit ) : array( 'text' => '', 'source' => 'none' );
 	}
 
 	/** Name of the current non-singular request: the term, author, post type, posts page or date archive. */
@@ -201,15 +203,24 @@ final class MetaGenerator {
 		return ! empty( PublicationProfile::normalize_url( home_url( '/' . ltrim( (string) $request, '/' ) ) ) ) ? PublicationProfile::normalize_url( home_url( '/' . ltrim( (string) $request, '/' ) ) ) : $primary;
 	}
 
-	/** Canonical URL for a post: a valid same-site override, else its permalink. */
+	/**
+	 * Canonical URL for a post: a valid override, else its permalink.
+	 *
+	 * The override may point to another site: that is how a syndicated or republished article names the original
+	 * (cross-domain canonical). Media and CDN hosts are never accepted, and sites that must keep every canonical
+	 * on their own domain can return false from the publishrank_seo_allow_cross_domain_canonical filter.
+	 */
 	public function canonical_for_post( $post_id ) {
 		$primary        = PublicationProfile::primary_url();
 		$primary_host   = strtolower( (string) wp_parse_url( $primary, PHP_URL_HOST ) );
 		$override       = PostMeta::get( $post_id, PostMeta::CANONICAL, '' );
 		$candidate      = $override ? PublicationProfile::normalize_url( $override ) : '';
 		$candidate_host = strtolower( (string) wp_parse_url( $candidate, PHP_URL_HOST ) );
-		if ( $candidate && $primary_host && $candidate_host === $primary_host && ! $this->is_media_host( $candidate_host ) ) {
-			return $candidate;
+		if ( $candidate && ! $this->is_media_host( $candidate_host ) ) {
+			$same_site = $primary_host && $candidate_host === $primary_host;
+			if ( $same_site || apply_filters( 'publishrank_seo_allow_cross_domain_canonical', true, $candidate, (int) $post_id ) ) {
+				return $candidate;
+			}
 		}
 		$permalink_raw  = $this->permalink_for_post( $post_id );
 		$permalink      = PublicationProfile::normalize_url( (string) $permalink_raw );

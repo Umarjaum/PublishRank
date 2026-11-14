@@ -129,23 +129,45 @@
 	var DESC_SEL = ['#publishrank_meta_description', '[name="publishrank_seo_description"]', '#_publishrank_seo_description', '[name="_publishrank_seo_description"]'];
 	function edMeta(key) { try { var m = wp.data.select('core/editor').getEditedPostAttribute('meta'); return (m && m[key]) || ''; } catch (e) { return ''; } }
 	/* Live character counts in the floating card: SEO title 30–60, meta description 120–160. */
+	var lenTimer = 0;
 	function paintLengths() {
 		var card = document.getElementById('publishrank-editor-score');
 		if (!card) { return; }
 		var title = value(TITLE_SEL) || edMeta('_publishrank_seo_title') || edAttr('title') || value(['#title']);
-		var desc = value(DESC_SEL) || edMeta('_publishrank_seo_description');
-		[['title', title.length, 30, 60], ['desc', desc.length, 120, 160]].forEach(function (r) {
+		var desc = value(DESC_SEL) || edMeta('_publishrank_seo_description'), autoDesc = false;
+		/* No description written: PublishRank publishes one extracted from the excerpt or the article, so count that. */
+		if (!desc) { desc = autoDescription(); autoDesc = desc !== ''; }
+		[['title', title.length, 30, 60, false], ['desc', desc.length, 120, 160, autoDesc]].forEach(function (r) {
 			var el = card.querySelector('[data-pr-esc-len="' + r[0] + '"]');
 			if (!el) { return; }
 			el.textContent = String(r[1]);
 			el.className = r[1] > r[3] ? 'is-over' : (r[1] < r[2] ? 'is-short' : 'is-ok');
+			var holder = el.parentNode, tag = holder && holder.querySelector('.pr-esc__auto');
+			if (holder && r[4] && !tag) { tag = document.createElement('small'); tag.className = 'pr-esc__auto'; tag.textContent = t.autoShort || 'auto'; holder.appendChild(tag); }
+			if (tag) { tag.hidden = !r[4]; }
+			if (holder) { holder.title = r[4] ? (t.autoDesc || 'No meta description written: an automatic one is taken from the excerpt or the article.') : ''; }
 		});
 	}
-	$(document).on('input', TITLE_SEL.concat(DESC_SEL, ['#title']).join(','), paintLengths);
+	function autoDescription() {
+		var text = edAttr('excerpt') || value(['#excerpt']);
+		if (!String(text).trim()) {
+			var div = document.createElement('div');
+			div.innerHTML = String(edContent() || '').replace(/<!--[\s\S]*?-->/g, ' ').replace(/\[[^\]]+\]/g, ' ');
+			text = div.textContent || '';
+		}
+		text = String(text).replace(/\b(?:https?:\/\/|www\.)\S+/gi, ' ').replace(/\s+/g, ' ').trim();
+		if (text.length < 25) { return ''; }
+		if (text.length <= 160) { return text; }
+		var cut = text.slice(0, 159), sp = cut.lastIndexOf(' ');
+		if (sp > 96) { cut = cut.slice(0, sp); }
+		return cut.replace(/[\s,;:\-–—]+$/, '') + '…';
+	}
+	$(document).on('input', TITLE_SEL.concat(DESC_SEL, ['#title', '#excerpt']).join(','), paintLengths);
 	function value(selectors) { for (var i = 0; i < selectors.length; i++) { var el = document.querySelector(selectors[i]); if (el && typeof el.value === 'string') { return el.value; } } return ''; }
 	function edAttr(name) { try { return wp.data.select('core/editor').getEditedPostAttribute(name) || ''; } catch (e) { return ''; } }
 	function edContent() {
-		try { if (window.wp && wp.data && wp.data.select('core/editor')) { return wp.data.select('core/editor').getEditedPostContent() || ''; } } catch (e) {}
+		/* The block editor store also exists on classic screens, where it is empty: only trust it when it has content. */
+		try { if (window.wp && wp.data && wp.data.select('core/editor')) { var c = wp.data.select('core/editor').getEditedPostContent(); if (c) { return c; } } } catch (e) {}
 		try { var mce = window.tinymce && tinymce.get('content'); if (mce && !mce.isHidden()) { return mce.getContent(); } } catch (e) {}
 		return value(['#content']);
 	}
@@ -211,7 +233,9 @@
 		return $.post(publishrankIntel.ajaxUrl, { action: publishrankIntel.applyAction, nonce: publishrankIntel.applyNonce, post_id: postId(), field: field, value: val })
 			.then(function (r) { if (!r || !r.success) { return $.Deferred().reject(); } setField(field, val); return r; });
 	}
+	var FIELD_FOR = { description: '#_publishrank_seo_description', headline: '#_publishrank_seo_title', seo_title: '#_publishrank_seo_title', keyphrase: '#_publishrank_seo_focus_keyword' };
 	function openReport(kind) {
+		if (FIELD_FOR[kind] && window.PublishRankSeoDock && document.querySelector(FIELD_FOR[kind])) { window.PublishRankSeoDock.focusField(FIELD_FOR[kind]); return; }
 		var box = document.getElementById('publishrank_article_intelligence');
 		if (box && box.classList.contains('closed')) { var h = box.querySelector('.handlediv, .postbox-header button'); if (h) { h.click(); } else { box.classList.remove('closed'); } }
 		var target = document.querySelector('.pr-studio__block[data-studio="' + kind + '"]') || box;
@@ -390,6 +414,9 @@
 		window.addEventListener('resize', function () { if (card.classList.contains('is-floating') && card.style.left) { clampInto(card); } });
 
 		watchBlockEditor();
+		/* Show the real SEO title / meta description lengths straight away, not only after the first analysis. */
+		paintLengths(); window.setTimeout(paintLengths, 1200);
+		$(document).on('tinymce-editor-init', function (e, ed) { if (ed && ed.id === 'content') { ed.on('change keyup', function () { window.clearTimeout(lenTimer); lenTimer = window.setTimeout(paintLengths, 400); }); paintLengths(); } });
 		/* No meta box on the page (hidden by a filter or post type): run one analysis so the panel is current. */
 		if (!document.getElementById('pr-intel')) { window.setTimeout(standalone, 800); }
 	});

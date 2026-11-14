@@ -20,11 +20,11 @@ defined( 'ABSPATH' ) || exit;
 
 final class EditorScoreCard {
 	public function register() {
-		if ( ! ArticleIntelligence::enabled() ) {
-			return;
-		}
-		add_action( 'admin_footer', array( $this, 'render' ), 20 );
+		// The sidebar that carries the SEO fields must exist even when the score analysis is switched off.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ), 20 );
+		if ( ArticleIntelligence::enabled() ) {
+			add_action( 'admin_footer', array( $this, 'render' ), 20 );
+		}
 	}
 
 	private static function on_supported_screen() {
@@ -33,30 +33,48 @@ final class EditorScoreCard {
 	}
 
 	public function enqueue( $hook ) {
-		if ( ( 'post.php' !== $hook && 'post-new.php' !== $hook ) || ! self::on_supported_screen() ) {
+		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) {
 			return;
 		}
-		$css = PUBLISHRANK_SEO_PATH . 'assets/css/editor-score-card.css';
-		$js  = PUBLISHRANK_SEO_PATH . 'assets/js/editor-score-card.js';
-		wp_enqueue_style( 'publishrank-editor-score-card', Branding::asset_url( 'css/editor-score-card.css' ), array(), Branding::version() . '.' . ( file_exists( $css ) ? (string) filemtime( $css ) : '0' ) );
-		wp_enqueue_script( 'publishrank-editor-score-card', Branding::asset_url( 'js/editor-score-card.js' ), array( 'jquery', 'publishrank-link-inserter' ), Branding::version() . '.' . ( file_exists( $js ) ? (string) filemtime( $js ) : '0' ), true );
-		if ( function_exists( 'use_block_editor_for_post_type' ) && use_block_editor_for_post_type( (string) get_current_screen()->post_type ) ) {
+		$scored = ArticleIntelligence::enabled() && self::on_supported_screen();
+		$seo    = EditorPlacement::on_editor_screen();
+		if ( ! $scored && ! $seo ) {
+			return;
+		}
+		if ( $scored ) {
+			$css = PUBLISHRANK_SEO_PATH . 'assets/css/editor-score-card.css';
+			$js  = PUBLISHRANK_SEO_PATH . 'assets/js/editor-score-card.js';
+			wp_enqueue_style( 'publishrank-editor-score-card', Branding::asset_url( 'css/editor-score-card.css' ), array(), Branding::version() . '.' . ( file_exists( $css ) ? (string) filemtime( $css ) : '0' ) );
+			wp_enqueue_script( 'publishrank-editor-score-card', Branding::asset_url( 'js/editor-score-card.js' ), array( 'jquery', 'publishrank-link-inserter' ), Branding::version() . '.' . ( file_exists( $js ) ? (string) filemtime( $js ) : '0' ), true );
+			wp_localize_script(
+				'publishrank-editor-score-card',
+				'publishrankScoreCard',
+				array(
+					'i18n' => self::strings(),
+				)
+			);
+		}
+		global $post;
+		$screen_type = function_exists( 'get_current_screen' ) && get_current_screen() ? (string) get_current_screen()->post_type : '';
+		$block       = $post instanceof \WP_Post && function_exists( 'use_block_editor_for_post' )
+			? use_block_editor_for_post( $post )
+			: ( function_exists( 'use_block_editor_for_post_type' ) && use_block_editor_for_post_type( $screen_type ) );
+		if ( $block ) {
 			$sidebar = PUBLISHRANK_SEO_PATH . 'assets/js/block-editor-sidebar.js';
-			wp_enqueue_script( 'publishrank-block-sidebar', Branding::asset_url( 'js/block-editor-sidebar.js' ), array( 'wp-plugins', 'wp-element', 'wp-components', 'wp-data', 'wp-i18n', 'wp-editor', 'wp-edit-post' ), Branding::version() . '.' . ( file_exists( $sidebar ) ? (string) filemtime( $sidebar ) : '0' ), true );
+			$deps    = array( 'wp-plugins', 'wp-element', 'wp-components', 'wp-data', 'wp-i18n', 'wp-editor', 'wp-edit-post' );
+			if ( wp_script_is( EditorPlacement::HANDLE, 'registered' ) ) {
+				$deps[] = EditorPlacement::HANDLE;
+			}
+			wp_enqueue_script( 'publishrank-block-sidebar', Branding::asset_url( 'js/block-editor-sidebar.js' ), $deps, Branding::version() . '.' . ( file_exists( $sidebar ) ? (string) filemtime( $sidebar ) : '0' ), true );
 			wp_set_script_translations( 'publishrank-block-sidebar', 'publishrank' );
 		}
-		wp_localize_script(
-			'publishrank-editor-score-card',
-			'publishrankScoreCard',
-			array(
-				'i18n' => self::strings(),
-			)
-		);
 	}
 
 	/** Translated strings shared by PHP and JavaScript rendering. */
 	private static function strings() {
 		return array(
+			'autoShort'     => __( 'auto', 'publishrank' ),
+			'autoDesc'      => __( 'No meta description written: an automatic one is taken from the excerpt or the article.', 'publishrank' ),
 			'excellent'     => __( 'Excellent', 'publishrank' ),
 			'good'          => __( 'Good', 'publishrank' ),
 			'ok'            => __( 'Needs improvement', 'publishrank' ),
@@ -69,7 +87,7 @@ final class EditorScoreCard {
 			'updated'       => __( 'Updated just now', 'publishrank' ),
 			'live'          => __( 'Updates as you write', 'publishrank' ),
 			'failed'        => __( 'Analysis failed. Save a draft and refresh.', 'publishrank' ),
-			'noKeyword'     => __( 'Not set — pick one in the SEO Score box below', 'publishrank' ),
+			'noKeyword'     => __( 'Not set — add one in the SEO fields', 'publishrank' ),
 			'nothingToFix'  => __( 'Nothing to fix. Great job!', 'publishrank' ),
 			'nonePassed'    => __( 'No checks pass yet.', 'publishrank' ),
 			/* translators: %d: SEO score. */

@@ -190,10 +190,11 @@ final class Installer {
 		if ( ! get_option( 'publishrank_onboarding_completed_at', '' ) ) {
 			update_option( 'publishrank_setup_required', 1, false );
 			// A new install must not move the login before the owner has seen the new address (Setup Wizard, Security step).
-			// Sites that already saved or switched Hide Login are left exactly as they were.
-			if ( null === get_option( \PublishRankSEO\Security\WPHideLogin::OPTION, null ) && null === get_option( 'whl_page', null ) ) {
-				add_option( \PublishRankSEO\Security\WPHideLogin::OPTION, 0, '', false );
-				add_option( \PublishRankSEO\Security\WPHideLogin::DEFERRED_OPTION, 1, '', false );
+			// Sites that already saved or switched Private Login are left exactly as they were.
+			\PublishRankSEO\Security\PrivateLogin::upgrade_storage();
+			if ( null === get_option( \PublishRankSEO\Security\PrivateLogin::OPTION, null ) && null === get_option( 'publishrank_login_slug', null ) ) {
+				add_option( \PublishRankSEO\Security\PrivateLogin::OPTION, 0, '', false );
+				add_option( \PublishRankSEO\Security\PrivateLogin::DEFERRED_OPTION, 1, '', false );
 			}
 		}
 		\PublishRankSEO\InternalLinks\Store::install();

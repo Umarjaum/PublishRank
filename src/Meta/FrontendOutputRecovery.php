@@ -107,7 +107,10 @@ final class FrontendOutputRecovery {
 
 	/** Output-buffer / filter callback. Must never start its own output buffer. */
 	public function inject( $html ) {
-		if ( $this->injected || ! is_string( $html ) || false === stripos( $html, '</head>' ) ) {
+		if ( ! is_string( $html ) || false === stripos( $html, '</head>' ) ) {
+			return $html; }
+		$html = self::dedupe_head_meta( $html );
+		if ( $this->injected ) {
 			return $html; }
 		$insertion = '';
 		// Inject technical provenance even when the theme has already printed SEO
@@ -129,5 +132,36 @@ final class FrontendOutputRecovery {
 			return $html; }
 		$this->injected = true;
 		return preg_replace( '/<\/head\s*>/i', "\n" . str_replace( array( '\\', '$' ), array( '\\\\', '\\$' ), $insertion ) . '</head>', $html, 1 );
+	}
+
+	/**
+	 * Remove description tags that a theme or another plugin printed next to PublishRank's own, so a page never
+	 * carries two different meta / og / twitter descriptions (often the site tagline repeated on every page).
+	 * Only tags PublishRank itself printed inside its marked block are kept; nothing outside <head> is touched.
+	 */
+	public static function dedupe_head_meta( $html ) {
+		if ( ! is_string( $html ) || ! apply_filters( 'publishrank_seo_dedupe_head_meta', true ) ) {
+			return $html; }
+		$end = stripos( $html, '</head>' );
+		if ( false === $end ) {
+			return $html; }
+		$head = substr( $html, 0, $end );
+		if ( ! preg_match( '/<!-- PublishRank: begin;.*?(?:<!-- PublishRank: end -->|<!-- end of SEO data Powered by PublishRank -->)/s', $head, $m, PREG_OFFSET_CAPTURE ) ) {
+			return $html; }
+		$block  = $m[0][0];
+		$pos    = (int) $m[0][1];
+		$keys   = array();
+		foreach ( array( 'description', 'og:description', 'twitter:description' ) as $key ) {
+			if ( preg_match( '/<meta\s[^>]*(?:name|property)\s*=\s*["\']' . preg_quote( $key, '/' ) . '["\']/i', $block ) ) {
+				$keys[] = preg_quote( $key, '/' ); }
+		}
+		if ( ! $keys ) {
+			return $html; }
+		$pattern = '/[ \t]*<meta\s[^>]*(?:name|property)\s*=\s*["\'](?:' . implode( '|', $keys ) . ')["\'][^>]*>[ \t]*\r?\n?/i';
+		$before  = preg_replace( $pattern, '', substr( $head, 0, $pos ) );
+		$after   = preg_replace( $pattern, '', substr( $head, $pos + strlen( $block ) ) );
+		if ( null === $before || null === $after ) {
+			return $html; }
+		return $before . $block . $after . substr( $html, $end );
 	}
 }

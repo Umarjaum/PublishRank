@@ -55,12 +55,15 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 		$publishrank_cleanup();
 	}
 
-// PublishRank Hide Login settings.
-delete_option( 'whl_page' );
-delete_option( 'whl_redirect_admin' );
+// PublishRank Private Login settings (current and earlier option names).
+foreach ( array( 'publishrank_login_slug', 'publishrank_login_redirect', 'publishrank_private_login_enabled', 'publishrank_private_login_deferred', 'publishrank_private_login_storage', 'publishrank_hide_login_enabled', 'publishrank_hide_login_deferred', 'whl_page', 'whl_redirect_admin' ) as $publishrank_login_option ) {
+	delete_option( $publishrank_login_option );
+}
+delete_site_transient( 'publishrank_private_login_comment_notice' );
 delete_option( 'publishrank_wp_hide_login' );
 delete_option( 'publishrank_wp_hide_login_apache_rules_active' );
 if ( is_multisite() ) {
-	delete_site_option( 'whl_page' );
-	delete_site_option( 'whl_redirect_admin' );
+	foreach ( array( 'publishrank_login_slug', 'publishrank_login_redirect', 'whl_page', 'whl_redirect_admin' ) as $publishrank_login_option ) {
+		delete_site_option( $publishrank_login_option );
+	}
 }

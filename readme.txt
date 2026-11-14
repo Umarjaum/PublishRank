@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.20.15
+Stable tag: 2.20.19
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -35,7 +35,7 @@ Features include:
 * Configurable llms.txt and optional llms-full.txt resources, with a public paginated schema-discovery endpoint linked from llms.txt.
 * Editorial SEO analysis, internal-link recommendations, sitemap diagnostics and WP-CLI commands.
 * Publisher Toolkit with permission-aware bulk SEO metadata editing, role-based access for the toolkit, and optional image alt-text assistance that preserves existing descriptions.
-* **New: WP Hide Login.** Optional custom sign-in URL, default-login-route handling, redirect behavior and multisite defaults, managed from its own PublishRank submenu screen. Based on a port of WPS Hide Login 1.9.19 (GPLv2+).
+* **New: Private Login.** Optional custom sign-in URL, default-login-route handling, redirect behavior and multisite defaults, managed from its own PublishRank submenu screen.
 * Always-on technical source provenance markers in page source; they do not add a promotional link or visible footer credit.
 
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
@@ -91,7 +91,7 @@ A readable view of the same sitemap search engines fetch as plain XML: totals, a
 Enable **Record a capped rolling 404 log** in **PublishRank → Settings**, then review entries at **PublishRank → 404 Monitor**. The monitor aggregates normalized paths by browser, mobile or crawler category, records hit counts and first/last seen times, and keeps only the latest useful referrer path without storing IP addresses, cookies, request bodies or full query strings. It ignores admin, AJAX, cron, REST, non-GET/HEAD, common static-asset and infrastructure-probe requests. The log is rate-limited, protected against concurrent write loss, retained for 90 days and capped at 500 entries. Administrators can search paths, filter visitor categories, sort by hits or recency, dismiss entries, clear the log, or create validated same-site redirects. It is a bounded diagnostic aid, not a complete access log, analytics system, WAF or DDoS defense.
 
 = Where is the complete feature list? =
-The package guide `docs/features/FEATURES.md` is the complete dashboard inventory through version 2.10.1. It includes every card under Search & discovery, Content & publishing, Measure & maintain, and Settings & help, plus every Technical Health check: Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt, Schema Aggregator, SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Internal links, Link intelligence, Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, WP Hide Login, Configuration history, Diagnostics, Setup wizard, Settings, Titles & Meta, Import / Export, Documentation & help, SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility.
+The package guide `docs/features/FEATURES.md` is the complete dashboard inventory through version 2.10.1. It includes every card under Search & discovery, Content & publishing, Measure & maintain, and Settings & help, plus every Technical Health check: Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt, Schema Aggregator, SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Internal links, Link intelligence, Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, Private Login, Configuration history, Diagnostics, Setup wizard, Settings, Titles & Meta, Import / Export, Documentation & help, SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility.
 
 = Which logo does PublishRank use? =
 One file, `assets/images/publishrank-brand-mark.png`, shown in the admin sidebar, toolbar, screen headers, setup wizard and sitemap view. No SVG or alternate icon files are packaged.
@@ -150,6 +150,29 @@ Other website links in the administration interface (including the Schema.org vo
 
 == Changelog ==
 
+= 2.20.19 =
+* **Mastodon works end to end.** Posts you opt in to sharing from the editor are now shared reliably (the choice was read before it was saved), "Share again now" really posts again, the server field accepts a plain address like mastodon.social, and the access token is never printed back into the page. The status only says Connected once Mastodon accepts the token, and failed checks explain what to fix.
+* **New Mastodon screen.** A clear status bar and five numbered steps: connect your account, verify your profile, choose what to share, write the post, and review authors and recent shares. Works on phones.
+* **Editor in PublishRank colors.** The SEO fields, tabs, buttons, checkboxes, help icons and analysis in the block and classic editors now use the PublishRank crimson palette instead of WordPress blue.
+* **Clearer Sitemap Hub.** The full sitemap address is shown and can be copied or opened in one click, and a new Sitemap files list shows every file search engines will read. Navigation scrolls to the current screen on phones.
+* **Private Login.** The custom sign-in address module has been rebuilt under its own PublishRank name, screen and settings. Existing sign-in addresses and redirect settings carry over automatically, and the old settings link forwards to the new screen. Emergency switch: `define( 'PUBLISHRANK_DISABLE_PRIVATE_LOGIN', true );`.
+
+= 2.20.18 =
+* **Editor layout fixed.** Block editor: the SEO fields no longer float over the article. They now sit inside the PublishRank sidebar under the SEO analysis (tabbed: Published values, Search appearance, Article context, Social sharing, ...) and go back to the Meta Boxes area at the bottom when the sidebar is closed. Classic editor: the section tabs have their own row under the "PublishRank SEO fields" header, so the title, move and collapse buttons no longer get squeezed; on phones the tabs scroll in one line and the "What will be published" table stacks.
+* **SEO panel shows the real description.** When no meta description is written, the score panel and the analysis now count the automatic description PublishRank publishes (marked "auto") instead of reporting 0/160 and a missing description.
+* **No duplicate site description.** The site description is now used only on the home page. It is no longer appended to the fallback description of posts, pages and archives, and the "use the publication-wide description everywhere" option was replaced by "leave the description out". Duplicate meta / og / twitter description tags printed by a theme next to PublishRank's own are removed.
+* **Preload and prefetch work on the live site.** The featured image of articles and pages is preloaded at high priority (with srcset) and never lazy-loaded; same-site article links are prefetched on hover or tap with Speculation Rules (configures core speculative loading on WordPress 6.8+); CDN and media hosts get preconnect, video and API hosts dns-prefetch. A filter no longer strips the configured hosts. Each part can be switched off under Settings > Infrastructure, speed and syndication.
+* **Syndication works.** The Canonical URL field now accepts the original article on another site (it was silently dropped before), and the canonical, og:url and feed link follow it. RSS items carry the featured image (media:content and in the item) and a "The post ... appeared first on ..." source line; the source line was never added before because of a wrong check.
+* **Canonical on local sites.** Sites running on localhost, 127.0.0.1 or *.local no longer show "/" as the canonical URL.
+
+= 2.20.17 =
+* **Movable SEO fields panel.** All SEO fields now open in a panel you can drag anywhere on the screen, with a button for each section (Search appearance, Social sharing, Article details, Indexing, Schema). Block editor: it appears on its own and minimizes to a small bar. Classic editor: use the move button in the SEO fields bar to float it. Position and open/closed state are remembered.
+
+= 2.20.16 =
+* **SEO fields are now at your fingertips.** Classic editor: the SEO Overrides, Schema Selection and Multilingual boxes are no longer buried in the footer; they sit in a tabbed "PublishRank SEO fields" bar directly under the title (Search appearance, Social sharing, Article details, Indexing, Schema). Block editor: the same fields now live inside the PublishRank sidebar below the SEO analysis. Click any "Fix" item in the analysis to jump straight to its field.
+* **Values no longer get lost.** Edits made in the SEO fields now mark the block editor post as changed, so Update always saves them. The old duplicate title/description fields in the sidebar (which could overwrite what you typed in the footer box) are gone. Unsaved SEO field values are backed up in the browser and restored after a reload. SEO meta is now available to custom post types that did not support custom fields, and the cornerstone flag can no longer be reset by another box on the page.
+* **Fixes.** Removed a stray closing tag in the SEO Overrides box, schema detail panels (Video, FAQ, Event...) work wherever the box is placed, the sidebar is available even when the SEO score analysis is switched off, and SEO title and meta description show live length counters in both editors.
+
 = 2.20.15 =
 * **SEO Analysis moved to the top of the editor.** The panel no longer floats over the bottom corner of your writing. In the block editor a live score badge now sits in the top toolbar next to Publish; it changes color and number as you write. Click it to open the PublishRank SEO sidebar, where the full analysis (score, metrics, focus keyword, items to fix with one-click Fix buttons) is docked at the top, followed by the SEO title and meta description.
 * **Dock or pop out — your choice.** A new button in the panel header pops the analysis out into a draggable floating panel and docks it back. Your choice is remembered.
@@ -175,22 +198,22 @@ Other website links in the administration interface (including the Schema.org vo
 * The structured data (BreadcrumbList) is unchanged: it is still built from the same trail as the visible breadcrumbs.
 
 = 2.20.10 =
-* **Hide Login emergency switch.** Add `define( 'PUBLISHRANK_DISABLE_HIDE_LOGIN', true );` to wp-config.php to restore the standard WordPress login at once if you are ever locked out. The Hide Login screen explains when this is active.
-* **Safer Hide Login.** The notice-dismiss request now requires the "manage options" capability and accepts only the notices Hide Login actually shows. The multisite network settings read their fields safely and use the same address check as the rest of the plugin.
-* **New installs keep the standard login until you confirm.** Hide Login now waits until you save the Security step (or the Hide Login screen) so the login never moves before you have seen the new address. Sites that already used Hide Login are not changed.
+* **Private Login emergency switch.** Add `define( 'PUBLISHRANK_DISABLE_PRIVATE_LOGIN', true );` to wp-config.php to restore the standard WordPress login at once if you are ever locked out. The Private Login screen explains when this is active.
+* **Safer Private Login.** The notice-dismiss request now requires the "manage options" capability and accepts only the notices Private Login actually shows. The multisite network settings read their fields safely and use the same address check as the rest of the plugin.
+* **New installs keep the standard login until you confirm.** Private Login now waits until you save the Security step (or the Private Login screen) so the login never moves before you have seen the new address. Sites that already used Private Login are not changed.
 * **See and copy the new login address.** The Security step shows the exact address, updates it as you type, and has a Copy address button.
 * **Login address in Import / Export.** The private login address and blocked-visitor redirect are now exported and imported, with the same validation as the settings screens. The on/off switch is deliberately not imported, so a settings file can never hide the login on a site that has not set it up.
-* **Translations.** The translation template now lists every translatable string, and the Urdu translation covers the Hide Login and Security step text.
+* **Translations.** The translation template now lists every translatable string, and the Urdu translation covers the Private Login and Security step text.
 * **Direct-access guards** added to two files that lacked them.
 * **Faster setup wizard.** The wizard checks required fields once per request instead of repeatedly.
 * **One version source.** The version number is read from the plugin header. The reviewable `src/assets` copies are synchronised with `assets`.
 * **Note on step numbers.** The Setup Wizard now has nine steps, with Security at step 8 and the final Ready step at step 9. A bookmarked `&step=8` link opens Security.
 
 = 2.20.9 =
-* **Hide Login in the Setup Wizard.** New "Security" step with a required private login address and an optional redirect for blocked visitors. The address is checked against reserved WordPress names before it is saved.
-* **Hide Login in General Settings.** A new Hide Login card edits the same two options with the same validation.
+* **Private Login in the Setup Wizard.** New "Security" step with a required private login address and an optional redirect for blocked visitors. The address is checked against reserved WordPress names before it is saved.
+* **Private Login in General Settings.** A new Private Login card edits the same two options with the same validation.
 * **Save & exit.** Once every required field (*) is filled in, the wizard unlocks and "Save & exit" saves the current step and leaves. Setup is marked complete, so PublishRank screens stay unlocked and the reminder disappears. Later steps can still be edited from the Setup Wizard.
-* **Readable Hide Login banner.** Text and links on the dark red banner are now always white, whatever other admin styles apply.
+* **Readable Private Login banner.** Text and links on the dark red banner are now always white, whatever other admin styles apply.
 
 = 2.20.8 =
 * **Separate social titles and descriptions.** The editor's Social sharing section now has Facebook, X and Mastodon fields. X cards use the X fields, then the Facebook fields, then the automatic text. The Mastodon fields replace {title} and {excerpt} in the post PublishRank shares to Mastodon. Blank fields stay automatic: the post title with the site name, and the post description. All fields support %%variables%% and are available in the REST API; SEO-plugin imports now carry X titles and descriptions across.
@@ -215,15 +238,15 @@ Other website links in the administration interface (including the Schema.org vo
 
 = 2.20.3 =
 * **Mastodon verification helper.** Added a generated, copyable `<link rel="me">` head snippet, with live updates from the profile URL field, plus clearer official verification steps.
-* **WP Hide Login visual refresh.** Improved branded login and redirect URL controls, contrast, keyboard focus and small-screen layout.
+* **Private Login visual refresh.** Improved branded login and redirect URL controls, contrast, keyboard focus and small-screen layout.
 = 2.20.2 =
 * **Mastodon site verification made easier.** Added a copy-ready Website URL field and clearer steps for the reciprocal rel="me" verification flow. Mastodon does not issue a separate one-time site-verification code.
 
 = 2.20.1 =
-* **New: WP Hide Login module spotlight.** The module now carries a first-visit New badge in the PublishRank menu and dashboard; its dedicated settings screen remains separate from WordPress Settings.
+* **New: Private Login module spotlight.** The module now carries a first-visit New badge in the PublishRank menu and dashboard; its dedicated settings screen remains separate from WordPress Settings.
 * **Migration & Portability contrast and mobile layout.** Improved heading contrast and touch-friendly responsive controls.
 = 2.20.0 =
-* Added PublishRank Hide Login, a port of WPS Hide Login 1.9.19 (GPLv2+): custom login URL, handling for wp-login.php, wp-register.php and wp-admin requests, custom redirect URL, and multisite network defaults. Settings live on the dedicated PublishRank > Hide Login page.
+* Added PublishRank Private Login: custom login URL, handling for wp-login.php, wp-register.php and wp-admin requests, custom redirect URL, and multisite network defaults. Settings live on the dedicated PublishRank > Private Login page.
 
 = 2.19.2 =
 * **Fix: keyword fields stay in the PublishRank SEO box.** Focus keyword, secondary keyphrases, synonyms and related keyphrases no longer redirect editors to Gutenberg’s sidebar or appear in duplicate locations.

@@ -121,7 +121,10 @@ final class HeadOutput {
 			echo "<!-- Open Graph metadata begin -->\n";
 			echo '<meta property="og:title" content="' . esc_attr( $this->social( PostMeta::OG_TITLE, $this->meta->title() ) ) . '" />' . "\n";
 			echo '<meta property="og:site_name" content="' . esc_attr( PublicationProfile::publication_name() ) . '" />' . "\n";
-			echo '<meta property="og:description" content="' . esc_attr( $this->social( PostMeta::OG_DESCRIPTION, $description ) ) . '" />' . "\n";
+			$og_description = $this->social( PostMeta::OG_DESCRIPTION, $description );
+			if ( '' !== $og_description ) {
+				echo '<meta property="og:description" content="' . esc_attr( $og_description ) . '" />' . "\n";
+			}
 			echo '<meta property="og:url" content="' . esc_url( $this->meta->canonical() ) . '" />' . "\n";
 			echo '<meta property="og:type" content="' . esc_attr( $this->is_editorial_article() ? 'article' : 'website' ) . '" />' . "\n";
 			if ( $this->is_editorial_article() ) {
@@ -188,7 +191,10 @@ final class HeadOutput {
 			if ( $creator ) {
 				echo '<meta name="twitter:creator" content="@' . esc_attr( ltrim( $creator, '@' ) ) . '" />' . "\n"; }
 			echo '<meta name="twitter:title" content="' . esc_attr( $this->social( array( PostMeta::X_TITLE, PostMeta::OG_TITLE ), $this->meta->title() ) ) . '" />' . "\n";
-			echo '<meta name="twitter:description" content="' . esc_attr( $this->social( array( PostMeta::X_DESCRIPTION, PostMeta::OG_DESCRIPTION ), $description ) ) . '" />' . "\n";
+			$x_description = $this->social( array( PostMeta::X_DESCRIPTION, PostMeta::OG_DESCRIPTION ), $description );
+			if ( '' !== $x_description ) {
+				echo '<meta name="twitter:description" content="' . esc_attr( $x_description ) . '" />' . "\n";
+			}
 			if ( $image ) {
 					echo '<meta name="twitter:image" content="' . esc_url( $image ) . '" />' . "\n";
 					$image_alt = $this->image_alt( $image );

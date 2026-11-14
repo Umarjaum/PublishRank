@@ -5,7 +5,7 @@
  *
  * The publisher creates an application on their own Mastodon server (Preferences → Development →
  * New application, scopes read:accounts and write:statuses) and pastes the access token here.
- * The token is encrypted with the site's auth salt and is never printed back.
+ * The token is encrypted with the site's auth salt and is never printed back, not even on the settings screen.
  *
  * @package PublishRankSEO
  */
@@ -405,28 +405,40 @@ final class Mastodon {
 		if ( 'publish' !== $new || 'publish' === $old || ! $post instanceof \WP_Post ) {
 			return;
 		}
-		if ( ! self::should_share( $post ) ) {
+		// The per-post "Share when published" box is saved after this hook runs (classic editor: save_post;
+		// block editor: a separate meta-box request). So a post is queued whenever it could be shared, and
+		// share_post() checks the final per-post choice when the queued job runs.
+		if ( ! self::could_share( $post ) ) {
 			return;
 		}
-		if ( ! wp_next_scheduled( self::CRON_HOOK, array( (int) $post->ID ) ) ) {
-			wp_schedule_single_event( time() + 15, self::CRON_HOOK, array( (int) $post->ID ) );
+		self::queue( (int) $post->ID );
+	}
+
+	/** Queue one background share for a post (no duplicates). */
+	public static function queue( $post_id ) {
+		if ( ! wp_next_scheduled( self::CRON_HOOK, array( (int) $post_id ) ) ) {
+			wp_schedule_single_event( time() + 20, self::CRON_HOOK, array( (int) $post_id ) );
 		}
 	}
 
-	public static function should_share( \WP_Post $post ) {
+	/** Feature on, connected, a shared type, not password protected and not shared yet. */
+	public static function could_share( \WP_Post $post ) {
 		if ( ! self::enabled() || ! self::connected() || ! empty( $post->post_password ) ) {
 			return false;
 		}
-		$s = self::settings();
-		if ( ! in_array( $post->post_type, (array) $s['post_types'], true ) ) {
+		if ( ! in_array( $post->post_type, (array) self::settings()['post_types'], true ) ) {
 			return false;
 		}
-		if ( '' !== (string) get_post_meta( $post->ID, self::META_STATUS, true ) ) {
-			return false; // Already shared once.
+		return '' === (string) get_post_meta( $post->ID, self::META_STATUS, true );
+	}
+
+	public static function should_share( \WP_Post $post ) {
+		if ( ! self::could_share( $post ) ) {
+			return false; // Off, not connected, not a shared type, protected, or already shared once.
 		}
 		$choice = (string) get_post_meta( $post->ID, self::META_SHARE, true );
 		if ( '' === $choice ) {
-			return ! empty( $s['auto_share'] );
+			return ! empty( self::settings()['auto_share'] );
 		}
 		return 'yes' === $choice;
 	}
@@ -474,6 +486,7 @@ final class Mastodon {
 		$s        = self::settings();
 		$custom   = trim( (string) get_post_meta( $post->ID, self::META_MESSAGE, true ) );
 		$template = '' !== $custom ? $custom : ( '' !== $template ? $template : (string) $s['template'] );
+		$template = str_replace( array( "\r\n", "\r" ), "\n", $template ); // Browsers submit textareas with CRLF line breaks.
 		$excerpt  = has_excerpt( $post ) ? $post->post_excerpt : wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 35, '…' );
 		$title    = html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' );
 		// Separate Mastodon title / description from the editor replace {title} and {excerpt}; blank means the post's own.
@@ -644,6 +657,7 @@ final class Mastodon {
 		$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		if ( $code < 200 || $code >= 300 || empty( $data['id'] ) ) {
 			$error = is_array( $data ) && ! empty( $data['error'] ) ? (string) $data['error'] : sprintf( 'HTTP %d', $code );
+			/* translators: %s: error message returned by the Mastodon server. */
 			return new \WP_Error( 'publishrank_mastodon_media', sprintf( __( 'Mastodon could not upload the featured image: %s', 'publishrank' ), $error ) );
 		}
 		$media_id = (string) $data['id'];
@@ -708,11 +722,12 @@ final class Mastodon {
 			'language'     => substr( (string) get_locale(), 0, 2 ),
 			'spoiler_text' => $spoiler,
 			'sensitive'    => '' !== $spoiler,
-				'_key'         => 'publishrank-' . $post->ID . '-' . md5( (string) $post->post_date_gmt ),
-			);
+			// The same key makes Mastodon ignore an accidental second automatic share; "Share again now" is a new post.
+			'_key'         => 'publishrank-' . $post->ID . '-' . md5( (string) $post->post_date_gmt . ( $force ? '|' . microtime( true ) : '' ) ),
+		);
 		if ( '' !== $media_id ) {
 			$body['media_ids'] = array( $media_id );
-			}
+		}
 		$result = self::request(
 			'POST',
 			'/api/v1/statuses',
@@ -811,6 +826,12 @@ final class Mastodon {
 			delete_post_meta( $post_id, self::META_SPOILER );
 		} else {
 			update_post_meta( $post_id, self::META_SPOILER, $spoiler );
+		}
+		// A post published just now with "Share when published" ticked (also when automatic sharing is off)
+		// is queued here, because the block editor saves this box after the post is already published.
+		$post = get_post( $post_id );
+		if ( $post instanceof \WP_Post && 'publish' === $post->post_status && self::should_share( $post ) && ( time() - (int) get_post_time( 'U', true, $post ) ) < 10 * MINUTE_IN_SECONDS ) {
+			self::queue( (int) $post_id );
 		}
 	}
 

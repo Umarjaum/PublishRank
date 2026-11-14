@@ -101,10 +101,10 @@ final class ImportExport {
 			'publishrank_seo_404_monitor',
 			'publishrank_seo_404_log',
 			'publishrank_traffic_guard',
-			// Private login address. The Hide Login on/off switch is deliberately not exported, so an import
+			// Private login address. The Private Login on/off switch is deliberately not exported, so an import
 			// can never hide the login on a site that has not set the address up.
-			'whl_page',
-			'whl_redirect_admin',
+			'publishrank_login_slug',
+			'publishrank_login_redirect',
 		);
 
 		/** Register admin actions. */
@@ -145,12 +145,19 @@ final class ImportExport {
 			if ( ! is_array( $data ) || ! in_array( ( $data['_schema'] ?? '' ), array( 'publishrank/v1', 'publishrank/v2' ), true ) ) {
 				wp_die( esc_html__( 'The import file is invalid.', 'publishrank' ), 400 );
 			}
+			// Files exported by earlier releases used different names for the private login address.
+			foreach ( array( 'whl_page' => 'publishrank_login_slug', 'whl_redirect_admin' => 'publishrank_login_redirect' ) as $legacy => $current ) {
+				if ( isset( $data[ $legacy ] ) && ! isset( $data[ $current ] ) ) {
+					$data[ $current ] = $data[ $legacy ];
+				}
+				unset( $data[ $legacy ] );
+			}
 			foreach ( $data as $key => $value ) {
 				if ( '_schema' === $key || ! in_array( $key, $this->allowed, true ) ) {
 					continue;
 				}
 				$clean = $this->sanitize( $key, $value );
-				if ( 'whl_page' === $key && '' === $clean ) {
+				if ( 'publishrank_login_slug' === $key && '' === $clean ) {
 					continue; // Empty or reserved address: keep the one already saved.
 				}
 				update_option( $key, $clean, false );
@@ -178,11 +185,11 @@ final class ImportExport {
 					'blocked_countries' => $countries['valid'],
 				);
 			}
-			if ( 'whl_page' === $key ) {
-				return \PublishRankSEO\Security\WPHideLogin::clean_login_slug( $value );
+			if ( 'publishrank_login_slug' === $key ) {
+				return \PublishRankSEO\Security\PrivateLogin::clean_login_slug( $value );
 			}
-			if ( 'whl_redirect_admin' === $key ) {
-				return \PublishRankSEO\Security\WPHideLogin::clean_redirect_slug( $value );
+			if ( 'publishrank_login_redirect' === $key ) {
+				return \PublishRankSEO\Security\PrivateLogin::clean_redirect_slug( $value );
 			}
 			if ( 'publishrank_indexnow_enabled' === $key ) {
 					return (bool) $value;

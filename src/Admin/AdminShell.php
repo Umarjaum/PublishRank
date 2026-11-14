@@ -50,7 +50,7 @@ final class AdminShell {
 				'items' => array(
 					'publishrank-seo-dashboard'  => array( 'icon' => 'fa-gauge-high', 'label' => __( 'Dashboard', 'publishrank' ), 'desc' => __( 'Your PublishRank overview.', 'publishrank' ) ),
 					'publishrank-modules'        => array( 'icon' => 'fa-toggle-on', 'label' => __( 'Features', 'publishrank' ), 'desc' => __( 'Turn PublishRank features on or off.', 'publishrank' ) ),
-					'publishrank-wp-hide-login' => array( 'icon' => 'fa-key', 'label' => __( 'Hide login', 'publishrank' ), 'desc' => __( 'Move the WordPress login page to a private address, or switch it off.', 'publishrank' ) ),
+					'publishrank-private-login' => array( 'icon' => 'fa-key', 'label' => __( 'Private login', 'publishrank' ), 'desc' => __( 'Move the WordPress login page to a private address, or switch it off.', 'publishrank' ) ),
 					'publishrank'                => array( 'icon' => 'fa-sliders', 'label' => __( 'General Settings', 'publishrank' ), 'desc' => __( 'Site-wide SEO defaults and preferences.', 'publishrank' ) ),
 					'publishrank-sitemap-health' => array( 'icon' => 'fa-sitemap', 'label' => __( 'Sitemap Hub', 'publishrank' ), 'desc' => __( 'Choose what goes in your sitemap and check it is valid.', 'publishrank' ) ),
 				),

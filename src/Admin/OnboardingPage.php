@@ -592,7 +592,7 @@ final class OnboardingPage {
 			case 8:
 				return array(
 					$f(
-						'whl_page',
+						'publishrank_login_slug',
 						'slug',
 						__( 'Private login address', 'publishrank' ),
 						array(
@@ -605,7 +605,7 @@ final class OnboardingPage {
 						)
 					),
 					$f(
-						'whl_redirect_admin',
+						'publishrank_login_redirect',
 						'slug',
 						__( 'Send blocked visitors to', 'publishrank' ),
 						array(
@@ -628,7 +628,7 @@ final class OnboardingPage {
 	 * @return string[]
 	 */
 	public static function setup_keys() {
-		$keep = array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_post_types', 'publishrank_sitemap_post_types', 'publishrank_seo_title_separator', 'whl_page', 'whl_redirect_admin' ); // Also editable in Settings.
+		$keep = array( 'publishrank_seo_news_enabled', 'publishrank_seo_news_post_types', 'publishrank_sitemap_post_types', 'publishrank_seo_title_separator', 'publishrank_login_slug', 'publishrank_login_redirect' ); // Also editable in Settings.
 		$keys = array( 'publishrank_social_profiles', 'publishrank_copyright', 'publishrank_identity_person_name', 'publishrank_identity_person_alternate_name', 'publishrank_identity_person_description', 'publishrank_identity_person_image', 'publishrank_identity_person_email' );
 		foreach ( array_keys( self::steps() ) as $step ) {
 			foreach ( self::fields( $step ) as $field ) {
@@ -1044,9 +1044,9 @@ final class OnboardingPage {
 				$code = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $raw ) );
 				return 2 === strlen( $code ) ? $code : '';
 			case 'login_slug':
-				return \PublishRankSEO\Security\WPHideLogin::clean_login_slug( (string) $raw );
+				return \PublishRankSEO\Security\PrivateLogin::clean_login_slug( (string) $raw );
 			case 'redirect_slug':
-				return \PublishRankSEO\Security\WPHideLogin::clean_redirect_slug( (string) $raw );
+				return \PublishRankSEO\Security\PrivateLogin::clean_redirect_slug( (string) $raw );
 		}
 		return method_exists( $settings, $san ) ? $settings->{$san}( $raw ) : sanitize_text_field( (string) $raw );
 	}
@@ -1075,7 +1075,7 @@ final class OnboardingPage {
 			$clean = $this->clean( $field, $raw, $settings );
 			if ( 'publishrank_identity_person_url' === $field['key'] && '' === $clean ) {
 				$clean = esc_url_raw( home_url( '/' ) ); }
-			if ( 'whl_page' === $field['key'] && '' === $clean ) {
+			if ( 'publishrank_login_slug' === $field['key'] && '' === $clean ) {
 				// Empty or reserved by WordPress: keep the address already in use and ask again.
 				$slug_error = true;
 				$errors[]   = $field['label'];
@@ -1090,9 +1090,9 @@ final class OnboardingPage {
 				update_option( $field['person_mirror'], $clean ); }
 		}
 
-		// Saving the Security step is the moment the owner has seen the new address: Hide Login may now switch on.
+		// Saving the Security step is the moment the owner has seen the new address: Private Login may now switch on.
 		if ( 8 === $step && ! $slug_error ) {
-			\PublishRankSEO\Security\WPHideLogin::confirm_login_address();
+			\PublishRankSEO\Security\PrivateLogin::confirm_login_address();
 		}
 
 		if ( 7 === $step ) {
@@ -1319,7 +1319,7 @@ final class OnboardingPage {
 			array( 5, 'fa-heading', __( 'Homepage SEO title', 'publishrank' ), $title, '' !== trim( (string) get_option( 'publishrank_home_title', '' ) ) ),
 			array( 6, 'fa-sitemap', __( 'Sitemaps', 'publishrank' ), ( $news ? __( 'News sitemap on', 'publishrank' ) : __( 'News sitemap off', 'publishrank' ) ) . ' · ' . str_replace( ',', ', ', (string) get_option( 'publishrank_seo_news_post_types', 'post' ) ), $news ),
 			array( 7, 'fa-location-dot', __( 'Local business', 'publishrank' ), ! empty( $local['enabled'] ) ? ( ! empty( $local['name'] ) ? (string) $local['name'] : __( 'Local business on', 'publishrank' ) ) : __( 'Local SEO off', 'publishrank' ), ! empty( $local['enabled'] ) ),
-			array( 8, 'fa-user-shield', __( 'Private login address', 'publishrank' ), \PublishRankSEO\Security\WPHideLogin::enabled() ? '/' . \PublishRankSEO\Security\WPHideLogin::current_login_slug() : __( 'Hide Login is off', 'publishrank' ), \PublishRankSEO\Security\WPHideLogin::enabled() ),
+			array( 8, 'fa-user-shield', __( 'Private login address', 'publishrank' ), \PublishRankSEO\Security\PrivateLogin::enabled() ? '/' . \PublishRankSEO\Security\PrivateLogin::current_login_slug() : __( 'Private Login is off', 'publishrank' ), \PublishRankSEO\Security\PrivateLogin::enabled() ),
 		);
 		echo '<ul class="prw-recap">';
 		foreach ( $items as $item ) {
@@ -1595,21 +1595,21 @@ final class OnboardingPage {
 
 	/** Security step: shows the exact new login address with a copy button before anything moves. */
 	private function render_login_url_notice() {
-		$hide     = \PublishRankSEO\Security\WPHideLogin::get_instance();
+		$hide     = \PublishRankSEO\Security\PrivateLogin::get_instance();
 		$url      = $hide->new_login_url();
 		$pretty   = (bool) get_option( 'permalink_structure' );
 		$prefix   = trailingslashit( home_url() ) . ( $pretty ? '' : '?' );
 		$tail     = ( $pretty && '/' === substr( (string) get_option( 'permalink_structure' ), -1 ) ) ? '/' : '';
-		$deferred = \PublishRankSEO\Security\WPHideLogin::is_deferred();
-		$off      = ! $deferred && ! \PublishRankSEO\Security\WPHideLogin::enabled();
+		$deferred = \PublishRankSEO\Security\PrivateLogin::is_deferred();
+		$off      = ! $deferred && ! \PublishRankSEO\Security\PrivateLogin::enabled();
 		if ( $deferred ) {
 			$text = __( 'Your sign-in page has not moved yet. It moves to the address below when you save this step. After that, wp-login.php and wp-admin are hidden from visitors who are not signed in. Copy the address and keep it somewhere safe.', 'publishrank' );
 		} elseif ( $off ) {
-			$text = __( 'Hide Login is switched off under Features, so your address is saved but not active yet. When it is on, your sign-in page is the address below.', 'publishrank' );
+			$text = __( 'Private Login is switched off under Features, so your address is saved but not active yet. When it is on, your sign-in page is the address below.', 'publishrank' );
 		} else {
 			$text = __( 'After you save, sign in at the address below. Visitors who are not signed in can no longer open wp-login.php or wp-admin. Copy the address before you continue.', 'publishrank' );
 		}
-		echo '<div class="prw-alert prw-alert--info prw-loginurl" data-prw-loginurl data-prw-input="prw_whl_page" data-prw-prefix="' . esc_attr( $prefix ) . '" data-prw-tail="' . esc_attr( $tail ) . '" data-copied="' . esc_attr__( 'Copied', 'publishrank' ) . '" data-copy-failed="' . esc_attr__( 'Press Ctrl+C to copy', 'publishrank' ) . '">';
+		echo '<div class="prw-alert prw-alert--info prw-loginurl" data-prw-loginurl data-prw-input="prw_publishrank_login_slug" data-prw-prefix="' . esc_attr( $prefix ) . '" data-prw-tail="' . esc_attr( $tail ) . '" data-copied="' . esc_attr__( 'Copied', 'publishrank' ) . '" data-copy-failed="' . esc_attr__( 'Press Ctrl+C to copy', 'publishrank' ) . '">';
 		echo '<i class="fa-solid fa-user-shield" aria-hidden="true"></i><div><p>' . esc_html( $text ) . '</p>';
 		echo '<p class="prw-loginurl__row"><code data-prw-loginurl-text>' . esc_html( $url ) . '</code> <button type="button" class="button prw-btn prw-btn--ghost" data-prw-copy-url><i class="fa-regular fa-copy" aria-hidden="true"></i> ' . esc_html__( 'Copy address', 'publishrank' ) . '</button> <span class="prw-loginurl__status" data-prw-copy-status role="status" aria-live="polite"></span></p></div></div>';
 	}

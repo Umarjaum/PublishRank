@@ -175,6 +175,7 @@ final class SitemapHealthPage {
 			$this->render_address();
 			$this->render_stats( $report );
 			$this->render_issues( $report );
+			$this->render_files( $engine );
 		} else {
 			echo '<div class="pr-hub-off"><i class="fa-solid fa-circle-pause" aria-hidden="true"></i><div><strong>' . esc_html__( 'PublishRank sitemaps are off', 'publishrank' ) . '</strong><p>' . esc_html__( 'Search engines are given the WordPress built-in sitemap at /wp-sitemap.xml instead. Turn the switch above back on to use PublishRank sitemaps, Google News and media sitemaps again.', 'publishrank' ) . '</p></div></div>';
 		}
@@ -219,7 +220,8 @@ final class SitemapHealthPage {
 		$bing     = 'https://www.bing.com/webmasters/sitemaps?siteUrl=' . rawurlencode( $home );
 		echo '<section class="pr-hub-card pr-hub-address" aria-labelledby="pr-hub-address-title">';
 		echo '<div class="pr-hub-address__main"><h3 class="pr-hub-card__title" id="pr-hub-address-title">' . esc_html__( 'Your sitemap address', 'publishrank' ) . '</h3>';
-		echo '<div class="pr-hub-url"><i class="fa-solid fa-link" aria-hidden="true"></i><input type="text" readonly value="' . esc_attr( $url ) . '" aria-label="' . esc_attr__( 'Sitemap address', 'publishrank' ) . '" data-pr-hub-url onclick="this.select()" />';
+		// The full address is shown as wrapping text so it is never cut off; the read-only field beside it feeds the Copy button.
+		echo '<div class="pr-hub-url"><i class="fa-solid fa-link" aria-hidden="true"></i><a class="pr-hub-url__text" href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . esc_html( $url ) . '</a><input type="text" class="pr-hub-url__field" readonly tabindex="-1" value="' . esc_attr( $url ) . '" aria-hidden="true" data-pr-hub-url />';
 		echo '<button type="button" class="pr-hub-btn hide-if-no-js" data-pr-hub-copy><i class="fa-solid fa-copy" aria-hidden="true"></i> ' . esc_html__( 'Copy', 'publishrank' ) . '</button>';
 		echo '<a class="pr-hub-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> ' . esc_html__( 'Open', 'publishrank' ) . '<span class="screen-reader-text"> ' . esc_html__( '(opens in a new tab)', 'publishrank' ) . '</span></a></div>';
 		echo '<p class="pr-hub-robots ' . ( $robots ? 'is-good' : 'is-warn' ) . '"><i class="fa-solid ' . ( $robots ? 'fa-circle-check' : 'fa-circle-info' ) . '" aria-hidden="true"></i> ';
@@ -233,6 +235,47 @@ final class SitemapHealthPage {
 		echo '<a class="pr-hub-engine" href="' . esc_url( $google ) . '" target="_blank" rel="noopener"><i class="fa-brands fa-google" aria-hidden="true"></i><span>' . esc_html__( 'Google Search Console', 'publishrank' ) . '</span><i class="fa-solid fa-arrow-up-right-from-square pr-hub-engine__ext" aria-hidden="true"></i></a>';
 		echo '<a class="pr-hub-engine" href="' . esc_url( $bing ) . '" target="_blank" rel="noopener"><i class="fa-brands fa-microsoft" aria-hidden="true"></i><span>' . esc_html__( 'Bing Webmaster Tools', 'publishrank' ) . '</span><i class="fa-solid fa-arrow-up-right-from-square pr-hub-engine__ext" aria-hidden="true"></i></a>';
 		echo '</div></section>';
+	}
+
+	/** Every sitemap file listed in the index, grouped by content type, so each one can be opened or submitted. */
+	private function render_files( $engine ) {
+		$labels = array( 'post' => __( 'Posts', 'publishrank' ) );
+		foreach ( self::parts() as $key => $part ) {
+			$labels[ $key ] = $part['label'];
+		}
+		$groups = array();
+		$total  = 0;
+		foreach ( $labels as $key => $label ) {
+			if ( 'post' !== $key && ! self::part_on( $key ) ) {
+				continue;
+			}
+			$provider = $engine->provider( $key );
+			if ( ! $provider ) {
+				continue;
+			}
+			$shards = $engine->listed_shards( $provider );
+			if ( empty( $shards ) ) {
+				continue;
+			}
+			$groups[ $key ] = array( 'label' => $label, 'shards' => $shards );
+			$total         += count( $shards );
+		}
+		if ( ! $groups ) {
+			return;
+		}
+		echo '<section class="pr-hub-card pr-hub-files" aria-labelledby="pr-hub-files-title">';
+		echo '<div class="pr-hub-card__head"><div><h3 class="pr-hub-card__title" id="pr-hub-files-title">' . esc_html__( 'Sitemap files', 'publishrank' ) . '</h3>';
+		/* translators: %d: number of sitemap files. */
+		echo '<p class="pr-hub-card__lead">' . esc_html( sprintf( _n( 'Your sitemap index links to %d file. Search engines read them all from the address above, so you only submit that one address.', 'Your sitemap index links to %d files. Search engines read them all from the address above, so you only submit that one address.', $total, 'publishrank' ), $total ) ) . '</p></div></div>';
+		echo '<ul class="pr-hub-files__list">';
+		foreach ( $groups as $key => $group ) {
+			foreach ( $group['shards'] as $shard ) {
+				$file = SitemapUrls::shard_url( $key, (int) $shard );
+				echo '<li><span class="pr-hub-files__type">' . esc_html( $group['label'] ) . ( count( $group['shards'] ) > 1 ? ' <span class="pr-hub-files__part">' . esc_html( sprintf( /* translators: %d: file number. */ __( 'part %d', 'publishrank' ), (int) $shard ) ) . '</span>' : '' ) . '</span>';
+				echo '<a class="pr-hub-files__url" href="' . esc_url( $file ) . '" target="_blank" rel="noopener">' . esc_html( $file ) . '<span class="screen-reader-text"> ' . esc_html__( '(opens in a new tab)', 'publishrank' ) . '</span></a></li>';
+			}
+		}
+		echo '</ul></section>';
 	}
 
 	/** Four headline numbers. */

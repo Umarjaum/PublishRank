@@ -41,11 +41,20 @@
     var button = target && target.closest ? target.closest("[data-pr-copy-target]") : null;
     if (!button) return;
     var input = document.getElementById(button.getAttribute("data-pr-copy-target"));
-    var status = document.getElementById("pr-mastodon-copy-status");
+    var status = document.getElementById(button.getAttribute("data-pr-copy-status") || "pr-mastodon-copy-status");
     if (!input) return;
     var done = button.getAttribute("data-pr-copy-done") || "Copied";
     var failed = button.getAttribute("data-pr-copy-failed") || "Select and copy manually.";
-    function announce(text){ if (status) status.textContent = text; }
+    function announce(text){
+      if (status) status.textContent = text;
+      var label = button.getAttribute("data-pr-label") || button.textContent;
+      button.setAttribute("data-pr-label", label);
+      if (text === done) {
+        button.textContent = done;
+        button.classList.add("is-done");
+        setTimeout(function(){ button.textContent = label; button.classList.remove("is-done"); }, 1800);
+      }
+    }
     function fallback(){
       input.focus(); input.select(); input.setSelectionRange(0, input.value.length);
       try {
@@ -53,6 +62,7 @@
       } catch (error) {}
       announce(failed);
     }
+    if (!input.value) { if (status) status.textContent = failed; return; }
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(input.value).then(function(){ announce(done); }, fallback);
     } else { fallback(); }

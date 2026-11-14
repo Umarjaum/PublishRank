@@ -169,6 +169,9 @@ final class SchemaSuite {
 				echo '<option value="' . esc_attr( $url ) . '"' . selected( PostMeta::get( $post->ID, PostMeta::PRODUCT_AVAILABILITY ), $url, false ) . '>' . esc_html( $availability ) . '</option>';
 			}
 			echo '</select></label></p></div>';
+			// Close .publishrank-schema-suite opened at the top of this box; leaving it
+			// open nested the classic editor and the right column inside the SEO bar.
+			echo '</div>';
 	}
 
 		/** Render one escaped schema text/number field. */

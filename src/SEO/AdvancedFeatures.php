@@ -62,6 +62,7 @@ final class AdvancedFeatures {
 		);
 		$names  = array(
 			'override'   => __( 'Your override', 'publishrank' ),
+			'syndicated' => __( 'Original article on another site (syndicated copy)', 'publishrank' ),
 			'auto'       => __( 'Automatic', 'publishrank' ),
 			'featured'   => __( 'Featured image', 'publishrank' ),
 			'content'    => __( 'First image in content', 'publishrank' ),
@@ -118,7 +119,7 @@ final class AdvancedFeatures {
 		echo '<p class="description pr-keyword-fields__status" data-publishrank-keyword-status role="status" aria-live="polite" aria-atomic="true"></p></div>';
 		$this->render_seo_field( $post->ID, PostMeta::TITLE, __( 'SEO title', 'publishrank' ), __( 'The title shown in search results. Use variables such as %%title%% %%sep%% %%sitename%% rather than hard-coding article-specific text. Leave blank for the global template.', 'publishrank' ), 'text', 255, $placeholders );
 		$this->render_seo_field( $post->ID, PostMeta::DESCRIPTION, __( 'Meta description', 'publishrank' ), __( 'The short summary shown beneath the search title. Use the “Insert variable” list to add dynamic values. Leave blank for an automatic summary.', 'publishrank' ), 'textarea', 320, $placeholders );
-		$this->render_seo_field( $post->ID, PostMeta::CANONICAL, __( 'Canonical URL', 'publishrank' ), __( 'Usually leave blank. Add a URL only when this article is a copy or syndicated version and another page should be treated as the original.', 'publishrank' ), 'url', 0, $placeholders );
+		$this->render_seo_field( $post->ID, PostMeta::CANONICAL, __( 'Canonical URL', 'publishrank' ), __( 'Usually leave blank. If this article is republished (syndicated) from another outlet, paste the original article URL here: search engines then credit the original, and your RSS feed links to it.', 'publishrank' ), 'url', 0, $placeholders );
 		echo '</section>';
 			echo '<section class="pr-seo-group" aria-labelledby="pr-seo-context-title"><h3 id="pr-seo-context-title">' . esc_html__( '2. Article context', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Add article context used to enrich structured data and editorial organization.', 'publishrank' ) . '</p>';
 		$this->render_seo_field( $post->ID, PostMeta::ENTITY_TOPIC, __( 'Main entity or topic', 'publishrank' ), __( 'The person, organization, place, or subject this article is mainly about. Used to enrich structured data.', 'publishrank' ), 'text', 120 );
@@ -128,7 +129,7 @@ final class AdvancedFeatures {
 		}
 		echo '</select><p class="description" id="pr-seo-primary-category-help">' . esc_html__( 'Choose a main category for this article’s structured data, or keep the automatic post category.', 'publishrank' ) . '</p></div>';
 		$cornerstone_help = 'pr-seo-cornerstone-help';
-		echo '<div class="pr-seo-field"><label><input type="checkbox" name="' . esc_attr( PostMeta::CORNERSTONE ) . '" value="1" aria-describedby="' . esc_attr( $cornerstone_help ) . '" ' . checked( PostMeta::get( $post->ID, PostMeta::CORNERSTONE, '0' ), '1', false ) . ' /> <strong>' . esc_html__( 'Mark as a cornerstone article', 'publishrank' ) . '</strong></label><p class="description" id="' . esc_attr( $cornerstone_help ) . '">' . esc_html__( 'Flag this as an important, long-term reference article on your site.', 'publishrank' ) . '</p></div></section>';
+		echo '<div class="pr-seo-field"><input type="hidden" name="publishrank_seo_cornerstone_field" value="1" /><label><input type="checkbox" name="' . esc_attr( PostMeta::CORNERSTONE ) . '" value="1" aria-describedby="' . esc_attr( $cornerstone_help ) . '" ' . checked( PostMeta::get( $post->ID, PostMeta::CORNERSTONE, '0' ), '1', false ) . ' /> <strong>' . esc_html__( 'Mark as a cornerstone article', 'publishrank' ) . '</strong></label><p class="description" id="' . esc_attr( $cornerstone_help ) . '">' . esc_html__( 'Flag this as an important, long-term reference article on your site.', 'publishrank' ) . '</p></div></section>';
 
 		echo '<section class="pr-seo-group" aria-labelledby="pr-seo-social-title"><h3 id="pr-seo-social-title">' . esc_html__( '3. Social sharing', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Optional overrides for each network. Blank fields stay automatic: the post title with the site name, and the post description.', 'publishrank' ) . '</p>';
 		echo '<h4>' . esc_html__( 'Facebook and other Open Graph networks', 'publishrank' ) . '</h4><p class="description">' . esc_html__( 'Facebook, LinkedIn, WhatsApp, Telegram, Slack, Discord, Threads, Bluesky and Mastodon link cards all read the same Open Graph tags. Leave blank to use the article title with the site name and the post description.', 'publishrank' ) . '</p>';
@@ -188,7 +189,7 @@ final class AdvancedFeatures {
 			$free_help = 'pr-seo-accessible-free-help';
 			echo '<input type="hidden" name="publishrank_seo_article_fields" value="1" /><div class="pr-seo-field"><label><input type="checkbox" name="' . esc_attr( PostMeta::ACCESSIBLE_FOR_FREE ) . '" value="1" aria-describedby="' . esc_attr( $free_help ) . '" ' . checked( PostMeta::get( $post->ID, PostMeta::ACCESSIBLE_FOR_FREE, '1' ), '1', false ) . ' /> <strong>' . esc_html__( 'Article is accessible for free', 'publishrank' ) . '</strong></label><p class="description" id="' . esc_attr( $free_help ) . '">' . esc_html__( 'Uncheck this for content that requires a subscription or payment.', 'publishrank' ) . '</p></div>';
 		}
-		echo '</section></div>';
+		echo '</section>';
 	}
 
 	/** Show the effective image dimensions and allow editors to create a separate resized media copy. */

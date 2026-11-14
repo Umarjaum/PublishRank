@@ -103,13 +103,23 @@ final class PostMeta {
 	const CONTENT_LOCATION         = '_publishrank_seo_content_location';
 	const BACKSTORY                = '_publishrank_seo_backstory';
 	const CORRECTION               = '_publishrank_seo_correction';
+	/** Editor-only change marker: lets the block editor treat edits made inside classic meta box fields as unsaved changes. Never stored. */
+	const EDITOR_TOUCH             = '_publishrank_seo_editor_touch';
+
+	/** @var string[] Post types where PublishRank had to switch on custom-fields support so the block editor can read and write the SEO meta. */
+	private static $forced_custom_fields = array();
+
+	/** @return string[] */
+	public static function forced_custom_fields_types() {
+		return self::$forced_custom_fields;
+	}
 
 	/** Meta keys that editors may override and that are exposed to the block editor and REST API. */
 	public static function overridable() {
 		return array(
 			self::TITLE          => 'text',
 			self::DESCRIPTION    => 'text',
-			self::CANONICAL      => 'url',
+			self::CANONICAL      => 'public_url', // May point to the original article on another site (syndication).
 			self::OG_TITLE       => 'text',
 			self::OG_DESCRIPTION => 'text',
 			self::X_TITLE        => 'text',
@@ -173,6 +183,35 @@ final class PostMeta {
 
 	/** Register overrides as post meta so the block editor, REST API and WP-CLI can read and write them. */
 	public static function register_meta() {
+		// The block editor only exposes `meta` over REST for post types that support custom fields. Without this,
+		// SEO values never reach (or come back from) the editor for custom post types and saved edits look lost.
+		foreach ( self::post_types() as $post_type ) {
+			if ( ! post_type_supports( $post_type, 'custom-fields' ) ) {
+				add_post_type_support( $post_type, 'custom-fields' );
+				self::$forced_custom_fields[] = $post_type;
+			}
+		}
+		if ( ! has_filter( 'update_post_metadata', array( __CLASS__, 'skip_editor_touch' ) ) ) {
+			add_filter( 'update_post_metadata', array( __CLASS__, 'skip_editor_touch' ), 10, 3 );
+		}
+		foreach ( self::post_types() as $post_type ) {
+			register_post_meta(
+				$post_type,
+				self::EDITOR_TOUCH,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'default'           => '',
+					'show_in_rest'      => true,
+					'sanitize_callback' => static function () {
+						return '';
+					},
+					'auth_callback'     => static function ( $allowed, $meta_key, $post_id ) {
+						return current_user_can( 'edit_post', (int) $post_id );
+					},
+				)
+			);
+		}
 		foreach ( self::post_types() as $post_type ) {
 			foreach ( self::overridable() as $key => $kind ) {
 				register_post_meta(
@@ -242,6 +281,11 @@ final class PostMeta {
 				);
 			}
 		}
+	}
+
+	/** Never write the editor change marker to the database. */
+	public static function skip_editor_touch( $check, $object_id, $meta_key ) {
+		return self::EDITOR_TOUCH === $meta_key ? true : $check;
 	}
 
 	/** Keyphrase list meta keys with their maximum item count and item length. @return array<string,array<int,int>> */
@@ -405,7 +449,8 @@ final class PostMeta {
 		}
 		foreach ( array( self::CANONICAL ) as $key ) {
 			if ( isset( $_POST[ $key ] ) ) {
-				update_post_meta( $post_id, $key, self::sanitize_url( esc_url_raw( wp_unslash( $_POST[ $key ] ) ) ) ); }
+				// Not limited to this site: a syndicated copy names the original article on the other outlet.
+				update_post_meta( $post_id, $key, self::sanitize_public_url( esc_url_raw( wp_unslash( $_POST[ $key ] ) ) ) ); }
 		}
 		foreach ( array( self::OG_IMAGE, self::VIDEO_THUMBNAIL, self::AUTHOR_IMAGE, self::WEB_STORY_POSTER, self::WEB_STORY_PUBLISHER_LOGO ) as $key ) {
 			if ( isset( $_POST[ $key ] ) ) {
@@ -546,7 +591,10 @@ final class PostMeta {
 		if ( isset( $_POST[ self::NEWS_ELIGIBLE ] ) ) {
 			update_post_meta( $post_id, self::NEWS_ELIGIBLE, in_array( sanitize_text_field( wp_unslash( $_POST[ self::NEWS_ELIGIBLE ] ) ), array( '1' ), true ) ? '1' : '-1' );
 		}
-		update_post_meta( $post_id, self::CORNERSTONE, isset( $_POST[ self::CORNERSTONE ] ) ? '1' : '0' );
+		// Only touch the flag when its checkbox was actually on the page; otherwise another box sharing the nonce would reset it.
+		if ( isset( $_POST['publishrank_seo_cornerstone_field'] ) ) {
+			update_post_meta( $post_id, self::CORNERSTONE, isset( $_POST[ self::CORNERSTONE ] ) ? '1' : '0' );
+		}
 		if ( isset( $_POST[ self::PRIMARY_CATEGORY ] ) ) {
 			$category_id = absint( wp_unslash( $_POST[ self::PRIMARY_CATEGORY ] ) );
 			update_post_meta( $post_id, self::PRIMARY_CATEGORY, term_exists( $category_id, 'category' ) ? (string) $category_id : '' );

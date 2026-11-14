@@ -96,6 +96,11 @@ final class PublicationProfile {
 	private static function local_hosts_allowed() {
 		$type    = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
 		$allowed = in_array( $type, array( 'local', 'development', 'staging' ), true );
+		// A site that itself runs on a local address (localhost, 127.0.0.1, *.local) must be able to use its own URLs,
+		// otherwise every canonical, og:url and schema id collapses to "/".
+		if ( ! $allowed && function_exists( 'home_url' ) ) {
+			$allowed = self::is_local_host( strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) );
+		}
 		return (bool) ( function_exists( 'apply_filters' ) ? apply_filters( 'publishrank_seo_allow_local_hosts', $allowed ) : $allowed );
 	}
 
