@@ -983,28 +983,7 @@ final class OnboardingPage {
 				'publishrank_meta_enabled'            => 1,
 			'publishrank_schema_enabled'          => 1,
 			'publishrank_org_website_schema_enabled' => 1,
-			'publishrank_local_seo_profile'       => array(
-				'enabled'       => 0,
-				'name'          => '',
-				'type'          => 'LocalBusiness',
-				'description'   => '',
-				'url'           => '',
-				'phone'         => '',
-				'email'         => '',
-				'logo'          => '',
-				'street'        => '',
-				'city'          => '',
-				'region'        => '',
-				'postal_code'   => '',
-				'country'       => '',
-				'latitude'      => '',
-				'longitude'     => '',
-				'price_range'   => '',
-				'has_map'       => '',
-				'service_area'  => '',
-				'opening_hours' => array(),
-				'same_as'       => array(),
-			),
+			'publishrank_local_seo_profile'       => \PublishRankSEO\SEO\LocalSEO::defaults(),
 		);
 		foreach ( $defaults as $key => $value ) {
 			update_option( $key, $value ); }
@@ -1097,7 +1076,8 @@ final class OnboardingPage {
 
 		if ( 7 === $step ) {
 			$local_input = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? map_deep( wp_unslash( $_POST['local_seo'] ), 'sanitize_textarea_field' ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			update_option( 'publishrank_local_seo_profile', \PublishRankSEO\SEO\LocalSEO::sanitize_profile( $local_input ) );
+			// Merge with the stored profile so the wizard's short form never erases fields only the Local SEO screen edits.
+			update_option( 'publishrank_local_seo_profile', \PublishRankSEO\SEO\LocalSEO::sanitize_profile( array_merge( \PublishRankSEO\SEO\LocalSEO::profile(), $local_input ) ) );
 		}
 
 		// Back saves what was typed, then returns to the previous step without blocking on required fields.
@@ -1335,32 +1315,9 @@ final class OnboardingPage {
 
 	/** The optional Local SEO step. */
 	private function render_local_step() {
-		$local = get_option( 'publishrank_local_seo_profile', array() );
-		$local = wp_parse_args(
-			is_array( $local ) ? $local : array(),
-			array(
-				'enabled'       => 0,
-				'name'          => '',
-				'type'          => 'LocalBusiness',
-				'description'   => '',
-				'url'           => home_url( '/' ),
-				'phone'         => '',
-				'email'         => '',
-				'logo'          => '',
-				'street'        => '',
-				'city'          => '',
-				'region'        => '',
-				'postal_code'   => '',
-				'country'       => '',
-				'latitude'      => '',
-				'longitude'     => '',
-				'price_range'   => '',
-				'has_map'       => '',
-				'service_area'  => '',
-				'opening_hours' => array(),
-				'same_as'       => array(),
-			)
-		);
+		$local = \PublishRankSEO\SEO\LocalSEO::profile();
+		if ( '' === (string) $local['url'] ) {
+			$local['url'] = home_url( '/' ); }
 		echo '<div class="prw-fields">';
 		echo '<div class="prw-field prw-field--wide prw-field--toggle"><input type="hidden" name="local_seo[enabled]" value="0" /><label class="prw-switch-row" for="prw_local_enabled"><span class="prw-switch-row__text"><b>' . esc_html__( 'Enable LocalBusiness schema', 'publishrank' ) . '</b><small>' . esc_html__( 'Leave off for a purely digital publication without a real public business location.', 'publishrank' ) . '</small></span><span class="pr-switch"><input id="prw_local_enabled" type="checkbox" name="local_seo[enabled]" value="1"' . checked( ! empty( $local['enabled'] ), true, false ) . ' data-prw-local-toggle /><span class="pr-switch__track"><span class="pr-switch__thumb"></span></span></span></label></div>';
 		echo '<div class="prw-fields prw-field--wide prw-local-fields" data-prw-local-fields>';
@@ -1377,20 +1334,18 @@ final class OnboardingPage {
 			'country'      => __( 'Country', 'publishrank' ),
 			'latitude'     => __( 'Latitude', 'publishrank' ),
 			'longitude'    => __( 'Longitude', 'publishrank' ),
-			'service_area' => __( 'Service area', 'publishrank' ),
 			'has_map'      => __( 'Map URL', 'publishrank' ),
 			'price_range'  => __( 'Price range (if applicable)', 'publishrank' ),
 		);
 		echo '<div class="prw-field"><label class="prw-label" for="prw_local_type">' . esc_html__( 'Business type', 'publishrank' ) . '</label><select id="prw_local_type" name="local_seo[type]">';
-		foreach ( \PublishRankSEO\SEO\LocalSEO::types() as $type => $label ) {
-			echo '<option value="' . esc_attr( $type ) . '"' . selected( $local['type'], $type, false ) . '>' . esc_html( $label ) . '</option>';
-		}
+		echo \PublishRankSEO\SEO\LocalSEO::type_options_html( $local['type'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper.
 		echo '</select></div>';
 		foreach ( $text as $key => $label ) {
 			$kind = in_array( $key, array( 'url', 'logo', 'has_map' ), true ) ? 'url' : ( 'email' === $key ? 'email' : ( in_array( $key, array( 'latitude', 'longitude' ), true ) ? 'number' : 'text' ) );
 			echo '<div class="prw-field"><label class="prw-label" for="prw_local_' . esc_attr( $key ) . '">' . esc_html( $label ) . '</label><input id="prw_local_' . esc_attr( $key ) . '" type="' . esc_attr( $kind ) . '"' . ( 'number' === $kind ? ' step="any"' : '' ) . ' name="local_seo[' . esc_attr( $key ) . ']" value="' . esc_attr( (string) $local[ $key ] ) . '" /></div>';
 		}
-		echo '<div class="prw-field prw-field--wide"><label class="prw-label" for="prw_local_hours">' . esc_html__( 'Opening hours', 'publishrank' ) . '</label><textarea id="prw_local_hours" name="local_seo[opening_hours]" rows="2" aria-describedby="prw_local_hours_help">' . esc_textarea( is_array( $local['opening_hours'] ) ? implode( "\n", $local['opening_hours'] ) : '' ) . '</textarea><small class="prw-help" id="prw_local_hours_help">' . esc_html__( 'Example: Mo-Fr 09:00-17:00', 'publishrank' ) . '</small></div>';
+		echo '<div class="prw-field prw-field--wide"><label class="prw-label" for="prw_local_service_area">' . esc_html__( 'Areas served (one per line)', 'publishrank' ) . '</label><textarea id="prw_local_service_area" name="local_seo[service_area]" rows="2">' . esc_textarea( is_array( $local['service_area'] ) ? implode( "\n", $local['service_area'] ) : (string) $local['service_area'] ) . '</textarea></div>';
+		echo '<div class="prw-field prw-field--wide"><label class="prw-label" for="prw_local_hours">' . esc_html__( 'Opening hours', 'publishrank' ) . '</label><textarea id="prw_local_hours" name="local_seo[opening_hours]" rows="2" aria-describedby="prw_local_hours_help">' . esc_textarea( is_array( $local['opening_hours'] ) ? implode( "\n", $local['opening_hours'] ) : '' ) . '</textarea><small class="prw-help" id="prw_local_hours_help">' . esc_html__( 'Example: Mo-Fr 09:00-17:00', 'publishrank' ) . ' · <a href="' . esc_url( \PublishRankSEO\Core\Branding::page_url( \PublishRankSEO\SEO\LocalSEO::SLUG ) ) . '">' . esc_html__( 'More business details (menu, specialties, services…) in Local SEO', 'publishrank' ) . '</a></small></div>';
 		echo '<div class="prw-field prw-field--wide"><label class="prw-label" for="prw_local_same">' . esc_html__( 'Official profile URLs (one per line)', 'publishrank' ) . '</label><textarea id="prw_local_same" name="local_seo[same_as]" rows="2">' . esc_textarea( is_array( $local['same_as'] ) ? implode( "\n", $local['same_as'] ) : '' ) . '</textarea></div>';
 		echo '</div></div>';
 	}

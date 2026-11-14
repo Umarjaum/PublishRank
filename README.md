@@ -21,18 +21,18 @@ PublishRank is an open-source WordPress plugin for news publishers, magazines, e
 
 ## Current release
 
-- **Version:** 2.20.19
+- **Version:** 2.20.20
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
 - **Requires PHP:** 7.4 or newer
 - **Repository:** <https://github.com/Umarjaum/PublishRank>
 - **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
-- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.20.19/publishrank-2.20.19.zip>
+- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.20.20/publishrank-2.20.20.zip>
 - **Official website:** <https://publishrankseo.vercel.app/>
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
 
-See the [v2.20.19 release notes](https://github.com/Umarjaum/PublishRank/releases/tag/v2.20.19) for the current plugin changes.
+See the [v2.20.20 release notes](https://github.com/Umarjaum/PublishRank/releases/tag/v2.20.20) for the current plugin changes.
 
 ## Actual interface screenshots
 
@@ -99,7 +99,7 @@ The sitemap index includes responsive cards, content-type badges, child-file cou
 - Sitemap health checks and frontend diagnostics.
 - IndexNow and optional Baidu submission workflows.
 - Optional traffic controls.
-- WP Hide Login: change the login address and choose how blocked visitors are handled from a dedicated **PublishRank → Hide Login** settings page, separate from WordPress Settings.
+- Private Login: change the login address and choose how blocked visitors are handled from a dedicated **PublishRank → Hide Login** settings page, separate from WordPress Settings.
 
 ### Publisher and newsroom workflows
 
@@ -107,6 +107,10 @@ The sitemap index includes responsive cards, content-type badges, child-file cou
 - Author expertise and author schema fields.
 - Newsroom assignments, stages, deadlines, calendar, activity, and notifications.
 - SEO score cards, internal-link recommendations, and publisher toolkit controls.
+
+## Complete feature catalog
+
+The [2.20.20 feature catalog](docs/FEATURE-CATALOG-2.20.20.md) documents the SEO editor and analysis, schema profiles and JSON-LD, all 134 selectable Local SEO business options grouped into 14 source-defined niches, technical SEO, search integrations, internal-link intelligence, newsroom and editorial workflows, redirects and 404 monitoring, Private Login, integrations, diagnostics, and administration. The business options are not 134 separate Schema.org classes.
 
 ## WordPress installation
 

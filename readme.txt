@@ -4,7 +4,7 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.20.19
+Stable tag: 2.20.20
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
@@ -19,24 +19,311 @@ Compatibility target: WordPress 7.1. The plugin remains installable on PHP 7.4+;
 
 Copyright and project rights: Muhammad Umar Jabbar.
 
-Features include:
+Feature catalog: this release includes the following areas and capabilities. Optional integrations may require administrator configuration and third-party accounts.
 
-* Features screen (formerly SEO Modules) with instant on/off toggle cards for sitemaps, schema, social metadata, the live SEO score, internal links, breadcrumbs, redirects, the 404 monitor, robots.txt, llms.txt and IndexNow.
-* Floating SEO Analysis panel in the editor with a live score ring out of 100, passed checks and items to improve, plus side-by-side Google, Facebook/LinkedIn and X previews.
-* SEO titles, descriptions, canonicals, robots directives, Open Graph and X/Twitter metadata.
-* Connected JSON-LD schema for organizations, people, webpages, articles, breadcrumbs and supported media/content types.
-* XML sitemaps for posts, pages, taxonomies, authors, images and videos, including a Google News sitemap.
-* Redirect management and a privacy-conscious local 404 monitor with normalized paths, grouped browser/mobile/crawler hits, referrer paths without query strings, noise suppression for assets and infrastructure probes, throttled and locked bounded writes, 90-day retention, searchable/sortable review, clearable logs, and same-site redirect creation.
-* Per-article author schema overrides for author name, job title and image, plus selectable Article, NewsArticle and BlogPosting types.
-* Migration & Portability workspace for Yoast SEO, Rank Math, All in One SEO, SEOPress and The SEO Framework, with preflight scans, safe merge/overwrite imports, preserved source metadata and normalized JSON exports.
-* Global and per-content robots directives, including index/noindex and follow/nofollow controls, plus configurable robots.txt rules.
-* Robots.txt controls, hreflang support and breadcrumbs.
-* IndexNow notifications and manual URL submission (optional; sends eligible public URLs to the IndexNow service when enabled).
-* Configurable llms.txt and optional llms-full.txt resources, with a public paginated schema-discovery endpoint linked from llms.txt.
-* Editorial SEO analysis, internal-link recommendations, sitemap diagnostics and WP-CLI commands.
-* Publisher Toolkit with permission-aware bulk SEO metadata editing, role-based access for the toolkit, and optional image alt-text assistance that preserves existing descriptions.
-* **New: Private Login.** Optional custom sign-in URL, default-login-route handling, redirect behavior and multisite defaults, managed from its own PublishRank submenu screen.
-* Always-on technical source provenance markers in page source; they do not add a promotional link or visible footer credit.
+**SEO Editor and Content Optimization**
+* SEO title editor.
+* Meta description editor.
+* Primary focus keyword.
+* Up to ten secondary keyphrases.
+* Synonyms and related keyphrases.
+* Live SEO score out of 100.
+* Keyword placement analysis.
+* Keyword density.
+* Keyword distribution.
+* Title keyword analysis.
+* Description keyword analysis.
+* URL slug analysis.
+* Opening paragraph analysis.
+* Subheading analysis.
+* Image alt-text analysis.
+* Content readability.
+* Article intelligence.
+* Content context.
+* SEO recommendations.
+* Search snippet preview.
+* Google desktop and mobile previews.
+* Facebook and LinkedIn previews.
+* X/Twitter previews.
+* Canonical URL.
+* Robots directives.
+* Open Graph metadata.
+* X/Twitter metadata.
+* Automatic metadata fallbacks.
+* Metadata template variables.
+* Per-post SEO overrides.
+* Language-specific SEO metadata.
+* Gutenberg integration.
+* Classic Editor integration.
+* Floating SEO analysis panel.
+* Movable SEO editor panel.
+* SEO analysis sidebar.
+* Tabbed SEO editor interface.
+* Live keyword field saving.
+
+**Structured Data and Schema Engine**
+* Organization.
+* Person.
+* WebSite.
+* WebPage.
+* Article.
+* NewsArticle.
+* BlogPosting.
+* ReportageNewsArticle.
+* AnalysisNewsArticle.
+* OpinionNewsArticle.
+* BackgroundNewsArticle.
+* Opinion and review-oriented article types.
+* ScholarlyArticle.
+* TechnicalArticle.
+* Sponsored article markup.
+* LiveBlogPosting.
+* VideoObject.
+* ImageGallery.
+* AudioObject.
+* PodcastEpisode.
+* FAQPage.
+* Event.
+* Product.
+* Recipe.
+* Review.
+* JobPosting.
+* LocalBusiness.
+* BreadcrumbList.
+* Author-related structured data.
+* Connected JSON-LD graph.
+* Schema aggregation.
+* Schema discovery endpoint.
+* Schema validation tools.
+* Live JSON-LD preview.
+
+**Local SEO — Business Types**
+* 134 selectable business options across 14 niches. The options are not 134 independent Schema.org classes.
+* 14 business niches.
+* Business profile management.
+* Business name and legal name.
+* Business description.
+* Address and geographical coordinates.
+* Service-area businesses.
+* Hidden street addresses.
+* Opening hours.
+* Holiday and special hours.
+* Telephone and email.
+* Website.
+* Business logo and photographs.
+* Price range.
+* Payment methods.
+* Accepted currencies.
+* Languages.
+* Areas served.
+* Services and OfferCatalog.
+* Booking links and ReserveAction.
+* Founding date.
+* Tax identification number.
+* Parent organization.
+* Business-specific properties.
+* Restaurants: cuisine, menus and reservations.
+* Hotels: check-in, check-out, rooms, official star rating and pets.
+* Medical businesses: medical specialties and new-patient status.
+* Banks: fees page.
+* Shops and car dealerships: brands.
+* Venues: capacity and free-entry information.
+* Schools and veterinary businesses: appropriate LocalBusiness mappings.
+* Funeral homes: LocalBusiness with additionalType where applicable.
+
+**Business options by niche**
+* General (3): Local business (generic) (`LocalBusiness`), Professional service (generic) (`ProfessionalService`), Store / shop (generic) (`Store`).
+* Food & drink (10): Food establishment (generic) (`FoodEstablishment`), Restaurant (`Restaurant`), Fast food restaurant (`FastFoodRestaurant`), Cafe / coffee shop (`CafeOrCoffeeShop`), Bakery (`Bakery`), Ice cream shop (`IceCreamShop`), Bar or pub (`BarOrPub`), Brewery (`Brewery`), Winery (`Winery`), Distillery (`Distillery`).
+* Health & medical (8): Medical business (generic) (`MedicalBusiness`), Medical clinic (`MedicalClinic`), Doctor / physician practice (`Physician`), Hospital (`Hospital`), Dentist (`Dentist`), Optician (`Optician`), Pharmacy / drugstore (`Pharmacy`), Veterinary care (`VeterinaryCare`).
+* Beauty & wellness (7): Health & beauty (generic) (`HealthAndBeautyBusiness`), Beauty salon (`BeautySalon`), Hair salon (`HairSalon`), Nail salon (`NailSalon`), Day spa (`DaySpa`), Tattoo parlor (`TattooParlor`), Health club / gym (`HealthClub`).
+* Home & construction services (9): Home & construction (generic) (`HomeAndConstructionBusiness`), Electrician (`Electrician`), Plumber (`Plumber`), Heating / ventilation / AC (HVAC) (`HVACBusiness`), Roofing contractor (`RoofingContractor`), House painter (`HousePainter`), General contractor (`GeneralContractor`), Locksmith (`Locksmith`), Moving company (`MovingCompany`).
+* Automotive (10): Automotive (generic) (`AutomotiveBusiness`), Auto body shop (`AutoBodyShop`), Car dealership (`AutoDealer`), Auto parts store (`AutoPartsStore`), Car rental (`AutoRental`), Auto repair shop (`AutoRepair`), Car wash (`AutoWash`), Gas station (`GasStation`), Motorcycle dealer (`MotorcycleDealer`), Motorcycle repair (`MotorcycleRepair`).
+* Legal, finance & real estate (11): Legal service (generic) (`LegalService`), Attorney / law firm (`Attorney`), Notary (`Notary`), Accountant / bookkeeping (`AccountingService`), Financial service (generic) (`FinancialService`), Bank or credit union (`BankOrCreditUnion`), ATM (`AutomatedTeller`), Insurance agency (`InsuranceAgency`), Real estate agency (`RealEstateAgent`), Employment / staffing agency (`EmploymentAgency`), Travel agency (`TravelAgency`).
+* Lodging & travel stays (8): Lodging (generic) (`LodgingBusiness`), Hotel (`Hotel`), Motel (`Motel`), Hostel (`Hostel`), Bed & breakfast (`BedAndBreakfast`), Vacation rental (`VacationRental`), Campground (`Campground`), Resort (`Resort`).
+* Retail & shopping (30): Shopping center / mall (`ShoppingCenter`), Bike store (`BikeStore`), Book store (`BookStore`), Clothing store (`ClothingStore`), Computer store (`ComputerStore`), Convenience store (`ConvenienceStore`), Department store (`DepartmentStore`), Electronics store (`ElectronicsStore`), Florist (`Florist`), Furniture store (`FurnitureStore`), Garden store (`GardenStore`), Grocery store (`GroceryStore`), Hardware store (`HardwareStore`), Hobby shop (`HobbyShop`), Home goods store (`HomeGoodsStore`), Jewelry store (`JewelryStore`), Liquor store (`LiquorStore`), Men's clothing store (`MensClothingStore`), Mobile phone store (`MobilePhoneStore`), Movie rental store (`MovieRentalStore`), Music store (`MusicStore`), Office equipment store (`OfficeEquipmentStore`), Outlet store (`OutletStore`), Pawn shop (`PawnShop`), Pet store (`PetStore`), Shoe store (`ShoeStore`), Sporting goods store (`SportingGoodsStore`), Tire shop (`TireShop`), Toy store (`ToyStore`), Wholesale store (`WholesaleStore`).
+* Entertainment & nightlife (8): Entertainment (generic) (`EntertainmentBusiness`), Amusement park (`AmusementPark`), Art gallery (`ArtGallery`), Casino (`Casino`), Comedy club (`ComedyClub`), Movie theater / cinema (`MovieTheater`), Nightclub (`NightClub`), Internet cafe (`InternetCafe`).
+* Sports & recreation (9): Sports venue (generic) (`SportsActivityLocation`), Bowling alley (`BowlingAlley`), Exercise gym (`ExerciseGym`), Golf course (`GolfCourse`), Public swimming pool (`PublicSwimmingPool`), Ski resort (`SkiResort`), Sports club (`SportsClub`), Stadium / arena (`StadiumOrArena`), Tennis complex (`TennisComplex`).
+* Education & child care (7): School / academy / tuition centre (generic) (`EducationalOrganization`), Child care / daycare (`ChildCare`), Preschool / nursery (`Preschool`), Primary / elementary school (`ElementarySchool`), Middle school (`MiddleSchool`), High school (`HighSchool`), College / university (`CollegeOrUniversity`).
+* Services & community (7): Funeral home (`FuneralHome`), Dry cleaner / laundry (`DryCleaningOrLaundry`), Self storage (`SelfStorage`), Recycling center (`RecyclingCenter`), Animal shelter (`AnimalShelter`), Library (`Library`), Tourist information center (`TouristInformationCenter`).
+* Public services & media (7): Government office (`GovernmentOffice`), Post office (`PostOffice`), Police station (`PoliceStation`), Fire station (`FireStation`), Emergency service (generic) (`EmergencyService`), Radio station (`RadioStation`), Television station (`TelevisionStation`).
+
+**Technical SEO**
+* XML sitemap generation.
+* Sitemap index.
+* Post sitemap.
+* Page sitemap.
+* Taxonomy sitemap.
+* Author sitemap.
+* Image sitemap.
+* Video sitemap.
+* Google News sitemap.
+* Sitemap browser.
+* Sitemap health checks.
+* Sitemap diagnostics.
+* Sitemap filtering.
+* Sitemap caching.
+* Sitemap pagination.
+* Robots.txt management.
+* Global robots directives.
+* Per-post robots directives.
+* Noindex and nofollow.
+* Crawl optimization.
+* Hreflang.
+* Breadcrumbs.
+* Featured image preloading.
+* Resource hints.
+* Preconnect.
+* DNS prefetch.
+* Link prefetching.
+* Speculation Rules.
+* Feed optimization.
+* llms.txt.
+* llms-full.txt.
+* Schema discovery.
+* Site verification.
+* Technical health checks.
+
+**Search Engine Integrations**
+* Google Search Console.
+* Google OAuth.
+* Search performance.
+* Search queries.
+* Search pages.
+* Daily and hourly metrics where implemented.
+* Discover performance.
+* Google News performance.
+* URL Inspection.
+* Property selection.
+* IndexNow.
+* Manual URL submission.
+* Automatic IndexNow notifications.
+* Baidu URL submission.
+* Google Preferred Sources.
+
+**Internal Linking and Link Intelligence**
+* Internal link recommendations.
+* Content relationship analysis.
+* Content Graph.
+* Orphaned content detection.
+* Link opportunities.
+* Broken-link detection.
+* Redirecting-link detection.
+* Redirect-chain analysis.
+* Sitewide broken-link checks.
+* Scheduled link auditing.
+* Per-article link rechecking.
+* External-link checking when enabled.
+* Link health reporting.
+
+**Newsroom and Editorial Management**
+* Newsroom dashboard.
+* Story pitches.
+* Editorial assignments.
+* Editorial workflow.
+* Story planning.
+* Editorial calendar.
+* Planning board.
+* Scheduled story management.
+* Newsroom activity.
+* Notifications.
+* Newsroom configuration.
+* Role-based newsroom permissions.
+* Author expertise.
+* Author credentials.
+* Publisher Toolkit.
+* Bulk SEO editing.
+* Image alt-text assistance.
+* Publishing workflow.
+* Mastodon publishing.
+* Mastodon profile verification.
+* Author verification using rel="me".
+* Fediverse author attribution.
+* Sharing history.
+* Per-post sharing controls.
+
+**Redirects and 404 Monitoring**
+* 301 redirects.
+* 302 redirects.
+* Redirect management.
+* Regex redirects where implemented.
+* Redirect validation.
+* Redirect-loop detection.
+* 404 monitoring.
+* Normalized URL paths.
+* Browser/mobile/crawler categories.
+* Referrer tracking.
+* Searchable and sortable logs.
+* Noise suppression.
+* Bounded storage.
+* 90-day retention.
+* Redirect creation from 404 entries.
+
+**Private Login**
+* Custom sign-in URL.
+* Default login-route handling.
+* wp-login.php handling.
+* wp-register.php handling.
+* wp-admin request handling.
+* Custom redirect URL.
+* Multisite defaults.
+* Migration of existing settings.
+* Emergency recovery constant:
+* Dedicated administration screen.
+* Login URL validation.
+* Compatibility considerations.
+
+**Integrations and Compatibility**
+* Gutenberg.
+* Classic Editor.
+* WPML.
+* Polylang.
+* TranslatePress.
+* Weglot.
+* bbPress.
+* BuddyPress.
+* Web Stories.
+* Podcast functionality.
+* JNews adapter.
+* Yoast migration.
+* Rank Math migration.
+* All in One SEO migration.
+* SEOPress migration.
+* The SEO Framework migration.
+* Import/export.
+* WP-CLI.
+
+**Analytics, Diagnostics and Publisher Intelligence**
+* Search Console performance dashboard.
+* Search insights.
+* SEO diagnostics.
+* Sitemap diagnostics.
+* Frontend scanning.
+* Schema health.
+* Link intelligence.
+* Search engine visibility checks.
+* Publisher diagnostics.
+* Configuration history.
+* Configuration snapshots.
+* Technical health monitoring.
+
+**Security and Administration**
+* Traffic Guard.
+* Trusted proxy configuration.
+* IP/CIDR controls.
+* Country rules.
+* Security headers.
+* Private Login.
+* Role-based access.
+* Feature toggles.
+* Setup Wizard.
+* Dashboard.
+* Configuration management.
+* Migration & Portability.
+* Import/export.
+* Admin toolbar.
+* Documentation & Help.
+* WP-CLI.
+* REST API.
 
 PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusion in Google News. IndexNow is not supported by Google.
 
@@ -61,7 +348,7 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 == Documentation ==
 
 * In WordPress: **PublishRank → Documentation & Help** explains titles, variables, output controls, breadcrumbs, sitemaps, schema, robots, redirects, the robust 404 Monitor, IndexNow, Baidu, diagnostics, the admin menu and toolbar, the sitemap browser view, versions and troubleshooting.
-* In the package: `docs/features/FEATURES.md` lists every dashboard feature and Technical Health check provided through version 2.10.1. The `docs/` folder also contains guides for sitemaps, branding, admin navigation, the 404 Monitor, troubleshooting, versioning and a WordPress 7.1.3 compatibility checklist.
+* Complete feature inventory for this release: [FEATURE-CATALOG-2.20.20.md](https://github.com/Umarjaum/PublishRank/blob/main/docs/FEATURE-CATALOG-2.20.20.md), including Local SEO options grouped into the 14 source-defined niches.
 * Online: [publishrankseo.vercel.app](https://publishrankseo.vercel.app/).
 
 == Frequently Asked Questions ==
@@ -91,7 +378,7 @@ A readable view of the same sitemap search engines fetch as plain XML: totals, a
 Enable **Record a capped rolling 404 log** in **PublishRank → Settings**, then review entries at **PublishRank → 404 Monitor**. The monitor aggregates normalized paths by browser, mobile or crawler category, records hit counts and first/last seen times, and keeps only the latest useful referrer path without storing IP addresses, cookies, request bodies or full query strings. It ignores admin, AJAX, cron, REST, non-GET/HEAD, common static-asset and infrastructure-probe requests. The log is rate-limited, protected against concurrent write loss, retained for 90 days and capped at 500 entries. Administrators can search paths, filter visitor categories, sort by hits or recency, dismiss entries, clear the log, or create validated same-site redirects. It is a bounded diagnostic aid, not a complete access log, analytics system, WAF or DDoS defense.
 
 = Where is the complete feature list? =
-The package guide `docs/features/FEATURES.md` is the complete dashboard inventory through version 2.10.1. It includes every card under Search & discovery, Content & publishing, Measure & maintain, and Settings & help, plus every Technical Health check: Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt, Schema Aggregator, SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Internal links, Link intelligence, Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, Private Login, Configuration history, Diagnostics, Setup wizard, Settings, Titles & Meta, Import / Export, Documentation & help, SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility.
+The complete category-by-category feature list and source-defined Local SEO business registry are included in the feature catalog above and at [FEATURE-CATALOG-2.20.20.md](https://github.com/Umarjaum/PublishRank/blob/main/docs/FEATURE-CATALOG-2.20.20.md).
 
 = Which logo does PublishRank use? =
 One file, `assets/images/publishrank-brand-mark.png`, shown in the admin sidebar, toolbar, screen headers, setup wizard and sitemap view. No SVG or alternate icon files are packaged.
@@ -149,6 +436,14 @@ PublishRank is provided under the GPLv2-or-later license. The plugin does not gu
 Other website links in the administration interface (including the Schema.org vocabulary and links to provider documentation) are ordinary references, not background API integrations. PublishRank's source-provenance markers are technical metadata only; the plugin does not insert a visible footer credit or promotional link.
 
 == Changelog ==
+
+= 2.20.20 =
+* **Local SEO for every kind of business.** 134 selectable business-type options across 14 niches (not 134 independent Schema.org classes), including new Education & child care and Public services & media groups, hospitals, doctors, notaries, ATMs, vacation rentals, ice cream shops, shopping centres, libraries and more.
+* **Fields for each business type.** Restaurants get cuisine, menu and reservations; hotels get check-in and check-out, rooms, official star rating and pets; clinics, dentists, pharmacies and vets get medical specialties and new-patient status; banks get a fees page; shops and car dealers get brands; venues get capacity and free entry. They appear only for the types schema.org defines them on.
+* **Richer, valid LocalBusiness schema.** Opening hours are published as OpeningHoursSpecification, with holiday and special hours; services become an OfferCatalog; amenities, languages, areas served, payment methods, currencies, booking link (ReserveAction), legal name, founding date, tax ID, logo and photo are supported. Service-area businesses can hide their street address, map and coordinates.
+* **Schema fixes.** Veterinary care and schools are now typed with LocalBusiness so hours and price range are valid; Funeral home (not a schema.org type) is published as LocalBusiness with a matching additionalType; the deprecated branchOf link is replaced by parentOrganization. Every type is checked against the schema.org vocabulary.
+* **Redesigned Local SEO screen.** Card sections that match the Setup Wizard, a Schema health checklist based on Google's guidelines, a live JSON-LD preview with copy, one-click hour presets and links to Google's Rich Results Test and the Schema.org validator. Works on phones.
+* The Setup Wizard no longer erases the extra Local SEO details when it saves.
 
 = 2.20.19 =
 * **Mastodon works end to end.** Posts you opt in to sharing from the editor are now shared reliably (the choice was read before it was saved), "Share again now" really posts again, the server field accepts a plain address like mastodon.social, and the access token is never printed back into the page. The status only says Connected once Mastodon accepts the token, and failed checks explain what to fix.
