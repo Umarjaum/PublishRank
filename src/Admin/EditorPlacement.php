@@ -101,6 +101,47 @@ final class EditorPlacement {
 		echo '</div></div>';
 	}
 
+	/** The movable SEO editor window (fields, previews and analysis in one draggable, resizable window). */
+	private function enqueue_window( $post ) {
+		$css = PUBLISHRANK_SEO_PATH . 'assets/css/seo-window.css';
+		$js  = PUBLISHRANK_SEO_PATH . 'assets/js/seo-window.js';
+		wp_enqueue_style( 'dashicons' );
+		wp_enqueue_style( 'publishrank-seo-window', Branding::asset_url( 'css/seo-window.css' ), array( self::HANDLE ), Branding::version() . '.' . ( file_exists( $css ) ? (string) filemtime( $css ) : '0' ) );
+		wp_enqueue_script( 'publishrank-seo-window', Branding::asset_url( 'js/seo-window.js' ), array( self::HANDLE ), Branding::version() . '.' . ( file_exists( $js ) ? (string) filemtime( $js ) : '0' ), true );
+		wp_localize_script(
+			'publishrank-seo-window',
+			'publishrankSeoWindow',
+			array(
+				'blockEditor' => self::is_block_editor( $post ),
+				'i18n'        => array(
+					'title'            => __( 'PublishRank SEO editor', 'publishrank' ),
+					'fields'           => __( 'SEO fields', 'publishrank' ),
+					'preview'          => __( 'Previews', 'publishrank' ),
+					'analysis'         => __( 'Analysis', 'publishrank' ),
+					'tabs'             => __( 'SEO editor sections', 'publishrank' ),
+					'open'             => __( 'Open the movable SEO editor with previews', 'publishrank' ),
+					'close'            => __( 'Dock the SEO editor back', 'publishrank' ),
+					'minimize'         => __( 'Minimize', 'publishrank' ),
+					'restore'          => __( 'Restore', 'publishrank' ),
+					'snapLeft'         => __( 'Snap to the left edge', 'publishrank' ),
+					'snapRight'        => __( 'Snap to the right edge', 'publishrank' ),
+					'center'           => __( 'Centre the window', 'publishrank' ),
+					'resize'           => __( 'Drag to resize', 'publishrank' ),
+					'draggable'        => __( 'movable window header', 'publishrank' ),
+					'dragHelp'         => __( 'Drag to move. Double-click to reset. Ctrl/Cmd + Shift + E opens or closes this window.', 'publishrank' ),
+					'keyboardHelp'     => __( 'Use the arrow keys to move this window, Shift and an arrow key to move it faster, Alt and an arrow key to resize it, Home to centre it and Escape to minimize it.', 'publishrank' ),
+					/* translators: %d: SEO score out of 100. */
+					'scoreAria'        => __( 'SEO score %d out of 100', 'publishrank' ),
+					'noFields'         => __( 'The SEO fields are not available for this post type.', 'publishrank' ),
+					'noPreview'        => __( 'Live previews are switched off for this post type.', 'publishrank' ),
+					'noAnalysis'       => __( 'The SEO analysis is not available for this post type.', 'publishrank' ),
+					'analysisFloating' => __( 'The SEO analysis is open as its own floating panel.', 'publishrank' ),
+					'moveHere'         => __( 'Move it into this window', 'publishrank' ),
+				),
+			)
+		);
+	}
+
 	/** Register (not enqueue) the dock assets so the block editor sidebar can depend on them. */
 	public function register_assets( $hook ) {
 		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) {
@@ -120,6 +161,7 @@ final class EditorPlacement {
 		$post_id = $post instanceof \WP_Post ? (int) $post->ID : ( isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		wp_enqueue_style( self::HANDLE );
 		wp_enqueue_script( self::HANDLE );
+		$this->enqueue_window( $post instanceof \WP_Post ? $post : null );
 		wp_localize_script(
 			self::HANDLE,
 			'publishrankSeoDock',

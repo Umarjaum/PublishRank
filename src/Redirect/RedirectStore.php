@@ -217,4 +217,122 @@ return $out ? implode( ' · ', $out ) : __( 'Always active', 'publishrank' );
 		}
 		return $rows;
 	}
+
+	/** Target for a matched rule; regex rules may use $1…$9 for captured groups of the old path. */
+	public static function resolve_target( array $rule, $path ) {
+		$target = (string) ( $rule['target'] ?? '' );
+		if ( ! empty( $rule['regex'] ) && false !== strpos( $target, '$' ) && self::regex_is_valid( (string) $rule['source'] ) ) {
+			$out = @preg_replace( self::compile_regex( (string) $rule['source'] ), $target, (string) $path, 1 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			if ( is_string( $out ) && '' !== $out ) {
+				// Captures come from the public URL: keep them to safe path characters.
+				$target = (string) preg_replace( '#[^A-Za-z0-9/_\-.~%:?=&+]#', '', $out );
+			}
+		}
+		return $target;
+	}
+
+	/** Whether a stored rule matches a normalised request path (same logic as the runtime controller). */
+	public static function rule_matches( array $rule, $path ) {
+		$source = (string) ( $rule['source'] ?? '' );
+		if ( ! empty( $rule['regex'] ) ) {
+			if ( strlen( (string) $path ) > 2048 || ! self::regex_is_valid( $source ) ) {
+				return false;
+			}
+			return 1 === @preg_match( self::compile_regex( $source ), (string) $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Validated pattern; a failure means "no match".
+		}
+		return self::normalise_path( $source ) === (string) $path;
+	}
+
+	/**
+	 * Follow the redirect rules for a path without making a request.
+	 *
+	 * @return array<int,array{path:string,status:int,target:string,regex:bool,loop:bool}>
+	 */
+	public static function trace( $url ) {
+		$path  = self::normalise_path( $url );
+		$hops  = array();
+		$seen  = array();
+		$limit = min( 50, max( 1, absint( get_option( 'publishrank_redirect_max_hops', 10 ) ) ) );
+		for ( $i = 0; $i < $limit; $i++ ) {
+			$match = null;
+			foreach ( self::all() as $rule ) {
+				if ( ! empty( $rule['enabled'] ) && self::is_scheduled_active( $rule ) && self::rule_matches( $rule, $path ) ) {
+					$match = $rule;
+					break;
+				}
+			}
+			if ( ! $match ) {
+				break;
+			}
+			$status = (int) ( $match['status'] ?? 301 );
+			$target = self::resolve_target( $match, $path );
+			$loop   = isset( $seen[ $path ] );
+			$hops[] = array( 'path' => $path, 'status' => $status, 'target' => $target, 'regex' => ! empty( $match['regex'] ), 'loop' => $loop );
+			$seen[ $path ] = true;
+			if ( $loop || in_array( $status, array( 410, 451 ), true ) || '' === $target ) {
+				break;
+			}
+			$host = wp_parse_url( $target, PHP_URL_HOST );
+			if ( $host && strtolower( (string) $host ) !== strtolower( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) ) ) {
+				break;
+			}
+			$path = self::normalise_path( $target );
+		}
+		return $hops;
+	}
+
+	/**
+	 * Read a CSV export (PublishRank, Yoast Premium, Rank Math, Redirection) into rule rows.
+	 * Recognised headers: source/from/origin/url, target/to/destination/redirect_to, status/type/code/http_code, regex/format/match_type.
+	 *
+	 * @return array<int,array{source:string,target:string,status:int,regex:bool}>
+	 */
+	public static function parse_csv( $csv ) {
+		$csv   = (string) preg_replace( '/^\xEF\xBB\xBF/', '', (string) $csv );
+		$lines = preg_split( '/\r\n|\r|\n/', $csv );
+		$rows  = array();
+		$map   = null;
+		$alias = array(
+			'source' => array( 'source', 'from', 'origin', 'url', 'old', 'source_url', 'sources' ),
+			'target' => array( 'target', 'to', 'destination', 'redirect_to', 'new', 'target_url', 'action_data' ),
+			'status' => array( 'status', 'type', 'code', 'http_code', 'redirect_type', 'header_code', 'action_code' ),
+			'regex'  => array( 'regex', 'format', 'match_type', 'comparison', 'is_regex' ),
+		);
+		foreach ( $lines as $line ) {
+			if ( '' === trim( (string) $line ) ) {
+				continue;
+			}
+			$cells = array_map( 'trim', str_getcsv( (string) $line, ',', '"', '\\' ) );
+			if ( null === $map ) {
+				$lower = array_map( 'strtolower', $cells );
+				$found = array();
+				foreach ( $alias as $field => $names ) {
+					foreach ( $lower as $i => $h ) {
+						if ( in_array( $h, $names, true ) ) {
+							$found[ $field ] = $i;
+							break;
+						}
+					}
+				}
+				if ( isset( $found['source'] ) ) {
+					$map = $found;
+					continue;
+				}
+				$map = array( 'source' => 0, 'target' => 1, 'status' => 2, 'regex' => 3 );
+			}
+			$source = (string) ( $cells[ $map['source'] ] ?? '' );
+			if ( '' === $source ) {
+				continue;
+			}
+			$status = isset( $map['status'] ) ? (int) preg_replace( '/\D/', '', (string) ( $cells[ $map['status'] ] ?? '' ) ) : 0;
+			$flag   = isset( $map['regex'] ) ? strtolower( (string) ( $cells[ $map['regex'] ] ?? '' ) ) : '';
+			$rows[] = array(
+				'source' => $source,
+				'target' => isset( $map['target'] ) ? (string) ( $cells[ $map['target'] ] ?? '' ) : '',
+				'status' => in_array( $status, self::statuses(), true ) ? $status : 301,
+				'regex'  => in_array( $flag, array( '1', 'yes', 'true', 'regex' ), true ),
+			);
+		}
+		return $rows;
+	}
 }

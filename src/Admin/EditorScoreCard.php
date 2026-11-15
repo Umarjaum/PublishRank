@@ -50,7 +50,9 @@ final class EditorScoreCard {
 				'publishrank-editor-score-card',
 				'publishrankScoreCard',
 				array(
-					'i18n' => self::strings(),
+					'i18n'          => self::strings(),
+					'dismissAction' => \PublishRankSEO\SEO\Language\InclusiveLanguage::AJAX,
+					'dismissNonce'  => \PublishRankSEO\SEO\Language\InclusiveLanguage::settings()['enabled'] ? wp_create_nonce( \PublishRankSEO\SEO\Language\InclusiveLanguage::AJAX ) : '',
 				)
 			);
 		}
@@ -102,6 +104,9 @@ final class EditorScoreCard {
 			'fixAria'       => __( 'Fix: %s', 'publishrank' ),
 			'popOut'        => __( 'Pop out as a floating panel', 'publishrank' ),
 			'dock'          => __( 'Dock to the sidebar', 'publishrank' ),
+			'dismiss'       => __( 'Dismiss', 'publishrank' ),
+			/* translators: %s: recommendation text. */
+			'dismissAria'   => __( 'Dismiss for this post: %s', 'publishrank' ),
 		);
 	}
 
@@ -216,7 +221,7 @@ final class EditorScoreCard {
 			echo '<li class="pr-esc__empty">' . esc_html( $empty ) . '</li>';
 		}
 		foreach ( $rows as $row ) {
-			echo '<li class="pr-esc__check is-' . esc_attr( $row['status'] ) . '"><span class="pr-esc__dot" aria-hidden="true"></span><span><strong>' . esc_html( $row['title'] ) . '</strong><small>' . esc_html( $row['message'] ) . '</small></span>' . ( 'good' !== $row['status'] && ! empty( $row['fix'] ) ? '<button type="button" class="button button-small pr-esc__fix" data-pr-esc-fix="' . esc_attr( $row['fix'] ) . '" aria-label="' . esc_attr( sprintf( /* translators: %s: check title. */ __( 'Fix: %s', 'publishrank' ), $row['title'] ) ) . '">' . esc_html__( 'Fix', 'publishrank' ) . '</button>' : '' ) . '</li>';
+			echo '<li class="pr-esc__check is-' . esc_attr( $row['status'] ) . '"><span class="pr-esc__dot" aria-hidden="true"></span><span><strong>' . esc_html( $row['title'] ) . '</strong><small>' . esc_html( $row['message'] ) . '</small></span>' . ( 'good' !== $row['status'] && ! empty( $row['fix'] ) ? '<button type="button" class="button button-small pr-esc__fix" data-pr-esc-fix="' . esc_attr( $row['fix'] ) . '" aria-label="' . esc_attr( sprintf( /* translators: %s: check title. */ __( 'Fix: %s', 'publishrank' ), $row['title'] ) ) . '">' . esc_html__( 'Fix', 'publishrank' ) . '</button>' : '' ) . ( ! empty( $row['dismiss'] ) ? '<button type="button" class="button button-small pr-esc__fix pr-esc__dismiss" data-pr-esc-dismiss="' . esc_attr( $row['dismiss'] ) . '">' . esc_html__( 'Dismiss', 'publishrank' ) . '</button>' : '' ) . '</li>';
 		}
 		echo '</ul></details>';
 	}

@@ -100,7 +100,16 @@
 		});
 		frame.on('select', function () {
 			var attachment = frame.state().get('selection').first().toJSON();
-			target.val(attachment.url).trigger('input').trigger('change');
+			target.val(attachment.url);
+			// jQuery's .trigger() does not reach listeners added with addEventListener (the wizard thumbnail,
+			// live previews), so dispatch real DOM events as well.
+			var idField = document.getElementById(target.attr('id') + '_id');
+			if (idField) { idField.value = attachment.id ? String(attachment.id) : ''; }
+			['input', 'change'].forEach(function (type) {
+				try { target[0].dispatchEvent(new Event(type, { bubbles: true })); } catch (err) { target.trigger(type); }
+			});
+			var thumbUrl = attachment.sizes && (attachment.sizes.medium || attachment.sizes.thumbnail) ? (attachment.sizes.medium || attachment.sizes.thumbnail).url : attachment.url;
+			target.attr('data-prw-thumb-url', thumbUrl);
 			var widget = discoverWidget();
 			if (widget && target[0] === socialImageInput(widget)) {
 				updateDiscoverSource(widget, attachment.id, attachment.url, attachment.width, attachment.height);

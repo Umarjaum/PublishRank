@@ -67,6 +67,8 @@ final class AdminShell {
 					'publishrank-seo-robots'               => array( 'icon' => 'fa-robot', 'label' => __( 'Robots.txt', 'publishrank' ), 'desc' => __( 'Decide which crawlers may visit which parts of your site.', 'publishrank' ) ),
 					'publishrank-crawl-optimization'       => array( 'icon' => 'fa-filter', 'label' => __( 'Crawl optimization', 'publishrank' ), 'desc' => __( 'Clean up feeds, search pages and extra URLs crawlers do not need.', 'publishrank' ) ),
 					'publishrank-breadcrumbs'              => array( 'icon' => 'fa-chevron-right', 'label' => __( 'Breadcrumbs', 'publishrank' ), 'desc' => __( 'Show a navigation trail and its structured data.', 'publishrank' ) ),
+					'publishrank-site-navigation'          => array( 'icon' => 'fa-compass', 'label' => __( 'Site Navigation', 'publishrank' ), 'desc' => __( 'Mark your most important pages and check they are indexable and well linked.', 'publishrank' ) ),
+					'publishrank-feeds'                    => array( 'icon' => 'fa-rss', 'label' => __( 'RSS Feeds', 'publishrank' ), 'desc' => __( 'Control feed content, validate feeds and preview them as a reader would.', 'publishrank' ) ),
 					'publishrank-verification'             => array( 'icon' => 'fa-circle-check', 'label' => __( 'Site verification', 'publishrank' ), 'desc' => __( 'Verification codes that prove you own the site.', 'publishrank' ) ),
 					'publishrank-llms-txt'                 => array( 'icon' => 'fa-brain', 'label' => __( 'AI & llms.txt', 'publishrank' ), 'desc' => __( 'Guidance for AI assistants and the llms.txt file.', 'publishrank' ) ),
 				),
@@ -76,6 +78,7 @@ final class AdminShell {
 				'items' => array(
 					'publishrank-seo-score'          => array( 'icon' => 'fa-chart-simple', 'label' => __( 'SEO score', 'publishrank' ), 'desc' => __( 'Practical content and technical checks across the site.', 'publishrank' ) ),
 					'publishrank-author-expertise'   => array( 'icon' => 'fa-user-pen', 'label' => __( 'Author expertise', 'publishrank' ), 'desc' => __( 'Author credentials and expertise that build reader trust.', 'publishrank' ) ),
+					'publishrank-woocommerce'        => array( 'icon' => 'fa-store', 'label' => __( 'WooCommerce SEO', 'publishrank' ), 'desc' => __( 'Product schema, product sharing tags, product sitemap and store noindex rules.', 'publishrank' ) ),
 					'publishrank-local-seo'          => array( 'icon' => 'fa-location-dot', 'label' => __( 'Local SEO', 'publishrank' ), 'desc' => __( 'Your business location and local search details.', 'publishrank' ) ),
 					'publishrank-image-optimizer'    => array( 'icon' => 'fa-images', 'label' => __( 'Image optimizer', 'publishrank' ), 'desc' => __( 'Media optimization tools and image delivery settings.', 'publishrank' ) ),
 					'publishrank-publisher-toolkit'  => array( 'icon' => 'fa-toolbox', 'label' => __( 'Publisher toolkit', 'publishrank' ), 'desc' => __( 'Bulk SEO editing and everyday newsroom utilities.', 'publishrank' ) ),

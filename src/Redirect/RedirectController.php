@@ -28,7 +28,8 @@ final class RedirectController {
 				status_header( $status );
 				nocache_headers();
 				exit; }
-			$target = $this->safe_target( (string) ( $rule['target'] ?? '' ) );
+			$target = RedirectStore::resolve_target( $rule, $path );
+			$target = $this->safe_target( $target );
 			if ( '' === $target || $this->is_loop( $path, $target ) ) {
 				return; }
 			if ( get_option( 'publishrank_redirect_preserve_query', true ) && ! empty( $_GET ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pass-through of public query args.

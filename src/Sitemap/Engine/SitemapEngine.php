@@ -33,15 +33,23 @@ final class SitemapEngine {
 	}
 	private $cache;
 	private $lock;
-	private $providers = array();
+	private $providers = null;
 	public function __construct() {
 		SitemapCursorStore::register();
 		$this->cache     = new SitemapCache();
 		$this->lock      = new SitemapLock();
-		$this->providers = array( new PostSitemapProvider(), new PageSitemapProvider(), new CPTSitemapProvider(), new TaxonomySitemapProvider(), new AuthorSitemapProvider(), new AttachmentSitemapProvider(), new NewsSitemapProvider(), new ImageSitemapProvider(), new VideoSitemapProvider() );
-		$this->providers = apply_filters( 'publishrank_sitemap_providers', $this->providers );
+		$this->providers = null;
 	}
+	/**
+	 * Providers are resolved on first use, not in the constructor: the engine is built while modules are still
+	 * loading, so integrations registered later (bbPress, podcasts, Web Stories, WooCommerce) would otherwise
+	 * miss the publishrank_sitemap_providers filter and their sitemaps would answer 404.
+	 */
 	public function providers() {
+		if ( null === $this->providers ) {
+			$this->providers = array( new PostSitemapProvider(), new PageSitemapProvider(), new CPTSitemapProvider(), new TaxonomySitemapProvider(), new AuthorSitemapProvider(), new AttachmentSitemapProvider(), new NewsSitemapProvider(), new ImageSitemapProvider(), new VideoSitemapProvider() );
+			$this->providers = (array) apply_filters( 'publishrank_sitemap_providers', $this->providers );
+		}
 		return array_filter(
 			$this->providers,
 			function ( $provider ) {

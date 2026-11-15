@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: PublishRank 2.20.19\n"
+"Project-Id-Version: PublishRank 2.21.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/publishrank\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-14T03:52:24+00:00\n"
+"POT-Creation-Date: 2026-11-14T12:12:33+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: publishrank\n"
@@ -51,13 +51,13 @@ msgstr ""
 #: publishrank.php:157
 #: src/Admin/AdminShell.php:51
 #: src/Admin/DashboardPage.php:52
-#: src/Security/PrivateLogin.php:517
+#: src/Security/PrivateLogin.php:491
 msgid "Dashboard"
 msgstr ""
 
 #: publishrank.php:158
-#: src/Admin/AdminShell.php:87
-#: src/Admin/AdminShell.php:89
+#: src/Admin/AdminShell.php:90
+#: src/Admin/AdminShell.php:92
 #: src/Admin/DashboardPage.php:89
 #: src/Admin/DashboardPage.php:349
 #: src/Admin/DashboardPage.php:350
@@ -107,7 +107,7 @@ msgid "Sitemap Hub"
 msgstr ""
 
 #: publishrank.php:201
-#: src/Admin/AdminShell.php:107
+#: src/Admin/AdminShell.php:110
 #: src/Admin/DashboardPage.php:371
 #: src/Admin/DiagnosticsPage.php:31
 #: src/Admin/DiagnosticsPage.php:67
@@ -137,7 +137,7 @@ msgid "Welcome To SEO"
 msgstr ""
 
 #: src/Admin/AdminAssets.php:92
-#: src/Admin/OnboardingPage.php:1246
+#: src/Admin/OnboardingPage.php:1260
 msgid "Choose image"
 msgstr ""
 
@@ -150,7 +150,7 @@ msgstr ""
 #: src/Admin/MastodonPage.php:137
 #: src/Admin/MastodonPage.php:142
 #: src/Admin/MastodonPage.php:414
-#: src/Admin/OnboardingPage.php:1612
+#: src/Admin/OnboardingPage.php:1601
 #: src/Admin/RobotsPage.php:100
 msgid "Copied"
 msgstr ""
@@ -279,7 +279,7 @@ msgstr ""
 #: src/Admin/AdminAssets.php:197
 #: src/Admin/ModulesPage.php:69
 #: src/Admin/SitemapHealthPage.php:129
-#: src/Security/PrivateLogin.php:592
+#: src/Security/PrivateLogin.php:566
 msgid "You do not have permission to do this."
 msgstr ""
 
@@ -292,7 +292,7 @@ msgstr ""
 #: src/Admin/ModulesPage.php:116
 #: src/Admin/ModulesPage.php:122
 #: src/Admin/ModulesPage.php:151
-#: src/Admin/OnboardingPage.php:1644
+#: src/Admin/OnboardingPage.php:1633
 msgid "Features"
 msgstr ""
 
@@ -309,7 +309,7 @@ msgid "Move the WordPress login page to a private address, or switch it off."
 msgstr ""
 
 #: src/Admin/AdminShell.php:54
-#: src/Admin/OnboardingPage.php:1644
+#: src/Admin/OnboardingPage.php:1633
 #: src/Admin/SettingsPage.php:1112
 msgid "General Settings"
 msgstr ""
@@ -351,7 +351,7 @@ msgstr ""
 
 #: src/Admin/AdminShell.php:63
 #: src/Admin/DashboardPage.php:326
-#: src/Admin/HelpDocumentationPage.php:212
+#: src/Admin/HelpDocumentationPage.php:248
 #: src/Admin/IndexNowPage.php:27
 #: src/Admin/IndexNowPage.php:257
 #: src/Core/ModuleSwitches.php:142
@@ -428,15 +428,34 @@ msgid "Show a navigation trail and its structured data."
 msgstr ""
 
 #: src/Admin/AdminShell.php:70
+#: src/Admin/SiteNavigationPage.php:26
+msgid "Site Navigation"
+msgstr ""
+
+#: src/Admin/AdminShell.php:70
+msgid "Mark your most important pages and check they are indexable and well linked."
+msgstr ""
+
+#: src/Admin/AdminShell.php:71
+#: src/Admin/FeedsPage.php:26
+#: src/Admin/FeedsPage.php:73
+msgid "RSS Feeds"
+msgstr ""
+
+#: src/Admin/AdminShell.php:71
+msgid "Control feed content, validate feeds and preview them as a reader would."
+msgstr ""
+
+#: src/Admin/AdminShell.php:72
 #: src/Admin/DashboardPage.php:333
 msgid "Site verification"
 msgstr ""
 
-#: src/Admin/AdminShell.php:70
+#: src/Admin/AdminShell.php:72
 msgid "Verification codes that prove you own the site."
 msgstr ""
 
-#: src/Admin/AdminShell.php:71
+#: src/Admin/AdminShell.php:73
 #: src/Admin/DashboardPage.php:334
 #: src/Admin/LLMSTxtPage.php:20
 #: src/Admin/LLMSTxtPage.php:79
@@ -444,65 +463,76 @@ msgstr ""
 msgid "AI & llms.txt"
 msgstr ""
 
-#: src/Admin/AdminShell.php:71
+#: src/Admin/AdminShell.php:73
 msgid "Guidance for AI assistants and the llms.txt file."
 msgstr ""
 
-#: src/Admin/AdminShell.php:75
+#: src/Admin/AdminShell.php:77
 #: src/Admin/DashboardPage.php:85
 #: src/Admin/DashboardPage.php:314
 #: src/Admin/DashboardPage.php:339
 msgid "Content & publishing"
 msgstr ""
 
-#: src/Admin/AdminShell.php:77
+#: src/Admin/AdminShell.php:79
 #: src/Admin/DashboardPage.php:342
 msgid "SEO score"
 msgstr ""
 
-#: src/Admin/AdminShell.php:77
+#: src/Admin/AdminShell.php:79
 msgid "Practical content and technical checks across the site."
 msgstr ""
 
-#: src/Admin/AdminShell.php:78
+#: src/Admin/AdminShell.php:80
 #: src/Admin/DashboardPage.php:345
 msgid "Author expertise"
 msgstr ""
 
-#: src/Admin/AdminShell.php:78
+#: src/Admin/AdminShell.php:80
 msgid "Author credentials and expertise that build reader trust."
 msgstr ""
 
-#: src/Admin/AdminShell.php:79
+#: src/Admin/AdminShell.php:81
+#: src/Admin/HelpDocumentationPage.php:202
+#: src/Admin/WooCommerceSeoPage.php:26
+#: src/Admin/WooCommerceSeoPage.php:56
+msgid "WooCommerce SEO"
+msgstr ""
+
+#: src/Admin/AdminShell.php:81
+msgid "Product schema, product sharing tags, product sitemap and store noindex rules."
+msgstr ""
+
+#: src/Admin/AdminShell.php:82
 #: src/Admin/DashboardPage.php:346
-#: src/SEO/LocalSEO.php:185
-#: src/SEO/LocalSEO.php:239
+#: src/SEO/LocalSEO.php:1030
+#: src/SEO/LocalSEO.php:1159
 msgid "Local SEO"
 msgstr ""
 
-#: src/Admin/AdminShell.php:79
+#: src/Admin/AdminShell.php:82
 msgid "Your business location and local search details."
 msgstr ""
 
-#: src/Admin/AdminShell.php:80
+#: src/Admin/AdminShell.php:83
 #: src/Admin/DashboardPage.php:347
 msgid "Image optimizer"
 msgstr ""
 
-#: src/Admin/AdminShell.php:80
+#: src/Admin/AdminShell.php:83
 msgid "Media optimization tools and image delivery settings."
 msgstr ""
 
-#: src/Admin/AdminShell.php:81
+#: src/Admin/AdminShell.php:84
 #: src/Admin/DashboardPage.php:348
 msgid "Publisher toolkit"
 msgstr ""
 
-#: src/Admin/AdminShell.php:81
+#: src/Admin/AdminShell.php:84
 msgid "Bulk SEO editing and everyday newsroom utilities."
 msgstr ""
 
-#: src/Admin/AdminShell.php:82
+#: src/Admin/AdminShell.php:85
 #: src/Admin/DashboardPage.php:356
 #: src/Core/ModuleSwitches.php:88
 #: src/InternalLinks/InternalLinksPage.php:30
@@ -510,189 +540,189 @@ msgstr ""
 msgid "Content Graph"
 msgstr ""
 
-#: src/Admin/AdminShell.php:82
+#: src/Admin/AdminShell.php:85
 msgid "Find orphaned stories and review relevant internal-link opportunities."
 msgstr ""
 
-#: src/Admin/AdminShell.php:83
+#: src/Admin/AdminShell.php:86
 #: src/Admin/DashboardPage.php:357
 #: src/InternalLinks/PublisherLinkIntelligence.php:37
 #: src/InternalLinks/PublisherLinkIntelligence.php:448
 msgid "Link Health Audit"
 msgstr ""
 
-#: src/Admin/AdminShell.php:83
+#: src/Admin/AdminShell.php:86
 msgid "Find broken links, redirecting links and redirect-chain problems."
 msgstr ""
 
-#: src/Admin/AdminShell.php:89
+#: src/Admin/AdminShell.php:92
 msgid "Story pitches, assignments and workflow stages."
 msgstr ""
 
-#: src/Admin/AdminShell.php:90
+#: src/Admin/AdminShell.php:93
 #: src/Admin/DashboardPage.php:350
 msgid "Planning board"
 msgstr ""
 
-#: src/Admin/AdminShell.php:90
+#: src/Admin/AdminShell.php:93
 #: src/Admin/DashboardPage.php:350
 msgid "Plan and move stories across the editorial board."
 msgstr ""
 
-#: src/Admin/AdminShell.php:91
+#: src/Admin/AdminShell.php:94
 msgid "Calendar"
 msgstr ""
 
-#: src/Admin/AdminShell.php:91
+#: src/Admin/AdminShell.php:94
 msgid "Scheduled and planned stories by date."
 msgstr ""
 
-#: src/Admin/AdminShell.php:92
+#: src/Admin/AdminShell.php:95
 msgid "Activity"
 msgstr ""
 
-#: src/Admin/AdminShell.php:92
+#: src/Admin/AdminShell.php:95
 msgid "The editorial activity history."
 msgstr ""
 
-#: src/Admin/AdminShell.php:93
+#: src/Admin/AdminShell.php:96
 #: src/Admin/DashboardPage.php:353
 #: src/Newsroom/Newsroom.php:86
 msgid "Notifications"
 msgstr ""
 
-#: src/Admin/AdminShell.php:93
+#: src/Admin/AdminShell.php:96
 msgid "Your newsroom notifications and alert preferences."
 msgstr ""
 
-#: src/Admin/AdminShell.php:94
+#: src/Admin/AdminShell.php:97
 msgid "Newsroom settings"
 msgstr ""
 
-#: src/Admin/AdminShell.php:94
+#: src/Admin/AdminShell.php:97
 msgid "Workflow stages and newsroom configuration."
 msgstr ""
 
-#: src/Admin/AdminShell.php:95
+#: src/Admin/AdminShell.php:98
 #: src/Admin/DashboardPage.php:355
 msgid "Newsroom roles"
 msgstr ""
 
-#: src/Admin/AdminShell.php:95
+#: src/Admin/AdminShell.php:98
 msgid "Who can do what in the newsroom."
 msgstr ""
 
-#: src/Admin/AdminShell.php:99
+#: src/Admin/AdminShell.php:102
 #: src/Admin/DashboardPage.php:97
 #: src/Admin/DashboardPage.php:314
 #: src/Admin/DashboardPage.php:361
 msgid "Measure & maintain"
 msgstr ""
 
-#: src/Admin/AdminShell.php:101
+#: src/Admin/AdminShell.php:104
 #: src/Admin/AnalyticsPage.php:20
 msgid "Analytics"
 msgstr ""
 
-#: src/Admin/AdminShell.php:101
+#: src/Admin/AdminShell.php:104
 msgid "Local publishing trends and connected search performance."
 msgstr ""
 
-#: src/Admin/AdminShell.php:102
+#: src/Admin/AdminShell.php:105
 #: src/Admin/DashboardPage.php:365
 #: src/Admin/InsightsPage.php:21
 msgid "Insights"
 msgstr ""
 
-#: src/Admin/AdminShell.php:102
+#: src/Admin/AdminShell.php:105
 msgid "Editorial and site-level signals that suggest next steps."
 msgstr ""
 
-#: src/Admin/AdminShell.php:103
+#: src/Admin/AdminShell.php:106
 #: src/Admin/DashboardPage.php:366
-#: src/Admin/RedirectsPage.php:22
-#: src/Admin/RedirectsPage.php:95
+#: src/Admin/RedirectsPage.php:83
+#: src/Admin/RedirectsPage.php:156
 #: src/Core/ModuleSwitches.php:106
 msgid "Redirects"
 msgstr ""
 
-#: src/Admin/AdminShell.php:103
+#: src/Admin/AdminShell.php:106
 msgid "Send visitors from old addresses to the right page."
 msgstr ""
 
-#: src/Admin/AdminShell.php:104
+#: src/Admin/AdminShell.php:107
 #: src/Admin/DashboardPage.php:367
 msgid "404 monitor"
 msgstr ""
 
-#: src/Admin/AdminShell.php:104
+#: src/Admin/AdminShell.php:107
 msgid "See which broken links people hit and fix them with a redirect."
 msgstr ""
 
-#: src/Admin/AdminShell.php:105
+#: src/Admin/AdminShell.php:108
 #: src/Admin/DashboardPage.php:368
 #: src/Admin/TrafficGuardPage.php:20
 #: src/Admin/TrafficGuardPage.php:76
 msgid "Traffic Guard"
 msgstr ""
 
-#: src/Admin/AdminShell.php:105
+#: src/Admin/AdminShell.php:108
 msgid "Optional IP, proxy and country-based access rules."
 msgstr ""
 
-#: src/Admin/AdminShell.php:106
+#: src/Admin/AdminShell.php:109
 msgid "Change history"
 msgstr ""
 
-#: src/Admin/AdminShell.php:106
+#: src/Admin/AdminShell.php:109
 msgid "Recorded SEO setting changes and their earlier values."
 msgstr ""
 
-#: src/Admin/AdminShell.php:107
+#: src/Admin/AdminShell.php:110
 msgid "Plugin health, compatibility notices and technical checks."
 msgstr ""
 
-#: src/Admin/AdminShell.php:111
-#: src/Admin/HelpDocumentationPage.php:348
-#: src/Admin/OnboardingPage.php:1633
+#: src/Admin/AdminShell.php:114
+#: src/Admin/HelpDocumentationPage.php:384
+#: src/Admin/OnboardingPage.php:1622
 msgid "Help"
 msgstr ""
 
-#: src/Admin/AdminShell.php:113
+#: src/Admin/AdminShell.php:116
 msgid "Help & docs"
 msgstr ""
 
-#: src/Admin/AdminShell.php:113
-#: src/Admin/HelpDocumentationPage.php:342
+#: src/Admin/AdminShell.php:116
+#: src/Admin/HelpDocumentationPage.php:378
 msgid "Plain-language guides to every PublishRank feature."
 msgstr ""
 
-#: src/Admin/AdminShell.php:114
+#: src/Admin/AdminShell.php:117
 #: src/Admin/DashboardPage.php:378
-#: src/Admin/OnboardingPage.php:1465
-#: src/Admin/OnboardingPage.php:1623
-#: src/Admin/OnboardingPage.php:1633
+#: src/Admin/OnboardingPage.php:1454
+#: src/Admin/OnboardingPage.php:1612
+#: src/Admin/OnboardingPage.php:1622
 msgid "Setup wizard"
 msgstr ""
 
-#: src/Admin/AdminShell.php:114
+#: src/Admin/AdminShell.php:117
 msgid "Review your core site identity and SEO settings step by step."
 msgstr ""
 
-#: src/Admin/AdminShell.php:298
+#: src/Admin/AdminShell.php:301
 msgid "PublishRank navigation"
 msgstr ""
 
-#: src/Admin/AdminShell.php:299
+#: src/Admin/AdminShell.php:302
 msgid "WORKSPACE"
 msgstr ""
 
-#: src/Admin/AdminShell.php:316
+#: src/Admin/AdminShell.php:319
 #: src/Admin/HelpDocumentationPage.php:95
 msgid "Getting started"
 msgstr ""
 
-#: src/Admin/AdminShell.php:321
+#: src/Admin/AdminShell.php:324
 msgid "More tools"
 msgstr ""
 
@@ -787,7 +817,7 @@ msgstr ""
 
 #. translators: %1$d: total count for the preceding category; %2$d: numeric count or measurement described by the message.
 #: src/Admin/AnalyticsPage.php:100
-#: src/Admin/SEOScorePage.php:73
+#: src/Admin/SEOScorePage.php:107
 msgid "Average editorial score"
 msgstr ""
 
@@ -1192,6 +1222,8 @@ msgstr ""
 
 #: src/Admin/BreadcrumbsPage.php:239
 #: src/Admin/BreadcrumbsPage.php:352
+#: src/Admin/SiteNavigationPage.php:194
+#: src/Admin/SiteNavigationPage.php:201
 #: src/SEO/BreadcrumbEngine.php:365
 #: src/SEO/BreadcrumbEngine.php:639
 #: assets/js/breadcrumbs-block.js:93
@@ -1239,7 +1271,7 @@ msgid "Small"
 msgstr ""
 
 #: src/Admin/BreadcrumbsPage.php:270
-#: src/SEO/ArticleIntelligence.php:1550
+#: src/SEO/ArticleIntelligence.php:1608
 #: assets/js/breadcrumbs-block.js:199
 #: src/assets/js/breadcrumbs-block.js:199
 msgid "Medium"
@@ -1350,7 +1382,7 @@ msgstr ""
 #: src/Admin/BreadcrumbsPage.php:295
 #: src/Admin/DashboardPage.php:324
 #: src/Admin/LivePreview.php:130
-#: src/SEO/ArticleIntelligence.php:1655
+#: src/SEO/ArticleIntelligence.php:1713
 msgid "Structured data"
 msgstr ""
 
@@ -1464,6 +1496,26 @@ msgstr ""
 msgid "No published post was found, so a safe sample item is shown."
 msgstr ""
 
+#: src/Admin/ClassicEditorNotice.php:59
+msgid "Recommended for publishers: Classic Editor"
+msgstr ""
+
+#: src/Admin/ClassicEditorNotice.php:60
+msgid "PublishRank recommends Classic Editor for a focused, traditional writing workflow. It provides a familiar editing experience for publishers and editorial teams."
+msgstr ""
+
+#: src/Admin/ClassicEditorNotice.php:61
+msgid "You can continue using Gutenberg if you prefer."
+msgstr ""
+
+#: src/Admin/ClassicEditorNotice.php:63
+msgid "View Classic Editor on WordPress.org"
+msgstr ""
+
+#: src/Admin/ClassicEditorNotice.php:64
+msgid "No thanks, keep Gutenberg"
+msgstr ""
+
 #: src/Admin/ConfigHistoryPage.php:17
 #: src/Admin/ConfigHistoryPage.php:36
 msgid "SEO Configuration History"
@@ -1515,6 +1567,7 @@ msgid "Restore this configuration? A safety snapshot will be created first."
 msgstr ""
 
 #: src/Admin/ConfigHistoryPage.php:48
+#: src/Admin/EditorPlacement.php:125
 msgid "Restore"
 msgstr ""
 
@@ -1897,7 +1950,7 @@ msgstr ""
 
 #: src/Admin/DashboardPage.php:257
 #: src/Admin/DashboardPage.php:371
-#: src/Admin/HelpDocumentationPage.php:279
+#: src/Admin/HelpDocumentationPage.php:315
 msgid "Run diagnostics"
 msgstr ""
 
@@ -1972,6 +2025,7 @@ msgstr ""
 #: src/Admin/RobotsPage.php:101
 #: src/Admin/RobotsPage.php:256
 #: src/Admin/SitemapHealthPage.php:225
+#: src/SEO/LocalSEO.php:1299
 msgid "Copy"
 msgstr ""
 
@@ -1988,7 +2042,7 @@ msgid "Publication"
 msgstr ""
 
 #: src/Admin/DashboardPage.php:302
-#: src/Admin/OnboardingPage.php:1298
+#: src/Admin/OnboardingPage.php:1312
 msgid "Not configured"
 msgstr ""
 
@@ -1998,7 +2052,7 @@ msgstr ""
 
 #: src/Admin/DashboardPage.php:303
 #: src/Admin/OnboardingPage.php:510
-#: src/Admin/OnboardingPage.php:1319
+#: src/Admin/OnboardingPage.php:1333
 msgid "Homepage SEO title"
 msgstr ""
 
@@ -2126,7 +2180,7 @@ msgid "Review connected property status and available search performance data."
 msgstr ""
 
 #: src/Admin/DashboardPage.php:327
-#: src/Admin/HelpDocumentationPage.php:234
+#: src/Admin/HelpDocumentationPage.php:270
 msgid "Open Search Console"
 msgstr ""
 
@@ -2246,7 +2300,7 @@ msgid "Review practical content and technical checks across the site."
 msgstr ""
 
 #: src/Admin/DashboardPage.php:342
-#: src/Admin/HelpDocumentationPage.php:243
+#: src/Admin/HelpDocumentationPage.php:279
 msgid "Open SEO score"
 msgstr ""
 
@@ -2341,7 +2395,7 @@ msgid "Open the existing newsroom workspace for assignments, planning, calendar,
 msgstr ""
 
 #: src/Admin/DashboardPage.php:349
-#: src/Admin/HelpDocumentationPage.php:252
+#: src/Admin/HelpDocumentationPage.php:288
 msgid "Open Newsroom"
 msgstr ""
 
@@ -2501,9 +2555,9 @@ msgstr ""
 #: src/Admin/SettingsPage.php:1033
 #: src/Admin/SettingsPage.php:1048
 #: src/Core/ModuleSwitches.php:160
-#: src/Security/PrivateLogin.php:569
-#: src/Security/PrivateLogin.php:638
-#: src/Security/PrivateLogin.php:641
+#: src/Security/PrivateLogin.php:543
+#: src/Security/PrivateLogin.php:612
+#: src/Security/PrivateLogin.php:615
 msgid "Private Login"
 msgstr ""
 
@@ -2565,7 +2619,7 @@ msgstr ""
 
 #: src/Admin/DashboardPage.php:380
 #: src/Admin/HelpDocumentationPage.php:96
-#: src/Admin/OnboardingPage.php:1543
+#: src/Admin/OnboardingPage.php:1532
 msgid "Search appearance"
 msgstr ""
 
@@ -2608,8 +2662,9 @@ msgstr ""
 #: src/Admin/DashboardPage.php:397
 #: src/Admin/PreferredSourcesPage.php:45
 #: src/Admin/PreferredSourcesPage.php:690
-#: src/Admin/RedirectsPage.php:147
-#: src/Security/PrivateLogin.php:577
+#: src/Admin/RedirectsPage.php:246
+#: src/Admin/WooCommerceSeoPage.php:74
+#: src/Security/PrivateLogin.php:551
 msgid "New"
 msgstr ""
 
@@ -2900,13 +2955,14 @@ msgstr ""
 #. translators: %d: number of pages.
 #: src/Admin/DiagnosticsPage.php:137
 #: src/Admin/SearchConsolePage.php:67
+#: src/Admin/SiteNavigationPage.php:100
 msgid "Page"
 msgstr ""
 
 #. translators: %d: number of pages.
 #: src/Admin/DiagnosticsPage.php:137
-#: src/Admin/RedirectsPage.php:106
-#: src/Admin/RedirectsPage.php:147
+#: src/Admin/RedirectsPage.php:167
+#: src/Admin/RedirectsPage.php:246
 msgid "Type"
 msgstr ""
 
@@ -2916,7 +2972,7 @@ msgid "Using"
 msgstr ""
 
 #: src/Admin/EditorPlacement.php:90
-#: src/Admin/EditorPlacement.php:140
+#: src/Admin/EditorPlacement.php:182
 msgid "PublishRank SEO fields"
 msgstr ""
 
@@ -2932,187 +2988,290 @@ msgstr ""
 msgid "Show or hide the SEO fields"
 msgstr ""
 
-#: src/Admin/EditorPlacement.php:133
-msgid "Published values"
+#: src/Admin/EditorPlacement.php:117
+msgid "PublishRank SEO editor"
 msgstr ""
 
-#: src/Admin/EditorPlacement.php:134
-msgid "Unsaved SEO changes from before the reload were restored. Update the post to save them."
+#: src/Admin/EditorPlacement.php:118
+#: assets/js/block-editor-sidebar.js:127
+#: src/assets/js/block-editor-sidebar.js:127
+msgid "SEO fields"
 msgstr ""
 
-#: src/Admin/EditorPlacement.php:135
-#: src/Admin/LivePreview.php:107
-msgid "characters"
+#: src/Admin/EditorPlacement.php:119
+msgid "Previews"
 msgstr ""
 
-#: src/Admin/EditorPlacement.php:136
-msgid "a little short"
+#: src/Admin/EditorPlacement.php:120
+msgid "Analysis"
 msgstr ""
 
-#: src/Admin/EditorPlacement.php:137
-msgid "too long"
+#: src/Admin/EditorPlacement.php:121
+msgid "SEO editor sections"
 msgstr ""
 
-#: src/Admin/EditorPlacement.php:138
-#: src/SEO/AdvancedFeatures.php:66
-msgid "Automatic"
+#: src/Admin/EditorPlacement.php:122
+msgid "Open the movable SEO editor with previews"
 msgstr ""
 
-#: src/Admin/EditorPlacement.php:139
-msgid "SEO field sections"
+#: src/Admin/EditorPlacement.php:123
+msgid "Dock the SEO editor back"
 msgstr ""
 
-#: src/Admin/EditorPlacement.php:141
-msgid "Minimize SEO fields"
+#: src/Admin/EditorPlacement.php:124
+#: src/Admin/EditorScoreCard.php:180
+msgid "Minimize"
 msgstr ""
 
-#: src/Admin/EditorPlacement.php:142
-msgid "Expand SEO fields"
+#: src/Admin/EditorPlacement.php:126
+msgid "Snap to the left edge"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:76
-msgid "auto"
+#: src/Admin/EditorPlacement.php:127
+msgid "Snap to the right edge"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:77
-msgid "No meta description written: an automatic one is taken from the excerpt or the article."
+#: src/Admin/EditorPlacement.php:128
+msgid "Centre the window"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:78
-msgid "Excellent"
+#: src/Admin/EditorPlacement.php:129
+msgid "Drag to resize"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:79
-#: src/SEO/Content/KeyphraseAnalyzer.php:814
-msgid "Good"
+#: src/Admin/EditorPlacement.php:130
+msgid "movable window header"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:80
-#: src/SEO/ArticleIntelligence.php:165
-#: src/SEO/ArticleIntelligence.php:1588
-#: src/SEO/Content/KeyphraseAnalyzer.php:815
-msgid "Needs improvement"
+#: src/Admin/EditorPlacement.php:131
+msgid "Drag to move. Double-click to reset. Ctrl/Cmd + Shift + E opens or closes this window."
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:81
-#: src/SEO/ArticleIntelligence.php:166
-#: src/SEO/ArticleIntelligence.php:1588
-#: src/SEO/Content/KeyphraseAnalyzer.php:816
-msgid "Needs work"
+#: src/Admin/EditorPlacement.php:132
+msgid "Use the arrow keys to move this window, Shift and an arrow key to move it faster, Alt and an arrow key to resize it, Home to centre it and Escape to minimize it."
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:82
-msgid "Your content is well optimized! Keep up the great work."
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:83
-msgid "Looking good. A few small tweaks will make it even stronger."
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:84
-msgid "You are on your way. Work through the items below."
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:85
-msgid "Start with the items below to improve this article."
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:86
-#: src/SEO/ArticleIntelligence.php:150
-msgid "Analyzing…"
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:87
-msgid "Updated just now"
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:88
-msgid "Updates as you write"
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:89
-msgid "Analysis failed. Save a draft and refresh."
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:90
-msgid "Not set — add one in the SEO fields"
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:91
-msgid "Nothing to fix. Great job!"
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:92
-msgid "No checks pass yet."
-msgstr ""
-
+#. translators: %d: SEO score out of 100.
 #. translators: %d: SEO score.
 #. translators: %d: editorial SEO score.
-#: src/Admin/EditorScoreCard.php:94
-#: src/SEO/ArticleIntelligence.php:1571
+#: src/Admin/EditorPlacement.php:134
+#: src/Admin/EditorScoreCard.php:96
+#: src/SEO/ArticleIntelligence.php:1629
 #, php-format
 msgid "SEO score %d out of 100"
 msgstr ""
 
+#: src/Admin/EditorPlacement.php:135
+msgid "The SEO fields are not available for this post type."
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:136
+msgid "Live previews are switched off for this post type."
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:137
+#: assets/js/block-editor-sidebar.js:95
+#: src/assets/js/block-editor-sidebar.js:95
+msgid "The SEO analysis is not available for this post type."
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:138
+msgid "The SEO analysis is open as its own floating panel."
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:139
+msgid "Move it into this window"
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:175
+msgid "Published values"
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:176
+msgid "Unsaved SEO changes from before the reload were restored. Update the post to save them."
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:177
+#: src/Admin/LivePreview.php:107
+msgid "characters"
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:178
+msgid "a little short"
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:179
+msgid "too long"
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:180
+#: src/SEO/AdvancedFeatures.php:66
+msgid "Automatic"
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:181
+msgid "SEO field sections"
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:183
+msgid "Minimize SEO fields"
+msgstr ""
+
+#: src/Admin/EditorPlacement.php:184
+msgid "Expand SEO fields"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:78
+msgid "auto"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:79
+msgid "No meta description written: an automatic one is taken from the excerpt or the article."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:80
+msgid "Excellent"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:81
+#: src/SEO/Content/KeyphraseAnalyzer.php:806
+msgid "Good"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:82
+#: src/SEO/ArticleIntelligence.php:165
+#: src/SEO/ArticleIntelligence.php:1646
+#: src/SEO/Content/KeyphraseAnalyzer.php:807
+msgid "Needs improvement"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:83
+#: src/SEO/ArticleIntelligence.php:166
+#: src/SEO/ArticleIntelligence.php:1646
+#: src/SEO/Content/KeyphraseAnalyzer.php:808
+msgid "Needs work"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:84
+msgid "Your content is well optimized! Keep up the great work."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:85
+msgid "Looking good. A few small tweaks will make it even stronger."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:86
+msgid "You are on your way. Work through the items below."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:87
+msgid "Start with the items below to improve this article."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:88
+#: src/SEO/ArticleIntelligence.php:150
+msgid "Analyzing…"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:89
+msgid "Updated just now"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:90
+msgid "Updates as you write"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:91
+msgid "Analysis failed. Save a draft and refresh."
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:92
+msgid "Not set — add one in the SEO fields"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:93
+msgid "Nothing to fix. Great job!"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:94
+msgid "No checks pass yet."
+msgstr ""
+
 #. translators: %s: check title.
-#: src/Admin/EditorScoreCard.php:95
-#: src/Admin/EditorScoreCard.php:219
-#: src/Admin/OnboardingPage.php:1559
-#: src/SEO/ArticleIntelligence.php:1706
+#: src/Admin/EditorScoreCard.php:97
+#: src/Admin/EditorScoreCard.php:224
+#: src/Admin/OnboardingPage.php:1548
+#: src/SEO/ArticleIntelligence.php:1764
 msgid "Fix"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:96
+#: src/Admin/EditorScoreCard.php:98
 msgid "Fixing…"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:97
+#: src/Admin/EditorScoreCard.php:99
 msgid "Applied. Review it, then update the post."
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:98
+#: src/Admin/EditorScoreCard.php:100
 msgid "No automatic fix could be derived. Open the full report."
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:99
+#: src/Admin/EditorScoreCard.php:101
 msgid "Finding related articles…"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:100
+#: src/Admin/EditorScoreCard.php:102
 msgid "No related published articles found yet."
 msgstr ""
 
 #. translators: %s: check title.
-#: src/Admin/EditorScoreCard.php:102
-#: src/Admin/EditorScoreCard.php:219
+#: src/Admin/EditorScoreCard.php:104
+#: src/Admin/EditorScoreCard.php:224
 #, php-format
 msgid "Fix: %s"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:103
+#: src/Admin/EditorScoreCard.php:105
 msgid "Pop out as a floating panel"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:104
+#: src/Admin/EditorScoreCard.php:106
 msgid "Dock to the sidebar"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:161
-msgid "PublishRank SEO analysis"
+#. translators: %s: check title.
+#: src/Admin/EditorScoreCard.php:107
+#: src/Admin/EditorScoreCard.php:224
+#: src/Admin/NotFoundPage.php:184
+#: src/Admin/RatingNotice.php:65
+#: src/InternalLinks/InternalLinksPage.php:502
+#: src/Newsroom/Newsroom.php:166
+msgid "Dismiss"
+msgstr ""
+
+#. translators: %s: recommendation text.
+#: src/Admin/EditorScoreCard.php:109
+#, php-format
+msgid "Dismiss for this post: %s"
 msgstr ""
 
 #: src/Admin/EditorScoreCard.php:166
-#: src/Admin/PostListColumns.php:22
-#: src/Admin/PostListColumns.php:26
+msgid "PublishRank SEO analysis"
+msgstr ""
+
+#: src/Admin/EditorScoreCard.php:171
+#: src/Admin/PostListColumns.php:30
+#: src/Admin/PostListColumns.php:34
 #: src/Meta/TemplateVariables.php:147
 msgid "SEO"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:171
+#: src/Admin/EditorScoreCard.php:176
 msgid "SEO Analysis"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:172
+#: src/Admin/EditorScoreCard.php:177
 #: src/Admin/LivePreview.php:56
 #: src/Admin/RobotsPage.php:96
 #: src/Admin/RobotsPage.php:247
@@ -3124,37 +3283,33 @@ msgstr ""
 msgid "Live"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:173
+#: src/Admin/EditorScoreCard.php:178
 msgid "Re-analyze now"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:175
+#: src/Admin/EditorScoreCard.php:180
 msgid "Minimize SEO analysis"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:175
-msgid "Minimize"
-msgstr ""
-
-#: src/Admin/EditorScoreCard.php:190
+#: src/Admin/EditorScoreCard.php:195
 msgid "Words"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:190
+#: src/Admin/EditorScoreCard.php:195
 #: src/Admin/SitemapHealthPage.php:82
 #: src/Sitemap/SitemapStylesheet.php:99
 msgid "Images"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:190
+#: src/Admin/EditorScoreCard.php:195
 msgid "Internal"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:190
+#: src/Admin/EditorScoreCard.php:195
 msgid "External"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:195
+#: src/Admin/EditorScoreCard.php:200
 #: src/Admin/PublisherToolkitPage.php:132
 #: src/Admin/PublisherToolkitPage.php:144
 #: src/Meta/LocalizedSeoMeta.php:123
@@ -3162,42 +3317,42 @@ msgstr ""
 msgid "SEO title"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:195
+#: src/Admin/EditorScoreCard.php:200
 #: src/Admin/FrontendScanner.php:295
 #: src/Admin/LivePreview.php:117
 #: src/Admin/PublisherToolkitPage.php:132
 #: src/Admin/PublisherToolkitPage.php:145
 #: src/Meta/LocalizedSeoMeta.php:123
 #: src/SEO/AdvancedFeatures.php:121
-#: src/SEO/ArticleIntelligence.php:1785
-#: src/SEO/Content/KeyphraseAnalyzer.php:821
+#: src/SEO/ArticleIntelligence.php:1843
+#: src/SEO/Content/KeyphraseAnalyzer.php:813
 msgid "Meta description"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:197
+#: src/Admin/EditorScoreCard.php:202
 msgid "Add internal links"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:199
+#: src/Admin/EditorScoreCard.php:204
 #: src/Admin/SeoPortability.php:305
 #: src/Meta/LocalizedSeoMeta.php:123
 #: src/Meta/TemplateVariables.php:132
 #: src/SEO/AdvancedFeatures.php:115
-#: src/SEO/ArticleIntelligence.php:1418
-#: src/SEO/ArticleIntelligence.php:1462
-#: src/SEO/Content/KeyphraseAnalyzer.php:852
+#: src/SEO/ArticleIntelligence.php:1471
+#: src/SEO/ArticleIntelligence.php:1519
+#: src/SEO/Content/KeyphraseAnalyzer.php:844
 msgid "Focus keyword"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:201
+#: src/Admin/EditorScoreCard.php:206
 msgid "To improve"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:202
+#: src/Admin/EditorScoreCard.php:207
 msgid "Passed checks"
 msgstr ""
 
-#: src/Admin/EditorScoreCard.php:206
+#: src/Admin/EditorScoreCard.php:211
 msgid "Full report"
 msgstr ""
 
@@ -3215,6 +3370,7 @@ msgid "Complete author profiles with a real biography, role, coverage expertise 
 msgstr ""
 
 #: src/Admin/ExpertisePage.php:29
+#: src/Admin/FeedsPage.php:115
 #: src/Admin/MastodonPage.php:362
 #: src/Admin/MastodonPage.php:367
 #: src/Meta/TemplateVariables.php:144
@@ -3231,6 +3387,7 @@ msgid "Biography"
 msgstr ""
 
 #: src/Admin/ExpertisePage.php:29
+#: src/Admin/SiteNavigationPage.php:100
 msgid "Role"
 msgstr ""
 
@@ -3239,6 +3396,7 @@ msgid "Expertise"
 msgstr ""
 
 #: src/Admin/ExpertisePage.php:29
+#: src/SEO/LocalSEO.php:1180
 msgid "Profiles"
 msgstr ""
 
@@ -3254,13 +3412,14 @@ msgstr ""
 #. translators: %d: number of profile.
 #: src/Admin/ExpertisePage.php:48
 #: src/Admin/LivePreview.php:145
+#: src/Admin/WooCommerceSeoPage.php:109
 msgid "Missing"
 msgstr ""
 
 #. translators: %d: number of profile.
 #. translators: %d: number of social profiles.
 #: src/Admin/ExpertisePage.php:48
-#: src/Admin/OnboardingPage.php:1318
+#: src/Admin/OnboardingPage.php:1332
 #, php-format
 msgid "%d profile"
 msgid_plural "%d profiles"
@@ -3281,6 +3440,246 @@ msgstr ""
 
 #: src/Admin/ExpertisePage.php:53
 msgid "Open schema settings"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:52
+msgid "Feed settings saved."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:73
+msgid "Control what your RSS and Atom feeds contain, check that every feed is valid XML and preview them the way a feed reader shows them."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:77
+msgid "Main feed"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:78
+#: src/Admin/FeedsPage.php:90
+msgid "Items per feed"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:79
+#: src/Admin/OnboardingPage.php:77
+#: src/Admin/PublisherToolkitPage.php:132
+#: src/InternalLinks/InternalLinksPage.php:407
+#: src/Meta/TemplateVariables.php:143
+#: src/SEO/Content/KeyphraseAnalyzer.php:817
+msgid "Content"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:79
+#: src/Admin/FeedsPage.php:99
+#: src/Meta/TemplateVariables.php:87
+#: src/Social/Mastodon.php:454
+msgid "Excerpt"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:79
+#: src/Admin/FeedsPage.php:98
+msgid "Full text"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:80
+msgid "Endpoints"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:88
+msgid "Feed content"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:92
+msgid "0 keeps the WordPress Reading setting. Applies to feeds only."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:95
+msgid "Each item shows"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:97
+msgid "WordPress Reading setting"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:102
+msgid "Featured image in every item (media:content and at the top of the item)"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:103
+msgid "Link back to the original article (\"The post … appeared first on …\")"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:107
+msgid "Channel identity"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:108
+msgid "Main feed title"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:109
+msgid "Main feed description"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:110
+msgid "Copyright"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:110
+msgid "Printed as the channel <copyright> (RSS) and <rights> (Atom). %%year%% and %%sitename%% are replaced. Empty fields keep the WordPress values."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:114
+msgid "Lines added under every item"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:116
+#: src/Admin/OnboardingPage.php:61
+msgid "Publisher"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:117
+#: src/Admin/LLMSTxtPage.php:116
+#: src/AI/LLMSTxt.php:227
+#: src/Feeds/FeedManager.php:346
+msgid "Categories"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:118
+#: src/Admin/OnboardingPage.php:373
+msgid "Copyright notice"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:119
+msgid "Custom attribution text"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:119
+msgid "Read %%title%% on %%sitename%%."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:119
+msgid "Plain text. Variables: %%title%%, %%permalink%%, %%sitename%%, %%author%%, %%date%%, %%year%%. Unknown variables are removed."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:124
+msgid "News feed, discovery and caching"
+msgstr ""
+
+#. translators: %s: feed URL.
+#: src/Admin/FeedsPage.php:125
+#, php-format
+msgid "Publish a news feed of recent articles at %s"
+msgstr ""
+
+#. translators: %s: feed URL.
+#: src/Admin/FeedsPage.php:126
+msgid "News window (hours)"
+msgstr ""
+
+#. translators: %s: feed URL.
+#: src/Admin/FeedsPage.php:126
+msgid "Uses the News sitemap post types. Password-protected and noindex articles are left out."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:127
+msgid "Print feed discovery links when the theme does not (respects Crawl optimization removals)"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:128
+msgid "Your theme already prints discovery links, so PublishRank does not add duplicates."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:128
+msgid "Your theme does not print discovery links."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:129
+msgid "Cache-Control max-age (seconds)"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:129
+msgid "0 = off. WordPress already answers feed readers with ETag and Last-Modified, which change as soon as you publish or edit a post. Signed-in users never get a shared-cache header."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:131
+msgid "Save feed settings"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:136
+msgid "Feed endpoints"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:137
+msgid "Validate fetches the feed from your server like a feed reader would, then checks the XML, dates and required elements."
+msgstr ""
+
+#: src/Admin/FeedsPage.php:147
+msgid "Preview & validate"
+msgstr ""
+
+#. translators: %s: author name.
+#: src/Admin/FeedsPage.php:172
+#: src/Feeds/FeedManager.php:213
+#, php-format
+msgid "Written by %s."
+msgstr ""
+
+#. translators: %s: publication name.
+#. translators: %s: linked publication name.
+#: src/Admin/FeedsPage.php:175
+#: src/Feeds/FeedManager.php:218
+#, php-format
+msgid "Published by %s."
+msgstr ""
+
+#. translators: %s: categories.
+#. translators: %s: comma-separated category names.
+#: src/Admin/FeedsPage.php:178
+#: src/Feeds/FeedManager.php:224
+#, php-format
+msgid "Filed under: %s"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:186
+msgid "Preview with your latest post"
+msgstr ""
+
+#: src/Admin/FeedsPage.php:187
+msgid "No extra lines are added."
+msgstr ""
+
+#. translators: %s: feed label.
+#: src/Admin/FeedsPage.php:193
+#, php-format
+msgid "Feed report: %s"
+msgstr ""
+
+#. translators: %s: feed label.
+#: src/Admin/FeedsPage.php:194
+msgid "Valid feed"
+msgstr ""
+
+#. translators: %s: feed label.
+#: src/Admin/FeedsPage.php:194
+msgid "Problems found"
+msgstr ""
+
+#. translators: %d: milliseconds.
+#: src/Admin/FeedsPage.php:199
+#, php-format
+msgid "%d ms"
+msgstr ""
+
+#. translators: %d: number of items.
+#: src/Admin/FeedsPage.php:200
+#, php-format
+msgid "%d item"
+msgid_plural "%d items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/FeedsPage.php:226
+msgid "Show raw XML (first 20 KB)"
 msgstr ""
 
 #. translators: %d: HTTP response status code.
@@ -3519,8 +3918,8 @@ msgid "PublishRank output was not found. A caching layer may be serving an old c
 msgstr ""
 
 #: src/Admin/HelpDocumentationPage.php:26
-#: src/Admin/HelpDocumentationPage.php:342
-#: src/Admin/HelpDocumentationPage.php:348
+#: src/Admin/HelpDocumentationPage.php:378
+#: src/Admin/HelpDocumentationPage.php:384
 msgid "Help & documentation"
 msgstr ""
 
@@ -3659,7 +4058,7 @@ msgid "Open PublishRank → Features (previously called SEO Modules). Each card 
 msgstr ""
 
 #: src/Admin/HelpDocumentationPage.php:118
-#: src/Admin/HelpDocumentationPage.php:356
+#: src/Admin/HelpDocumentationPage.php:392
 #: src/Admin/SettingsPage.php:1239
 msgid "Open Features"
 msgstr ""
@@ -3770,323 +4169,385 @@ msgid "Open Breadcrumbs"
 msgstr ""
 
 #: src/Admin/HelpDocumentationPage.php:184
-msgid "XML, News, image & video sitemaps"
+#: src/Admin/SiteNavigationPage.php:26
+#: src/Admin/SiteNavigationPage.php:88
+msgid "Site Navigation SEO"
 msgstr ""
 
 #: src/Admin/HelpDocumentationPage.php:185
-msgid "The files that help search engines find every story you publish."
+msgid "Mark your most important pages and check they are easy to reach."
 msgstr ""
 
 #: src/Admin/HelpDocumentationPage.php:186
-msgid "The sitemap index links to the enabled sitemap types. News sitemaps focus on eligible recent articles; image and video sitemaps help describe media attached to eligible content. Check Sitemap Hub after changing permalink, sitemap or cache settings. A sitemap is a discovery hint, not an indexing guarantee."
+msgid "Add your About, Contact, Services, policy and other key pages, or accept the suggestions. Each page is checked for being published, indexable, in the sitemap, linked from a menu, linked from other pages, using a self canonical and having a description. The homepage lists them as structured data, and the screen shows breadcrumb trails and orphaned content. Sitelinks are chosen by Google; no plugin can force them."
 msgstr ""
 
 #: src/Admin/HelpDocumentationPage.php:188
-#: src/Admin/HelpDocumentationPage.php:357
-#: src/Admin/SEOScorePage.php:76
+msgid "Open Site Navigation"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:193
+msgid "RSS feeds"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:194
+msgid "Feed attribution lines, a recent-news feed, validation and previews."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:195
+msgid "Choose which lines are added to each feed item (author, publisher, categories, copyright or your own text with variables) and see a preview. Optionally publish a recent-news feed at /feed/news/. Validate any feed: PublishRank requests your own feed, checks that it is valid RSS or Atom XML and shows it the way a feed reader does."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:197
+msgid "Open RSS Feeds"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:203
+msgid "Product schema, sharing tags, product sitemap and store noindex rules."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:204
+msgid "Available while WooCommerce is active. Product pages use WooCommerce product schema connected to your publisher graph, og:type product tags with price and availability, and their own sitemap. Cart, checkout, account pages, sorted or filtered listings and hidden products stay out of search results. The product audit lists missing images, prices, SKUs, GTINs and brands; nothing is invented."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:206
+msgid "Open WooCommerce SEO"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:211
+msgid "Arabic, Urdu and inclusive language"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:212
+msgid "How the analysis handles other languages, and optional wording suggestions."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:213
+msgid "The SEO analysis detects English, Arabic and Urdu. Arabic-script text is normalised and lightly stemmed so focus keywords match different spellings and endings, and each language has its own sentence marks, connective words and sentence-length limit. English formulas such as Flesch and passive voice are only used for English. Inclusive-language suggestions (English) can be switched on in SEO Score; they explain the concern, suggest alternatives, can be dismissed per post and never change your text."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:215
+msgid "Open language settings"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:220
+msgid "XML, News, image & video sitemaps"
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:221
+msgid "The files that help search engines find every story you publish."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:222
+msgid "The sitemap index links to the enabled sitemap types. News sitemaps focus on eligible recent articles; image and video sitemaps help describe media attached to eligible content. Check Sitemap Hub after changing permalink, sitemap or cache settings. A sitemap is a discovery hint, not an indexing guarantee."
+msgstr ""
+
+#: src/Admin/HelpDocumentationPage.php:224
+#: src/Admin/HelpDocumentationPage.php:393
+#: src/Admin/SEOScorePage.php:110
 #: src/Admin/SettingsPage.php:1257
 msgid "Open Sitemap Hub"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:193
+#: src/Admin/HelpDocumentationPage.php:229
 msgid "Reading your sitemap in a browser"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:194
+#: src/Admin/HelpDocumentationPage.php:230
 msgid "What the friendly sitemap page shows and how to read it."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:195
+#: src/Admin/HelpDocumentationPage.php:231
 msgid "Open your sitemap index in a browser to see a readable overview. The top explains what the file is and gives you the one address to submit, with copy and Search Console shortcuts. Below it, a short three-step strip explains how sitemaps work, four totals show how many addresses, content types and files are listed and when the newest change happened, and the “What’s in your sitemap” list shows one row per content type with its icon, a plain description, the number of addresses, its share of the total and when it last changed. An empty row is normal: it fills up automatically when matching content is published. Open a row to see every address in that file, with filtering, paging and quick checks (URL limit, last-modified dates, HTTPS and news data). Search engines never use this view; they read the plain XML. Use View raw XML to see exactly what crawlers receive. Very large indexes skip per-file URL counts to stay fast."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:197
+#: src/Admin/HelpDocumentationPage.php:233
 msgid "Open your sitemap"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:203
+#: src/Admin/HelpDocumentationPage.php:239
 msgid "Robots, archives & indexing controls"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:204
+#: src/Admin/HelpDocumentationPage.php:240
 msgid "Decide what search engines may crawl and index."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:205
+#: src/Admin/HelpDocumentationPage.php:241
 msgid "Robots settings influence crawling and indexing signals. Use noindex carefully, especially on article pages and category archives. robots.txt rules are not a substitute for access control and do not guarantee removal from search results."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:207
+#: src/Admin/HelpDocumentationPage.php:243
 msgid "Open Robots.txt"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:213
+#: src/Admin/HelpDocumentationPage.php:249
 msgid "Tell Bing and other IndexNow engines as soon as a story changes."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:214
+#: src/Admin/HelpDocumentationPage.php:250
 msgid "IndexNow can notify supported participating search engines about URL changes after you enable it and configure its verification key. Notifications do not guarantee indexing, and Google does not use IndexNow."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:216
+#: src/Admin/HelpDocumentationPage.php:252
 msgid "Open IndexNow"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:221
+#: src/Admin/HelpDocumentationPage.php:257
 msgid "Baidu URL submission"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:222
+#: src/Admin/HelpDocumentationPage.php:258
 msgid "Send new addresses to Baidu from a verified site."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:223
+#: src/Admin/HelpDocumentationPage.php:259
 msgid "Baidu requires a verified site and its current site-specific ordinary-inclusion endpoint. PublishRank stores that HTTPS endpoint encrypted, limits requests to the same host and batches up to 2,000 URLs. Baidu quota and eligibility vary; acceptance is not an indexing guarantee. Baidu dashboard analytics are not exposed through a documented public read API."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:225
+#: src/Admin/HelpDocumentationPage.php:261
 msgid "Open Search engines"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:230
+#: src/Admin/HelpDocumentationPage.php:266
 msgid "Google Search Console & local analytics"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:231
+#: src/Admin/HelpDocumentationPage.php:267
 msgid "Connect Search Console and read your publishing trends."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:232
+#: src/Admin/HelpDocumentationPage.php:268
 msgid "The optional Search Console connection uses Google OAuth webmasters.readonly, requires a Google Cloud project with the Search Console API enabled, and stores tokens encrypted at rest. Refreshes are administrator-initiated; data is aggregated and delayed. Local Publisher Analytics is separate and does not track visitors. Never paste OAuth client secrets or tokens into public support requests."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:239
+#: src/Admin/HelpDocumentationPage.php:275
 msgid "Editorial SEO intelligence"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:240
+#: src/Admin/HelpDocumentationPage.php:276
 msgid "The live score and checks that help editors before publishing."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:241
+#: src/Admin/HelpDocumentationPage.php:277
 msgid "Article analysis reviews signals such as headline, keyphrase, description, structure, readability, media and links. Treat scores and suggestions as editorial guidance, not a promise of ranking performance. Always prioritize accuracy and reader value."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:248
+#: src/Admin/HelpDocumentationPage.php:284
 msgid "Live blogs, Newsroom & news workflow"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:249
+#: src/Admin/HelpDocumentationPage.php:285
 msgid "Live coverage markup and the built-in editorial workflow."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:250
+#: src/Admin/HelpDocumentationPage.php:286
 msgid "Choose Live Blog Post in the Schema box and add timestamped updates to mark a live blog; ordinary posts are never marked up as live blogs automatically. The built-in Newsroom handles story pitches, assignments, workflow stages, a planning board, a calendar and private notes. These are editorial aids and do not change what is published until you publish."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:257
+#: src/Admin/HelpDocumentationPage.php:293
 msgid "Images, media & performance"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:258
+#: src/Admin/HelpDocumentationPage.php:294
 msgid "Keep images sharp, light and ready for Google Discover."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:259
+#: src/Admin/HelpDocumentationPage.php:295
 msgid "Image optimization settings control supported image-processing behavior. Keep originals or backups according to your workflow, test output with your theme and CDN, and verify that image dimensions and quality remain suitable for publishing."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:261
+#: src/Admin/HelpDocumentationPage.php:297
 msgid "Open Image optimizer"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:266
+#: src/Admin/HelpDocumentationPage.php:302
 msgid "Redirects & 404 monitoring"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:267
+#: src/Admin/HelpDocumentationPage.php:303
 msgid "Fix broken links and send old addresses to the right page."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:268
+#: src/Admin/HelpDocumentationPage.php:304
 msgid "Use permanent redirects for durable URL moves and temporary redirects when the move is temporary. Test the destination and avoid redirect loops/chains. The 404 Monitor is opt-in and records normalized GET/HEAD 404 paths only; admin, AJAX, cron, REST, non-HTML asset and common infrastructure-probe requests are excluded. Hits are aggregated by browser, mobile or crawler category without IP addresses, cookies, request bodies or full query strings. Administrators can search, filter, sort, dismiss, clear and create validated same-site redirects from the monitor. Its 90-day, 500-entry rolling limit, rate limiting and write lock make it a bounded diagnostic aid rather than a complete access log, analytics system or WAF."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:270
+#: src/Admin/HelpDocumentationPage.php:306
 msgid "Open Redirects"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:275
+#: src/Admin/HelpDocumentationPage.php:311
 msgid "Diagnostics & compatibility"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:276
+#: src/Admin/HelpDocumentationPage.php:312
 msgid "Check plugin health and spot clashes with other SEO plugins."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:277
+#: src/Admin/HelpDocumentationPage.php:313
 msgid "Run diagnostics after installation or major configuration changes. Review conflicts with themes and other SEO plugins, then inspect the live page source and sitemap responses. Disable overlapping SEO output in other plugins only after confirming which plugin owns each output."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:284
+#: src/Admin/HelpDocumentationPage.php:320
 msgid "Settings import/export & configuration history"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:285
+#: src/Admin/HelpDocumentationPage.php:321
 msgid "Back up your settings and see what changed and when."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:286
+#: src/Admin/HelpDocumentationPage.php:322
 msgid "Use exports for controlled migration and backups. Review imported settings before relying on them, and protect exported files. Configuration history can help identify changes; it is not a substitute for a full database backup."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:288
+#: src/Admin/HelpDocumentationPage.php:324
 msgid "Open Import / Export"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:293
+#: src/Admin/HelpDocumentationPage.php:329
 msgid "Versions, updates & support"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:294
+#: src/Admin/HelpDocumentationPage.php:330
 msgid "Where the version number appears and what to do after updating."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:295
+#: src/Admin/HelpDocumentationPage.php:331
 msgid "The plugin version appears on every PublishRank screen header, in the sitemap view footer, in the plugin header and in the readme stable tag; all of them always show the same number. After updating, clear your site, plugin, CDN and browser caches so you see the current admin styles and sitemap stylesheet. If something looks wrong, run Diagnostics and Sitemap Hub first, then check for conflicts with other SEO plugins."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:305
+#: src/Admin/HelpDocumentationPage.php:341
 msgid "My sitemap shows a blank page or plain text"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:306
+#: src/Admin/HelpDocumentationPage.php:342
 msgid "Open Settings › Permalinks in WordPress and select Save Changes without changing anything. This refreshes the address rules. Then reload your sitemap."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:309
+#: src/Admin/HelpDocumentationPage.php:345
 msgid "The sitemap page looks unstyled"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:310
+#: src/Admin/HelpDocumentationPage.php:346
 msgid "Purge your page, CDN and browser caches, then reload. The sitemap design is generated by WordPress at /publishrank-sitemap.xsl, so a caching layer that rewrites or blocks that address can break it."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:313
+#: src/Admin/HelpDocumentationPage.php:349
 msgid "The Google News sitemap is empty"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:314
+#: src/Admin/HelpDocumentationPage.php:350
 msgid "That is normal when nothing was published recently. It only lists eligible articles from the news window (48 hours by default), and an empty sitemap is still valid."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:317
+#: src/Admin/HelpDocumentationPage.php:353
 msgid "I see duplicate titles or schema in my page source"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:318
+#: src/Admin/HelpDocumentationPage.php:354
 msgid "Two plugins (or your theme and a plugin) are printing the same thing. Leave only one of them responsible for each output, then purge caches."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:321
+#: src/Admin/HelpDocumentationPage.php:357
 msgid "I changed a setting but my site still shows the old version"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:322
+#: src/Admin/HelpDocumentationPage.php:358
 msgid "Clear your site, plugin, CDN and browser caches. Cached pages keep showing the previous output until they are refreshed."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:325
+#: src/Admin/HelpDocumentationPage.php:361
 msgid "The PublishRank icon is missing from the menu or toolbar"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:326
+#: src/Admin/HelpDocumentationPage.php:362
 msgid "Purge caches and confirm that assets/images/publishrank-brand-mark.png exists inside the plugin folder and is readable."
 msgstr ""
 
 #. translators: %s: PublishRank version number.
-#: src/Admin/HelpDocumentationPage.php:350
+#: src/Admin/HelpDocumentationPage.php:386
 #, php-format
 msgid "Short answers first, details when you need them. Search for a feature or pick a topic below. This guide covers PublishRank %s."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:355
+#: src/Admin/HelpDocumentationPage.php:391
 msgid "Complete the Setup Wizard"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:355
+#: src/Admin/HelpDocumentationPage.php:391
 msgid "Add your publication name, logo and social profiles once."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:355
+#: src/Admin/HelpDocumentationPage.php:391
 msgid "Open the wizard"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:356
+#: src/Admin/HelpDocumentationPage.php:392
 msgid "Choose your features"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:356
+#: src/Admin/HelpDocumentationPage.php:392
 msgid "Switch on the tools you want, such as the News sitemap or redirects."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:357
+#: src/Admin/HelpDocumentationPage.php:393
 msgid "Submit your sitemap"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:357
+#: src/Admin/HelpDocumentationPage.php:393
 msgid "Copy one address into Google Search Console and Bing."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:359
+#: src/Admin/HelpDocumentationPage.php:395
 msgid "New here? Start with these three steps"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:369
+#: src/Admin/HelpDocumentationPage.php:405
 msgid "Filter topics"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:370
+#: src/Admin/HelpDocumentationPage.php:406
 msgid "All topics"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:378
+#: src/Admin/HelpDocumentationPage.php:414
 msgid "Search help"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:379
+#: src/Admin/HelpDocumentationPage.php:415
 msgid "Search help…"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:400
+#: src/Admin/HelpDocumentationPage.php:436
 msgid "Read more"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:409
+#: src/Admin/HelpDocumentationPage.php:445
 msgid "No topics match your search. Try a different word, or check the common problems below."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:412
+#: src/Admin/HelpDocumentationPage.php:448
 msgid "Common problems & quick fixes"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:420
+#: src/Admin/HelpDocumentationPage.php:456
 msgid "Good to know:"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:420
+#: src/Admin/HelpDocumentationPage.php:456
 msgid "Values you type yourself always win over automatic ones. Your theme, caching, multilingual plugins and other SEO plugins can also change what appears on a page, so keep only one plugin in charge of each output. Look for the blue “i” icons beside settings for quick explanations."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:421
+#: src/Admin/HelpDocumentationPage.php:457
 msgid "Still stuck?"
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:421
+#: src/Admin/HelpDocumentationPage.php:457
 msgid "Online documentation and support are on the official website."
 msgstr ""
 
-#: src/Admin/HelpDocumentationPage.php:421
+#: src/Admin/HelpDocumentationPage.php:457
 msgid "Visit the PublishRank website"
 msgstr ""
 
@@ -4114,6 +4575,7 @@ msgid "Current policy: maximum width %1$d px, quality %2$d, preferred format %3$
 msgstr ""
 
 #: src/Admin/ImageOptimizerPage.php:33
+#: src/Admin/WooCommerceSeoPage.php:86
 #: src/Social/Mastodon.php:456
 msgid "Image"
 msgstr ""
@@ -4573,14 +5035,14 @@ msgid "Open Rich Results Test (paste code)"
 msgstr ""
 
 #: src/Admin/LivePreview.php:103
-#: src/Admin/OnboardingPage.php:896
+#: src/Admin/OnboardingPage.php:918
 msgid "Desktop"
 msgstr ""
 
 #. translators: 1: number of paths, 2: number of hits.
 #: src/Admin/LivePreview.php:104
 #: src/Admin/NotFoundPage.php:125
-#: src/Admin/OnboardingPage.php:896
+#: src/Admin/OnboardingPage.php:918
 msgid "Mobile"
 msgstr ""
 
@@ -4599,7 +5061,7 @@ msgstr ""
 #: src/Admin/LivePreview.php:109
 #: src/Admin/SeoPortability.php:305
 #: src/SEO/AdvancedFeatures.php:47
-#: src/SEO/Content/KeyphraseAnalyzer.php:820
+#: src/SEO/Content/KeyphraseAnalyzer.php:812
 #: src/Social/Mastodon.php:453
 msgid "Title"
 msgstr ""
@@ -4607,8 +5069,9 @@ msgstr ""
 #: src/Admin/LivePreview.php:110
 #: src/Admin/LivePreview.php:136
 #: src/Admin/SeoPortability.php:305
+#: src/Admin/WooCommerceSeoPage.php:87
 #: src/SEO/AdvancedFeatures.php:48
-#: src/SEO/LocalSEO.php:251
+#: src/SEO/LocalSEO.php:1196
 msgid "Description"
 msgstr ""
 
@@ -5025,17 +5488,13 @@ msgid "Detect About, Contact, Editorial policy, Corrections, Ethics, Team and Pr
 msgstr ""
 
 #: src/Admin/LLMSTxtPage.php:116
-#: src/AI/LLMSTxt.php:227
-msgid "Categories"
-msgstr ""
-
-#: src/Admin/LLMSTxtPage.php:116
 msgid "Include public category hubs so agents can understand topic structure."
 msgstr ""
 
 #: src/Admin/LLMSTxtPage.php:117
 #: src/Admin/SitemapHealthPage.php:80
 #: src/AI/LLMSTxt.php:231
+#: src/Feeds/FeedManager.php:355
 #: src/Sitemap/SitemapStylesheet.php:84
 msgid "Authors"
 msgstr ""
@@ -5046,6 +5505,7 @@ msgstr ""
 
 #: src/Admin/LLMSTxtPage.php:118
 #: src/AI/LLMSTxt.php:229
+#: src/Feeds/FeedManager.php:351
 msgid "Tags"
 msgstr ""
 
@@ -5640,7 +6100,7 @@ msgid "Author page to add on Mastodon"
 msgstr ""
 
 #: src/Admin/MastodonPage.php:373
-#: src/Admin/OnboardingPage.php:1561
+#: src/Admin/OnboardingPage.php:1550
 msgid "Check"
 msgstr ""
 
@@ -5677,7 +6137,7 @@ msgid "You do not have permission to manage Mastodon settings."
 msgstr ""
 
 #: src/Admin/ModulesPage.php:51
-#: src/Admin/OnboardingPage.php:790
+#: src/Admin/OnboardingPage.php:812
 #: src/Admin/SettingsPage.php:37
 #: src/SEO/AdvancedFeatures.php:387
 msgid "Saving…"
@@ -5932,7 +6392,7 @@ msgid "Create page"
 msgstr ""
 
 #: src/Admin/NotFoundPage.php:182
-#: src/Admin/RedirectsPage.php:105
+#: src/Admin/RedirectsPage.php:166
 msgid "New path or URL"
 msgstr ""
 
@@ -5940,19 +6400,8 @@ msgstr ""
 msgid "301"
 msgstr ""
 
-#: src/Admin/NotFoundPage.php:184
-#: src/Admin/RatingNotice.php:65
-#: src/InternalLinks/InternalLinksPage.php:502
-#: src/Newsroom/Newsroom.php:166
-msgid "Dismiss"
-msgstr ""
-
 #: src/Admin/OnboardingPage.php:57
 msgid "Welcome"
-msgstr ""
-
-#: src/Admin/OnboardingPage.php:61
-msgid "Publisher"
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:69
@@ -5962,14 +6411,6 @@ msgstr ""
 #: src/Admin/OnboardingPage.php:73
 #: src/Admin/PublisherToolkitPage.php:128
 msgid "Search"
-msgstr ""
-
-#: src/Admin/OnboardingPage.php:77
-#: src/Admin/PublisherToolkitPage.php:132
-#: src/InternalLinks/InternalLinksPage.php:407
-#: src/Meta/TemplateVariables.php:143
-#: src/SEO/Content/KeyphraseAnalyzer.php:825
-msgid "Content"
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:81
@@ -6035,7 +6476,7 @@ msgid "News media organization"
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:228
-#: src/Admin/OnboardingPage.php:1212
+#: src/Admin/OnboardingPage.php:1217
 #: src/Meta/PostMeta.php:157
 msgid "Organization"
 msgstr ""
@@ -6082,27 +6523,26 @@ msgid "Public contact phone"
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:322
-#: src/Admin/OnboardingPage.php:1373
+#: src/Admin/OnboardingPage.php:1364
 #: src/Schema/SchemaSuite.php:109
-#: src/SEO/LocalSEO.php:258
+#: src/SEO/LocalSEO.php:1209
 msgid "Street address"
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:333
-#: src/Admin/OnboardingPage.php:1374
+#: src/Admin/OnboardingPage.php:1365
 #: src/Schema/SchemaSuite.php:110
-#: src/SEO/LocalSEO.php:259
+#: src/SEO/LocalSEO.php:1210
 msgid "City / locality"
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:343
-#: src/SEO/LocalSEO.php:260
 msgid "State / region"
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:353
-#: src/Admin/OnboardingPage.php:1376
-#: src/SEO/LocalSEO.php:261
+#: src/Admin/OnboardingPage.php:1367
+#: src/SEO/LocalSEO.php:1212
 msgid "Postal code"
 msgstr ""
 
@@ -6120,10 +6560,6 @@ msgstr ""
 
 #: src/Admin/OnboardingPage.php:372
 msgid "Copyright holder"
-msgstr ""
-
-#: src/Admin/OnboardingPage.php:373
-msgid "Copyright notice"
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:373
@@ -6336,7 +6772,7 @@ msgid "Post types in the standard sitemap"
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:597
-#: src/Admin/OnboardingPage.php:1322
+#: src/Admin/OnboardingPage.php:1336
 #: src/Admin/SettingsPage.php:1237
 msgid "Private login address"
 msgstr ""
@@ -6347,8 +6783,8 @@ msgstr ""
 
 #: src/Admin/OnboardingPage.php:610
 #: src/Admin/SettingsPage.php:1238
-#: src/Security/PrivateLogin.php:526
-#: src/Security/PrivateLogin.php:667
+#: src/Security/PrivateLogin.php:500
+#: src/Security/PrivateLogin.php:641
 msgid "Send blocked visitors to"
 msgstr ""
 
@@ -6365,600 +6801,602 @@ msgstr ""
 msgid "PublishRank Setup"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:770
+#: src/Admin/OnboardingPage.php:792
 msgid "Finish setting up PublishRank"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:770
+#: src/Admin/OnboardingPage.php:792
 msgid "Set up your publisher identity, social profiles, search appearance and content scope once in the setup wizard. PublishRank outputs your publisher details only after setup is completed."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:771
+#: src/Admin/OnboardingPage.php:793
 msgid "Start setup"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:788
+#: src/Admin/OnboardingPage.php:810
 msgid "You have unsaved changes on this step"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:789
+#: src/Admin/OnboardingPage.php:811
 msgid "Each step saves when you continue"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:791
+#: src/Admin/OnboardingPage.php:813
 msgid "Leave this step? Changes you made here have not been saved yet."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:795
+#: src/Admin/OnboardingPage.php:817
 msgid "Updating preview…"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:796
+#: src/Admin/OnboardingPage.php:818
 msgid "The preview could not be updated. Your settings are not affected."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:797
+#: src/Admin/OnboardingPage.php:819
 msgid "Google will probably shorten this title. Put the most important words first."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:798
+#: src/Admin/OnboardingPage.php:820
 msgid "The title field is empty, so your site name is used."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:799
+#: src/Admin/OnboardingPage.php:821
 msgid "This description is longer than Google usually shows, so the end may be cut off."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:800
+#: src/Admin/OnboardingPage.php:822
 msgid "This description is quite short. About 120 to 160 characters usually reads best."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:801
+#: src/Admin/OnboardingPage.php:823
 msgid "No description is set, so Google will choose its own text from your page."
 msgstr ""
 
 #. translators: %s: where the description comes from.
-#: src/Admin/OnboardingPage.php:803
+#: src/Admin/OnboardingPage.php:825
 #, php-format
 msgid "Description used: %s"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:858
+#: src/Admin/OnboardingPage.php:880
 msgid "your homepage description"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:859
+#: src/Admin/OnboardingPage.php:881
 msgid "the front page's own SEO description"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:860
+#: src/Admin/OnboardingPage.php:882
 msgid "the front page excerpt"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:861
-#: src/Admin/OnboardingPage.php:862
+#: src/Admin/OnboardingPage.php:883
+#: src/Admin/OnboardingPage.php:884
 msgid "text taken from the front page content"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:863
+#: src/Admin/OnboardingPage.php:885
 msgid "your publication description (the homepage description is empty)"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:895
+#: src/Admin/OnboardingPage.php:917
 msgid "How your homepage looks in Google"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:896
+#: src/Admin/OnboardingPage.php:918
 msgid "Preview size"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:899
+#: src/Admin/OnboardingPage.php:921
 msgid "This is an estimate built from your fields as you type. Google may still rewrite titles and descriptions, and shows the title and description you set only when they match the page well."
 msgstr ""
 
 #. translators: %s: detected WordPress version.
-#: src/Admin/OnboardingPage.php:930
+#: src/Admin/OnboardingPage.php:952
 #, php-format
 msgid "WordPress %s (6.3+ required)"
 msgstr ""
 
 #. translators: %s: detected PHP version.
-#: src/Admin/OnboardingPage.php:936
+#: src/Admin/OnboardingPage.php:958
 #, php-format
 msgid "PHP %s (7.4+ required)"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:940
+#: src/Admin/OnboardingPage.php:962
 msgid "HTTPS active"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:944
+#: src/Admin/OnboardingPage.php:966
 msgid "Pretty permalinks enabled"
 msgstr ""
 
 #. translators: %s: name of the conflicting SEO plugin.
-#: src/Admin/OnboardingPage.php:951
+#: src/Admin/OnboardingPage.php:973
 #, php-format
 msgid "⚠️ Another SEO plugin is active: %s. Running two SEO plugins can print duplicate titles, canonicals and schema."
 msgstr ""
 
 #. translators: %s: name of the conflicting SEO plugin.
-#: src/Admin/OnboardingPage.php:951
+#: src/Admin/OnboardingPage.php:973
 msgid "No conflicting SEO plugin detected"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:956
+#: src/Admin/OnboardingPage.php:978
 msgid "Uploads directory writable"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1212
+#: src/Admin/OnboardingPage.php:1217
 msgid "Newspapers, magazines, newsrooms and digital publishers."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1213
+#: src/Admin/OnboardingPage.php:1218
 msgid "Person"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1213
+#: src/Admin/OnboardingPage.php:1218
 msgid "An individual publisher, journalist or creator-led site."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1224
+#: src/Admin/OnboardingPage.php:1229
 msgid "(required)"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1284
+#: src/Admin/OnboardingPage.php:1298
 msgid "This field is required."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1315
+#: src/Admin/OnboardingPage.php:1329
 msgid "Publisher · person"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1315
+#: src/Admin/OnboardingPage.php:1329
 msgid "Publisher · organization"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1316
-#: src/Admin/OnboardingPage.php:1377
+#: src/Admin/OnboardingPage.php:1330
+#: src/Admin/OnboardingPage.php:1368
 msgid "Country"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1316
+#: src/Admin/OnboardingPage.php:1330
 #: src/Admin/RobotsPage.php:219
 msgid "Not set"
 msgstr ""
 
 #. translators: %d: number of social profiles.
-#: src/Admin/OnboardingPage.php:1318
+#: src/Admin/OnboardingPage.php:1332
 msgid "Social profiles"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1320
+#: src/Admin/OnboardingPage.php:1334
 msgid "Sitemaps"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1320
+#: src/Admin/OnboardingPage.php:1334
 msgid "News sitemap on"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1320
+#: src/Admin/OnboardingPage.php:1334
 msgid "News sitemap off"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1321
+#: src/Admin/OnboardingPage.php:1335
 #: src/Meta/PostMeta.php:154
 msgid "Local business"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1321
+#: src/Admin/OnboardingPage.php:1335
 msgid "Local business on"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1321
+#: src/Admin/OnboardingPage.php:1335
 msgid "Local SEO off"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1322
+#: src/Admin/OnboardingPage.php:1336
 #: src/Admin/SettingsPage.php:1239
 msgid "Private Login is off"
 msgstr ""
 
 #. translators: %s: summary item label.
-#: src/Admin/OnboardingPage.php:1329
+#: src/Admin/OnboardingPage.php:1343
 #, php-format
 msgid "Edit %s"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1365
-#: src/SEO/LocalSEO.php:245
+#: src/Admin/OnboardingPage.php:1356
+#: src/SEO/LocalSEO.php:1170
 msgid "Enable LocalBusiness schema"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1365
+#: src/Admin/OnboardingPage.php:1356
 msgid "Leave off for a purely digital publication without a real public business location."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1368
-#: src/SEO/LocalSEO.php:246
+#: src/Admin/OnboardingPage.php:1359
+#: src/SEO/LocalSEO.php:1190
 msgid "Business / location name"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1369
-#: src/SEO/LocalSEO.php:252
+#: src/Admin/OnboardingPage.php:1360
 msgid "Business URL"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1370
+#: src/Admin/OnboardingPage.php:1361
 msgid "Business phone"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1371
+#: src/Admin/OnboardingPage.php:1362
 msgid "Business email"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1372
+#: src/Admin/OnboardingPage.php:1363
 msgid "Business logo / image URL"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1375
+#: src/Admin/OnboardingPage.php:1366
 msgid "Region"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1378
-#: src/SEO/LocalSEO.php:266
+#: src/Admin/OnboardingPage.php:1369
+#: src/SEO/LocalSEO.php:1215
 msgid "Latitude"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1379
-#: src/SEO/LocalSEO.php:267
+#: src/Admin/OnboardingPage.php:1370
+#: src/SEO/LocalSEO.php:1216
 msgid "Longitude"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1380
-#: src/SEO/LocalSEO.php:270
-msgid "Service area"
-msgstr ""
-
-#: src/Admin/OnboardingPage.php:1381
-#: src/SEO/LocalSEO.php:269
+#: src/Admin/OnboardingPage.php:1371
 msgid "Map URL"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1382
+#: src/Admin/OnboardingPage.php:1372
 msgid "Price range (if applicable)"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1384
-#: src/SEO/LocalSEO.php:250
+#: src/Admin/OnboardingPage.php:1374
+#: src/SEO/LocalSEO.php:1191
 msgid "Business type"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1393
-#: src/SEO/LocalSEO.php:271
+#: src/Admin/OnboardingPage.php:1381
+msgid "Areas served (one per line)"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1382
+#: src/SEO/LocalSEO.php:1222
 msgid "Opening hours"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1393
+#: src/Admin/OnboardingPage.php:1382
 msgid "Example: Mo-Fr 09:00-17:00"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1394
+#: src/Admin/OnboardingPage.php:1382
+msgid "More business details (menu, specialties, services…) in Local SEO"
+msgstr ""
+
+#: src/Admin/OnboardingPage.php:1383
 msgid "Official profile URLs (one per line)"
 msgstr ""
 
 #. translators: 1: step, 2: total.
-#: src/Admin/OnboardingPage.php:1417
-#: src/Admin/OnboardingPage.php:1462
+#: src/Admin/OnboardingPage.php:1406
+#: src/Admin/OnboardingPage.php:1451
 #, php-format
 msgid "Step %1$d of %2$d"
 msgstr ""
 
 #. translators: 1: step, 2: total.
-#: src/Admin/OnboardingPage.php:1418
+#: src/Admin/OnboardingPage.php:1407
 msgid "Setup progress"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1422
+#: src/Admin/OnboardingPage.php:1411
 msgid "completed"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1422
+#: src/Admin/OnboardingPage.php:1411
 msgid "current step"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1422
+#: src/Admin/OnboardingPage.php:1411
 msgid "not started"
 msgstr ""
 
 #. translators: 1: step number, 2: status.
-#: src/Admin/OnboardingPage.php:1423
+#: src/Admin/OnboardingPage.php:1412
 #, php-format
 msgid "Step %1$d, %2$s"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1462
+#: src/Admin/OnboardingPage.php:1451
 msgid "Editing setup"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1462
+#: src/Admin/OnboardingPage.php:1451
 msgid "First-time setup"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1465
+#: src/Admin/OnboardingPage.php:1454
 msgid "Update your publisher identity and core SEO settings. Every step saves on its own."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1465
+#: src/Admin/OnboardingPage.php:1454
 msgid "A few quick steps so search engines know exactly who publishes this site."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1484
+#: src/Admin/OnboardingPage.php:1473
 msgid "That login address cannot be used because it is empty or reserved by WordPress. Your previous address is unchanged. Please choose another one."
 msgstr ""
 
 #. translators: %s: field list.
-#: src/Admin/OnboardingPage.php:1486
+#: src/Admin/OnboardingPage.php:1475
 #, php-format
 msgid "Please complete the required fields (*): %s"
 msgstr ""
 
 #. translators: %s: field list.
-#: src/Admin/OnboardingPage.php:1486
+#: src/Admin/OnboardingPage.php:1475
 msgid "see highlighted fields"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1494
+#: src/Admin/OnboardingPage.php:1483
 msgid "Required fields saved. You can exit any time."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1494
+#: src/Admin/OnboardingPage.php:1483
 msgid "Fill in the required fields (*) to unlock exit"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1498
-#: src/SEO/ArticleIntelligence.php:1785
+#: src/Admin/OnboardingPage.php:1487
+#: src/SEO/ArticleIntelligence.php:1843
 msgid "Cancel"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1500
+#: src/Admin/OnboardingPage.php:1489
 msgid "Saves this step and leaves the wizard. Available once every required field (*) is filled in."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1500
+#: src/Admin/OnboardingPage.php:1489
 msgid "Save & exit"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1502
+#: src/Admin/OnboardingPage.php:1491
 msgid "Skip for now"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1505
+#: src/Admin/OnboardingPage.php:1494
 msgid "Back"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1508
+#: src/Admin/OnboardingPage.php:1497
 msgid "Start configuration"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1510
+#: src/Admin/OnboardingPage.php:1499
 msgid "Finish setup"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1510
+#: src/Admin/OnboardingPage.php:1499
 msgid "Save & continue"
 msgstr ""
 
 #. translators: %s: name of the previous step.
-#: src/Admin/OnboardingPage.php:1518
+#: src/Admin/OnboardingPage.php:1507
 #, php-format
 msgid "%s saved"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1526
+#: src/Admin/OnboardingPage.php:1515
 msgid "Welcome to PublishRank"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1526
+#: src/Admin/OnboardingPage.php:1515
 msgid "This one-time setup tells search engines who publishes this site. It takes about three minutes, and everything can be edited later."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1527
+#: src/Admin/OnboardingPage.php:1516
 msgid "Who publishes this site?"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1527
+#: src/Admin/OnboardingPage.php:1516
 msgid "Powers your Organization/Person schema and keeps publisher information consistent across search surfaces. Fields marked * are required."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1528
+#: src/Admin/OnboardingPage.php:1517
 msgid "About the publisher"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1528
+#: src/Admin/OnboardingPage.php:1517
 msgid "Organization details"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1528
+#: src/Admin/OnboardingPage.php:1517
 msgid "All optional. Only add details that are public and accurate."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1529
+#: src/Admin/OnboardingPage.php:1518
 msgid "Social profiles and sharing"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1529
+#: src/Admin/OnboardingPage.php:1518
 msgid "Official profiles become the schema sameAs list. Enter a handle or a full URL."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1530
+#: src/Admin/OnboardingPage.php:1519
 msgid "Search appearance and verification"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1530
+#: src/Admin/OnboardingPage.php:1519
 msgid "Homepage title and description, plus ownership verification for search engines."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1531
+#: src/Admin/OnboardingPage.php:1520
 msgid "Content scope"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1531
+#: src/Admin/OnboardingPage.php:1520
 msgid "Choose which content types appear in your sitemaps."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1532
+#: src/Admin/OnboardingPage.php:1521
 msgid "Local business (optional)"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1532
+#: src/Admin/OnboardingPage.php:1521
 msgid "Only enable this if the publication has a real, public-facing business location."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1533
+#: src/Admin/OnboardingPage.php:1522
 msgid "Protect your sign-in page"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1533
+#: src/Admin/OnboardingPage.php:1522
 msgid "Choose a private address for the WordPress login. Fields marked * are required. You can change this any time in General Settings."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1534
+#: src/Admin/OnboardingPage.php:1523
 msgid "Review and finish"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1534
+#: src/Admin/OnboardingPage.php:1523
 msgid "Check your configuration, then finish. Ongoing controls such as the News window, breadcrumbs and robots live in General Settings."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1542
+#: src/Admin/OnboardingPage.php:1531
 msgid "Publisher identity"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1542
+#: src/Admin/OnboardingPage.php:1531
 msgid "Your publication name, logo and country, used in schema, Open Graph and the News sitemap."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1543
+#: src/Admin/OnboardingPage.php:1532
 msgid "Homepage title, social profiles, verification codes and which content goes in your sitemaps."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1544
+#: src/Admin/OnboardingPage.php:1533
 msgid "Review & go live"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1544
+#: src/Admin/OnboardingPage.php:1533
 msgid "Check the summary and finish. Ongoing controls stay in General Settings."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1553
+#: src/Admin/OnboardingPage.php:1542
 msgid "Site readiness"
 msgstr ""
 
 #. translators: 1: passed checks, 2: total checks.
-#: src/Admin/OnboardingPage.php:1553
+#: src/Admin/OnboardingPage.php:1542
 #, php-format
 msgid "%1$d of %2$d checks passed"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1561
+#: src/Admin/OnboardingPage.php:1550
 msgid "OK"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1567
+#: src/Admin/OnboardingPage.php:1556
 msgid "PublishRank screens unlock as soon as the required publisher fields are saved."
 msgstr ""
 
 #. translators: %s: field list.
-#: src/Admin/OnboardingPage.php:1578
+#: src/Admin/OnboardingPage.php:1567
 #, php-format
 msgid "Still required: %s. Finishing will take you back to the Publisher step."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1606
+#: src/Admin/OnboardingPage.php:1595
 msgid "Your sign-in page has not moved yet. It moves to the address below when you save this step. After that, wp-login.php and wp-admin are hidden from visitors who are not signed in. Copy the address and keep it somewhere safe."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1608
+#: src/Admin/OnboardingPage.php:1597
 msgid "Private Login is switched off under Features, so your address is saved but not active yet. When it is on, your sign-in page is the address below."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1610
+#: src/Admin/OnboardingPage.php:1599
 msgid "After you save, sign in at the address below. Visitors who are not signed in can no longer open wp-login.php or wp-admin. Copy the address before you continue."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1612
+#: src/Admin/OnboardingPage.php:1601
 msgid "Press Ctrl+C to copy"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1614
+#: src/Admin/OnboardingPage.php:1603
 msgid "Copy address"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1623
+#: src/Admin/OnboardingPage.php:1612
 msgid "Your setup is complete. Review the configuration here, or edit it when your publication changes."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1625
+#: src/Admin/OnboardingPage.php:1614
 msgid "Setup complete. PublishRank is now outputting your publisher identity."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1628
+#: src/Admin/OnboardingPage.php:1617
 msgid "Recommended defaults restored."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1633
+#: src/Admin/OnboardingPage.php:1622
 msgid "Review your core site identity and SEO settings, and jump straight to any step to change it."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1634
+#: src/Admin/OnboardingPage.php:1623
 msgid "Setup complete"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1634
+#: src/Admin/OnboardingPage.php:1623
 msgid "PublishRank is outputting your publisher identity"
 msgstr ""
 
 #. translators: %s: date the setup was completed.
-#: src/Admin/OnboardingPage.php:1637
+#: src/Admin/OnboardingPage.php:1626
 #, php-format
 msgid "Completed on %s. One-time settings live in this wizard; ongoing controls are in General Settings."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1639
+#: src/Admin/OnboardingPage.php:1628
 msgid "One-time settings live in this wizard; ongoing controls are in General Settings."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1641
+#: src/Admin/OnboardingPage.php:1630
 msgid "Edit setup"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1642
+#: src/Admin/OnboardingPage.php:1631
 msgid "Your configuration"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1644
+#: src/Admin/OnboardingPage.php:1633
 msgid "Go to dashboard"
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1645
+#: src/Admin/OnboardingPage.php:1634
 msgid "Restore recommended defaults? Your current wizard-managed values will be replaced."
 msgstr ""
 
-#: src/Admin/OnboardingPage.php:1647
+#: src/Admin/OnboardingPage.php:1636
 msgid "Restore recommended defaults"
 msgstr ""
 
-#: src/Admin/PostListColumns.php:45
+#: src/Admin/PostListColumns.php:53
 msgid "No issues found."
 msgstr ""
 
-#: src/Admin/PostListColumns.php:48
+#: src/Admin/PostListColumns.php:56
 #: src/Admin/SitemapHealthPage.php:409
 msgid "noindex"
 msgstr ""
 
-#: src/Admin/PostListColumns.php:58
+#: src/Admin/PostListColumns.php:66
+#: src/SEO/SeoAnalysis.php:40
 msgid "Article could not be loaded for analysis."
 msgstr ""
 
@@ -7667,178 +8105,252 @@ msgstr ""
 msgid "I already rated it"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:39
+#: src/Admin/RedirectsPage.php:49
+msgid "Choose a CSV file up to 2 MB."
+msgstr ""
+
+#. translators: 1: imported rules, 2: skipped rows.
+#: src/Admin/RedirectsPage.php:63
+#, php-format
+msgid "%1$d redirect(s) imported, %2$d row(s) skipped."
+msgstr ""
+
+#. translators: %d: number of removed rules.
+#: src/Admin/RedirectsPage.php:79
+#, php-format
+msgid "%d redirect removed."
+msgid_plural "%d redirects removed."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/RedirectsPage.php:100
 msgid "Redirect saved."
 msgstr ""
 
 #. translators: 1: saved rules, 2: skipped lines.
-#: src/Admin/RedirectsPage.php:57
+#: src/Admin/RedirectsPage.php:118
 #, php-format
 msgid "%1$d redirect(s) saved, %2$d line(s) skipped."
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:73
+#: src/Admin/RedirectsPage.php:134
 msgid "Redirect behavior saved."
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:81
+#: src/Admin/RedirectsPage.php:142
 msgid "Redirect removed."
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:95
+#: src/Admin/RedirectsPage.php:156
 msgid "Send old URLs to the right place with loop-safe 301, 302, 303, 307, 308, 410 and 451 rules."
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:100
+#: src/Admin/RedirectsPage.php:161
 msgid "Add a redirect"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:104
+#: src/Admin/RedirectsPage.php:165
 msgid "Old path or URL on this site"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:104
+#: src/Admin/RedirectsPage.php:165
 msgid "Use a path or a full URL on this site. External source URLs are rejected because rules match this site’s paths only."
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:108
+#: src/Admin/RedirectsPage.php:169
 msgid "301 — Moved permanently"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:109
+#: src/Admin/RedirectsPage.php:170
 msgid "302 — Found (temporary)"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:110
+#: src/Admin/RedirectsPage.php:171
 msgid "303 — See other (temporary)"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:111
+#: src/Admin/RedirectsPage.php:172
 msgid "307 — Temporary redirect"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:112
+#: src/Admin/RedirectsPage.php:173
 msgid "308 — Permanent redirect"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:113
+#: src/Admin/RedirectsPage.php:174
 msgid "410 — Content deleted (no target)"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:114
+#: src/Admin/RedirectsPage.php:175
 msgid "451 — Unavailable for legal reasons (no target)"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:116
+#: src/Admin/RedirectsPage.php:177
 msgid "Treat the old path as a regular expression"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:116
+#: src/Admin/RedirectsPage.php:177
 msgid "Regex rules are limited to 255 characters; matching is bounded to protect request performance."
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:117
+#: src/Admin/RedirectsPage.php:178
 msgid "Schedule (optional)"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:117
+#: src/Admin/RedirectsPage.php:178
 msgid "Start time"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:117
+#: src/Admin/RedirectsPage.php:178
 msgid "End time"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:117
+#: src/Admin/RedirectsPage.php:178
 #, php-format
 msgid "Uses the site timezone: %s. Before the start and after the end, this redirect automatically becomes inactive."
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:118
+#: src/Admin/RedirectsPage.php:179
 msgid "Save redirect"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:122
+#: src/Admin/RedirectsPage.php:183
 msgid "Redirect behavior"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:125
+#: src/Admin/RedirectsPage.php:186
 msgid "Enable redirect engine"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:126
+#: src/Admin/RedirectsPage.php:187
 msgid "Only process URLs that are 404"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:127
+#: src/Admin/RedirectsPage.php:188
 msgid "Preserve query parameters"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:128
+#: src/Admin/RedirectsPage.php:189
 msgid "Send X-Redirect-By: PublishRank"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:129
+#: src/Admin/RedirectsPage.php:190
 msgid "Maximum redirect-chain depth"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:130
+#: src/Admin/RedirectsPage.php:191
 msgid "Save behavior"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:134
+#: src/Admin/RedirectsPage.php:195
 msgid "Bulk add"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:138
+#: src/Admin/RedirectsPage.php:199
 msgid "One rule per line: old-path new-path [status]. Use \"old-path 410\" for removed content. Plain paths only; up to 500 lines."
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:140
+#: src/Admin/RedirectsPage.php:201
 msgid "Add rules"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:144
+#: src/Admin/RedirectsPage.php:205
+msgid "Import and export"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:208
+msgid "CSV with a header row. Exports from PublishRank, Yoast SEO Premium, Rank Math and Redirection are recognised (source, target, status and regex columns). Every row is validated; existing rules with the same source are updated."
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:209
+msgid "CSV file"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:210
+msgid "Import CSV"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:211
+msgid "Export all as CSV"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:215
+msgid "Test an address"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:219
+msgid "Path or URL"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:220
+msgid "Trace redirects"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:227
+msgid "No redirect rule matches this address."
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:230
+msgid "Loop detected"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:233
+msgid "This is a redirect chain. Point the first rule straight at the final address to save a hop."
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:240
 msgid "Redirects apply to addresses that would otherwise return a 404 page. Rules are checked top to bottom and the first match wins."
 msgstr ""
 
 #. translators: %d: number of rules.
-#: src/Admin/RedirectsPage.php:145
+#: src/Admin/RedirectsPage.php:241
 #, php-format
 msgid "%d rule"
 msgid_plural "%d rules"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/RedirectsPage.php:147
+#: src/Admin/RedirectsPage.php:244
+msgid "Delete the selected redirects?"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:244
+msgid "Delete selected"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:246
+msgid "Select all"
+msgstr ""
+
+#: src/Admin/RedirectsPage.php:246
 msgid "Old"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:147
+#: src/Admin/RedirectsPage.php:246
 msgid "Match"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:147
+#: src/Admin/RedirectsPage.php:246
 msgid "Schedule"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:150
+#: src/Admin/RedirectsPage.php:249
 msgid "No redirects yet."
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:169
+#: src/Admin/RedirectsPage.php:269
 msgid "Regex"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:169
+#: src/Admin/RedirectsPage.php:269
 msgid "Exact"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:170
+#: src/Admin/RedirectsPage.php:270
 msgid "Inactive now"
 msgstr ""
 
-#: src/Admin/RedirectsPage.php:171
+#: src/Admin/RedirectsPage.php:271
 #: src/Admin/SiteVerificationPage.php:335
 msgid "Delete"
 msgstr ""
@@ -8745,101 +9257,130 @@ msgstr ""
 msgid "You are not allowed to use SEO portability."
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:16
-#: src/Admin/SEOScorePage.php:71
+#: src/Admin/SEOScorePage.php:32
+msgid "Inclusive-language settings saved."
+msgstr ""
+
+#: src/Admin/SEOScorePage.php:37
+msgid "Languages and inclusive language"
+msgstr ""
+
+#: src/Admin/SEOScorePage.php:38
+msgid "The analysis detects English, Arabic and Urdu from the text. Arabic and Urdu use their own normalisation, word endings, sentence marks, connective words and sentence-length limits; English-only formulas (Flesch, passive voice) are not applied to them. Other languages get the language-neutral checks only."
+msgstr ""
+
+#: src/Admin/SEOScorePage.php:41
+msgid "Suggest more inclusive wording in the editor (English)"
+msgstr ""
+
+#: src/Admin/SEOScorePage.php:41
+msgid "Suggestions explain why and offer alternatives. They never change your text and do not affect the SEO score. Writers can dismiss a suggestion for one post."
+msgstr ""
+
+#: src/Admin/SEOScorePage.php:42
+msgid "Rules"
+msgstr ""
+
+#: src/Admin/SEOScorePage.php:46
+#: src/InternalLinks/PublisherLinkIntelligence.php:491
+msgid "Save"
+msgstr ""
+
+#: src/Admin/SEOScorePage.php:49
+#: src/Admin/SEOScorePage.php:104
 msgid "SEO Score"
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:71
+#: src/Admin/SEOScorePage.php:104
 msgid "Editorial quality signals and technical discovery, scored locally without sending article content to an external service."
 msgstr ""
 
 #. translators: %1$d: total count for the preceding category; %2$d: numeric count or measurement described by the message.
-#: src/Admin/SEOScorePage.php:73
+#: src/Admin/SEOScorePage.php:107
 #, php-format
 msgid "Based on %1$d of %2$d published articles."
 msgstr ""
 
 #. translators: %d: numeric count or measurement described by the message.
-#: src/Admin/SEOScorePage.php:75
+#: src/Admin/SEOScorePage.php:109
 msgid "Score distribution"
 msgstr ""
 
 #. translators: %d: numeric count or measurement described by the message.
-#: src/Admin/SEOScorePage.php:75
+#: src/Admin/SEOScorePage.php:109
 #, php-format
 msgid "Strong (75–100): %d"
 msgstr ""
 
 #. translators: %d: numeric count or measurement described by the message.
-#: src/Admin/SEOScorePage.php:75
+#: src/Admin/SEOScorePage.php:109
 #, php-format
 msgid "Improving (50–74): %d"
 msgstr ""
 
 #. translators: %d: numeric count or measurement described by the message.
-#: src/Admin/SEOScorePage.php:75
+#: src/Admin/SEOScorePage.php:109
 #, php-format
 msgid "Priority (0–49): %d"
 msgstr ""
 
 #. translators: %d: numeric count or measurement described by the message.
-#: src/Admin/SEOScorePage.php:75
+#: src/Admin/SEOScorePage.php:109
 msgid "The score weighs headline, description, content depth, subheadings, featured image, author attribution, dates and links. It is an editorial checklist, not a ranking prediction."
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:76
+#: src/Admin/SEOScorePage.php:110
 msgid "Technical discovery"
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:76
+#: src/Admin/SEOScorePage.php:110
 msgid "XML sitemap index"
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:76
+#: src/Admin/SEOScorePage.php:110
 msgid "Run the Sitemap Hub screen for XML validity, provider coverage and shard diagnostics."
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:76
+#: src/Admin/SEOScorePage.php:110
 msgid "Schema settings"
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:78
+#: src/Admin/SEOScorePage.php:113
 msgid "Most common opportunities"
 msgstr ""
 
 #. translators: 1: SEO issue label, 2: number of sampled articles.
-#: src/Admin/SEOScorePage.php:82
+#: src/Admin/SEOScorePage.php:117
 #, php-format
 msgid "%1$s — %2$d sampled article(s)"
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:85
+#: src/Admin/SEOScorePage.php:120
 msgid "Articles to review first"
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:85
+#: src/Admin/SEOScorePage.php:120
 msgid "Article"
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:85
+#: src/Admin/SEOScorePage.php:120
 #: src/InternalLinks/InternalLinksPage.php:435
 msgid "Score"
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:85
+#: src/Admin/SEOScorePage.php:120
 msgid "Next steps"
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:87
+#: src/Admin/SEOScorePage.php:122
 msgid "No published editorial articles were found."
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:92
+#: src/Admin/SEOScorePage.php:127
 msgid "No priority issues identified."
 msgstr ""
 
-#: src/Admin/SEOScorePage.php:94
+#: src/Admin/SEOScorePage.php:129
 msgid "Sample is capped at the 50 most recently published eligible articles to keep this screen responsive on large sites. Scores are calculated on demand and are not cached as a site-wide ranking metric."
 msgstr ""
 
@@ -9449,6 +9990,7 @@ msgstr ""
 #: src/Admin/SettingsPage.php:1286
 #: src/Admin/SettingsPage.php:1291
 #: src/Schema/SchemaSuite.php:166
+#: src/SEO/LocalSEO.php:1114
 msgid "Not specified"
 msgstr ""
 
@@ -9894,10 +10436,13 @@ msgid "no publication date"
 msgstr ""
 
 #: src/Admin/SitemapHealthPage.php:419
+#: src/Admin/WooCommerceSeoPage.php:109
+#: src/SEO/LocalSEO.php:1114
 msgid "Yes"
 msgstr ""
 
 #: src/Admin/SitemapHealthPage.php:420
+#: src/SEO/LocalSEO.php:1114
 msgid "No"
 msgstr ""
 
@@ -9995,6 +10540,100 @@ msgstr ""
 
 #: src/Admin/SitemapHealthPage.php:455
 msgid "Last sitemap error"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:77
+msgid "Site navigation saved."
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:88
+msgid "Tell search engines which pages matter most and check that each one is easy to reach, indexable and consistently linked."
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:90
+msgid "No plugin can force Google to show particular pages as sitelinks under your homepage. A clear hierarchy, consistent internal links, breadcrumbs and descriptive titles make relevant sitelinks more likely; that is what this screen helps with."
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:98
+msgid "Important pages"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:100
+msgid "Health"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:100
+#: src/Admin/SiteNavigationPage.php:123
+msgid "Remove"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:104
+msgid "No important pages yet. Add them below or accept the suggestions."
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:129
+msgid "Add a page"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:135
+msgid "— Select a page —"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:140
+msgid "Role of the added page"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:147
+msgid "Suggested from your page addresses"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:154
+msgid "Describe these pages on the homepage (SiteNavigationElement list and WebPage significantLink)"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:155
+msgid "Save site navigation"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:174
+msgid "Homepage schema preview"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:176
+msgid "Nothing is added until at least one published, indexable page is saved."
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:179
+#: src/SEO/SiteNavigation.php:114
+msgid "Site navigation"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:188
+msgid "Breadcrumb trails"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:205
+msgid "Breadcrumb settings"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:209
+msgid "Orphaned content"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:215
+msgid "No orphaned content found in the content graph, or the graph has not been scanned yet."
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:219
+msgid "0 internal links"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:223
+msgid "Content Graph and link suggestions"
+msgstr ""
+
+#: src/Admin/SiteNavigationPage.php:223
+msgid "Broken link audit"
 msgstr ""
 
 #: src/Admin/SiteVerificationPage.php:29
@@ -10401,6 +11040,130 @@ msgstr ""
 msgid "Save Traffic Guard"
 msgstr ""
 
+#: src/Admin/WooCommerceSeoPage.php:47
+msgid "WooCommerce SEO settings saved."
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:56
+msgid "Product structured data, social sharing tags, product sitemap and noindex rules for store pages, working together with WooCommerce instead of duplicating it."
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:59
+msgid "Connect WooCommerce product schema to the PublishRank graph (one breadcrumb, seller = your organization, brand, condition, gallery images)"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:60
+msgid "Use og:type \"product\" with price, currency, availability, SKU and brand when product pages are shared"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:61
+msgid "Keep cart, checkout and account pages out of search results"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:62
+msgid "Keep sorted and filtered shop listings out of search results (they still pass links)"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:63
+msgid "Keep products hidden from the catalog out of search results"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:64
+msgid "List products in their own sitemap and leave hidden products out"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:69
+msgid "Store SEO"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:73
+msgid "Default item condition"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:74
+msgid "Used"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:74
+msgid "Refurbished"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:74
+msgid "Damaged"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:77
+msgid "Save WooCommerce SEO"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:88
+#: src/Schema/SchemaSuite.php:164
+msgid "Price"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:89
+msgid "SKU"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:90
+msgid "GTIN"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:91
+msgid "Brand"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:92
+msgid "Indexable"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:95
+msgid "Product audit"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:96
+msgid "Google needs a name, image and price for product results; SKU, GTIN and brand help it match your product to searches. Nothing is invented: missing values stay missing."
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:97
+#: src/Meta/PostMeta.php:142
+msgid "Product"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:103
+msgid "No published products yet."
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:124
+msgid "Search result preview"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:126
+msgid "Publish a product to see its preview."
+msgstr ""
+
+#. translators: 1: average rating, 2: number of reviews.
+#: src/Admin/WooCommerceSeoPage.php:143
+#, php-format
+msgid "%1$s (%2$d reviews)"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:146
+msgid "Open Graph product tags"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:158
+msgid "Product structured data"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:159
+msgid "Test in Google Rich Results"
+msgstr ""
+
+#: src/Admin/WooCommerceSeoPage.php:159
+msgid "Edit product SEO"
+msgstr ""
+
 #: src/AI/LLMSTxt.php:197
 msgid "Official website homepage."
 msgstr ""
@@ -10800,6 +11563,129 @@ msgstr ""
 msgid "Integrations"
 msgstr ""
 
+#. translators: 1: current year, 2: publication name.
+#: src/Feeds/FeedManager.php:171
+#, php-format
+msgid "© %1$s %2$s. All rights reserved."
+msgstr ""
+
+#. translators: %s: publication name.
+#: src/Feeds/FeedManager.php:268
+#, php-format
+msgid "%s » News feed"
+msgstr ""
+
+#: src/Feeds/FeedManager.php:336
+msgid "Main feed (RSS 2.0)"
+msgstr ""
+
+#: src/Feeds/FeedManager.php:336
+#: src/Feeds/FeedManager.php:337
+#: src/Feeds/FeedManager.php:338
+#: src/Feeds/FeedManager.php:342
+#: src/Meta/TemplateVariables.php:142
+msgid "Site"
+msgstr ""
+
+#: src/Feeds/FeedManager.php:337
+msgid "Main feed (Atom)"
+msgstr ""
+
+#: src/Feeds/FeedManager.php:338
+msgid "Comments feed"
+msgstr ""
+
+#: src/Feeds/FeedManager.php:342
+msgid "News feed (recent articles)"
+msgstr ""
+
+#: src/Feeds/FeedManager.php:361
+#: src/InternalLinks/InternalLinksPage.php:392
+msgid "Post types"
+msgstr ""
+
+#: src/Feeds/FeedManager.php:368
+msgid "Taxonomies"
+msgstr ""
+
+#. translators: %s: error message.
+#: src/Feeds/FeedManager.php:405
+#, php-format
+msgid "The feed could not be fetched from this server: %s"
+msgstr ""
+
+#. translators: %d: HTTP status code.
+#: src/Feeds/FeedManager.php:423
+#, php-format
+msgid "The feed answered with HTTP status %d instead of 200."
+msgstr ""
+
+#. translators: %s: content type.
+#: src/Feeds/FeedManager.php:427
+#, php-format
+msgid "The content type is \"%s\"; feed readers expect an XML type such as application/rss+xml."
+msgstr ""
+
+#: src/Feeds/FeedManager.php:430
+msgid "PHP warnings or notices are printed inside the feed. Turn off WP_DEBUG_DISPLAY on production sites and fix the reported plugin or theme."
+msgstr ""
+
+#: src/Feeds/FeedManager.php:434
+msgid "The feed is empty."
+msgstr ""
+
+#: src/Feeds/FeedManager.php:438
+msgid "There is text or whitespace before the XML declaration. This usually comes from a blank line in a theme or plugin file and makes the feed invalid."
+msgstr ""
+
+#. translators: 1: line number, 2: XML parser message.
+#: src/Feeds/FeedManager.php:446
+#, php-format
+msgid "XML error on line %1$d: %2$s"
+msgstr ""
+
+#: src/Feeds/FeedManager.php:458
+msgid "The rss element should declare version=\"2.0\"."
+msgstr ""
+
+#: src/Feeds/FeedManager.php:462
+msgid "The RSS feed has no channel element."
+msgstr ""
+
+#. translators: %s: element name.
+#: src/Feeds/FeedManager.php:476
+#, php-format
+msgid "The channel has an empty <%s> element."
+msgstr ""
+
+#. translators: %d: item number.
+#: src/Feeds/FeedManager.php:498
+#, php-format
+msgid "Item %d has neither a title nor a description."
+msgstr ""
+
+#. translators: 1: item number, 2: date value.
+#: src/Feeds/FeedManager.php:502
+#, php-format
+msgid "Item %1$d has an invalid pubDate (%2$s). RSS requires RFC 822 dates."
+msgstr ""
+
+#. translators: %s: guid value.
+#: src/Feeds/FeedManager.php:507
+#, php-format
+msgid "Duplicate guid %s: readers may hide one of the items."
+msgstr ""
+
+#. translators: %s: root element name.
+#: src/Feeds/FeedManager.php:539
+#, php-format
+msgid "The document root is <%s>, not an RSS or Atom feed."
+msgstr ""
+
+#: src/Feeds/FeedManager.php:543
+msgid "The feed is valid but has no items yet."
+msgstr ""
+
 #: src/Google/LiveSync.php:59
 msgid "Connect Search Console and choose a property first."
 msgstr ""
@@ -11121,6 +12007,16 @@ msgstr ""
 msgid "Tappable visual stories for Google Search and Discover"
 msgstr ""
 
+#: src/Integrations/WooCommerceSEO.php:239
+#: src/Integrations/WooCommerceSEO.php:262
+#: src/SEO/SiteNavigation.php:35
+msgid "Products"
+msgstr ""
+
+#: src/Integrations/WooCommerceSEO.php:263
+msgid "WooCommerce products (hidden products left out)"
+msgstr ""
+
 #: src/InternalLinks/InternalLinksPage.php:101
 msgid "You do not have permission to manage this internal link."
 msgstr ""
@@ -11286,10 +12182,6 @@ msgstr ""
 
 #: src/InternalLinks/InternalLinksPage.php:391
 msgid "Recommendations per orphan"
-msgstr ""
-
-#: src/InternalLinks/InternalLinksPage.php:392
-msgid "Post types"
 msgstr ""
 
 #: src/InternalLinks/InternalLinksPage.php:392
@@ -11546,10 +12438,6 @@ msgstr ""
 msgid "Include external links"
 msgstr ""
 
-#: src/InternalLinks/PublisherLinkIntelligence.php:491
-msgid "Save"
-msgstr ""
-
 #: src/InternalLinks/PublisherLinkIntelligence.php:492
 msgid "Runs in the background in small batches. When on, each article is also re-checked for broken internal links as soon as it is published or updated."
 msgstr ""
@@ -11692,16 +12580,16 @@ msgctxt "page-type meta description fallback"
 msgid "%1$s — %2$s"
 msgstr ""
 
-#: src/Meta/HeadOutput.php:211
+#: src/Meta/HeadOutput.php:213
 msgid "Written by"
 msgstr ""
 
-#: src/Meta/HeadOutput.php:215
+#: src/Meta/HeadOutput.php:217
 msgid "Est. reading time"
 msgstr ""
 
 #. translators: %d: minutes.
-#: src/Meta/HeadOutput.php:217
+#: src/Meta/HeadOutput.php:219
 #, php-format
 msgid "%d minute"
 msgid_plural "%d minutes"
@@ -11737,10 +12625,6 @@ msgstr ""
 
 #: src/Meta/MetaGenerator.php:318
 msgid "Page not found"
-msgstr ""
-
-#: src/Meta/PostMeta.php:142
-msgid "Product"
 msgstr ""
 
 #: src/Meta/PostMeta.php:143
@@ -11788,6 +12672,7 @@ msgid "Game"
 msgstr ""
 
 #: src/Meta/PostMeta.php:155
+#: src/SEO/LocalSEO.php:1229
 msgid "Restaurant"
 msgstr ""
 
@@ -11876,11 +12761,6 @@ msgstr ""
 
 #: src/Meta/TemplateVariables.php:84
 msgid "Empty when there is no title."
-msgstr ""
-
-#: src/Meta/TemplateVariables.php:87
-#: src/Social/Mastodon.php:454
-msgid "Excerpt"
 msgstr ""
 
 #: src/Meta/TemplateVariables.php:88
@@ -11979,10 +12859,6 @@ msgstr ""
 
 #: src/Meta/TemplateVariables.php:134
 msgid "Empty when no focus keyword is set."
-msgstr ""
-
-#: src/Meta/TemplateVariables.php:142
-msgid "Site"
 msgstr ""
 
 #: src/Meta/TemplateVariables.php:145
@@ -12784,10 +13660,6 @@ msgstr ""
 msgid "Brand (optional)"
 msgstr ""
 
-#: src/Schema/SchemaSuite.php:164
-msgid "Price"
-msgstr ""
-
 #: src/Schema/SchemaSuite.php:165
 msgid "Currency code"
 msgstr ""
@@ -12860,152 +13732,152 @@ msgstr ""
 msgid "%1$d missing, %2$d changed and %3$d unexpected PHP files were detected. PublishRank will continue with defensive module loading where possible."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:303
+#: src/Security/PrivateLogin.php:277
 msgid "This has been disabled"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:314
+#: src/Security/PrivateLogin.php:288
 msgid "This feature is not enabled."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:522
+#: src/Security/PrivateLogin.php:496
 msgid "PublishRank Private Login"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:523
+#: src/Security/PrivateLogin.php:497
 msgid "Network default for the private login address. Each site can choose its own under PublishRank → Private Login."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:524
+#: src/Security/PrivateLogin.php:498
 msgid "Default login address"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:555
+#: src/Security/PrivateLogin.php:529
 msgid "Login settings"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:598
+#: src/Security/PrivateLogin.php:572
 msgid "No changes were saved. Please choose a different login address; this one is reserved by WordPress."
 msgstr ""
 
 #. translators: %s: new login URL.
-#: src/Security/PrivateLogin.php:604
+#: src/Security/PrivateLogin.php:578
 #, php-format
 msgid "Saved. Your login page is now %s — bookmark it!"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:626
+#: src/Security/PrivateLogin.php:600
 msgid "Private Login is disabled by wp-config.php."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:626
+#: src/Security/PrivateLogin.php:600
 msgid "The constant PUBLISHRANK_DISABLE_PRIVATE_LOGIN is set to true, so the standard WordPress login (wp-login.php and wp-admin) works as normal. Remove that line from wp-config.php to use your private login address again."
 msgstr ""
 
 #. translators: %s: login URL.
-#: src/Security/PrivateLogin.php:629
+#: src/Security/PrivateLogin.php:603
 msgid "Private Login is waiting for you."
 msgstr ""
 
 #. translators: %s: login URL.
-#: src/Security/PrivateLogin.php:629
+#: src/Security/PrivateLogin.php:603
 #, php-format
 msgid "Your sign-in page has not moved yet. When you save below, it moves to %s. Copy that address first."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:631
+#: src/Security/PrivateLogin.php:605
 msgid "Private Login is turned off."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:631
+#: src/Security/PrivateLogin.php:605
 msgid "The standard WordPress login (wp-login.php and wp-admin) works as normal. Your address below is saved but not in use."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:633
+#: src/Security/PrivateLogin.php:607
 msgid "Your login page is now here:"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:633
+#: src/Security/PrivateLogin.php:607
 msgid "Bookmark this address. Visitors who are not signed in can no longer open wp-login.php, wp-register.php or the wp-admin folder."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:638
+#: src/Security/PrivateLogin.php:612
 msgid "Move the WordPress login page to a private address and keep wp-login.php and wp-admin hidden from visitors."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:651
+#: src/Security/PrivateLogin.php:625
 msgid "Turn it on under Features"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:660
+#: src/Security/PrivateLogin.php:634
 msgid "Login address"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:660
+#: src/Security/PrivateLogin.php:634
 msgid "Login URL"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:661
+#: src/Security/PrivateLogin.php:635
 msgid "Your private login address"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:663
+#: src/Security/PrivateLogin.php:637
 msgid "You sign in here from now on. wp-login.php and the wp-admin folder are hidden from visitors who are not signed in."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:666
+#: src/Security/PrivateLogin.php:640
 msgid "Blocked visitors"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:666
+#: src/Security/PrivateLogin.php:640
 msgid "Redirection URL"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:669
+#: src/Security/PrivateLogin.php:643
 msgid "Where visitors land if they open wp-login.php or wp-admin while signed out. Leave 404 to show your not-found page."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:672
+#: src/Security/PrivateLogin.php:646
 msgid "What is protected"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:672
+#: src/Security/PrivateLogin.php:646
 msgid "Active protections"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:675
+#: src/Security/PrivateLogin.php:649
 msgid "wp-login.php and wp-register.php are hidden"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:676
+#: src/Security/PrivateLogin.php:650
 msgid "wp-admin redirects visitors who are not signed in"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:677
+#: src/Security/PrivateLogin.php:651
 msgid "wp-signup and wp-activate are blocked on single sites"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:678
+#: src/Security/PrivateLogin.php:652
 msgid "Login links in emails and menus use your new address"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:679
+#: src/Security/PrivateLogin.php:653
 msgid "The Customizer is blocked for visitors who are not signed in"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:683
+#: src/Security/PrivateLogin.php:657
 msgid "Hiding the login page is not a replacement for strong passwords and two-factor sign-in."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:684
+#: src/Security/PrivateLogin.php:658
 msgid "Locked out? Add define( 'PUBLISHRANK_DISABLE_PRIVATE_LOGIN', true ); to wp-config.php to restore the standard login."
 msgstr ""
 
-#: src/Security/PrivateLogin.php:688
+#: src/Security/PrivateLogin.php:662
 msgid "Save login settings"
 msgstr ""
 
-#: src/Security/PrivateLogin.php:721
+#: src/Security/PrivateLogin.php:695
 msgid "PublishRank Private Login: if \"Users must be registered and logged in to comment\" is ticked, the comment form still shows a login link, so the private address is visible there."
 msgstr ""
 
@@ -13014,8 +13886,8 @@ msgid "Access restricted by the site administrator."
 msgstr ""
 
 #: src/SEO/AdvancedFeatures.php:52
-#: src/SEO/ArticleIntelligence.php:1491
-#: src/SEO/Content/KeyphraseAnalyzer.php:826
+#: src/SEO/ArticleIntelligence.php:1548
+#: src/SEO/Content/KeyphraseAnalyzer.php:818
 msgid "Image alt text"
 msgstr ""
 
@@ -13024,7 +13896,7 @@ msgid "Original article on another site (syndicated copy)"
 msgstr ""
 
 #: src/SEO/AdvancedFeatures.php:67
-#: src/SEO/ArticleIntelligence.php:1490
+#: src/SEO/ArticleIntelligence.php:1547
 msgid "Featured image"
 msgstr ""
 
@@ -13667,12 +14539,12 @@ msgid "No reliable suggestion could be derived from the current content."
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:163
-#: src/SEO/ArticleIntelligence.php:1819
+#: src/SEO/ArticleIntelligence.php:1877
 msgid "Re-analyze"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:164
-#: src/SEO/ArticleIntelligence.php:1588
+#: src/SEO/ArticleIntelligence.php:1646
 msgid "Well optimized"
 msgstr ""
 
@@ -13682,7 +14554,7 @@ msgid "Analysis complete. SEO score: %1$d out of 100. %2$s."
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:168
-#: src/SEO/ArticleIntelligence.php:1785
+#: src/SEO/ArticleIntelligence.php:1843
 #, php-format
 msgid "%d character (target 70–160)"
 msgid_plural "%d characters (target 70–160)"
@@ -13715,303 +14587,337 @@ msgid_plural "Analyzed %d articles."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/SEO/ArticleIntelligence.php:533
+#: src/SEO/ArticleIntelligence.php:546
 msgid "Set a focus keyword to get keyword-specific checks."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:540
+#: src/SEO/ArticleIntelligence.php:553
 msgid "The focus keyword length is good."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:540
+#: src/SEO/ArticleIntelligence.php:553
 msgid "The focus keyword is long; aim for 1 to 4 words."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:543
+#: src/SEO/ArticleIntelligence.php:556
 msgid "The focus keyword appears in the title."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:543
+#: src/SEO/ArticleIntelligence.php:556
 msgid "Add the focus keyword to the headline or search title."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:546
+#: src/SEO/ArticleIntelligence.php:559
 msgid "The focus keyword appears in the meta description."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:546
+#: src/SEO/ArticleIntelligence.php:559
 msgid "Mention the focus keyword in the meta description."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:550
+#: src/SEO/ArticleIntelligence.php:563
 msgid "The focus keyword appears in the URL slug."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:550
+#: src/SEO/ArticleIntelligence.php:563
 msgid "Consider including the focus keyword in the URL slug."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:554
+#: src/SEO/ArticleIntelligence.php:567
 msgid "The focus keyword appears in the opening paragraph."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:554
+#: src/SEO/ArticleIntelligence.php:567
 msgid "State the focus keyword in the opening paragraph."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:568
+#: src/SEO/ArticleIntelligence.php:581
 msgid "The focus keyword (or a variant) appears in a subheading."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:568
+#: src/SEO/ArticleIntelligence.php:581
 msgid "Use the focus keyword in at least one subheading."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:578
+#: src/SEO/ArticleIntelligence.php:591
 msgid "An image alt text includes the focus keyword."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:578
+#: src/SEO/ArticleIntelligence.php:591
 msgid "Describe at least one image with the focus keyword where it fits naturally."
 msgstr ""
 
 #. translators: %1$d: occurrences; %2$s: density percentage.
-#: src/SEO/ArticleIntelligence.php:593
+#: src/SEO/ArticleIntelligence.php:606
 #, php-format
 msgid "The focus keyword appears %1$d times (%2$s%% density). Aim for 0.5%% to 3%%."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:606
+#: src/SEO/ArticleIntelligence.php:619
 msgid "The focus keyword is spread across the article."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:606
+#: src/SEO/ArticleIntelligence.php:619
 msgid "The focus keyword is bunched in one part of the article; mention it in the beginning, middle and end."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:614
+#: src/SEO/ArticleIntelligence.php:627
 msgid "Add a headline."
 msgstr ""
 
 #. translators: %d: numeric count or measurement described by the message; %d: number of characters.
-#: src/SEO/ArticleIntelligence.php:618
+#: src/SEO/ArticleIntelligence.php:631
 #, php-format
 msgid "The headline length (%d characters) works well."
 msgstr ""
 
 #. translators: %d: numeric count or measurement described by the message; %d: number of characters.
-#: src/SEO/ArticleIntelligence.php:618
+#: src/SEO/ArticleIntelligence.php:631
 #, php-format
 msgid "The headline is %d characters; aim for 30 to 65."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:620
+#: src/SEO/ArticleIntelligence.php:633
 msgid "The headline has a readable number of words."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:620
+#: src/SEO/ArticleIntelligence.php:633
 msgid "Aim for roughly 5 to 14 words in the headline."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:625
+#: src/SEO/ArticleIntelligence.php:638
 msgid "The headline reads as sensational (capitals or clickbait phrasing), which can hurt trust and News eligibility."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:625
+#: src/SEO/ArticleIntelligence.php:638
 msgid "The headline tone is straightforward."
 msgstr ""
 
 #. translators: %1$d: pixel width or size; %2$d: pixel width or size.
-#: src/SEO/ArticleIntelligence.php:632
+#: src/SEO/ArticleIntelligence.php:645
 #, php-format
 msgid "The search title should fit without truncation (about %1$d of %2$d px)."
 msgstr ""
 
 #. translators: %1$d: pixel width or size; %2$d: pixel width or size.
-#: src/SEO/ArticleIntelligence.php:632
+#: src/SEO/ArticleIntelligence.php:645
 #, php-format
 msgid "The search title may be truncated in results (about %1$d of %2$d px)."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:636
+#: src/SEO/ArticleIntelligence.php:649
 msgid "Write a 70–160 character meta description; without one, search engines choose a snippet for you."
 msgstr ""
 
 #. translators: %d: number of characters.
-#: src/SEO/ArticleIntelligence.php:639
+#: src/SEO/ArticleIntelligence.php:652
 #, php-format
 msgid "No meta description written, so an automatic one is taken from the article (%d characters). Write your own 70–160 character description to control the search snippet."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:641
+#: src/SEO/ArticleIntelligence.php:654
 msgid "The meta description length is good."
 msgstr ""
 
 #. translators: %d: number of characters.
-#: src/SEO/ArticleIntelligence.php:644
+#: src/SEO/ArticleIntelligence.php:657
 #, php-format
 msgid "The meta description is %d characters; aim for 70 to 160."
 msgstr ""
 
 #. translators: %d: number of words.
-#: src/SEO/ArticleIntelligence.php:650
+#: src/SEO/ArticleIntelligence.php:663
 #, php-format
 msgid "Only %d words: too thin for most news coverage. Add context, sourcing and detail."
 msgstr ""
 
 #. translators: %d: number of words.
-#: src/SEO/ArticleIntelligence.php:653
+#: src/SEO/ArticleIntelligence.php:666
 #, php-format
 msgid "%d words: acceptable for a brief, but 300+ gives readers and search engines more to work with."
 msgstr ""
 
 #. translators: %d: number of words.
-#: src/SEO/ArticleIntelligence.php:656
+#: src/SEO/ArticleIntelligence.php:669
 #, php-format
 msgid "%d words: a substantial article."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:665
+#: src/SEO/ArticleIntelligence.php:678
 msgid "Subheadings break the article into scannable sections."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:665
+#: src/SEO/ArticleIntelligence.php:678
 msgid "Add descriptive subheadings (H2/H3) to break up the article."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:668
+#: src/SEO/ArticleIntelligence.php:681
 msgid "Some sections run over 350 words without a subheading."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:668
+#: src/SEO/ArticleIntelligence.php:681
 msgid "Subheadings are spaced evenly."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:682
+#: src/SEO/ArticleIntelligence.php:695
 msgid "The content contains an H1; the theme already outputs the headline as H1, so use H2 and below."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:682
+#: src/SEO/ArticleIntelligence.php:695
 msgid "Heading levels skip a step (for example H2 to H4). Keep the hierarchy sequential."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:682
+#: src/SEO/ArticleIntelligence.php:695
 msgid "The heading hierarchy is clean."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:690
+#: src/SEO/ArticleIntelligence.php:703
 msgid "Paragraph lengths are comfortable."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:690
+#: src/SEO/ArticleIntelligence.php:703
 msgid "Some paragraphs exceed 150 words; split them for easier reading."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:693
+#: src/SEO/ArticleIntelligence.php:706
 msgid "The opening paragraph is tight."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:693
+#: src/SEO/ArticleIntelligence.php:706
 msgid "The opening paragraph is long; lead with the key facts in a few sentences."
 msgstr ""
 
-#. translators: %d: percentage value.
-#: src/SEO/ArticleIntelligence.php:707
+#. translators: 1: percentage value, 2: words per sentence.
+#: src/SEO/ArticleIntelligence.php:721
 #, php-format
-msgid "Only %d%% of sentences are long (25+ words)."
+msgid "Only %1$d%% of sentences are long (%2$d+ words)."
 msgstr ""
 
-#. translators: %d: percentage value.
-#: src/SEO/ArticleIntelligence.php:707
+#. translators: 1: percentage value, 2: words per sentence.
+#: src/SEO/ArticleIntelligence.php:721
 #, php-format
-msgid "%d%% of sentences exceed 25 words; shorten some."
+msgid "%1$d%% of sentences exceed %2$d words; shorten some."
+msgstr ""
+
+#. translators: 1: percentage value, 2: language name.
+#: src/SEO/ArticleIntelligence.php:731
+#, php-format
+msgid "%1$d%% of sentences use %2$s connective words, which helps flow."
+msgstr ""
+
+#. translators: 1: percentage value, 2: language name.
+#: src/SEO/ArticleIntelligence.php:731
+#, php-format
+msgid "Only %1$d%% of sentences use %2$s connective words; connect ideas more clearly."
+msgstr ""
+
+#. translators: %s: language name.
+#: src/SEO/ArticleIntelligence.php:733
+#, php-format
+msgid "Analysed as %s. Flesch reading ease and passive-voice checks are English formulas and were not applied."
 msgstr ""
 
 #. translators: %s: Flesch reading-ease score.
-#: src/SEO/ArticleIntelligence.php:711
+#: src/SEO/ArticleIntelligence.php:737
 #, php-format
 msgid "Flesch reading ease is %s: easy to read."
 msgstr ""
 
 #. translators: %s: Flesch reading-ease score.
-#: src/SEO/ArticleIntelligence.php:711
+#: src/SEO/ArticleIntelligence.php:737
 #, php-format
 msgid "Flesch reading ease is %s: prefer shorter sentences and simpler words."
 msgstr ""
 
 #. translators: %d: percentage value.
-#: src/SEO/ArticleIntelligence.php:722
+#: src/SEO/ArticleIntelligence.php:748
 #, php-format
 msgid "Passive voice is kept low (%d%% of sentences)."
 msgstr ""
 
 #. translators: %d: percentage value.
-#: src/SEO/ArticleIntelligence.php:722
+#: src/SEO/ArticleIntelligence.php:748
 #, php-format
 msgid "%d%% of sentences look passive; prefer active constructions."
 msgstr ""
 
 #. translators: %d: percentage value.
-#: src/SEO/ArticleIntelligence.php:725
+#: src/SEO/ArticleIntelligence.php:751
 #, php-format
 msgid "%d%% of sentences use transition words, which helps flow."
 msgstr ""
 
 #. translators: %d: percentage value.
-#: src/SEO/ArticleIntelligence.php:725
+#: src/SEO/ArticleIntelligence.php:751
 #, php-format
 msgid "Only %d%% of sentences use transition words; connect ideas more clearly."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:727
-msgid "Readability formulas are tuned for Latin-script text and were not applied to this article."
+#: src/SEO/ArticleIntelligence.php:753
+msgid "Reading-ease, passive-voice and transition-word formulas are tuned for English and were not applied to this article."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:740
+#: src/SEO/ArticleIntelligence.php:766
 msgid "Three or more consecutive sentences start with the same word; vary the openings."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:740
+#: src/SEO/ArticleIntelligence.php:766
 msgid "Sentence openings are varied."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:745
+#. translators: 1: flagged words, 2: explanation, 3: alternatives.
+#: src/SEO/ArticleIntelligence.php:776
+#, php-format
+msgid "\"%1$s\": %2$s Consider: %3$s."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:780
+msgid "No potentially non-inclusive wording found."
+msgstr ""
+
+#. translators: %s: language name.
+#: src/SEO/ArticleIntelligence.php:784
+#, php-format
+msgid "Inclusive-language rules are not available for %s yet, so this check was not run."
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:789
 msgid "A featured image is set for previews and Google News."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:745
+#: src/SEO/ArticleIntelligence.php:789
 msgid "Set a featured image so the article previews well in search and news surfaces."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:754
+#: src/SEO/ArticleIntelligence.php:798
 msgid "All images have alternative text."
 msgstr ""
 
 #. translators: %d: number of image.
-#: src/SEO/ArticleIntelligence.php:757
+#: src/SEO/ArticleIntelligence.php:801
 #, php-format
 msgid "%d image is missing alt text."
 msgid_plural "%d images are missing alt text."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/SEO/ArticleIntelligence.php:762
-#: src/SEO/ArticleIntelligence.php:770
+#: src/SEO/ArticleIntelligence.php:806
+#: src/SEO/ArticleIntelligence.php:814
 msgid "Article images are within the recommended file-size budget."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:763
-#: src/SEO/ArticleIntelligence.php:776
+#: src/SEO/ArticleIntelligence.php:807
+#: src/SEO/ArticleIntelligence.php:820
 msgid "Images are sized for the configured maximum width."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:764
-#: src/SEO/ArticleIntelligence.php:782
+#: src/SEO/ArticleIntelligence.php:808
+#: src/SEO/ArticleIntelligence.php:826
 msgid "Images use modern WebP/AVIF formats where available."
 msgstr ""
 
 #. translators: %d: number of image.
-#: src/SEO/ArticleIntelligence.php:768
+#: src/SEO/ArticleIntelligence.php:812
 #, php-format
 msgid "%d image file exceeds 350 KB; compress it to speed up the page."
 msgid_plural "%d image files exceed 350 KB; compress them to speed up the page."
@@ -14019,7 +14925,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of image.
-#: src/SEO/ArticleIntelligence.php:774
+#: src/SEO/ArticleIntelligence.php:818
 #, php-format
 msgid "%d image is wider than the configured maximum; serve a smaller size."
 msgid_plural "%d images are wider than the configured maximum; serve smaller sizes."
@@ -14027,7 +14933,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of image.
-#: src/SEO/ArticleIntelligence.php:780
+#: src/SEO/ArticleIntelligence.php:824
 #, php-format
 msgid "%d image uses a legacy format; convert it to WebP or AVIF when practical."
 msgid_plural "%d images use legacy formats; convert them to WebP or AVIF when practical."
@@ -14035,7 +14941,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: numeric count or measurement described by the message.
-#: src/SEO/ArticleIntelligence.php:801
+#: src/SEO/ArticleIntelligence.php:845
 #, php-format
 msgid "%d internal link found."
 msgid_plural "%d internal links found."
@@ -14043,55 +14949,54 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: numeric count or measurement described by the message.
-#: src/SEO/ArticleIntelligence.php:801
+#: src/SEO/ArticleIntelligence.php:845
 msgid "Link to related coverage on your own site to help readers and crawlers."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:803
+#: src/SEO/ArticleIntelligence.php:847
 msgid "The article attributes or cites outside sources."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:803
+#: src/SEO/ArticleIntelligence.php:847
 msgid "Link to or cite primary sources where you report from them."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:806
+#: src/SEO/ArticleIntelligence.php:850
 msgid "Link anchor text is descriptive."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:806
+#: src/SEO/ArticleIntelligence.php:850
 msgid "Replace generic anchors such as “click here” with descriptive text."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:809
+#: src/SEO/ArticleIntelligence.php:853
 msgid "There are many links for the length of the article; keep only the most useful."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:814
+#: src/SEO/ArticleIntelligence.php:858
 msgid "The article has a named author or byline."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:814
-#: src/SEO/EditorialAudit.php:49
+#: src/SEO/ArticleIntelligence.php:858
 msgid "Add a named author or editorial byline."
 msgstr ""
 
 #. translators: %d: number of days.
-#: src/SEO/ArticleIntelligence.php:819
+#: src/SEO/ArticleIntelligence.php:863
 #, php-format
 msgid "Last updated %d days ago; review it for accuracy and refresh if the story has moved on."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:958
+#: src/SEO/ArticleIntelligence.php:1011
 msgid "Another article already uses this exact headline."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:958
+#: src/SEO/ArticleIntelligence.php:1011
 msgid "The headline is unique on this site."
 msgstr ""
 
 #. translators: %d: number of other published articles using the same focus keyword.
-#: src/SEO/ArticleIntelligence.php:975
+#: src/SEO/ArticleIntelligence.php:1028
 #, php-format
 msgid "This focus keyword is already used by %d other published article. Choose a distinct angle or link to it instead of competing with it."
 msgid_plural "This focus keyword is already used by %d other published articles. Choose a distinct angle or link to them instead of competing with them."
@@ -14099,12 +15004,12 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of other published articles using the same focus keyword.
-#: src/SEO/ArticleIntelligence.php:975
+#: src/SEO/ArticleIntelligence.php:1028
 msgid "No other published article uses this focus keyword."
 msgstr ""
 
 #. translators: %d: count of other articles linking to the current article.
-#: src/SEO/ArticleIntelligence.php:989
+#: src/SEO/ArticleIntelligence.php:1042
 #, php-format
 msgid "%d other article links here."
 msgid_plural "%d other articles link here."
@@ -14112,414 +15017,419 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: count of other articles linking to the current article.
-#: src/SEO/ArticleIntelligence.php:989
+#: src/SEO/ArticleIntelligence.php:1042
 msgid "No other article links to this one yet (orphan). See Internal Links for suggestions."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1018
+#: src/SEO/ArticleIntelligence.php:1071
 msgid "Search engines weigh the title heavily; a missing subject weakens relevance signals."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1019
+#: src/SEO/ArticleIntelligence.php:1072
 msgid "Stating the subject early confirms to readers and crawlers what the article covers."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1020
+#: src/SEO/ArticleIntelligence.php:1073
 msgid "An absent or overstuffed keyphrase reads as off-topic or spammy."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1021
+#: src/SEO/ArticleIntelligence.php:1074
 msgid "Spreading the subject through the article signals sustained relevance instead of a passing mention."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1022
+#: src/SEO/ArticleIntelligence.php:1075
 msgid "Subheadings that reflect the subject help readers and crawlers confirm topical focus."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1023
+#: src/SEO/ArticleIntelligence.php:1076
 msgid "Articles without a headline produce poor search and news listings."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1024
+#: src/SEO/ArticleIntelligence.php:1077
 msgid "Titles that are too short or too long are truncated or ignored in results."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1025
+#: src/SEO/ArticleIntelligence.php:1078
 msgid "Sensational headlines reduce trust and can affect news-surface eligibility."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1026
+#: src/SEO/ArticleIntelligence.php:1079
 msgid "Without a meta description, search engines choose an arbitrary snippet for you."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1027
+#: src/SEO/ArticleIntelligence.php:1080
 msgid "Over-wide search titles are cut off in results, hiding the subject."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1028
+#: src/SEO/ArticleIntelligence.php:1081
 msgid "Thin content rarely satisfies readers or ranks for competitive queries."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1029
+#: src/SEO/ArticleIntelligence.php:1082
 msgid "Subheadings make long articles scannable for readers and search engines."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1030
+#: src/SEO/ArticleIntelligence.php:1083
 msgid "Long sentences are harder to read, especially on mobile."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1031
+#: src/SEO/ArticleIntelligence.php:1084
 msgid "Harder text keeps fewer readers and can dampen engagement."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1032
+#: src/SEO/ArticleIntelligence.php:1085
 msgid "Active voice is clearer and more direct."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1033
+#: src/SEO/ArticleIntelligence.php:1086
 msgid "Transition words guide readers through the argument."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1034
+#: src/SEO/ArticleIntelligence.php:1087
 msgid "Featured images control how the article appears in shares and news surfaces."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1035
+#: src/SEO/ArticleIntelligence.php:1088
 msgid "Alt text makes images accessible and helps image search understand them."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1036
+#: src/SEO/ArticleIntelligence.php:1089
 msgid "Internal links help readers discover related coverage and distribute crawl attention."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1037
+#: src/SEO/ArticleIntelligence.php:1090
 msgid "Citing primary sources supports credibility and E-E-A-T signals."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1038
+#: src/SEO/ArticleIntelligence.php:1091
 msgid "Descriptive anchors tell readers and crawlers what the destination covers."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1039
+#: src/SEO/ArticleIntelligence.php:1092
 msgid "A named byline is a strong trust and news-eligibility signal."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1040
+#: src/SEO/ArticleIntelligence.php:1093
 msgid "Duplicate headlines confuse search engines about which article to rank."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1041
+#: src/SEO/ArticleIntelligence.php:1094
 msgid "Orphan pages are crawled rarely and receive little internal authority."
 msgstr ""
 
 #. translators: %s: focus keyword.
-#: src/SEO/ArticleIntelligence.php:1168
+#: src/SEO/ArticleIntelligence.php:1221
 #, php-format
 msgid "This article is about %s."
 msgstr ""
 
 #. translators: %s: list of shared topics.
-#: src/SEO/ArticleIntelligence.php:1358
+#: src/SEO/ArticleIntelligence.php:1411
 #, php-format
 msgid "Shares topics: %s"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1419
-#: src/SEO/ArticleIntelligence.php:1777
+#: src/SEO/ArticleIntelligence.php:1472
+#: src/SEO/ArticleIntelligence.php:1835
 msgid "SEO headline"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1420
+#: src/SEO/ArticleIntelligence.php:1473
 msgid "Search snippet & meta description"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1421
+#: src/SEO/ArticleIntelligence.php:1474
 msgid "Content structure"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1422
+#: src/SEO/ArticleIntelligence.php:1475
 msgid "Readability"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1423
-msgid "Media & image accessibility"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1424
-msgid "Internal & external links"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1425
-msgid "Newsroom signals"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1426
-msgid "Across your site"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1432
-msgid "Keyphrase not in title"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1433
-msgid "Keyphrase not in description"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1434
-msgid "Keyphrase not in opening paragraph"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1435
-msgid "Keyphrase density"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1436
-#: src/SEO/ArticleIntelligence.php:1473
-msgid "Headline length"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1437
-msgid "Sensational headline"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1438
-msgid "Search title too wide"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1439
-msgid "Missing or poor meta description"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1440
-msgid "Thin article"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1441
-msgid "No subheadings"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1442
-msgid "Long sentences"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1443
-msgid "Hard to read"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1444
-#: src/SEO/ArticleIntelligence.php:1486
-msgid "Passive voice"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1445
-msgid "Few transition words"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1446
-msgid "No featured image"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1447
-msgid "Images without alt text"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1448
-msgid "No internal links"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1449
-msgid "No byline"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1450
-#: src/SEO/ArticleIntelligence.php:1492
-msgid "Image file size"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1451
-#: src/SEO/ArticleIntelligence.php:1493
-msgid "Image dimensions"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1452
-#: src/SEO/ArticleIntelligence.php:1494
-msgid "Image format"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1453
-msgid "Duplicate headline"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1454
-msgid "Orphan article"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1463
-msgid "Focus keyword length"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1464
-msgid "Focus keyword in title"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1465
-msgid "Focus keyword in meta description"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1466
-msgid "Focus keyword in introduction"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1467
-msgid "Focus keyword density"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1468
-msgid "Focus keyword in URL"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1469
-msgid "Focus keyword in subheadings"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1470
-msgid "Focus keyword in image alt text"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1471
-msgid "Focus keyword distribution"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1472
-msgid "Headline"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1474
-msgid "Headline word count"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1475
-msgid "Headline tone"
-msgstr ""
-
 #: src/SEO/ArticleIntelligence.php:1476
-msgid "Search title width"
+#: src/SEO/ArticleIntelligence.php:1516
+msgid "Inclusive language"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1477
-msgid "Meta description length"
+msgid "Media & image accessibility"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1478
-msgid "Content length"
+msgid "Internal & external links"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1479
-msgid "Subheadings"
+msgid "Newsroom signals"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1480
-msgid "Paragraph length"
+msgid "Across your site"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1481
-msgid "Heading hierarchy"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1482
-msgid "Heading spacing"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1483
-msgid "Opening paragraph"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1484
-msgid "Readable content"
-msgstr ""
-
-#: src/SEO/ArticleIntelligence.php:1485
-msgid "Readability language"
+#: src/SEO/ArticleIntelligence.php:1486
+msgid "Keyphrase not in title"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1487
-msgid "Sentence variety"
+msgid "Keyphrase not in description"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1488
-msgid "Sentence length"
+msgid "Keyphrase not in opening paragraph"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1489
-msgid "Transition words"
+msgid "Keyphrase density"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1490
+#: src/SEO/ArticleIntelligence.php:1530
+msgid "Headline length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1491
+msgid "Sensational headline"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1492
+msgid "Search title too wide"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1493
+msgid "Missing or poor meta description"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1494
+msgid "Thin article"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1495
-msgid "Internal links"
+msgid "No subheadings"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1496
-msgid "External links"
+msgid "Long sentences"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1497
-msgid "Link anchor text"
+msgid "Hard to read"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1498
-msgid "Link density"
+#: src/SEO/ArticleIntelligence.php:1543
+msgid "Passive voice"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1499
-msgid "Byline"
+msgid "Few transition words"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1500
-msgid "Freshness"
+msgid "No featured image"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1501
-msgid "Unique headline"
+msgid "Images without alt text"
 msgstr ""
 
 #: src/SEO/ArticleIntelligence.php:1502
+msgid "No internal links"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1503
+msgid "No byline"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1504
+#: src/SEO/ArticleIntelligence.php:1549
+msgid "Image file size"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1505
+#: src/SEO/ArticleIntelligence.php:1550
+msgid "Image dimensions"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1506
+#: src/SEO/ArticleIntelligence.php:1551
+msgid "Image format"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1507
+msgid "Duplicate headline"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1508
+msgid "Orphan article"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1520
+msgid "Focus keyword length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1521
+msgid "Focus keyword in title"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1522
+msgid "Focus keyword in meta description"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1523
+msgid "Focus keyword in introduction"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1524
+msgid "Focus keyword density"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1525
+msgid "Focus keyword in URL"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1526
+msgid "Focus keyword in subheadings"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1527
+msgid "Focus keyword in image alt text"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1528
+msgid "Focus keyword distribution"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1529
+msgid "Headline"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1531
+msgid "Headline word count"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1532
+msgid "Headline tone"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1533
+msgid "Search title width"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1534
+msgid "Meta description length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1535
+msgid "Content length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1536
+msgid "Subheadings"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1537
+msgid "Paragraph length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1538
+msgid "Heading hierarchy"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1539
+msgid "Heading spacing"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1540
+msgid "Opening paragraph"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1541
+msgid "Readable content"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1542
+msgid "Readability language"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1544
+msgid "Sentence variety"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1545
+msgid "Sentence length"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1546
+msgid "Transition words"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1552
+msgid "Internal links"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1553
+msgid "External links"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1554
+msgid "Link anchor text"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1555
+msgid "Link density"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1556
+msgid "Byline"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1557
+msgid "Freshness"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1558
+msgid "Unique headline"
+msgstr ""
+
+#: src/SEO/ArticleIntelligence.php:1559
 msgid "Links from other articles"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1548
+#: src/SEO/ArticleIntelligence.php:1606
 msgid "Critical"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1549
+#: src/SEO/ArticleIntelligence.php:1607
 msgid "High"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1551
+#: src/SEO/ArticleIntelligence.php:1609
 msgid "Low"
 msgstr ""
 
 #. translators: %1$d: number of words; %2$d: numeric count or measurement described by the message; %3$d: number of images; %4$d: numeric count or measurement described by the message; %5$d: numeric count or measurement described by the message.
-#: src/SEO/ArticleIntelligence.php:1596
+#: src/SEO/ArticleIntelligence.php:1654
 #, php-format
 msgid "%1$d words · %2$d min read · %3$d images · %4$d internal / %5$d external links"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1597
+#: src/SEO/ArticleIntelligence.php:1655
 msgid "A local summary of on-page SEO checks. It is not a Google ranking metric."
 msgstr ""
 
 #. translators: 1: signed score change, 2: resolved issue count, 3: new issue count.
-#: src/SEO/ArticleIntelligence.php:1612
+#: src/SEO/ArticleIntelligence.php:1670
 #, php-format
 msgid "%1$s vs last saved analysis · %2$d resolved · %3$d new"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1619
+#: src/SEO/ArticleIntelligence.php:1677
 msgid "First analysis for this article — scores are saved when the post is saved."
 msgstr ""
 
 #. translators: %d: number of issue; %d: number of improvement.
-#: src/SEO/ArticleIntelligence.php:1652
+#: src/SEO/ArticleIntelligence.php:1710
 #, php-format
 msgid "%d issue"
 msgid_plural "%d issues"
@@ -14527,129 +15437,129 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of issue; %d: number of improvement.
-#: src/SEO/ArticleIntelligence.php:1652
+#: src/SEO/ArticleIntelligence.php:1710
 #, php-format
 msgid "%d improvement"
 msgid_plural "%d improvements"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/SEO/ArticleIntelligence.php:1655
+#: src/SEO/ArticleIntelligence.php:1713
 msgid "n/a"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1655
+#: src/SEO/ArticleIntelligence.php:1713
 msgid "Not evaluated by the article analyzer — see the PublishRank Schema suite."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1672
+#: src/SEO/ArticleIntelligence.php:1730
 msgid "issues detected"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1672
+#: src/SEO/ArticleIntelligence.php:1730
 msgid "suggested improvements"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1672
+#: src/SEO/ArticleIntelligence.php:1730
 msgid "checks passed"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1672
+#: src/SEO/ArticleIntelligence.php:1730
 msgid "not evaluated"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1698
+#: src/SEO/ArticleIntelligence.php:1756
 msgid "Priority issues"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1771
+#: src/SEO/ArticleIntelligence.php:1829
 msgid "SEO fix assistant"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1771
+#: src/SEO/ArticleIntelligence.php:1829
 msgid "Fix assistant"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1772
+#: src/SEO/ArticleIntelligence.php:1830
 msgid "Every suggestion below is derived from this article. Review, edit, then apply — nothing changes until you apply it."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1777
+#: src/SEO/ArticleIntelligence.php:1835
 msgid "The title shown in search results. Your WordPress post title stays unchanged; this saves the SEO title only."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1777
+#: src/SEO/ArticleIntelligence.php:1835
 msgid "SEO headline input"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1777
+#: src/SEO/ArticleIntelligence.php:1835
 msgid "Write a 30–65 character search title that summarizes the article"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1777
+#: src/SEO/ArticleIntelligence.php:1835
 msgid "Apply SEO title"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1777
-#: src/SEO/ArticleIntelligence.php:1785
+#: src/SEO/ArticleIntelligence.php:1835
+#: src/SEO/ArticleIntelligence.php:1843
 msgid "Regenerate"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1785
+#: src/SEO/ArticleIntelligence.php:1843
 msgid "Meta description input"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1785
+#: src/SEO/ArticleIntelligence.php:1843
 msgid "Write 70–160 characters that summarize the article "
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1785
+#: src/SEO/ArticleIntelligence.php:1843
 msgid "Apply description"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1792
+#: src/SEO/ArticleIntelligence.php:1850
 msgid "Internal link suggestions"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1792
+#: src/SEO/ArticleIntelligence.php:1850
 msgid "Relevant published articles on this site. Insert adds the link on a matching phrase in your text (or a short \"Related\" line at the end). Review the result, then update the post."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1792
+#: src/SEO/ArticleIntelligence.php:1850
 msgid "Insert all internal links"
 msgstr ""
 
 #. translators: %s: linked article title.
-#: src/SEO/ArticleIntelligence.php:1794
+#: src/SEO/ArticleIntelligence.php:1852
 #, php-format
 msgid "Copy link to %s"
 msgstr ""
 
 #. translators: %s: linked article title.
-#: src/SEO/ArticleIntelligence.php:1794
+#: src/SEO/ArticleIntelligence.php:1852
 msgid "Copy link"
 msgstr ""
 
 #. translators: %s: linked article title.
-#: src/SEO/ArticleIntelligence.php:1794
+#: src/SEO/ArticleIntelligence.php:1852
 #, php-format
 msgid "Insert link to %s"
 msgstr ""
 
 #. translators: %s: linked article title.
-#: src/SEO/ArticleIntelligence.php:1794
+#: src/SEO/ArticleIntelligence.php:1852
 msgid "Insert"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1800
+#: src/SEO/ArticleIntelligence.php:1858
 msgid "No automatic fixes are available yet — add more content and the assistant will derive suggestions from it."
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1819
+#: src/SEO/ArticleIntelligence.php:1877
 msgid "SEO score and improvement plan"
 msgstr ""
 
-#: src/SEO/ArticleIntelligence.php:1819
+#: src/SEO/ArticleIntelligence.php:1877
 msgid "Computed locally on your server. No external service is contacted."
 msgstr ""
 
@@ -14969,268 +15879,869 @@ msgstr ""
 msgid "\"%s\" overlaps with the focus keyword. Make sure it covers a different angle, not the same one."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:784
+#: src/SEO/Content/KeyphraseAnalyzer.php:776
 msgid "The phrase is in the title."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:784
+#: src/SEO/Content/KeyphraseAnalyzer.php:776
 msgid "The words appear in the title, but not as the phrase."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:784
+#: src/SEO/Content/KeyphraseAnalyzer.php:776
 msgid "The phrase is not in the title."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:785
+#: src/SEO/Content/KeyphraseAnalyzer.php:777
 msgid "The phrase is in the meta description."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:785
+#: src/SEO/Content/KeyphraseAnalyzer.php:777
 msgid "The words appear in the meta description, but not as the phrase."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:785
+#: src/SEO/Content/KeyphraseAnalyzer.php:777
 msgid "The phrase is not in the meta description."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:786
+#: src/SEO/Content/KeyphraseAnalyzer.php:778
 msgid "The phrase is in the URL slug."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:786
+#: src/SEO/Content/KeyphraseAnalyzer.php:778
 msgid "The words appear in the URL slug, but not as the phrase."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:786
+#: src/SEO/Content/KeyphraseAnalyzer.php:778
 msgid "The phrase is not in the URL slug."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:787
+#: src/SEO/Content/KeyphraseAnalyzer.php:779
 msgid "The phrase is in the opening paragraph."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:787
+#: src/SEO/Content/KeyphraseAnalyzer.php:779
 msgid "The words appear in the opening paragraph, but not as the phrase."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:787
+#: src/SEO/Content/KeyphraseAnalyzer.php:779
 msgid "The phrase is not in the opening paragraph."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:797
+#: src/SEO/Content/KeyphraseAnalyzer.php:789
 msgid "Work the phrase into the title, ideally near the start, without making it awkward."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:797
+#: src/SEO/Content/KeyphraseAnalyzer.php:789
 msgid "A secondary phrase does not have to be in the title. Add it only if the title still reads well."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:798
+#: src/SEO/Content/KeyphraseAnalyzer.php:790
 msgid "Mention the topic in the meta description so searchers see it echoed in the result."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:799
+#: src/SEO/Content/KeyphraseAnalyzer.php:791
 msgid "Use the main words of the phrase in the URL slug. Change a published URL only with a redirect in place."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:800
+#: src/SEO/Content/KeyphraseAnalyzer.php:792
 msgid "State the topic in the first paragraph so readers know right away they are in the right place."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:817
+#: src/SEO/Content/KeyphraseAnalyzer.php:809
 msgid "Note"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:822
+#: src/SEO/Content/KeyphraseAnalyzer.php:814
 msgid "URL slug"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:823
+#: src/SEO/Content/KeyphraseAnalyzer.php:815
 msgid "First paragraph"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:824
+#: src/SEO/Content/KeyphraseAnalyzer.php:816
 msgid "Headings"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:827
+#: src/SEO/Content/KeyphraseAnalyzer.php:819
 msgid "Internal link anchors"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:830
+#: src/SEO/Content/KeyphraseAnalyzer.php:822
 msgid "found"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:831
+#: src/SEO/Content/KeyphraseAnalyzer.php:823
 msgid "partly"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:832
+#: src/SEO/Content/KeyphraseAnalyzer.php:824
 msgid "not found"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:835
+#: src/SEO/Content/KeyphraseAnalyzer.php:827
 msgid "Keyphrase scorecards"
 msgstr ""
 
 #. translators: 1: combined score, 2: article score, 3: average secondary score.
-#: src/SEO/Content/KeyphraseAnalyzer.php:841
+#: src/SEO/Content/KeyphraseAnalyzer.php:833
 #, php-format
 msgid "Combined score %1$d. The article score (%2$d) counts for 80%% and the average of your secondary keyphrases (%3$d) for 20%%. The focus keyword stays the main target."
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:849
+#: src/SEO/Content/KeyphraseAnalyzer.php:841
 msgid "Check:"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:852
+#: src/SEO/Content/KeyphraseAnalyzer.php:844
 msgid "Secondary"
 msgstr ""
 
 #. translators: 1: score, 2: rating.
-#: src/SEO/Content/KeyphraseAnalyzer.php:855
+#: src/SEO/Content/KeyphraseAnalyzer.php:847
 #, php-format
 msgid "Score %1$d out of 100, %2$s"
 msgstr ""
 
 #. translators: 1: count, 2: density.
-#: src/SEO/Content/KeyphraseAnalyzer.php:865
+#: src/SEO/Content/KeyphraseAnalyzer.php:857
 #, php-format
 msgid "Used %1$d time (%2$s%% of the text)."
 msgid_plural "Used %1$d times (%2$s%% of the text)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:868
+#: src/SEO/Content/KeyphraseAnalyzer.php:860
 msgid "Search intent:"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:874
+#: src/SEO/Content/KeyphraseAnalyzer.php:866
 msgid "Synonyms used:"
 msgstr ""
 
-#: src/SEO/Content/KeyphraseAnalyzer.php:882
+#: src/SEO/Content/KeyphraseAnalyzer.php:874
 msgid "Related keyphrases:"
 msgstr ""
 
 #. translators: %s: missing terms.
-#: src/SEO/Content/KeyphraseAnalyzer.php:882
+#: src/SEO/Content/KeyphraseAnalyzer.php:874
 #, php-format
 msgid "not yet mentioned: %s"
 msgstr ""
 
 #. translators: %s: missing terms.
-#: src/SEO/Content/KeyphraseAnalyzer.php:882
+#: src/SEO/Content/KeyphraseAnalyzer.php:874
 msgid "all are mentioned."
 msgstr ""
 
-#: src/SEO/EditorialAudit.php:29
-msgid "Keep the headline between 30 and 65 characters."
+#: src/SEO/Language/InclusiveLanguage.php:42
+#: src/SEO/Language/InclusiveLanguage.php:44
+msgid "Uses \"man\" for all people."
 msgstr ""
 
-#: src/SEO/EditorialAudit.php:33
-msgid "Add a 70–160 character meta description."
+#: src/SEO/Language/InclusiveLanguage.php:42
+msgid "humanity, humankind, people"
 msgstr ""
 
-#: src/SEO/EditorialAudit.php:37
-msgid "Add enough original context for a substantial news article (300+ words recommended)."
+#: src/SEO/Language/InclusiveLanguage.php:43
+msgid "Uses \"man\" for all workers."
 msgstr ""
 
-#: src/SEO/EditorialAudit.php:41
-msgid "Use descriptive H2 subheadings for longer articles."
+#: src/SEO/Language/InclusiveLanguage.php:43
+msgid "workforce, staff, personnel"
 msgstr ""
 
-#: src/SEO/EditorialAudit.php:45
-msgid "Add a featured image for article and social previews."
+#: src/SEO/Language/InclusiveLanguage.php:44
+msgid "artificial, human-made, synthetic"
 msgstr ""
 
-#: src/SEO/EditorialAudit.php:53
-msgid "Ensure published and modified dates are available."
+#: src/SEO/Language/InclusiveLanguage.php:45
+#: src/SEO/Language/InclusiveLanguage.php:46
+msgid "Gendered job title; fine when it is the person's official title."
 msgstr ""
 
-#: src/SEO/EditorialAudit.php:57
-msgid "Add relevant internal or source links where editorially appropriate."
+#: src/SEO/Language/InclusiveLanguage.php:45
+msgid "chair, chairperson"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:190
-#: src/SEO/LocalSEO.php:209
+#: src/SEO/Language/InclusiveLanguage.php:46
+msgid "spokesperson, representative"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:47
+#: src/SEO/Language/InclusiveLanguage.php:48
+msgid "Gendered job title."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:47
+msgid "police officer"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:48
+msgid "firefighter"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:49
+msgid "Gendered when the gender is unknown or irrelevant."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:49
+msgid "businessperson, executive, entrepreneur"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:50
+msgid "Associates black with bad and white with good."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:50
+msgid "blocklist / allowlist, denylist / safelist"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:51
+msgid "Technical metaphor based on slavery."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:51
+msgid "primary / replica, leader / follower"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:52
+msgid "Frames a mobility aid as a limitation."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:52
+msgid "wheelchair user, uses a wheelchair"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:53
+msgid "Assumes a condition means suffering."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:53
+msgid "has, lives with, was diagnosed with"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:54
+msgid "Outdated term for disabled people."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:54
+msgid "disabled people, people with disabilities"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:55
+msgid "Disability used as a metaphor for damage."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:55
+msgid "paralysed, disrupted, severely damaged"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:56
+msgid "Disability used as an insult."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:56
+msgid "weak, unconvincing, boring"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:57
+msgid "Mental-health terms used casually."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:57
+msgid "wild, unbelievable, reckless, absurd"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:58
+msgid "\"Committed\" implies a crime. Media guidelines recommend neutral wording."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:58
+msgid "died by suicide, took their own life"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:59
+msgid "Groups older people as a single category."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:59
+msgid "older people, older adults"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:60
+msgid "Describes people as illegal. Many style guides advise against it."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:60
+msgid "undocumented immigrants, people without legal status"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:61
+msgid "Gendered address for a mixed group."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:61
+msgid "everyone, folks, you all"
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:62
+msgid "Disability used as a metaphor."
+msgstr ""
+
+#: src/SEO/Language/InclusiveLanguage.php:62
+msgid "insensitive, ignored, overlooked"
+msgstr ""
+
+#: src/SEO/Language/LanguageRules.php:161
+msgid "English"
+msgstr ""
+
+#: src/SEO/Language/LanguageRules.php:162
+msgid "Arabic"
+msgstr ""
+
+#: src/SEO/Language/LanguageRules.php:163
+msgid "Urdu"
+msgstr ""
+
+#: src/SEO/Language/LanguageRules.php:164
+msgid "this language"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:984
+msgid "LocalBusiness output is switched off. Nothing is added to your pages."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:987
+msgid "Business name is set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:987
+msgid "Add the business name — schema is not output without it."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:989
+msgid "Address is complete (Google requires it)."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:989
+msgid "Complete the address: street, city and country are required by Google."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:990
+msgid "Country uses a two-letter ISO code."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:990
+msgid "Use a two-letter country code such as PK, US or GB."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:991
+msgid "Public telephone is set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:991
+msgid "Add a public phone number."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:993
+msgid "Phone includes the country code."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:993
+msgid "Start the phone with + and the country code, e.g. +92 21 1234567."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:996
+msgid "Coordinates have at least 5 decimal places."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:996
+msgid "Add latitude and longitude with at least 5 decimal places."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:998
+msgid "Opening hours are set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:998
+msgid "Add your opening hours."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:999
+msgid "A logo or photo is set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:999
+msgid "Add a logo or storefront photo URL."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1000
+msgid "Official profiles are linked."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1000
+msgid "Link your Google Business Profile and social pages."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1002
+msgid "Cuisine is set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1002
+msgid "Add the cuisine you serve (Google recommends it for restaurants)."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1003
+msgid "Menu link is set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1003
+msgid "Add a link to your menu."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1004
+msgid "Price range is set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1004
+msgid "Add a price range such as $$ or PKR 1,000–2,500."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1007
+msgid "Check-in and check-out times are set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1007
+msgid "Add check-in and check-out times."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1008
+msgid "Amenities are listed."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1008
+msgid "List amenities such as Free Wi-Fi, Parking or Pool."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1011
+msgid "Medical specialty is set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1011
+msgid "Choose at least one medical specialty."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1013
+msgid "Service area is set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1013
+msgid "Add the areas you serve — key for service businesses."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1015
+msgid "Payment methods are set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1015
+msgid "Add accepted payment methods."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1017
+msgid "Services are listed."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1017
+msgid "List the main services or products you offer."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1020
+msgid "Ratings and reviews are intentionally not added: Google ignores self-published reviews for a business about itself."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1047
+#: src/SEO/LocalSEO.php:1134
 msgid "You do not have permission to manage Local SEO."
 msgstr ""
 
-#: src/SEO/LocalSEO.php:239
-msgid "Configure a real-world business location and emit connected LocalBusiness structured data. Keep this disabled if your site has no public-facing business location."
+#: src/SEO/LocalSEO.php:1159
+msgid "Describe your real-world business once. PublishRank turns it into connected, Google-ready LocalBusiness structured data."
 msgstr ""
 
-#: src/SEO/LocalSEO.php:241
+#: src/SEO/LocalSEO.php:1161
 msgid "Local SEO settings saved."
 msgstr ""
 
-#: src/SEO/LocalSEO.php:245
-msgid "Output LocalBusiness JSON-LD on public pages."
+#: src/SEO/LocalSEO.php:1168
+msgid "LocalBusiness structured data"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:246
+#: src/SEO/LocalSEO.php:1168
+msgid "On — added to every public page."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1168
+msgid "Off — switch on once your business details are accurate."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1173
+msgid "Local SEO sections"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1175
+#: src/SEO/LocalSEO.php:1189
+msgid "Business"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1176
+#: src/SEO/LocalSEO.php:1208
+msgid "Location"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1177
+msgid "Hours"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1178
+#: src/SEO/SiteNavigation.php:34
+msgid "Services"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1179
+#: src/SEO/LocalSEO.php:1248
+msgid "Type details"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1189
+msgid "Who you are, exactly as customers see you on your sign and Google Business Profile."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1190
 msgid "Use the real-world name shown to customers."
 msgstr ""
 
-#: src/SEO/LocalSEO.php:253
+#: src/SEO/LocalSEO.php:1193
+msgid "Pick the most specific type. Extra fields for your type appear under Type details."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1194
+msgid "Also known as"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1194
+msgid "Optional short or local name."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1195
+msgid "Registered legal name"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1195
+msgid "Optional, e.g. Acme Traders (Pvt) Ltd."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1196
+msgid "One or two plain sentences about what you do and where."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1197
+msgid "Business website / location page"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1198
 msgid "Public telephone"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:254
+#: src/SEO/LocalSEO.php:1198
+msgid "Include the country code."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1199
 msgid "Public email"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:255
-msgid "Logo / image URL"
+#: src/SEO/LocalSEO.php:1200
+msgid "Booking / appointment link"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:256
-msgid "Address"
+#: src/SEO/LocalSEO.php:1200
+msgid "Where customers book a table, room or appointment."
 msgstr ""
 
-#: src/SEO/LocalSEO.php:262
-msgid "Country code or name"
+#: src/SEO/LocalSEO.php:1201
+msgid "Logo URL"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:266
-msgid "Optional decimal coordinate from -90 to 90."
+#: src/SEO/LocalSEO.php:1202
+msgid "Storefront / interior photo URL"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:267
-msgid "Optional decimal coordinate from -180 to 180."
+#: src/SEO/LocalSEO.php:1202
+msgid "A real photo of the place. Falls back to the logo."
 msgstr ""
 
-#: src/SEO/LocalSEO.php:268
+#: src/SEO/LocalSEO.php:1203
+msgid "Founded"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1204
+msgid "Tax / VAT number"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1204
+msgid "Optional, e.g. NTN or VAT ID."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1208
+msgid "Google requires a full address. Service-area businesses can hide the street."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1211
+msgid "State / province"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1213
+msgid "Country code"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1213
+msgid "Two-letter ISO code, e.g. PK, US, GB."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1214
+msgid "I serve customers at their location (hide street, map and coordinates)"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1214
+msgid "For plumbers, electricians, movers and other service-area businesses without a public storefront."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1217
+msgid "Google Maps link"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1218
+msgid "Areas served"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1218
+msgid "One city, district or region per line."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1222
+msgid "Published as OpeningHoursSpecification, the format Google reads for local results."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1223
+msgid "Regular hours"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1223
+msgid "One line per schedule. Days: Mo Tu We Th Fr Sa Su. Open 24 hours: Mo-Su 00:00-23:59. Lines that do not match are dropped."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1224
+msgid "Holiday & special hours"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1224
+msgid "Date (or date..date) followed by closed or HH:MM-HH:MM."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1225
+msgid "Hour presets"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1227
+msgid "Office hours"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1228
+msgid "Retail Mon–Sat"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1230
+msgid "Open 24/7"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1237
+msgid "Services, payments & amenities"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1237
+msgid "What you offer and how customers pay — shared by every business type."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1238
+msgid "Services or products offered"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1238
+msgid "One per line. Optionally add | and a short description."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1239
+msgid "Specialties / areas of expertise"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1240
+msgid "Amenities & accessibility"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1241
 msgid "Price range"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:268
-msgid "Optional, e.g. $$; use only if applicable."
+#: src/SEO/LocalSEO.php:1241
+msgid "e.g. $$ or PKR 1,000–2,500 (max 100 characters)."
 msgstr ""
 
-#: src/SEO/LocalSEO.php:270
-msgid "Optional description, e.g. Karachi metropolitan area."
+#: src/SEO/LocalSEO.php:1242
+msgid "Payment methods"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:271
-msgid "One line per schedule, e.g. Mo-Fr 09:00-17:00. Valid day abbreviations: Mo, Tu, We, Th, Fr, Sa, Su."
+#: src/SEO/LocalSEO.php:1243
+msgid "Currencies"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:272
-msgid "Official social / profile URLs"
+#: src/SEO/LocalSEO.php:1243
+msgid "Three-letter ISO 4217 codes."
 msgstr ""
 
-#: src/SEO/LocalSEO.php:272
-msgid "One full http(s) URL per line."
+#: src/SEO/LocalSEO.php:1244
+msgid "Languages spoken"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:273
+#: src/SEO/LocalSEO.php:1248
+msgid "Extra fields that only apply to your business type. They change when you pick another type."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1249
+msgid "No extra fields for this type — the sections above cover everything schema.org defines for it."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1251
+msgid "Cuisine served"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1252
+msgid "Menu link"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1253
+msgid "Takes reservations"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1253
+msgid "Uses the booking link when one is set."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1254
+msgid "Drive-through"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1256
+msgid "Check-in from"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1257
+msgid "Check-out by"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1258
+msgid "Number of rooms"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1259
+msgid "Official star rating"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1259
+msgid "Only an official classification — not guest reviews."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1260
+msgid "Pets allowed"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1262
+msgid "Medical specialties"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1266
+msgid "Accepting new patients"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1268
+msgid "Fees & charges page"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1270
+msgid "Brands sold or serviced"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1272
+msgid "Maximum capacity"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1273
+msgid "Free entry"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1277
+msgid "Official profiles"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1277
+msgid "Links that prove this is the same business everywhere (sameAs)."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1278
+msgid "Profile URLs"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1278
+msgid "One full http(s) URL per line: Google Business Profile, Facebook, Instagram, Yelp, TripAdvisor …"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1281
+msgid "Use accurate, public details only. Structured data helps search engines understand you but does not guarantee rich results or rankings."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1281
 msgid "Save Local SEO profile"
 msgstr ""
 
-#: src/SEO/LocalSEO.php:274
-msgid "Only enable this for a real, public-facing business/location and use accurate details. Structured data does not guarantee rich results or local rankings."
+#: src/SEO/LocalSEO.php:1286
+msgid "Schema health"
+msgstr ""
+
+#. translators: 1: passed checks, 2: total checks.
+#: src/SEO/LocalSEO.php:1288
+#, php-format
+msgid "%1$d of %2$d checks pass for the saved profile."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1299
+msgid "JSON-LD preview"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1303
+msgid "Add a business name and save to see the structured data."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1305
+msgid "Preview of the saved profile. Save after editing to refresh it."
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1306
+msgid "Rich Results Test"
+msgstr ""
+
+#: src/SEO/LocalSEO.php:1306
+msgid "Schema validator"
 msgstr ""
 
 #. translators: %d: minutes.
@@ -15318,6 +16829,83 @@ msgstr ""
 #: src/SEO/SiteConnections.php:661
 #, php-format
 msgid "HTTP %d. A security plugin, cache or server rule may be blocking this path."
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:32
+msgid "About"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:33
+msgid "Contact"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:36
+msgid "Category hub"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:37
+msgid "Editorial policy"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:38
+msgid "Authors / team"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:39
+msgid "Business location"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:40
+msgid "Landing page"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:41
+msgid "Legal / trust"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:42
+msgid "Other important page"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:186
+msgid "Published and public"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:187
+msgid "Indexable (no noindex)"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:190
+msgid "Expected in the XML sitemap"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:191
+msgid "Linked from a navigation menu"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:202
+msgid "Internal links point to it"
+msgstr ""
+
+#. translators: %d: number of internal links.
+#: src/SEO/SiteNavigation.php:204
+msgid "Not scanned yet: run the Content Graph scan."
+msgstr ""
+
+#. translators: %d: number of internal links.
+#: src/SEO/SiteNavigation.php:204
+#, php-format
+msgid "%d internal link"
+msgid_plural "%d internal links"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/SEO/SiteNavigation.php:207
+msgid "Canonical points to itself"
+msgstr ""
+
+#: src/SEO/SiteNavigation.php:209
+msgid "Has a written meta description or excerpt"
 msgstr ""
 
 #. translators: 1: linked article title, 2: original publication host.
@@ -15647,34 +17235,44 @@ msgstr ""
 msgid "Shared to Mastodon."
 msgstr ""
 
-#: assets/js/block-editor-sidebar.js:72
-#: src/assets/js/block-editor-sidebar.js:72
-msgid "The SEO analysis is not available for this post type."
+#: assets/js/block-editor-sidebar.js:78
+#: src/assets/js/block-editor-sidebar.js:78
+msgid "The SEO editor is open as a movable window. Drag its header to move it anywhere."
 msgstr ""
 
-#: assets/js/block-editor-sidebar.js:76
-#: src/assets/js/block-editor-sidebar.js:76
+#: assets/js/block-editor-sidebar.js:79
+#: src/assets/js/block-editor-sidebar.js:79
+msgid "Dock it back here"
+msgstr ""
+
+#: assets/js/block-editor-sidebar.js:81
+#: src/assets/js/block-editor-sidebar.js:81
+msgid "Open movable SEO editor"
+msgstr ""
+
+#: assets/js/block-editor-sidebar.js:99
+#: src/assets/js/block-editor-sidebar.js:99
 msgid "The SEO analysis is popped out as a floating panel."
 msgstr ""
 
-#: assets/js/block-editor-sidebar.js:77
-#: src/assets/js/block-editor-sidebar.js:77
+#: assets/js/block-editor-sidebar.js:100
+#: src/assets/js/block-editor-sidebar.js:100
 msgid "Dock it here"
 msgstr ""
 
-#: assets/js/block-editor-sidebar.js:103
-#: src/assets/js/block-editor-sidebar.js:103
-msgid "SEO fields"
-msgstr ""
-
-#: assets/js/block-editor-sidebar.js:104
-#: src/assets/js/block-editor-sidebar.js:104
+#: assets/js/block-editor-sidebar.js:128
+#: src/assets/js/block-editor-sidebar.js:128
 msgid "Loading the SEO fields…"
 msgstr ""
 
-#: assets/js/block-editor-sidebar.js:111
-#: src/assets/js/block-editor-sidebar.js:111
+#: assets/js/block-editor-sidebar.js:135
+#: src/assets/js/block-editor-sidebar.js:135
 msgid "Open PublishRank SEO analysis"
+msgstr ""
+
+#: assets/js/block-editor-sidebar.js:140
+#: src/assets/js/block-editor-sidebar.js:140
+msgid "Open or close the movable PublishRank SEO editor"
 msgstr ""
 
 #: assets/js/breadcrumbs-block.js:94

@@ -13,26 +13,36 @@
 
 ![PublishRank](assets/images/publishrank-brand-mark.png)
 
-**Publisher-first technical SEO, structured data, sitemaps, and newsroom controls for WordPress.**
+**Cross-industry WordPress SEO for businesses and every website—with specialist publishing workflows when you need them.**
 
-PublishRank is an open-source WordPress plugin for news publishers, magazines, editorial teams, blogs, and content-heavy websites. It brings technical SEO controls, connected JSON-LD, Google News and XML sitemaps, redirects, robots management, author expertise, editorial tooling, and diagnostics into one capability-aware administration workspace.
+PublishRank is a free, open-source WordPress SEO plugin for local businesses, service providers, stores, organizations, bloggers, publishers and websites of every kind. It combines sitewide metadata, structured data, sitemaps, redirects and diagnostics with Local SEO for 134 selectable business options across 14 niches. Newsroom and editorial workflows are an additional specialty, not a requirement to use the plugin.
 
 > PublishRank generates and validates technical publishing signals. Search engines and social networks may still rewrite titles, descriptions, images, snippets, and rich-result presentations.
 
 ## Current release
 
-- **Version:** 2.20.20
+- **Version:** 2.21.0
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
 - **Requires PHP:** 7.4 or newer
 - **Repository:** <https://github.com/Umarjaum/PublishRank>
 - **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
-- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.20.20/publishrank-2.20.20.zip>
+- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.21.0/PublishRank-2.21.0-404-fix.zip>
 - **Official website:** <https://publishrankseo.vercel.app/>
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
 
-See the [v2.20.20 release notes](https://github.com/Umarjaum/PublishRank/releases/tag/v2.20.20) for the current plugin changes.
+See the [v2.21.0 release notes](https://github.com/Umarjaum/PublishRank/releases/tag/v2.21.0) for the current plugin changes.
+
+## What's new in 2.21.0
+
+- **Movable SEO editor:** one draggable, resizable workspace for metadata, previews and analysis in the block or Classic Editor.
+- **Consistent SEO scoring:** the editor, toolbar, post list, SEO Score screen, Insights and scheduled audits use the same score.
+- **Site operations:** improvements to the 404 Monitor, RSS feed controls, Site Navigation SEO, redirect import/export and redirect-chain tracing.
+- **Commerce and language:** WooCommerce Product schema integration, Arabic and Urdu analysis, and optional, dismissible English inclusive-language suggestions.
+- **Reliability:** fixes for integration sitemaps, description spacing, screen tables and narrow date fields.
+
+The [v2.21.0 feature addendum](docs/FEATURE-CATALOG-2.21.0.md) details these changes. The [2.20.20 source-backed catalog](docs/FEATURE-CATALOG-2.20.20.md) documents the carried-forward feature set, including all 134 Local SEO options across 14 niches.
 
 ## Actual interface screenshots
 
@@ -110,14 +120,14 @@ The sitemap index includes responsive cards, content-type badges, child-file cou
 
 ## Complete feature catalog
 
-The [2.20.20 feature catalog](docs/FEATURE-CATALOG-2.20.20.md) documents the SEO editor and analysis, schema profiles and JSON-LD, all 134 selectable Local SEO business options grouped into 14 source-defined niches, technical SEO, search integrations, internal-link intelligence, newsroom and editorial workflows, redirects and 404 monitoring, Private Login, integrations, diagnostics, and administration. The business options are not 134 separate Schema.org classes.
+The [2.20.20 source-backed feature catalog](docs/FEATURE-CATALOG-2.20.20.md) documents the carried-forward SEO editor and analysis, schema profiles and JSON-LD, all 134 selectable Local SEO business options grouped into 14 source-defined niches, technical SEO, search integrations, internal-link intelligence, newsroom and editorial workflows, redirects and 404 monitoring, Private Login, integrations, diagnostics, and administration. The [2.21.0 addendum](docs/FEATURE-CATALOG-2.21.0.md) documents this release's additions and fixes. The business options are not 134 separate Schema.org classes.
 
 ## WordPress installation
 
 1. Download the latest ZIP from [GitHub Releases](https://github.com/Umarjaum/PublishRank/releases).
 2. In WordPress, open **Plugins → Add New → Upload Plugin**.
 3. Upload the ZIP, install it, and activate **PublishRank**.
-4. Open **PublishRank → Setup Wizard** and complete the publisher identity, site, social, search, and content-scope steps.
+4. Open **PublishRank → Setup Wizard** and complete the site and business identity, SEO, social, search, and content-scope steps.
 5. Review **PublishRank → Settings**, **Schema**, **Sitemap Health**, and **Robots.txt** before production use.
 6. Submit `/publishrank-sitemap.xml` to Google Search Console and other webmaster tools when ready.
 

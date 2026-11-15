@@ -615,19 +615,11 @@ final class KeyphraseAnalyzer {
 		return self::stem_tokens( ArticleIntelligence::tokens( (string) $text ) );
 	}
 
-	/** Light English stemming (plurals only). Other scripts are compared as written. @param array<int,string> $tokens @return array<int,string> */
+	/** Language-aware light stemming (English plurals; Arabic/Urdu affixes). See LanguageRules. @param array<int,string> $tokens @return array<int,string> */
 	private static function stem_tokens( array $tokens ) {
 		$out = array();
 		foreach ( $tokens as $t ) {
-			$t = str_replace( array( "'", '’' ), '', (string) $t );
-			if ( strlen( $t ) > 3 && preg_match( '/^[a-z]+$/', $t ) ) {
-				if ( 'ies' === substr( $t, -3 ) ) {
-					$t = substr( $t, 0, -3 ) . 'y';
-				} elseif ( 's' === substr( $t, -1 ) && 'ss' !== substr( $t, -2 ) ) {
-					$t = substr( $t, 0, -1 );
-				}
-			}
-			$out[] = $t;
+			$out[] = \PublishRankSEO\SEO\Language\LanguageRules::stem( (string) $t );
 		}
 		return $out;
 	}

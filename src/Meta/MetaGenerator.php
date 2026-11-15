@@ -334,6 +334,7 @@ final class MetaGenerator {
 	private function is_editorial_article() {
 		$post = get_queried_object();
 		$type = $post instanceof \WP_Post ? get_post_type_object( $post->post_type ) : false;
-		return is_singular() && $type && $type->public && $type->publicly_queryable && ! in_array( $post->post_type, array( 'page', 'attachment' ), true );
+		$is = is_singular() && $type && $type->public && $type->publicly_queryable && ! in_array( $post->post_type, array( 'page', 'attachment' ), true );
+		return (bool) apply_filters( 'publishrank_is_editorial_article', $is, $post );
 	}
 }

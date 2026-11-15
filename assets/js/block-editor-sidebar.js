@@ -59,15 +59,38 @@
 			el('b', null, String(n)));
 	}
 
+	function seoWindow() { return window.PublishRankSeoWindow || null; }
+	/* True while the movable SEO editor window holds the fields, previews and analysis. */
+	function useWindowOpen() {
+		var st = useState(seoWindow() ? seoWindow().isOpen() : false);
+		useEffect(function () {
+			function on(e) { st[1](!!(e && e.detail && e.detail.open)); }
+			document.addEventListener('publishrank:seowin', on);
+			return function () { document.removeEventListener('publishrank:seowin', on); };
+		}, []);
+		return st[0];
+	}
+	function WindowLauncher() {
+		var open = useWindowOpen();
+		if (!seoWindow()) { return null; }
+		if (open) {
+			return el('div', { className: 'pr-esc-dock-note pr-seowin-note' },
+				el('p', null, __('The SEO editor is open as a movable window. Drag its header to move it anywhere.', 'publishrank')),
+				el(C.Button, { variant: 'secondary', onClick: function () { seoWindow().close(); } }, __('Dock it back here', 'publishrank')));
+		}
+		return el(C.Button, { variant: 'primary', icon: 'external', className: 'pr-seowin-launch', onClick: function () { seoWindow().open(); } }, __('Open movable SEO editor', 'publishrank'));
+	}
+
 	/* The PHP-rendered SEO Analysis panel is moved into this slot while the sidebar is open. */
 	function AnalysisDock() {
-		var ref = useRef(null), mode = useMode();
+		var ref = useRef(null), mode = useMode(), winOpen = useWindowOpen();
 		useLayoutEffect(function () {
 			var api = card(), slot = ref.current;
-			if (!api || !slot || mode !== 'docked') { return; }
+			if (!api || !slot || mode !== 'docked' || winOpen) { return; }
 			api.dock(slot);
 			return function () { api.release(slot); };
-		}, [mode]);
+		}, [mode, winOpen]);
+		if (winOpen) { return null; }
 		if (!card()) {
 			return el('p', { className: 'pr-esc-dock-note' }, __('The SEO analysis is not available for this post type.', 'publishrank'));
 		}
@@ -82,10 +105,10 @@
 	/* The SEO fields (Published values, Search appearance, Social sharing, ...) are docked here while the
 	 * sidebar is open, and handed back to the bottom Meta Boxes area when it closes (see seo-dock.js). */
 	function FieldsDock() {
-		var ref = useRef(null), st = useState(false), docked = st[0], setDocked = st[1];
+		var ref = useRef(null), st = useState(false), docked = st[0], setDocked = st[1], winOpen = useWindowOpen();
 		useLayoutEffect(function () {
 			var slot = ref.current, timer = 0, tries = 0;
-			if (!slot) { return; }
+			if (!slot || winOpen) { setDocked(false); return; }
 			function attempt() {
 				var api = window.PublishRankSeoDock;
 				if (api && api.dock(slot)) { setDocked(true); return true; }
@@ -98,7 +121,8 @@
 				if (timer) { window.clearInterval(timer); }
 				if (window.PublishRankSeoDock) { window.PublishRankSeoDock.release(slot); }
 			};
-		}, []);
+		}, [winOpen]);
+		if (winOpen) { return el('div', { ref: ref, hidden: true }); }
 		return el('div', { className: 'pr-seodock-slot' },
 			el('h2', { className: 'pr-seodock-slot__head' }, __('SEO fields', 'publishrank')),
 			docked ? null : el('p', { className: 'pr-seodock-slot__note' }, __('Loading the SEO fields…', 'publishrank')),
@@ -110,6 +134,11 @@
 			name: 'publishrank/open-seo-analysis',
 			label: __('Open PublishRank SEO analysis', 'publishrank'),
 			callback: function (o) { openSidebar(); if (o && o.close) { o.close(); } }
+		});
+		wp.commands.useCommand({
+			name: 'publishrank/toggle-seo-window',
+			label: __('Open or close the movable PublishRank SEO editor', 'publishrank'),
+			callback: function (o) { if (seoWindow()) { seoWindow().toggle(); } if (o && o.close) { o.close(); } }
 		});
 		return null;
 	}
@@ -137,6 +166,7 @@
 				wp.commands && wp.commands.useCommand ? el(Commands) : null,
 				PluginSidebarMoreMenuItem ? el(PluginSidebarMoreMenuItem, { target: SIDEBAR, icon: 'chart-line' }, 'PublishRank SEO') : null,
 				el(PluginSidebar, { name: SIDEBAR, title: 'PublishRank SEO', icon: el(Badge), className: 'pr-esc-sidebar' },
+					el(WindowLauncher),
 					el(AnalysisDock),
 					el(FieldsDock))
 			);

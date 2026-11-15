@@ -263,6 +263,8 @@ final class DescriptionResolver {
 	 */
 	public static function plain( $html ) {
 		$text = self::unwrap_shortcodes( (string) $html );
+		// Keep words from neighbouring blocks apart ("Heading</h2><p>Text" must not become "HeadingText").
+		$text = (string) preg_replace( '#</(?:p|div|li|h[1-6]|blockquote|tr|td|th|figcaption|section|article|header|footer|dd|dt|pre)>|<br\s*/?>#i', '$0 ', $text );
 		$text = SeoData::clean( $text );
 		// Bare URLs (embeds, link lists) make poor descriptions.
 		$text = (string) preg_replace( '~\b(?:https?://|www\.)\S+~iu', ' ', $text );

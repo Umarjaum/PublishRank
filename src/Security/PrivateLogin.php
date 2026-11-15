@@ -10,8 +10,8 @@
  * Emergency switch: define( 'PUBLISHRANK_DISABLE_PRIVATE_LOGIN', true ); in wp-config.php restores the
  * standard login at once.
  *
- * Request-routing approach credit: WPS Hide Login (GPLv2+). PublishRank's implementation, settings,
- * screens and storage are its own.
+ * Settings saved by earlier releases are moved by PrivateLoginMigration. Third-party attributions for
+ * GPL-licensed prior art are listed in CREDITS.md.
  *
  * @package PublishRankSEO
  */
@@ -47,14 +47,6 @@ final class PrivateLogin {
 	const DISMISS_ACTION = 'publishrank_private_login_dismiss';
 	const NOTICE_KEY     = 'publishrank_private_login_comment_notice';
 
-	/** Option names used by earlier PublishRank releases, moved once to the names above. */
-	const LEGACY_OPTIONS = array(
-		'whl_page'                        => self::SLUG_OPTION,
-		'whl_redirect_admin'              => self::REDIRECT_OPTION,
-		'publishrank_hide_login_enabled' => self::OPTION,
-		'publishrank_hide_login_deferred' => self::DEFERRED_OPTION,
-	);
-
 	/** @var self|null */
 	private static $instance = null;
 
@@ -75,30 +67,12 @@ final class PrivateLogin {
 
 	/* --------------------------------------------------------------------- state */
 
-	/** Copy settings saved under earlier option names to the current names, once. */
+	/** Copy settings saved under earlier option names to the current names, once (see PrivateLoginMigration). */
 	public static function upgrade_storage() {
-		if ( get_option( 'publishrank_private_login_storage', 0 ) >= 1 ) {
-			return;
+		if ( ! class_exists( __NAMESPACE__ . '\\PrivateLoginMigration' ) ) {
+			require_once __DIR__ . '/PrivateLoginMigration.php';
 		}
-		foreach ( self::LEGACY_OPTIONS as $old => $new ) {
-			$value = get_option( $old, null );
-			if ( null !== $value && null === get_option( $new, null ) ) {
-				add_option( $new, $value );
-			}
-			if ( null !== $value ) {
-				delete_option( $old );
-			}
-			if ( is_multisite() ) {
-				$network = get_site_option( $old, null );
-				if ( null !== $network && null === get_site_option( $new, null ) ) {
-					add_site_option( $new, $network );
-				}
-				if ( null !== $network ) {
-					delete_site_option( $old );
-				}
-			}
-		}
-		update_option( 'publishrank_private_login_storage', 1 );
+		PrivateLoginMigration::run();
 	}
 
 	/** True when wp-config.php forces the standard WordPress login. */
@@ -559,7 +533,7 @@ final class PrivateLogin {
 	/** Bookmarks to the screen's earlier address keep working. */
 	public function redirect_old_screens() {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( in_array( $page, array( 'publishrank-wp-hide-login', 'whl_settings' ), true ) ) {
+		if ( in_array( $page, PrivateLoginMigration::old_screens(), true ) ) {
 			wp_safe_redirect( admin_url( 'admin.php?page=' . self::PAGE ) );
 			exit;
 		}
@@ -573,7 +547,7 @@ final class PrivateLogin {
 		if ( self::PAGE === $page && $user_id && current_user_can( 'manage_options' ) ) {
 			update_user_meta( $user_id, self::META_SEEN, 1 );
 		}
-		if ( $user_id && current_user_can( 'manage_options' ) && ! get_user_meta( $user_id, self::META_SEEN, true ) && ! get_user_meta( $user_id, 'publishrank_hide_login_seen', true ) ) {
+		if ( $user_id && current_user_can( 'manage_options' ) && ! get_user_meta( $user_id, self::META_SEEN, true ) && ! get_user_meta( $user_id, PrivateLoginMigration::old_seen_meta(), true ) ) {
 			$label .= ' <span class="pr-menu-new">' . esc_html__( 'New', 'publishrank' ) . '</span>';
 		}
 		$hook = add_submenu_page( 'publishrank-seo-dashboard', $title, $label, 'manage_options', self::PAGE, array( $this, 'render_page' ), 12 );

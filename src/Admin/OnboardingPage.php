@@ -681,6 +681,28 @@ final class OnboardingPage {
 		return '' === (string) $value ? $field['default'] : $value;
 	}
 
+	/**
+	 * Store the Media Library attachment behind an image field (`{key}_id`) so the preview, schema and the
+	 * theme logo can use the real attachment instead of guessing from a URL. A typed external URL clears it.
+	 */
+	private function save_attachment_reference( $key, $url ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Called from save(), which verifies the nonce first.
+		$posted = isset( $_POST[ $key . '_id' ] ) ? absint( wp_unslash( $_POST[ $key . '_id' ] ) ) : 0;
+		$id     = 0;
+		if ( '' !== $url ) {
+			if ( $posted > 0 && wp_attachment_is_image( $posted ) ) {
+				$id = $posted;
+			} else {
+				$id = (int) attachment_url_to_postid( $url );
+			}
+		}
+		if ( $id > 0 ) {
+			update_option( $key . '_id', $id, false );
+		} else {
+			delete_option( $key . '_id' );
+		}
+	}
+
 	/** Labels of required fields that are still empty. @return string[] */
 	private function missing_required() {
 		if ( null !== $this->missing_cache ) {
@@ -1063,6 +1085,9 @@ final class OnboardingPage {
 			if ( $field['required'] && '' === trim( (string) $clean ) ) {
 				$errors[] = $field['label']; }
 			update_option( $field['key'], $clean );
+			if ( 'image' === $field['type'] ) {
+				$this->save_attachment_reference( $field['key'], (string) $clean );
+			}
 			foreach ( (array) $field['mirror'] as $legacy ) {
 				update_option( $legacy, $clean ); }
 			if ( $is_person && $field['person_mirror'] ) {
@@ -1222,7 +1247,16 @@ final class OnboardingPage {
 					echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '"' . $req . '>' . wp_timezone_choice( (string) $value ) . '</select>'; // phpcs:ignore WordPress.Security.EscapeOutput
 					break;
 				case 'image':
-					$thumb = '' !== (string) $value ? '<img src="' . esc_url( (string) $value ) . '" alt="" loading="lazy" />' : '';
+					$att_id = (int) get_option( $key . '_id', 0 );
+					if ( '' === (string) $value && $att_id > 0 ) {
+						$value = (string) wp_get_attachment_image_url( $att_id, 'full' );
+					}
+					$thumb_src = ( $att_id > 0 && wp_attachment_is_image( $att_id ) ) ? (string) wp_get_attachment_image_url( $att_id, 'medium' ) : '';
+					if ( '' === $thumb_src ) {
+						$thumb_src = (string) $value;
+					}
+					$thumb = '' !== $thumb_src ? '<img src="' . esc_url( $thumb_src ) . '" alt="" />' : '';
+					echo '<input type="hidden" id="' . esc_attr( $id ) . '_id" name="' . esc_attr( $key ) . '_id" value="' . esc_attr( $att_id > 0 ? (string) $att_id : '' ) . '" />';
 					echo '<div class="prw-media"><span class="prw-media__thumb' . ( '' === $thumb ? ' is-empty' : '' ) . '" data-prw-thumb aria-hidden="true">' . $thumb . '<i class="fa-solid fa-image"></i></span><span class="prw-media__ctrl"><input type="text" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $value ) . '" placeholder="https://" inputmode="url" data-prw-media-input' . $req . ' /><button type="button" class="button rhs-media-button prw-media__button" data-target="' . esc_attr( $id ) . '"' . ( $applies ? '' : ' disabled' ) . '><i class="fa-solid fa-photo-film" aria-hidden="true"></i> ' . esc_html__( 'Choose image', 'publishrank' ) . '</button></span></div>'; // phpcs:ignore WordPress.Security.EscapeOutput
 					break;
 				case 'country':

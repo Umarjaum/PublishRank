@@ -83,7 +83,7 @@ final class DashboardPage {
 			),
 			array(
 				'label' => __( 'Content & publishing', 'publishrank' ),
-				'items' => array( 'publishrank-seo-score', 'publishrank-author-expertise', 'publishrank-publisher-toolkit', 'publishrank-image-optimizer', 'publishrank-seo-internal-links', 'publishrank-link-intelligence', 'publishrank-local-seo' ),
+				'items' => array( 'publishrank-seo-score', 'publishrank-author-expertise', 'publishrank-publisher-toolkit', 'publishrank-image-optimizer', 'publishrank-seo-internal-links', 'publishrank-link-intelligence', 'publishrank-local-seo', 'publishrank-woocommerce' ),
 			),
 			array(
 				'label' => __( 'Newsroom', 'publishrank' ),
@@ -91,7 +91,7 @@ final class DashboardPage {
 			),
 			array(
 				'label' => __( 'Search & discovery', 'publishrank' ),
-				'items' => array( 'publishrank-search-console', 'publishrank-sitemap-health', 'publishrank-indexnow', 'publishrank-baidu', 'publishrank-google-preferred-sources', 'publishrank-verification', 'publishrank-schema', 'publishrank-breadcrumbs', 'publishrank-seo-robots', 'publishrank-crawl-optimization', 'publishrank-llms-txt' ),
+				'items' => array( 'publishrank-search-console', 'publishrank-sitemap-health', 'publishrank-indexnow', 'publishrank-baidu', 'publishrank-google-preferred-sources', 'publishrank-verification', 'publishrank-schema', 'publishrank-breadcrumbs', 'publishrank-site-navigation', 'publishrank-feeds', 'publishrank-mastodon', 'publishrank-seo-robots', 'publishrank-crawl-optimization', 'publishrank-llms-txt' ),
 			),
 			array(
 				'label' => __( 'Measure & maintain', 'publishrank' ),

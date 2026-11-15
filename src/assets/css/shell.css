@@ -619,3 +619,6 @@ body[class*="publishrank"] .wrap table.widefat tfoot td {
 .pr-simple-nav__more li:not(.pr-simple-nav__group-label)>a:hover,.pr-simple-nav__more li:not(.pr-simple-nav__group-label)>a.is-current{background:rgba(120,90,110,.09)}
 .pr-simple-nav__group-label{padding:12px 10px 5px;color:#89828c;font-size:10px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
 @media(prefers-reduced-motion:reduce){.pr-simple-nav__chevron{transition:none}}
+
+/* 2.21: date/time inputs must never spill out of narrow cards. */
+body[class*="publishrank"] .wrap input[type="datetime-local"], body[class*="publishrank"] .wrap input[type="date"] { max-width: 100%; box-sizing: border-box; }

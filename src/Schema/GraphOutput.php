@@ -758,6 +758,11 @@ final class GraphOutput {
 	}
 
 	private function is_editorial_article() {
+		$is = $this->is_editorial_article_default();
+		return (bool) apply_filters( 'publishrank_is_editorial_article', $is, get_queried_object() );
+	}
+
+	private function is_editorial_article_default() {
 		$post = get_queried_object();
 		$type = $post instanceof \WP_Post ? get_post_type_object( $post->post_type ) : false;
 		if ( ! is_singular() || ! $post instanceof \WP_Post || ! $type || ! $type->public ) {

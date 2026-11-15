@@ -16,6 +16,67 @@ final class RedirectsPage {
 		add_action( 'admin_post_publishrank_seo_redirect_bulk', array( $this, 'handle_bulk' ) );
 		add_action( 'admin_post_publishrank_seo_redirect_delete', array( $this, 'handle_delete' ) );
 		add_action( 'admin_post_publishrank_seo_redirect_settings', array( $this, 'handle_settings' ) );
+		add_action( 'admin_post_publishrank_seo_redirect_export', array( $this, 'handle_export' ) );
+		add_action( 'admin_post_publishrank_seo_redirect_import', array( $this, 'handle_import' ) );
+		add_action( 'admin_post_publishrank_seo_redirect_bulk_delete', array( $this, 'handle_bulk_delete' ) );
+	}
+
+	/** Download every rule as CSV (re-importable here, readable in any spreadsheet). */
+	public function handle_export() {
+		AdminAssets::guard( 'publishrank_seo_redirect_export' );
+		check_admin_referer( 'publishrank_seo_redirect_export' );
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=UTF-8' );
+		header( 'Content-Disposition: attachment; filename=publishrank-redirects-' . gmdate( 'Y-m-d' ) . '.csv' );
+		$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Streaming a download.
+		fputcsv( $out, array( 'source', 'target', 'status', 'regex', 'start_at', 'end_at' ), ',', '"', '\\' );
+		foreach ( RedirectStore::all() as $rule ) {
+			$row = array( (string) ( $rule['source'] ?? '' ), (string) ( $rule['target'] ?? '' ), (int) ( $rule['status'] ?? 301 ), empty( $rule['regex'] ) ? 0 : 1, empty( $rule['start_at'] ) ? '' : gmdate( 'c', (int) $rule['start_at'] ), empty( $rule['end_at'] ) ? '' : gmdate( 'c', (int) $rule['end_at'] ) );
+			// Spreadsheet formula injection guard.
+			$row = array_map( static function ( $v ) { $v = (string) $v; return preg_match( '/^[=+\-@]/', $v ) ? "'" . $v : $v; }, $row );
+			fputcsv( $out, $row, ',', '"', '\\' );
+		}
+		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		exit;
+	}
+
+	public function handle_import() {
+		AdminAssets::guard( 'publishrank_seo_redirect_import' );
+		check_admin_referer( 'publishrank_seo_redirect_import' );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only the temporary path is used; the content is parsed and validated rule by rule.
+		$file = isset( $_FILES['csv']['tmp_name'] ) ? (string) $_FILES['csv']['tmp_name'] : '';
+		if ( '' === $file || ! is_uploaded_file( $file ) || filesize( $file ) > 2 * MB_IN_BYTES ) {
+			AdminAssets::done( self::SLUG, 'error', __( 'Choose a CSV file up to 2 MB.', 'publishrank' ) );
+		}
+		$rows  = array_slice( RedirectStore::parse_csv( (string) file_get_contents( $file ) ), 0, 2000 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$added = 0;
+		$skip  = array();
+		foreach ( $rows as $i => $row ) {
+			$result = RedirectStore::add( $row['source'], $row['target'], $row['status'], $row['regex'] );
+			if ( true === $result ) {
+				++$added;
+			} else {
+				$skip[] = sprintf( '#%d %s', $i + 2, is_wp_error( $result ) ? $result->get_error_message() : '' );
+			}
+		}
+		/* translators: 1: imported rules, 2: skipped rows. */
+		$msg = sprintf( __( '%1$d redirect(s) imported, %2$d row(s) skipped.', 'publishrank' ), $added, count( $skip ) );
+		if ( $skip ) {
+			$msg .= ' ' . implode( ' · ', array_slice( $skip, 0, 5 ) );
+		}
+		AdminAssets::done( self::SLUG, $skip ? 'error' : 'success', $msg );
+	}
+
+	public function handle_bulk_delete() {
+		AdminAssets::guard( 'publishrank_seo_redirect_bulk_delete' );
+		check_admin_referer( 'publishrank_seo_redirect_bulk_delete' );
+		$ids     = isset( $_POST['ids'] ) && is_array( $_POST['ids'] ) ? array_map( 'sanitize_key', wp_unslash( $_POST['ids'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$removed = 0;
+		foreach ( $ids as $id ) {
+			$removed += RedirectStore::delete( $id ) ? 1 : 0;
+		}
+		/* translators: %d: number of removed rules. */
+		AdminAssets::done( self::SLUG, 'success', sprintf( _n( '%d redirect removed.', '%d redirects removed.', $removed, 'publishrank' ), $removed ) );
 	}
 
 	public function menu() {
@@ -140,14 +201,52 @@ final class RedirectsPage {
 					<?php submit_button( __( 'Add rules', 'publishrank' ), 'secondary', 'submit', false ); ?>
 				</form>
 			</div>
+			<div class="rhs-card">
+				<h2><?php esc_html_e( 'Import and export', 'publishrank' ); ?></h2>
+				<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="publishrank_seo_redirect_import" /><?php wp_nonce_field( 'publishrank_seo_redirect_import' ); ?>
+					<p class="description"><?php esc_html_e( 'CSV with a header row. Exports from PublishRank, Yoast SEO Premium, Rank Math and Redirection are recognised (source, target, status and regex columns). Every row is validated; existing rules with the same source are updated.', 'publishrank' ); ?></p>
+					<p><label for="rhs-csv" class="screen-reader-text"><?php esc_html_e( 'CSV file', 'publishrank' ); ?></label><input id="rhs-csv" type="file" name="csv" accept=".csv,text/csv" required /></p>
+					<?php submit_button( __( 'Import CSV', 'publishrank' ), 'secondary', 'submit', false ); ?>
+					<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=publishrank_seo_redirect_export' ), 'publishrank_seo_redirect_export' ) ); ?>"><?php esc_html_e( 'Export all as CSV', 'publishrank' ); ?></a>
+				</form>
+			</div>
+			<div class="rhs-card">
+				<h2><?php esc_html_e( 'Test an address', 'publishrank' ); ?></h2>
+				<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+					<input type="hidden" name="page" value="<?php echo esc_attr( self::SLUG ); ?>" />
+					<?php $test = isset( $_GET['test_url'] ) ? sanitize_text_field( wp_unslash( $_GET['test_url'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only lookup. ?>
+					<p><label for="rhs-test"><strong><?php esc_html_e( 'Path or URL', 'publishrank' ); ?></strong></label><br /><input id="rhs-test" name="test_url" type="text" class="large-text" value="<?php echo esc_attr( $test ); ?>" placeholder="/old-article" /></p>
+					<?php submit_button( __( 'Trace redirects', 'publishrank' ), 'secondary', '', false ); ?>
+				</form>
+				<?php
+				if ( '' !== $test ) {
+					$hops = RedirectStore::trace( $test );
+					echo '<div class="rhs-trace" data-hops="' . (int) count( $hops ) . '">';
+					if ( ! $hops ) {
+						echo '<p>' . esc_html__( 'No redirect rule matches this address.', 'publishrank' ) . '</p>';
+					}
+					foreach ( $hops as $hop ) {
+						echo '<p><code>' . esc_html( $hop['path'] ) . '</code> → <strong>' . (int) $hop['status'] . '</strong> ' . ( '' !== $hop['target'] ? '<code>' . esc_html( $hop['target'] ) . '</code>' : '' ) . ( $hop['regex'] ? ' <em>regex</em>' : '' ) . ( $hop['loop'] ? ' <strong style="color:#b32d2e">' . esc_html__( 'Loop detected', 'publishrank' ) . '</strong>' : '' ) . '</p>';
+					}
+					if ( count( $hops ) > 1 ) {
+						echo '<p class="description">' . esc_html__( 'This is a redirect chain. Point the first rule straight at the final address to save a hop.', 'publishrank' ) . '</p>';
+					}
+					echo '</div>';
+				}
+				?>
+			</div>
 		</div>
 		<p class="description"><?php esc_html_e( 'Redirects apply to addresses that would otherwise return a 404 page. Rules are checked top to bottom and the first match wins.', 'publishrank' ); ?></p>
 		<h2><?php echo esc_html( sprintf( /* translators: %d: number of rules. */ _n( '%d rule', '%d rules', $total, 'publishrank' ), $total ) ); ?></h2>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="rhs-bulk-delete">
+		<input type="hidden" name="action" value="publishrank_seo_redirect_bulk_delete" /><?php wp_nonce_field( 'publishrank_seo_redirect_bulk_delete' ); ?>
+		<p><button type="submit" class="button" onclick="return confirm(this.dataset.confirm)" data-confirm="<?php esc_attr_e( 'Delete the selected redirects?', 'publishrank' ); ?>"><?php esc_html_e( 'Delete selected', 'publishrank' ); ?></button></p>
 		<div class="rhs-table-wrap"><table class="widefat striped">
-			<thead><tr><th><?php esc_html_e( 'Old', 'publishrank' ); ?></th><th><?php esc_html_e( 'New', 'publishrank' ); ?></th><th><?php esc_html_e( 'Type', 'publishrank' ); ?></th><th><?php esc_html_e( 'Match', 'publishrank' ); ?></th><th><?php esc_html_e( 'Schedule', 'publishrank' ); ?></th><th></th></tr></thead>
+			<thead><tr><td class="check-column"><input type="checkbox" aria-label="<?php esc_attr_e( 'Select all', 'publishrank' ); ?>" onclick="var c=this.checked;this.closest('table').querySelectorAll('tbody input[type=checkbox]').forEach(function(b){b.checked=c;});" /></td><th><?php esc_html_e( 'Old', 'publishrank' ); ?></th><th><?php esc_html_e( 'New', 'publishrank' ); ?></th><th><?php esc_html_e( 'Type', 'publishrank' ); ?></th><th><?php esc_html_e( 'Match', 'publishrank' ); ?></th><th><?php esc_html_e( 'Schedule', 'publishrank' ); ?></th><th></th></tr></thead>
 			<tbody>
 			<?php if ( empty( $slice ) ) : ?>
-				<tr><td colspan="6"><?php esc_html_e( 'No redirects yet.', 'publishrank' ); ?></td></tr>
+				<tr><td colspan="7"><?php esc_html_e( 'No redirects yet.', 'publishrank' ); ?></td></tr>
 			<?php endif; ?>
 			<?php
 			foreach ( $slice as $rule ) :
@@ -163,6 +262,7 @@ final class RedirectsPage {
 				);
 				?>
 				<tr>
+					<th scope="row" class="check-column"><input type="checkbox" name="ids[]" value="<?php echo esc_attr( RedirectStore::id( $rule ) ); ?>" /></th>
 					<td><code><?php echo esc_html( isset( $rule['source'] ) ? $rule['source'] : '' ); ?></code></td>
 					<td><?php echo ! empty( $rule['target'] ) ? '<code>' . esc_html( $rule['target'] ) . '</code>' : '&mdash;'; ?></td>
 					<td><?php echo esc_html( isset( $rule['status'] ) ? (string) (int) $rule['status'] : '301' ); ?></td>
@@ -173,6 +273,7 @@ final class RedirectsPage {
 			<?php endforeach; ?>
 			</tbody>
 		</table></div>
+		</form>
 		<?php
 		if ( $pages > 1 ) {
 			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post(

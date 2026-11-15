@@ -146,12 +146,7 @@ final class ImportExport {
 				wp_die( esc_html__( 'The import file is invalid.', 'publishrank' ), 400 );
 			}
 			// Files exported by earlier releases used different names for the private login address.
-			foreach ( array( 'whl_page' => 'publishrank_login_slug', 'whl_redirect_admin' => 'publishrank_login_redirect' ) as $legacy => $current ) {
-				if ( isset( $data[ $legacy ] ) && ! isset( $data[ $current ] ) ) {
-					$data[ $current ] = $data[ $legacy ];
-				}
-				unset( $data[ $legacy ] );
-			}
+			$data = \PublishRankSEO\Security\PrivateLoginMigration::translate_import( $data );
 			foreach ( $data as $key => $value ) {
 				if ( '_schema' === $key || ! in_array( $key, $this->allowed, true ) ) {
 					continue;

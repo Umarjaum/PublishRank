@@ -126,7 +126,9 @@ final class HeadOutput {
 				echo '<meta property="og:description" content="' . esc_attr( $og_description ) . '" />' . "\n";
 			}
 			echo '<meta property="og:url" content="' . esc_url( $this->meta->canonical() ) . '" />' . "\n";
-			echo '<meta property="og:type" content="' . esc_attr( $this->is_editorial_article() ? 'article' : 'website' ) . '" />' . "\n";
+			$og_type = (string) apply_filters( 'publishrank_og_type', $this->is_editorial_article() ? 'article' : 'website' );
+			echo '<meta property="og:type" content="' . esc_attr( $og_type ) . '" />' . "\n";
+			do_action( 'publishrank_og_extra', $og_type );
 			if ( $this->is_editorial_article() ) {
 				echo '<meta property="og:updated_time" content="' . esc_attr( get_post_modified_time( DATE_W3C, true, get_queried_object_id() ) ) . '" />' . "\n"; }
 			$locale = str_replace( '-', '_', ! empty( LanguageAlternates::current_locale() ) ? LanguageAlternates::current_locale() : sanitize_text_field( (string) get_option( 'publishrank_default_locale', get_locale() ) ) );
@@ -356,7 +358,8 @@ final class HeadOutput {
 	private function is_editorial_article() {
 		$post = get_queried_object();
 		$type = $post instanceof \WP_Post ? get_post_type_object( $post->post_type ) : false;
-		return is_singular() && $type && $type->public && $type->publicly_queryable && ! in_array( $post->post_type, array( 'page', 'attachment' ), true );
+		$is = is_singular() && $type && $type->public && $type->publicly_queryable && ! in_array( $post->post_type, array( 'page', 'attachment' ), true );
+		return (bool) apply_filters( 'publishrank_is_editorial_article', $is, $post );
 	}
 }
 

@@ -82,11 +82,18 @@
 				img.addEventListener('error', function () { img.remove(); thumb.classList.add('is-empty'); });
 				thumb.insertBefore(img, thumb.firstChild);
 			}
-			if (img.getAttribute('src') !== url) { img.src = url; }
+			var preferred = input.getAttribute('data-prw-thumb-url') || url;
+			if (img.getAttribute('src') !== preferred) { img.src = preferred; }
 			thumb.classList.remove('is-empty');
 		}
-		input.addEventListener('input', function () { window.clearTimeout(timer); timer = window.setTimeout(update, 250); });
+		var idField = document.getElementById(input.id + '_id');
+		input.addEventListener('input', function (e) {
+			// Typed by hand: the previous Media Library attachment no longer applies.
+			if (e.isTrusted) { input.removeAttribute('data-prw-thumb-url'); if (idField) { idField.value = ''; } }
+			window.clearTimeout(timer); timer = window.setTimeout(update, 250);
+		});
 		input.addEventListener('change', update);
+		update();
 	});
 
 	/* ---------- Google-style homepage preview (step 5) ---------- */

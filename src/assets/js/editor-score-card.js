@@ -62,6 +62,14 @@
 				b.textContent = t.fix || 'Fix';
 				li.appendChild(b);
 			}
+			if (row.dismiss && cfg.dismissNonce) {
+				var d = document.createElement('button');
+				d.type = 'button'; d.className = 'button button-small pr-esc__fix pr-esc__dismiss';
+				d.setAttribute('data-pr-esc-dismiss', row.dismiss);
+				d.setAttribute('aria-label', String(t.dismissAria || 'Dismiss: %s').replace('%s', row.message || ''));
+				d.textContent = t.dismiss || 'Dismiss';
+				li.appendChild(d);
+			}
 			list.appendChild(li);
 		});
 	}
@@ -263,6 +271,12 @@
 			return saveField(field, val).then(function () { setStatus(t.fixed || ''); analyzeNow(); }, function () { setStatus(t.fixFailed || ''); });
 		}, function () { setStatus(t.fixFailed || ''); });
 	}
+	$(document).on('click', '[data-pr-esc-dismiss]', function () {
+		var btn = this, url = (window.publishrankIntel && publishrankIntel.ajaxUrl) || window.ajaxurl;
+		btn.disabled = true;
+		$.post(url, { action: cfg.dismissAction, nonce: cfg.dismissNonce, post_id: postId(), rule: btn.getAttribute('data-pr-esc-dismiss') })
+			.then(function (r) { if (r && r.success) { var li = btn.closest('li'); if (li) { li.remove(); } analyzeNow(); } else { btn.disabled = false; } }, function () { btn.disabled = false; });
+	});
 	$(document).on('click', '[data-pr-esc-fix], [data-pr-esc-links]', function () {
 		var btn = this, kind = btn.getAttribute('data-pr-esc-fix') || 'links';
 		btn.disabled = true;

@@ -141,6 +141,10 @@ final class Plugin {
 		$this->loader->register( ConfigHistory::class, false );
 		$this->loader->register( LLMSTxt::class, false );
 		$this->loader->register( \PublishRankSEO\Schema\LiveBlogSchema::class, false );
+		$this->loader->register( \PublishRankSEO\Feeds\FeedManager::class, false );
+		$this->loader->register( \PublishRankSEO\SEO\SiteNavigation::class, false );
+		$this->loader->register( \PublishRankSEO\Integrations\WooCommerceSEO::class, false );
+		$this->loader->register( \PublishRankSEO\SEO\Language\InclusiveLanguage::class, false );
 		$this->register_cache_invalidation();
 		// Register this module on every request: its frontend hooks and shortcode must exist outside wp-admin.
 		$this->loader->register( PreferredSourcesPage::class, false );
@@ -175,6 +179,10 @@ final class Plugin {
 			$this->loader->register( IndexNowPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\MastodonPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\RatingNotice::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\ClassicEditorNotice::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\FeedsPage::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\SiteNavigationPage::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\WooCommerceSeoPage::class, false );
 			$this->loader->register( PublisherToolkitPage::class, false );
 			$this->loader->register( HelpDocumentationPage::class, false );
 				$this->loader->register( SchemaPage::class, false );

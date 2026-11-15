@@ -434,9 +434,16 @@ final class ArticleIntelligence {
 	public static function store( $post ) {
 		$report = self::analyze( self::data_from_post( $post ), true );
 		$fail   = array();
+		$passed = 0;
+		$total  = 0;
 		foreach ( $report['checks'] as $check ) {
 			if ( 'bad' === $check['status'] ) {
 				$fail[] = $check['id']; }
+			if ( 'info' !== $check['status'] ) {
+				++$total;
+				if ( 'good' === $check['status'] ) {
+					++$passed; }
+			}
 		}
 		$prev       = get_post_meta( $post->ID, self::SUMMARY_META, true );
 		$prev_score = is_array( $prev ) && isset( $prev['score'] ) ? (int) $prev['score'] : null;
@@ -449,6 +456,10 @@ final class ArticleIntelligence {
 				'fail'       => array_slice( $fail, 0, 8 ),
 				'at'         => gmdate( 'c' ),
 				'prev_score' => $prev_score,
+				'v'          => SeoAnalysis::VERSION,
+				'passed'     => $passed,
+				'total'      => $total,
+				'words'      => (int) ( $report['stats']['words'] ?? 0 ),
 			)
 		);
 		delete_transient( 'pr_intel_links_' . (int) $post->ID );
@@ -486,6 +497,8 @@ final class ArticleIntelligence {
 		$links                 = self::links( $html, (string) $d['home_host'] );
 		$sentences             = self::sentences( $paragraphs );
 		$latin                 = self::is_latin( $text );
+		$lang                  = \PublishRankSEO\SEO\Language\LanguageRules::detect( $text . ' ' . (string) $d['title'], isset( $d['locale'] ) && '' !== (string) $d['locale'] ? (string) $d['locale'] : ( function_exists( 'determine_locale' ) ? determine_locale() : get_locale() ) );
+		\PublishRankSEO\SEO\Language\LanguageRules::set_current( $lang );
 		$keyphrase             = trim( (string) $d['keyphrase'] );
 		$keyphrase_occurrences = 0;
 		$keyphrase_density     = 0.0;
@@ -698,14 +711,27 @@ final class ArticleIntelligence {
 		$sentence_count = count( $sentences );
 		if ( $sentence_count >= 3 ) {
 			$long_sentences = 0;
+			$long_limit     = \PublishRankSEO\SEO\Language\LanguageRules::long_sentence_words( $lang );
 			foreach ( $sentences as $s ) {
-				if ( count( self::tokens( $s ) ) > 25 ) {
+				if ( count( self::tokens( $s ) ) > $long_limit ) {
 					++$long_sentences; }
 			}
 			$share = $long_sentences / $sentence_count;
-			/* translators: %d: percentage value. */
-			$add( 'read_sentence_length', 'readability', $share <= 0.25 ? 'good' : ( $share <= 0.4 ? 'ok' : 'bad' ), 2, $share <= 0.25 ? sprintf( __( 'Only %d%% of sentences are long (25+ words).', 'publishrank' ), round( $share * 100 ) ) : sprintf( __( '%d%% of sentences exceed 25 words; shorten some.', 'publishrank' ), round( $share * 100 ) ) );
-			if ( $latin && $word_count >= 50 ) {
+			/* translators: 1: percentage value, 2: words per sentence. */
+			$add( 'read_sentence_length', 'readability', $share <= 0.25 ? 'good' : ( $share <= 0.4 ? 'ok' : 'bad' ), 2, $share <= 0.25 ? sprintf( __( 'Only %1$d%% of sentences are long (%2$d+ words).', 'publishrank' ), round( $share * 100 ), $long_limit ) : sprintf( __( '%1$d%% of sentences exceed %2$d words; shorten some.', 'publishrank' ), round( $share * 100 ), $long_limit ) );
+			if ( in_array( $lang, array( 'ar', 'ur' ), true ) && $word_count >= 50 ) {
+				$pattern    = \PublishRankSEO\SEO\Language\LanguageRules::transition_pattern( $lang );
+				$transition = 0;
+				foreach ( $sentences as $s ) {
+					if ( '' !== $pattern && preg_match( $pattern, \PublishRankSEO\SEO\Language\LanguageRules::normalize( self::lower( $s ) ) ) ) {
+						++$transition; }
+				}
+				$t_share = $transition / $sentence_count;
+				/* translators: 1: percentage value, 2: language name. */
+				$add( 'read_transitions', 'readability', $t_share >= 0.2 ? 'good' : ( $t_share >= 0.1 ? 'ok' : 'bad' ), 1, $t_share >= 0.2 ? sprintf( __( '%1$d%% of sentences use %2$s connective words, which helps flow.', 'publishrank' ), round( $t_share * 100 ), \PublishRankSEO\SEO\Language\LanguageRules::label( $lang ) ) : sprintf( __( 'Only %1$d%% of sentences use %2$s connective words; connect ideas more clearly.', 'publishrank' ), round( $t_share * 100 ), \PublishRankSEO\SEO\Language\LanguageRules::label( $lang ) ) );
+				/* translators: %s: language name. */
+				$add( 'read_language', 'readability', 'info', 0, sprintf( __( 'Analysed as %s. Flesch reading ease and passive-voice checks are English formulas and were not applied.', 'publishrank' ), \PublishRankSEO\SEO\Language\LanguageRules::label( $lang ) ) );
+			} elseif ( 'en' === $lang && $latin && $word_count >= 50 ) {
 				$ease = self::flesch( $words, $sentence_count );
 				/* translators: %s: Flesch reading-ease score. */
 				$add( 'read_flesch', 'readability', $ease >= 60 ? 'good' : ( $ease >= 45 ? 'ok' : 'bad' ), 2, $ease >= 60 ? sprintf( __( 'Flesch reading ease is %s: easy to read.', 'publishrank' ), self::num( $ease ) ) : sprintf( __( 'Flesch reading ease is %s: prefer shorter sentences and simpler words.', 'publishrank' ), self::num( $ease ) ) );
@@ -723,8 +749,8 @@ final class ArticleIntelligence {
 				$t_share = $transition / $sentence_count;
 				/* translators: %d: percentage value. */
 				$add( 'read_transitions', 'readability', $t_share >= 0.2 ? 'good' : ( $t_share >= 0.1 ? 'ok' : 'bad' ), 1, $t_share >= 0.2 ? sprintf( __( '%d%% of sentences use transition words, which helps flow.', 'publishrank' ), round( $t_share * 100 ) ) : sprintf( __( 'Only %d%% of sentences use transition words; connect ideas more clearly.', 'publishrank' ), round( $t_share * 100 ) ) );
-			} elseif ( ! $latin ) {
-				$add( 'read_language', 'readability', 'info', 0, __( 'Readability formulas are tuned for Latin-script text and were not applied to this article.', 'publishrank' ) );
+			} elseif ( 'en' !== $lang ) {
+				$add( 'read_language', 'readability', 'info', 0, __( 'Reading-ease, passive-voice and transition-word formulas are tuned for English and were not applied to this article.', 'publishrank' ) );
 			}
 			if ( $sentence_count >= 6 ) {
 				$run     = 1;
@@ -738,6 +764,24 @@ final class ArticleIntelligence {
 					$last    = $first;
 				}
 				$add( 'read_repetition', 'readability', $max_run >= 3 ? 'ok' : 'good', 1, $max_run >= 3 ? __( 'Three or more consecutive sentences start with the same word; vary the openings.', 'publishrank' ) : __( 'Sentence openings are varied.', 'publishrank' ) );
+			}
+		}
+
+		/* ---- Inclusive language (optional, never scored, never rewrites) ---- */
+		if ( \PublishRankSEO\SEO\Language\InclusiveLanguage::settings()['enabled'] ) {
+			if ( \PublishRankSEO\SEO\Language\InclusiveLanguage::has_rules_for( $lang ) ) {
+				$findings = \PublishRankSEO\SEO\Language\InclusiveLanguage::scan( wp_strip_all_tags( $text . "\n" . (string) $d['title'] ), $lang, (int) $d['post_id'] );
+				foreach ( $findings as $f ) {
+					/* translators: 1: flagged words, 2: explanation, 3: alternatives. */
+					$add( 'inclusive_' . $f['rule'], 'inclusive', 'ok', 0, sprintf( __( '"%1$s": %2$s Consider: %3$s.', 'publishrank' ), $f['term'], $f['why'], $f['alt'] ) );
+					$checks[ count( $checks ) - 1 ]['dismiss'] = $f['rule'];
+				}
+				if ( ! $findings ) {
+					$add( 'inclusive_clear', 'inclusive', 'good', 0, __( 'No potentially non-inclusive wording found.', 'publishrank' ) );
+				}
+			} else {
+				/* translators: %s: language name. */
+				$add( 'inclusive_unavailable', 'inclusive', 'info', 0, sprintf( __( 'Inclusive-language rules are not available for %s yet, so this check was not run.', 'publishrank' ), \PublishRankSEO\SEO\Language\LanguageRules::label( $lang ) ) );
 			}
 		}
 
@@ -895,9 +939,17 @@ final class ArticleIntelligence {
 			);
 		}
 
+		// ONE authoritative score: the content score combined with the secondary keyphrase scorecards.
+		// Every PublishRank surface (editor panel, toolbar badge, post list, SEO Score page, insights,
+		// REST) reads this value, so the same post always shows the same number.
+		$content_score = $score;
+		$score         = $kp_result ? KeyphraseAnalyzer::combine( $content_score, $kp_result ) : $content_score;
+		$score         = (int) apply_filters( 'publishrank_seo_score', max( 0, min( 100, (int) $score ) ), $d );
+
 		return array(
 			'score'       => $score,
-			'combined_score' => $kp_result ? KeyphraseAnalyzer::combine( $score, $kp_result ) : $score,
+			'content_score' => $content_score,
+			'combined_score' => $score,
 			'keyphrases'  => $kp_result,
 			'rating'      => $score >= 80 ? 'good' : ( $score >= 55 ? 'ok' : 'bad' ),
 			'groups'      => $groups,
@@ -917,6 +969,7 @@ final class ArticleIntelligence {
 				'issues_info'                  => $info_count,
 				'issues_high'                  => $high_count,
 				'generated_at'                 => gmdate( 'c' ),
+				'language'                     => $lang,
 			),
 			'suggestions' => array(
 				'keyphrases'  => $word_count >= 80 ? self::suggest_keyphrases( $title, $words, $headings, (string) $d['terms'] ) : array(),
@@ -1420,6 +1473,7 @@ final class ArticleIntelligence {
 			'snippet'     => __( 'Search snippet & meta description', 'publishrank' ),
 			'structure'   => __( 'Content structure', 'publishrank' ),
 			'readability' => __( 'Readability', 'publishrank' ),
+			'inclusive'   => __( 'Inclusive language', 'publishrank' ),
 			'media'       => __( 'Media & image accessibility', 'publishrank' ),
 			'links'       => __( 'Internal & external links', 'publishrank' ),
 			'news'        => __( 'Newsroom signals', 'publishrank' ),
@@ -1458,6 +1512,9 @@ final class ArticleIntelligence {
 
 	/** Neutral, editor-friendly title for a check (used for passed and failed rows alike). */
 	public static function check_title( $id ) {
+		if ( 0 === strpos( (string) $id, 'inclusive_' ) ) {
+			return __( 'Inclusive language', 'publishrank' );
+		}
 		$titles = array(
 			'keyphrase_missing'         => __( 'Focus keyword', 'publishrank' ),
 			'keyphrase_length'          => __( 'Focus keyword length', 'publishrank' ),
@@ -1527,6 +1584,7 @@ final class ArticleIntelligence {
 				'status'  => $status,
 				'message' => wp_strip_all_tags( (string) $check['message'] ),
 				'fix'     => isset( $check['fix'] ) ? (string) $check['fix'] : (string) self::fix_for( (string) $check['id'], $status ),
+				'dismiss' => isset( $check['dismiss'] ) ? (string) $check['dismiss'] : '',
 				'_order'  => ( isset( $rank[ $status ] ) ? $rank[ $status ] : 3 ) * 1000 + (int) $i,
 			);
 		}
@@ -1625,7 +1683,7 @@ final class ArticleIntelligence {
 		$out .= '<div class="pr-dash__cats" role="list">';
 		foreach ( $labels as $key => $label ) {
 			$items = self::checks_in( $report, $key, false );
-			if ( ! $items ) {
+			if ( ! $items || 'inclusive' === $key ) { // Inclusive-language findings are advice, not a score.
 				continue; }
 			$val    = isset( $report['groups'][ $key ] ) ? (int) $report['groups'][ $key ] : 0;
 			$issues = count(
@@ -1657,7 +1715,7 @@ final class ArticleIntelligence {
 
 		/* --- Keyphrase scorecards (primary plus secondary) --- */
 		if ( ! empty( $report['keyphrases'] ) ) {
-			$out .= KeyphraseAnalyzer::render( $report['keyphrases'], $score );
+			$out .= KeyphraseAnalyzer::render( $report['keyphrases'], isset( $report['content_score'] ) ? (int) $report['content_score'] : $score );
 		}
 
 		/* --- Tally --- */
@@ -2007,7 +2065,7 @@ final class ArticleIntelligence {
 	}
 
 	public static function tokens( $text ) {
-		$text = self::lower( (string) $text );
+		$text = \PublishRankSEO\SEO\Language\LanguageRules::normalize( self::lower( (string) $text ) );
 		preg_match_all( '/[\p{L}\p{M}\p{N}]+(?:[\'’][\p{L}]+)*/u', $text, $m );
 		return isset( $m[0] ) ? $m[0] : array();
 	}
@@ -2015,13 +2073,7 @@ final class ArticleIntelligence {
 	private static function stems( array $tokens ) {
 		$out = array();
 		foreach ( $tokens as $t ) {
-			$t = str_replace( array( "'", '’' ), '', (string) $t );
-			if ( strlen( $t ) > 3 && preg_match( '/^[a-z]+$/', $t ) ) {
-				if ( 'ies' === substr( $t, -3 ) ) {
-					$t = substr( $t, 0, -3 ) . 'y'; } elseif ( 's' === substr( $t, -1 ) && 'ss' !== substr( $t, -2 ) ) {
-					$t = substr( $t, 0, -1 ); }
-			}
-			$out[] = $t;
+			$out[] = \PublishRankSEO\SEO\Language\LanguageRules::stem( (string) $t );
 		}
 		return $out;
 	}

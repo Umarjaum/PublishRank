@@ -6,7 +6,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 	$publishrank_cleanup = static function () {
 		global $wpdb;
-		// Remove only PublishRank's managed Apache block so uninstall cannot leave /wp-admin blocked.
+		// Remove only PublishRank's managed Apache block (legacy marker written by old releases) so uninstall cannot leave /wp-admin blocked.
 		if ( ! function_exists( 'get_home_path' ) && is_readable( ABSPATH . 'wp-admin/includes/file.php' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
@@ -56,14 +56,16 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	}
 
 // PublishRank Private Login settings (current and earlier option names).
-foreach ( array( 'publishrank_login_slug', 'publishrank_login_redirect', 'publishrank_private_login_enabled', 'publishrank_private_login_deferred', 'publishrank_private_login_storage', 'publishrank_hide_login_enabled', 'publishrank_hide_login_deferred', 'whl_page', 'whl_redirect_admin' ) as $publishrank_login_option ) {
+// Earlier option names are owned by the migration layer, which never removes another plugin's settings.
+require_once __DIR__ . '/src/Security/PrivateLogin.php';
+require_once __DIR__ . '/src/Security/PrivateLoginMigration.php';
+$publishrank_login_options = array_merge( array( 'publishrank_login_slug', 'publishrank_login_redirect', 'publishrank_private_login_enabled', 'publishrank_private_login_deferred' ), \PublishRankSEO\Security\PrivateLoginMigration::uninstall_options() );
+foreach ( $publishrank_login_options as $publishrank_login_option ) {
 	delete_option( $publishrank_login_option );
 }
 delete_site_transient( 'publishrank_private_login_comment_notice' );
-delete_option( 'publishrank_wp_hide_login' );
-delete_option( 'publishrank_wp_hide_login_apache_rules_active' );
 if ( is_multisite() ) {
-	foreach ( array( 'publishrank_login_slug', 'publishrank_login_redirect', 'whl_page', 'whl_redirect_admin' ) as $publishrank_login_option ) {
+	foreach ( $publishrank_login_options as $publishrank_login_option ) {
 		delete_site_option( $publishrank_login_option );
 	}
 }
