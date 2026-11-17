@@ -1,0 +1,7 @@
+.prx-sl__entry{border:1px solid #dcdcde;border-radius:8px;padding:10px 14px;margin:10px 0;background:#fff}
+.prx-sl__entry legend{font-weight:650;padding:0 6px}
+.prx-sl__ok{color:#1e6b4f;font-weight:600;font-size:12px}
+.prx-sl__bad{display:inline-block;margin-top:2px;color:#a1232b;font-weight:600;font-size:12px}
+.prx-sl__entry textarea{max-width:100%}
+.prx-sl__entry .regular-text{width:min(100%,420px)}
+.prx-sl__add{position:sticky;bottom:0;background:#fff;padding:8px 0}

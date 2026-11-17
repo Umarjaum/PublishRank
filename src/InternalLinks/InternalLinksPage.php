@@ -27,7 +27,7 @@ final class InternalLinksPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Content Graph', 'publishrank' ), __( 'Content Graph', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Content Graph', 'publishrank' ), __( 'Content Graph', 'publishrank' ), 'publishrank_bulk_edit', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function settings() {
@@ -90,7 +90,7 @@ final class InternalLinksPage {
 	}
 
 	private function can_manage_or_edit( $source_id = 0, $target_id = 0 ) {
-		if ( current_user_can( 'manage_options' ) ) {
+		if ( \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			return true;
 		}
 		return $source_id && $target_id && current_user_can( 'edit_post', $source_id ) && current_user_can( 'edit_post', $target_id );
@@ -104,7 +104,7 @@ final class InternalLinksPage {
 	}
 
 	public function handle_settings() {
-		AdminAssets::guard( 'publishrank_internal_links_settings' );
+		AdminAssets::guard( 'publishrank_internal_links_settings', 'publishrank_bulk_edit' );
 		check_admin_referer( 'publishrank_internal_links_settings' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This helper only reads the recommendation ID; its caller validates the route nonce before mutation.
 		update_option( 'publishrank_internal_link_enabled', ! empty( $_POST['publishrank_internal_link_enabled'] ) );
@@ -119,7 +119,7 @@ final class InternalLinksPage {
 	}
 
 	public function handle_scan() {
-		AdminAssets::guard( 'publishrank_internal_links_scan' );
+		AdminAssets::guard( 'publishrank_internal_links_scan', 'publishrank_bulk_edit' );
 		Scanner::start_rebuild();
 		wp_safe_redirect(
 			add_query_arg(
@@ -136,7 +136,7 @@ final class InternalLinksPage {
 	/** Enqueue the scan runner on the Content Graph screen only. */
 	public function enqueue( $hook = '' ) {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
-		if ( self::SLUG !== $page || ! current_user_can( 'manage_options' ) ) {
+		if ( self::SLUG !== $page || ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			return;
 		}
 		$file = PUBLISHRANK_SEO_PATH . 'assets/js/internal-links-scan.js';
@@ -184,7 +184,7 @@ final class InternalLinksPage {
 		if ( ! check_ajax_referer( 'publishrank_internal_links_batch', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Your session expired. Reload the page and try again.', 'publishrank' ) ), 403 );
 		}
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to rebuild the content graph.', 'publishrank' ) ), 403 );
 		}
 		$result = Scanner::run_batch();
@@ -209,7 +209,7 @@ final class InternalLinksPage {
 		if ( ! check_ajax_referer( 'publishrank_internal_links_cancel', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Your session expired. Reload the page and try again.', 'publishrank' ) ), 403 );
 		}
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to rebuild the content graph.', 'publishrank' ) ), 403 );
 		}
 		Scanner::cancel();
@@ -220,7 +220,7 @@ final class InternalLinksPage {
 
 	/** No-JavaScript fallback: run a single batch per click. It never loops on its own. */
 	public function handle_batch() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			wp_die( esc_html__( 'You do not have permission to rebuild the content graph.', 'publishrank' ), '', array( 'response' => 403 ) );
 		}
 		check_admin_referer( 'publishrank_internal_links_batch' );
@@ -239,7 +239,7 @@ final class InternalLinksPage {
 	}
 
 	public function handle_cancel() {
-		AdminAssets::guard( 'publishrank_internal_links_cancel' );
+		AdminAssets::guard( 'publishrank_internal_links_cancel', 'publishrank_bulk_edit' );
 		Scanner::cancel();
 		Store::invalidate_cache();
 		AdminAssets::done( self::SLUG, 'success', __( 'Scan cancelled. The graph built so far has been kept.', 'publishrank' ) );

@@ -17,10 +17,10 @@ final class SearchConsolePage {
 		add_action( 'admin_menu', array( $this, 'menu' ), 13 );
 		$this->client->register(); }
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Google Search Console', 'publishrank' ), __( 'Search Console', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) ); }
+		add_submenu_page( Branding::MENU_SLUG, __( 'Google Search Console', 'publishrank' ), __( 'Search Console', 'publishrank' ), 'publishrank_manage_indexing', self::SLUG, array( $this, 'render' ) ); }
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_indexing' ) ) {
 			return; }
 		echo '<div class="wrap publishrank-search-console">';
 		AdminAssets::header( __( 'Google Search Console', 'publishrank' ), __( 'Connect your own Google OAuth client for live, read-only search performance, Discover and Google News tracking, and URL inspection.', 'publishrank' ) );

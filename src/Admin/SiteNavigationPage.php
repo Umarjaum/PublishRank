@@ -23,18 +23,21 @@ final class SiteNavigationPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Site Navigation SEO', 'publishrank' ), __( 'Site Navigation', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Site Navigation SEO', 'publishrank' ), __( 'Site Navigation', 'publishrank' ), 'publishrank_manage_navigation', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function assets() {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( self::SLUG === $page ) {
 			ModuleUi::enqueue();
+			$js = PUBLISHRANK_SEO_PATH . 'assets/js/site-navigation.js';
+			wp_enqueue_script( 'publishrank-site-navigation', Branding::asset_url( 'js/site-navigation.js' ), array(), Branding::version() . '.' . ( file_exists( $js ) ? (string) filemtime( $js ) : '0' ), true );
+			wp_localize_script( 'publishrank-site-navigation', 'prxNav', array( 'max' => SiteNavigation::MAX_PAGES ) );
 		}
 	}
 
 	public function save() {
-		AdminAssets::guard( self::ACTION );
+		AdminAssets::guard( self::ACTION, 'publishrank_manage_navigation' );
 		check_admin_referer( self::ACTION );
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Every value is cast below.
 		$rows  = isset( $_POST['nav'] ) && is_array( $_POST['nav'] ) ? wp_unslash( $_POST['nav'] ) : array();
@@ -66,19 +69,24 @@ final class SiteNavigationPage {
 				$pages[]      = array( 'id' => $sid, 'role' => isset( $roles[ $srole ] ) ? sanitize_key( $srole ) : 'other' );
 			}
 		}
+		$over = count( $pages ) > SiteNavigation::MAX_PAGES;
 		update_option(
 			SiteNavigation::OPTION,
 			array(
-				'pages'  => array_slice( $pages, 0, 40 ),
+				'pages'  => array_slice( $pages, 0, SiteNavigation::MAX_PAGES ),
 				'schema' => empty( $_POST['nav_schema'] ) ? 0 : 1, // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			),
 			false
 		);
+		if ( $over ) {
+			/* translators: %d: maximum number of pages */
+			AdminAssets::done( self::SLUG, 'warning', sprintf( __( 'Saved the first %d pages. Site navigation holds at most %d important pages, so the rest were not added.', 'publishrank' ), SiteNavigation::MAX_PAGES, SiteNavigation::MAX_PAGES ) );
+		}
 		AdminAssets::done( self::SLUG, 'success', __( 'Site navigation saved.', 'publishrank' ) );
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_navigation' ) ) {
 			return;
 		}
 		$s     = SiteNavigation::settings();
@@ -95,13 +103,16 @@ final class SiteNavigationPage {
 			<div class="pr21-cols">
 			<div class="pr21-main">
 			<section class="pr21-card">
-				<h2><span class="fa-solid fa-star" aria-hidden="true"></span> <?php esc_html_e( 'Important pages', 'publishrank' ); ?></h2>
-				<table class="widefat striped pr21-table">
-					<thead><tr><th><?php esc_html_e( 'Page', 'publishrank' ); ?></th><th><?php esc_html_e( 'Role', 'publishrank' ); ?></th><th><?php esc_html_e( 'Health', 'publishrank' ); ?></th><th><?php esc_html_e( 'Remove', 'publishrank' ); ?></th></tr></thead>
+				<h2><span class="fa-solid fa-star" aria-hidden="true"></span> <?php esc_html_e( 'Important pages', 'publishrank' ); ?> <span class="pr21-pill" id="pr21-nav-count" data-max="<?php echo (int) SiteNavigation::MAX_PAGES; ?>"><?php echo esc_html( count( $s['pages'] ) . ' / ' . SiteNavigation::MAX_PAGES ); ?></span></h2>
+				<p class="description"><?php
+				/* translators: %d: maximum number of pages */
+				echo esc_html( sprintf( __( 'Choose up to %d pages. The order below is the order used in the homepage schema; use the arrows to change it.', 'publishrank' ), SiteNavigation::MAX_PAGES ) ); ?></p>
+				<table class="widefat striped pr21-table" id="pr21-nav-table">
+					<thead><tr><th><?php esc_html_e( 'Page', 'publishrank' ); ?></th><th><?php esc_html_e( 'Role', 'publishrank' ); ?></th><th><?php esc_html_e( 'Health', 'publishrank' ); ?></th><th><?php esc_html_e( 'Order', 'publishrank' ); ?></th><th><?php esc_html_e( 'Remove', 'publishrank' ); ?></th></tr></thead>
 					<tbody>
 					<?php
 					if ( ! $s['pages'] ) {
-						echo '<tr><td colspan="4">' . esc_html__( 'No important pages yet. Add them below or accept the suggestions.', 'publishrank' ) . '</td></tr>';
+						echo '<tr class="pr21-empty"><td colspan="5">' . esc_html__( 'No important pages yet. Add them below or accept the suggestions.', 'publishrank' ) . '</td></tr>';
 					}
 					foreach ( $s['pages'] as $i => $row ) {
 						$post = get_post( $row['id'] );
@@ -110,7 +121,7 @@ final class SiteNavigationPage {
 						}
 						$checks = SiteNavigation::audit( $post, $menus );
 						$ok     = count( array_filter( $checks, static function ( $c ) { return true === $c['ok']; } ) );
-						echo '<tr><td><input type="hidden" name="nav[' . (int) $i . '][id]" value="' . (int) $post->ID . '" /><strong><a href="' . esc_url( get_edit_post_link( $post->ID ) ) . '">' . esc_html( get_the_title( $post ) ) . '</a></strong><br /><a href="' . esc_url( get_permalink( $post ) ) . '" target="_blank" rel="noopener"><code>' . esc_html( wp_make_link_relative( get_permalink( $post ) ) ) . '</code></a></td>';
+						echo '<tr data-nav-row><td><input type="hidden" name="nav[' . (int) $i . '][id]" value="' . (int) $post->ID . '" /><strong><a href="' . esc_url( get_edit_post_link( $post->ID ) ) . '">' . esc_html( get_the_title( $post ) ) . '</a></strong><br /><a href="' . esc_url( get_permalink( $post ) ) . '" target="_blank" rel="noopener"><code>' . esc_html( wp_make_link_relative( get_permalink( $post ) ) ) . '</code></a></td>';
 						echo '<td><select name="nav[' . (int) $i . '][role]">';
 						foreach ( $roles as $key => $label ) {
 							echo '<option value="' . esc_attr( $key ) . '"' . selected( $row['role'], $key, false ) . '>' . esc_html( $label ) . '</option>';
@@ -120,12 +131,12 @@ final class SiteNavigationPage {
 							$icon = true === $c['ok'] ? 'fa-circle-check is-good' : ( false === $c['ok'] ? 'fa-circle-xmark is-bad' : 'fa-circle-question is-warn' );
 							echo '<li><span class="fa-solid ' . esc_attr( $icon ) . '" aria-hidden="true"></span> ' . esc_html( $c['label'] ) . ( '' !== $c['detail'] ? ' <small>(' . esc_html( $c['detail'] ) . ')</small>' : '' ) . '</li>';
 						}
-						echo '</ul></td><td><label><input type="checkbox" name="nav[' . (int) $i . '][remove]" value="1" /> <span class="screen-reader-text">' . esc_html__( 'Remove', 'publishrank' ) . '</span></label></td></tr>';
+						echo '</ul></td><td class="pr21-order"><button type="button" class="button button-small" data-move="-1" aria-label="' . esc_attr__( 'Move up', 'publishrank' ) . '"><span class="fa-solid fa-arrow-up" aria-hidden="true"></span></button> <button type="button" class="button button-small" data-move="1" aria-label="' . esc_attr__( 'Move down', 'publishrank' ) . '"><span class="fa-solid fa-arrow-down" aria-hidden="true"></span></button></td><td><label><input type="checkbox" name="nav[' . (int) $i . '][remove]" value="1" /> <span class="screen-reader-text">' . esc_html__( 'Remove', 'publishrank' ) . '</span></label></td></tr>';
 					}
 					?>
 					</tbody>
 				</table>
-				<div class="pr21-row" style="margin-top:12px">
+				<div class="pr21-row" id="pr21-nav-addrow" style="margin-top:12px">
 					<label for="pr21-nav-add"><?php esc_html_e( 'Add a page', 'publishrank' ); ?></label>
 					<?php
 					wp_dropdown_pages(
@@ -134,6 +145,7 @@ final class SiteNavigationPage {
 							'id'                => 'pr21-nav-add',
 							'show_option_none'  => __( '— Select a page —', 'publishrank' ),
 							'option_none_value' => '0',
+							'exclude'           => implode( ',', array_map( 'absint', wp_list_pluck( $s['pages'], 'id' ) ) ),
 						)
 					);
 					?>
@@ -152,6 +164,9 @@ final class SiteNavigationPage {
 				}
 				?>
 				<label class="pr21-check" style="margin-top:12px"><input type="checkbox" name="nav_schema" value="1" <?php checked( $s['schema'] ); ?> /> <?php esc_html_e( 'Describe these pages on the homepage (SiteNavigationElement list and WebPage significantLink)', 'publishrank' ); ?></label>
+				<p id="pr21-nav-full" class="description" hidden><?php
+				/* translators: %d: maximum number of pages */
+				echo esc_html( sprintf( __( 'You have reached the limit of %d pages. Remove one to add another.', 'publishrank' ), SiteNavigation::MAX_PAGES ) ); ?></p>
 				<p><button type="submit" class="button button-primary"><?php esc_html_e( 'Save site navigation', 'publishrank' ); ?></button></p>
 			</section>
 			</div>

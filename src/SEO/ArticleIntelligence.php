@@ -342,7 +342,7 @@ final class ArticleIntelligence {
 
 	/** Analyze the next batch of articles that have no stored score. */
 	public function batch() {
-		\PublishRankSEO\Admin\AdminAssets::guard( self::BATCH_ACTION );
+		\PublishRankSEO\Admin\AdminAssets::guard( self::BATCH_ACTION, 'publishrank_bulk_edit' );
 		$ids  = get_posts(
 			array(
 				'post_type'        => self::supported_post_types(),
@@ -864,6 +864,24 @@ final class ArticleIntelligence {
 			}
 		}
 
+		/* ---- Advanced SEO & trust (2.25) ---- */
+		foreach ( AdvancedChecks::run(
+			array(
+				'html'                => $html,
+				'paragraphs'          => $paragraphs,
+				'headings'            => $headings,
+				'images'              => $images,
+				'word_count'          => $word_count,
+				'title'               => $title,
+				'written_description' => $written_description,
+				'slug'                => (string) $d['slug'],
+				'lang'                => (string) $lang,
+				'home'                => function_exists( 'home_url' ) ? home_url() : '',
+			)
+		) as $check ) {
+			$checks[] = $check;
+		}
+
 		/* ---- Site-level checks ---- */
 		if ( $site ) {
 			foreach ( self::site_checks( $d, $keyphrase, $title ) as $check ) {
@@ -1093,6 +1111,7 @@ final class ArticleIntelligence {
 			'site_duplicate_title'  => __( 'Duplicate headlines confuse search engines about which article to rank.', 'publishrank' ),
 			'site_inbound'          => __( 'Orphan pages are crawled rarely and receive little internal authority.', 'publishrank' ),
 		);
+		$map = array_merge( $map, AdvancedChecks::why() );
 		return isset( $map[ $id ] ) ? $map[ $id ] : '';
 	}
 
@@ -1477,6 +1496,7 @@ final class ArticleIntelligence {
 			'media'       => __( 'Media & image accessibility', 'publishrank' ),
 			'links'       => __( 'Internal & external links', 'publishrank' ),
 			'news'        => __( 'Newsroom signals', 'publishrank' ),
+			'advanced'    => __( 'Advanced SEO & trust', 'publishrank' ),
 			'site'        => __( 'Across your site', 'publishrank' ),
 		);
 	}
@@ -1514,6 +1534,12 @@ final class ArticleIntelligence {
 	public static function check_title( $id ) {
 		if ( 0 === strpos( (string) $id, 'inclusive_' ) ) {
 			return __( 'Inclusive language', 'publishrank' );
+		}
+		if ( 0 === strpos( (string) $id, 'adv_' ) ) {
+			$adv = AdvancedChecks::titles();
+			if ( isset( $adv[ $id ] ) ) {
+				return $adv[ $id ];
+			}
 		}
 		$titles = array(
 			'keyphrase_missing'         => __( 'Focus keyword', 'publishrank' ),

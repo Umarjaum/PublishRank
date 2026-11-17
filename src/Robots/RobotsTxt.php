@@ -832,7 +832,7 @@ final class RobotsTxt {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'rest_preview' ),
 				'permission_callback' => static function () {
-					return current_user_can( 'manage_options' ); },
+					return \PublishRankSEO\Core\Capabilities::can( 'manage_robots' ); },
 			)
 		);
 	}

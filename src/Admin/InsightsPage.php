@@ -18,7 +18,7 @@ final class InsightsPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'PublishRank Insights', 'publishrank' ), __( 'Insights', 'publishrank' ), 'manage_options', 'publishrank-insights', array( $this, 'page' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'PublishRank Insights', 'publishrank' ), __( 'Insights', 'publishrank' ), 'publishrank_view_reports', 'publishrank-insights', array( $this, 'page' ) );
 	}
 
 	/** Aggregated summary reused by this screen and WP-CLI. @return array<string,mixed> */
@@ -78,7 +78,7 @@ final class InsightsPage {
 			}
 		}
 		$redirects     = count( RedirectStore::all() );
-		$log           = (array) get_option( 'publishrank_seo_404_log', array() );
+		$log           = \PublishRankSEO\Monitor\NotFoundStore::legacy_rows();
 		$unresolved404 = count(
 			array_filter(
 				$log,
@@ -111,7 +111,7 @@ final class InsightsPage {
 	}
 
 	public function page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) ) {
 			return; }
 			$s   = self::summary();
 			$bar = static function ( $part, $total ) {

@@ -50,7 +50,10 @@ final class AdminShell {
 				'items' => array(
 					'publishrank-seo-dashboard'  => array( 'icon' => 'fa-gauge-high', 'label' => __( 'Dashboard', 'publishrank' ), 'desc' => __( 'Your PublishRank overview.', 'publishrank' ) ),
 					'publishrank-modules'        => array( 'icon' => 'fa-toggle-on', 'label' => __( 'Features', 'publishrank' ), 'desc' => __( 'Turn PublishRank features on or off.', 'publishrank' ) ),
-					'publishrank-private-login' => array( 'icon' => 'fa-key', 'label' => __( 'Private login', 'publishrank' ), 'desc' => __( 'Move the WordPress login page to a private address, or switch it off.', 'publishrank' ) ),
+					'publishrank-analytics'     => array( 'icon' => 'fa-chart-line', 'label' => __( 'Traffic Analytics', 'publishrank' ), 'desc' => __( 'Real visitors, pages, sources, countries and search performance in one place.', 'publishrank' ) ),
+					'publishrank-woocommerce'   => array( 'icon' => 'fa-store', 'label' => __( 'WooCommerce SEO', 'publishrank' ), 'desc' => __( 'Google product data, product tab, templates, store rules, audit and Merchant Center feed.', 'publishrank' ) ),
+					'publishrank-theme-seo'     => array( 'icon' => 'fa-masks-theater', 'label' => __( 'Theme SEO & Masking', 'publishrank' ), 'desc' => __( 'Remove SEO tags your theme adds and hide which theme the site uses.', 'publishrank' ) ),
+					'publishrank-access-shield' => array( 'icon' => 'fa-shield-halved', 'label' => __( 'Access Shield', 'publishrank' ), 'desc' => __( 'Private login, lockouts, two-factor, CAPTCHA and hardening.', 'publishrank' ) ),
 					'publishrank'                => array( 'icon' => 'fa-sliders', 'label' => __( 'General Settings', 'publishrank' ), 'desc' => __( 'Site-wide SEO defaults and preferences.', 'publishrank' ) ),
 					'publishrank-sitemap-health' => array( 'icon' => 'fa-sitemap', 'label' => __( 'Sitemap Hub', 'publishrank' ), 'desc' => __( 'Choose what goes in your sitemap and check it is valid.', 'publishrank' ) ),
 				),
@@ -78,7 +81,6 @@ final class AdminShell {
 				'items' => array(
 					'publishrank-seo-score'          => array( 'icon' => 'fa-chart-simple', 'label' => __( 'SEO score', 'publishrank' ), 'desc' => __( 'Practical content and technical checks across the site.', 'publishrank' ) ),
 					'publishrank-author-expertise'   => array( 'icon' => 'fa-user-pen', 'label' => __( 'Author expertise', 'publishrank' ), 'desc' => __( 'Author credentials and expertise that build reader trust.', 'publishrank' ) ),
-					'publishrank-woocommerce'        => array( 'icon' => 'fa-store', 'label' => __( 'WooCommerce SEO', 'publishrank' ), 'desc' => __( 'Product schema, product sharing tags, product sitemap and store noindex rules.', 'publishrank' ) ),
 					'publishrank-local-seo'          => array( 'icon' => 'fa-location-dot', 'label' => __( 'Local SEO', 'publishrank' ), 'desc' => __( 'Your business location and local search details.', 'publishrank' ) ),
 					'publishrank-image-optimizer'    => array( 'icon' => 'fa-images', 'label' => __( 'Image optimizer', 'publishrank' ), 'desc' => __( 'Media optimization tools and image delivery settings.', 'publishrank' ) ),
 					'publishrank-publisher-toolkit'  => array( 'icon' => 'fa-toolbox', 'label' => __( 'Publisher toolkit', 'publishrank' ), 'desc' => __( 'Bulk SEO editing and everyday newsroom utilities.', 'publishrank' ) ),
@@ -101,7 +103,6 @@ final class AdminShell {
 			'operations' => array(
 				'label' => __( 'Measure & maintain', 'publishrank' ),
 				'items' => array(
-					'publishrank-analytics'          => array( 'icon' => 'fa-chart-line', 'label' => __( 'Analytics', 'publishrank' ), 'desc' => __( 'Local publishing trends and connected search performance.', 'publishrank' ) ),
 					'publishrank-insights'           => array( 'icon' => 'fa-lightbulb', 'label' => __( 'Insights', 'publishrank' ), 'desc' => __( 'Editorial and site-level signals that suggest next steps.', 'publishrank' ) ),
 					'publishrank-seo-redirects'      => array( 'icon' => 'fa-arrow-right-arrow-left', 'label' => __( 'Redirects', 'publishrank' ), 'desc' => __( 'Send visitors from old addresses to the right page.', 'publishrank' ) ),
 					'publishrank-seo-404'            => array( 'icon' => 'fa-triangle-exclamation', 'label' => __( '404 monitor', 'publishrank' ), 'desc' => __( 'See which broken links people hit and fix them with a redirect.', 'publishrank' ) ),

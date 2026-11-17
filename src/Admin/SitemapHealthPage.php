@@ -32,7 +32,7 @@ final class SitemapHealthPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Sitemap Hub', 'publishrank' ), __( 'Sitemap Hub', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Sitemap Hub', 'publishrank' ), __( 'Sitemap Hub', 'publishrank' ), 'publishrank_manage_sitemaps', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function enqueue() {
@@ -125,7 +125,7 @@ final class SitemapHealthPage {
 
 	public function ajax_toggle() {
 		check_ajax_referer( self::AJAX_ACTION, 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_sitemaps' ) ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to do this.', 'publishrank' ) ), 403 );
 		}
 		$key = isset( $_POST['part'] ) ? sanitize_key( wp_unslash( $_POST['part'] ) ) : '';
@@ -145,7 +145,7 @@ final class SitemapHealthPage {
 
 	/** No-JavaScript fallback for the content type switches. */
 	public function save() {
-		AdminAssets::guard( self::SAVE_ACTION );
+		AdminAssets::guard( self::SAVE_ACTION, 'publishrank_manage_sitemaps' );
 		$posted = isset( $_POST['parts'] ) && is_array( $_POST['parts'] ) ? array_map( 'sanitize_key', array_keys( wp_unslash( $_POST['parts'] ) ) ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		foreach ( array_keys( self::parts() ) as $key ) {
 			self::set_part( $key, in_array( $key, $posted, true ) );
@@ -154,7 +154,7 @@ final class SitemapHealthPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_sitemaps' ) ) {
 			return;
 		}
 		$enabled = ModuleSwitches::sitemap_enabled();

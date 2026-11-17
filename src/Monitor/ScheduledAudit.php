@@ -43,7 +43,7 @@ final class ScheduledAudit {
 		$engine  = ( new \PublishRankSEO\Sitemap\SitemapController() )->engine();
 		$sitemap = SitemapAudit::run( $engine, $preview_limit );
 
-		$log = (array) get_option( 'publishrank_seo_404_log', array() );
+		$log = \PublishRankSEO\Monitor\NotFoundStore::legacy_rows( 50 );
 		usort(
 			$log,
 			static function ( $a, $b ) {

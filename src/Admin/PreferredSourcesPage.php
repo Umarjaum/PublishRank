@@ -44,7 +44,7 @@ final class PreferredSourcesPage {
 		if ( self::is_new() ) {
 			$label .= ' <span class="pr-menu-new">' . esc_html__( 'New', 'publishrank' ) . '</span>';
 		}
-		add_submenu_page( Branding::MENU_SLUG, $title, $label, 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, $title, $label, 'publishrank_manage_integrations', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function enqueue() {
@@ -568,7 +568,7 @@ final class PreferredSourcesPage {
 	}
 
 	public function save() {
-		AdminAssets::guard( 'publishrank_ps_save' );
+		AdminAssets::guard( 'publishrank_ps_save', 'publishrank_manage_integrations' );
 		$uid = get_current_user_id();
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by AdminAssets::guard().
 		$op = isset( $_POST['ps_op'] ) ? sanitize_key( wp_unslash( $_POST['ps_op'] ) ) : 'save';
@@ -653,7 +653,7 @@ final class PreferredSourcesPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_integrations' ) ) {
 			wp_die( esc_html__( 'You do not have permission to view this page.', 'publishrank' ), '', array( 'response' => 403 ) );
 		}
 		$uid     = get_current_user_id();

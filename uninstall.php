@@ -6,6 +6,19 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 	$publishrank_cleanup = static function () {
 		global $wpdb;
+		// Opt-in full erase (default OFF). Read before options are deleted below.
+		$delete_data = (bool) get_option( 'publishrank_delete_data_on_uninstall', 0 );
+		foreach ( array( 'publishrank_websub_ping', 'uj_newsroom_purge_trash', 'publishrank_404_retention', 'publishrank_shield_daily', 'publishrank_ai_log_retention', 'publishrank_ai_refresh_ip_lists', 'publishrank_ai_rdns_batch', 'publishrank_ai_citation_batch', 'publishrank_ai_citation_schedule' ) as $publishrank_hook ) {
+			wp_unschedule_hook( $publishrank_hook );
+		}
+		if ( $delete_data ) {
+			require_once plugin_dir_path( __FILE__ ) . 'src/Core/Database.php';
+			require_once plugin_dir_path( __FILE__ ) . 'src/Core/Capabilities.php';
+			\PublishRankSEO\Core\Database::drop_all();
+			\PublishRankSEO\Core\Capabilities::uninstall();
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE meta_key = %s', $wpdb->postmeta, '_publishrank_schema_library' ) );
+		}
 		// Remove only PublishRank's managed Apache block (legacy marker written by old releases) so uninstall cannot leave /wp-admin blocked.
 		if ( ! function_exists( 'get_home_path' ) && is_readable( ABSPATH . 'wp-admin/includes/file.php' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -20,9 +33,9 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			}
 		}
 		delete_option( 'rewrite_rules' );
-		$private_meta      = array( 'publishrank_supabase_session_enc', 'publishrank_supabase_subject', 'publishrank_supabase_verified_at', 'publishrank_ps_seen' );
+		$private_meta      = array( 'publishrank_supabase_session_enc', 'publishrank_supabase_subject', 'publishrank_supabase_verified_at', 'publishrank_ps_seen', 'publishrank_news_seen', 'publishrank_news_dismissed' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE meta_key IN (%s, %s, %s, %s)', $wpdb->usermeta, ...$private_meta ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE meta_key IN (%s, %s, %s, %s, %s, %s)', $wpdb->usermeta, ...$private_meta ) );
 		$post_meta              = array( '_publishrank_baidu_submitted', '_publishrank_baidu_pending' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE meta_key IN (%s, %s)', $wpdb->postmeta, ...$post_meta ) );
@@ -38,6 +51,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 		wp_unschedule_hook( 'publishrank_indexnow_submit' );
 		wp_unschedule_hook( 'publishrank_baidu_submit_post' );
 		wp_unschedule_hook( 'publishrank_daily_analytics_snapshot' );
+		wp_unschedule_hook( 'publishrank_news_refresh' );
 		wp_unschedule_hook( 'publishrank_weekly_audit' );
 		wp_unschedule_hook( 'publishrank_prepare_sitemap_cursors' );
 		wp_unschedule_hook( 'publishrank_continue_sitemap_cursor_preparation' );
@@ -55,17 +69,13 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 		$publishrank_cleanup();
 	}
 
-// PublishRank Private Login settings (current and earlier option names).
-// Earlier option names are owned by the migration layer, which never removes another plugin's settings.
-require_once __DIR__ . '/src/Security/PrivateLogin.php';
-require_once __DIR__ . '/src/Security/PrivateLoginMigration.php';
-$publishrank_login_options = array_merge( array( 'publishrank_login_slug', 'publishrank_login_redirect', 'publishrank_private_login_enabled', 'publishrank_private_login_deferred' ), \PublishRankSEO\Security\PrivateLoginMigration::uninstall_options() );
+// Access Shield login-address options (and the names used by the removed Private Login module).
+require_once __DIR__ . '/src/AccessShield/LoginBridge.php';
+$publishrank_login_options = \PublishRankSEO\AccessShield\LoginBridge::uninstall_options();
 foreach ( $publishrank_login_options as $publishrank_login_option ) {
 	delete_option( $publishrank_login_option );
-}
-delete_site_transient( 'publishrank_private_login_comment_notice' );
-if ( is_multisite() ) {
-	foreach ( $publishrank_login_options as $publishrank_login_option ) {
+	if ( is_multisite() ) {
 		delete_site_option( $publishrank_login_option );
 	}
 }
+delete_site_transient( 'publishrank_private_login_comment_notice' );

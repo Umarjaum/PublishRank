@@ -256,7 +256,7 @@ final class LocalSEO {
 	 *
 	 * @return array<string,array<int,string>>
 	 */
-	public static function family_map() {
+	public static function group_map() {
 		$niches = self::niches();
 		$keys   = static function ( $niche ) use ( $niches ) {
 			return isset( $niches[ $niche ] ) ? array_keys( $niches[ $niche ] ) : array();
@@ -276,9 +276,9 @@ final class LocalSEO {
 	}
 
 	/** @return array<int,string> Families of one stored type key. */
-	public static function families_of( $type ) {
+	public static function groups_of( $type ) {
 		$out = array();
-		foreach ( self::family_map() as $family => $types ) {
+		foreach ( self::group_map() as $family => $types ) {
 			if ( in_array( (string) $type, $types, true ) ) {
 				$out[] = $family; }
 		}
@@ -287,7 +287,7 @@ final class LocalSEO {
 
 	/** Whether a stored type belongs to a family. */
 	public static function in_family( $type, $family ) {
-		return in_array( $family, self::families_of( $type ), true );
+		return in_array( $family, self::groups_of( $type ), true );
 	}
 
 	/**
@@ -301,7 +301,7 @@ final class LocalSEO {
 		foreach ( self::niches() as $niche => $group ) {
 			$html .= '<optgroup label="' . esc_attr( $niche ) . '">';
 			foreach ( $group as $value => $label ) {
-				$html .= '<option value="' . esc_attr( $value ) . '" data-families="' . esc_attr( implode( ' ', self::families_of( $value ) ) ) . '" ' . selected( $selected, $value, false ) . '>' . esc_html( $label ) . '</option>';
+				$html .= '<option value="' . esc_attr( $value ) . '" data-families="' . esc_attr( implode( ' ', self::groups_of( $value ) ) ) . '" ' . selected( $selected, $value, false ) . '>' . esc_html( $label ) . '</option>';
 			}
 			$html .= '</optgroup>';
 		}
@@ -1027,7 +1027,7 @@ final class LocalSEO {
 	 * ------------------------------------------------------------------------------------------ */
 
 	public function menu() {
-		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'Local SEO', 'publishrank' ), __( 'Local SEO', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'page' ) );
+		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'Local SEO', 'publishrank' ), __( 'Local SEO', 'publishrank' ), 'publishrank_manage_integrations', self::SLUG, array( $this, 'page' ) );
 	}
 
 	public function assets() {
@@ -1043,7 +1043,7 @@ final class LocalSEO {
 	}
 
 	public function save() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_integrations' ) ) {
 			wp_die( esc_html__( 'You do not have permission to manage Local SEO.', 'publishrank' ) ); }
 		check_admin_referer( 'publishrank_local_seo_save' );
 		$input   = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? map_deep( wp_unslash( $_POST['local_seo'] ), 'sanitize_textarea_field' ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_admin_referer() above.
@@ -1130,11 +1130,11 @@ final class LocalSEO {
 	}
 
 	public function page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_integrations' ) ) {
 			wp_die( esc_html__( 'You do not have permission to manage Local SEO.', 'publishrank' ) ); }
 		$p        = self::profile();
 		$type     = $p['type'];
-		$families = implode( ' ', self::families_of( $type ) );
+		$families = implode( ' ', self::groups_of( $type ) );
 		$checks   = self::health( $p );
 		$scored   = array_filter(
 			$checks,

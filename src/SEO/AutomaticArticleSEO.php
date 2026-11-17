@@ -23,7 +23,7 @@ final class AutomaticArticleSEO {
 
 	/** Batched, resumable cleanup of snapshots stored by versions before 2.9.38. */
 	public function migrate() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 			return; }
 		$state = get_option(
 			self::MIGRATION_OPTION,

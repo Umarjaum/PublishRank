@@ -20,7 +20,7 @@ final class ConflictNotice {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 			return; }
 		$screen    = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 		$screen_id = $screen && isset( $screen->id ) ? (string) $screen->id : '';

@@ -26,7 +26,7 @@ final class ModulesPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Features', 'publishrank' ), __( 'Features', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Features', 'publishrank' ), __( 'Features', 'publishrank' ), 'publishrank_manage_modules', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function enqueue() {
@@ -65,7 +65,7 @@ final class ModulesPage {
 	/** Instant toggle from a card switch. */
 	public function ajax_toggle() {
 		check_ajax_referer( self::AJAX_ACTION, 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_modules' ) ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to do this.', 'publishrank' ) ), 403 );
 		}
 		$key = isset( $_POST['module'] ) ? sanitize_key( wp_unslash( $_POST['module'] ) ) : '';
@@ -91,7 +91,7 @@ final class ModulesPage {
 
 	/** No-JavaScript fallback: save every switch from the submitted form. */
 	public function save() {
-		AdminAssets::guard( self::SAVE_ACTION );
+		AdminAssets::guard( self::SAVE_ACTION, 'publishrank_manage_modules' );
 		$posted = isset( $_POST['modules'] ) && is_array( $_POST['modules'] ) ? array_map( 'sanitize_key', array_keys( wp_unslash( $_POST['modules'] ) ) ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$scope  = isset( $_POST['scope'] ) && is_array( $_POST['scope'] ) ? array_map( 'sanitize_key', wp_unslash( $_POST['scope'] ) ) : array_keys( ModuleSwitches::definitions() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		foreach ( array_keys( ModuleSwitches::definitions() ) as $key ) {
@@ -105,7 +105,7 @@ final class ModulesPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_modules' ) ) {
 			return;
 		}
 		$modules = ModuleSwitches::definitions();
@@ -142,7 +142,7 @@ final class ModulesPage {
 
 	/** Compact module section for the main dashboard. */
 	public static function render_dashboard_section() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_modules' ) ) {
 			return;
 		}
 		$total  = count( ModuleSwitches::definitions() );

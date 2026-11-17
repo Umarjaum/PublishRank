@@ -34,11 +34,11 @@ final class PublisherLinkIntelligence {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Link Health Audit', 'publishrank' ), __( 'Link Health Audit', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Link Health Audit', 'publishrank' ), __( 'Link Health Audit', 'publishrank' ), 'publishrank_bulk_edit', self::SLUG, array( $this, 'render' ) );
 	}
 
 	private function guard( $action ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			wp_die( esc_html__( 'You do not have permission to run link audits.', 'publishrank' ), '', array( 'response' => 403 ) ); }
 		check_admin_referer( $action );
 	}
@@ -439,7 +439,7 @@ final class PublisherLinkIntelligence {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			return; }
 		$results = get_option( self::RESULTS_OPTION, array() );
 		$results = is_array( $results ) ? array_values( $results ) : array();
@@ -468,7 +468,7 @@ final class PublisherLinkIntelligence {
 		) as $label => $count ) {
 			echo '<div class="rhs-card"><p class="rhs-label">' . esc_html( $label ) . '</p><div class="rhs-stat">' . esc_html( number_format_i18n( $count ) ) . '</div></div>'; }
 		$graph_stats     = Store::stats();
-		$not_found_log   = get_option( 'publishrank_seo_404_log', array() );
+		$not_found_log   = array_fill( 0, \PublishRankSEO\Monitor\NotFoundStore::summary( 30 )['open'], 1 );
 		$not_found_count = is_array( $not_found_log ) ? count( $not_found_log ) : 0;
 		foreach ( array(
 			__( 'Internal links in graph', 'publishrank' ) => (int) ( $graph_stats['edges'] ?? 0 ),

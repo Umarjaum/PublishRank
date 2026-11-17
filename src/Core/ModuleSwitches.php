@@ -16,7 +16,7 @@ final class ModuleSwitches {
 	const SITEMAP = 'publishrank_sitemap_enabled';
 
 	/** Modules whose switch changes public URLs, so rewrite rules are refreshed after a change. */
-	const REWRITE_MODULES = array( 'sitemap', 'news_sitemap', 'llms', 'bbpress', 'buddypress', 'podcast', 'web_stories', 'private_login' );
+	const REWRITE_MODULES = array( 'sitemap', 'news_sitemap', 'llms', 'bbpress', 'buddypress', 'podcast', 'web_stories', 'access_shield' );
 
 	/**
 	 * Module definitions in display order.
@@ -151,16 +151,26 @@ final class ModuleSwitches {
 				'title'       => __( 'Mastodon', 'publishrank' ),
 				'description' => __( 'Verify your Mastodon profile (green check), credit authors in link previews, and share new posts to Mastodon automatically.', 'publishrank' ),
 			),
-			'private_login'  => array(
-				'option'      => \PublishRankSEO\Security\PrivateLogin::OPTION,
+			'access_shield'  => array(
+				'option'      => \PublishRankSEO\AccessShield\AccessShield::MASTER,
 				'default'     => true,
-				'icon'        => 'fa-key',
+				'icon'        => 'fa-shield-halved',
 				'group'       => 'security',
-				'page'        => 'publishrank-private-login',
-				'title'       => __( 'Private Login', 'publishrank' ),
-				'description' => __( 'Move the WordPress login page to a private address and hide wp-login.php and wp-admin from visitors who are not signed in. Switch off to restore the standard login.', 'publishrank' ),
+				'page'        => 'publishrank-access-shield',
+				'title'       => __( 'Access Shield', 'publishrank' ),
+				'description' => __( 'Private login address, brute-force lockouts, two-factor sign-in, CAPTCHA, XML-RPC control and WordPress hardening. Switch off to restore the standard login.', 'publishrank' ),
 			),
 
+			'woocommerce'    => array(
+				'option'      => \PublishRankSEO\WooCommerce\Settings::MASTER,
+				'default'     => true,
+				'icon'        => 'fa-store',
+				'group'       => 'store',
+				'page'        => 'publishrank-woocommerce',
+				'requires'    => 'woocommerce',
+				'title'       => __( 'WooCommerce SEO', 'publishrank' ),
+				'description' => __( 'Rich Google product data (barcode, part number, brand, variations, shipping and returns), a PublishRank SEO tab on every product, product title templates, sold-out and deleted-product rules, a product audit and a Google Merchant Center / Facebook catalogue feed.', 'publishrank' ),
+			),
 			'podcast'        => array(
 				'option'      => 'publishrank_integration_podcast',
 				'default'     => true,
@@ -214,6 +224,7 @@ final class ModuleSwitches {
 		return array(
 			'discovery' => __( 'Search & discovery', 'publishrank' ),
 			'content'   => __( 'Content & social', 'publishrank' ),
+			'store'     => __( 'Online store', 'publishrank' ),
 			'security'  => __( 'Security', 'publishrank' ),
 			'maintain'  => __( 'Maintenance', 'publishrank' ),
 			'integrations' => __( 'Integrations', 'publishrank' ),
@@ -228,6 +239,10 @@ final class ModuleSwitches {
 	 */
 	private static function requirements() {
 		return array(
+			'woocommerce' => array(
+				'name'  => 'WooCommerce',
+				'files' => array( 'woocommerce/woocommerce.php' ),
+			),
 			'bbpress'    => array(
 				'name'  => 'bbPress',
 				'files' => array( 'bbpress/bbpress.php' ),
@@ -241,6 +256,9 @@ final class ModuleSwitches {
 
 	/** Whether the host plugin of a requirement is active right now. */
 	private static function requirement_active( $need ) {
+		if ( 'woocommerce' === $need ) {
+			return class_exists( 'WooCommerce' );
+		}
 		if ( 'bbpress' === $need ) {
 			return class_exists( 'bbPress' ) || function_exists( 'bbpress' );
 		}

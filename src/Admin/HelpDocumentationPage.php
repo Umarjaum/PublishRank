@@ -23,7 +23,7 @@ final class HelpDocumentationPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Help & documentation', 'publishrank' ), __( 'Documentation & Help', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'page' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Help & documentation', 'publishrank' ), __( 'Documentation & Help', 'publishrank' ), 'publishrank_view_reports', self::SLUG, array( $this, 'page' ) );
 	}
 
 	public function assets( $hook ) {
@@ -124,7 +124,7 @@ final class HelpDocumentationPage {
 				/* translators: %s: PublishRank version number. */
 				'summary' => sprintf( __( 'A full list of the tools and health checks in version %s.', 'publishrank' ), $version ),
 				/* translators: %s: PublishRank version number. */
-				'body'    => sprintf( __( 'This inventory for version %s covers every dashboard tool card and Technical Health check. Search & discovery includes Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt and Schema Aggregator. Content & publishing includes SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Content Graph and Link Health Audit. Measure & maintain includes Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, WP Private Login, Configuration history and Diagnostics. Settings & help includes Setup wizard, Features, Settings, Titles & Meta, Import / Export and Help & documentation. Technical Health checks include SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility. Some features are optional or permission-gated and external integrations require their own configuration; this list describes what the package provides, not a guarantee that every optional service is active on every site.', 'publishrank' ), $version ),
+				'body'    => sprintf( __( 'This inventory for version %s covers every dashboard tool card and Technical Health check. Search & discovery includes Schema studio, Sitemap health, IndexNow, Search Console, Search engines, Google Preferred Sources, Robots.txt, Crawl optimization, Breadcrumbs, Site verification, AI & llms.txt and Schema Aggregator. Content & publishing includes SEO score, SEO Overrides, Google Discover image, Author expertise, Local SEO, Image optimizer, Publisher toolkit, Newsroom, Planning board, Newsroom calendar, Newsroom activity, My notifications, Newsroom configuration, Newsroom roles, Content Graph and Link Health Audit. Measure & maintain includes Publisher analytics, Insights, Redirects, 404 monitor, Traffic Guard, Access Shield, Configuration history and Diagnostics. Settings & help includes Setup wizard, Features, Settings, Titles & Meta, Import / Export and Help & documentation. Technical Health checks include SEO plugin conflicts, Search engine visibility, Pretty permalinks, HTTPS, News sitemap, Structured data coverage, Publisher logo, Default social image, Robots.txt and JNews compatibility. Some features are optional or permission-gated and external integrations require their own configuration; this list describes what the package provides, not a guarantee that every optional service is active on every site.', 'publishrank' ), $version ),
 				'url'     => Branding::page_url( Branding::MENU_SLUG ) . '#pr-dashboard-workspace-title',
 				'link'    => __( 'Browse all tools', 'publishrank' ),
 			),
@@ -365,7 +365,7 @@ final class HelpDocumentationPage {
 	}
 
 	public function page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) ) {
 			return; }
 		$topics     = self::topics();
 		$categories = self::categories();

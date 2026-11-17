@@ -28,12 +28,12 @@ final class DiagnosticsPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'PublishRank Diagnostics', 'publishrank' ), __( 'Diagnostics', 'publishrank' ), 'manage_options', 'publishrank-seo-diagnostics', array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'PublishRank Diagnostics', 'publishrank' ), __( 'Diagnostics', 'publishrank' ), 'publishrank_view_reports', 'publishrank-seo-diagnostics', array( $this, 'render' ) );
 	}
 
 	/** Run the live scan and keep the result for the next page view only. */
 	public function handle_scan() {
-		AdminAssets::guard( 'publishrank_seo_scan' );
+		AdminAssets::guard( 'publishrank_seo_scan', 'publishrank_view_reports' );
 		$user_id = get_current_user_id();
 		$lock    = 'publishrank_seo_scan_lock_' . $user_id;
 		if ( get_transient( $lock ) ) {
@@ -60,7 +60,7 @@ final class DiagnosticsPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) ) {
 			return;
 		}
 		echo '<div class="wrap">';

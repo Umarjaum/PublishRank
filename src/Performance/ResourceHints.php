@@ -151,7 +151,7 @@ final class ResourceHints {
 	/** Paths that must never be prefetched (relative to the site root). */
 	public static function excluded_paths() {
 		$paths = array( '/wp-admin/*', '/wp-login.php*', '/wp-json/*', '/xmlrpc.php*', '/*logout*', '/cart/*', '/checkout/*', '/my-account/*', '/basket/*', '/feed/*', '/*/feed/*', '/*.xml', '/*.php*' );
-		$login = class_exists( '\\PublishRankSEO\\Security\\PrivateLogin' ) && method_exists( '\\PublishRankSEO\\Security\\PrivateLogin', 'current_login_slug' ) ? (string) \PublishRankSEO\Security\PrivateLogin::current_login_slug() : '';
+		$login = class_exists( '\\PublishRankSEO\\AccessShield\\LoginAddress' ) && \PublishRankSEO\AccessShield\LoginAddress::active() ? \PublishRankSEO\AccessShield\LoginAddress::slug() : '';
 		if ( '' !== $login ) {
 			$paths[] = '/' . trim( $login, '/' ) . '*'; }
 		return array_values( array_unique( (array) apply_filters( 'publishrank_prefetch_exclude_paths', $paths ) ) );

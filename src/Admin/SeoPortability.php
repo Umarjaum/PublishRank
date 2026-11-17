@@ -93,7 +93,7 @@ final class SeoPortability {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'SEO Migration & Portability', 'publishrank' ), __( 'Migration & Portability', 'publishrank' ), 'manage_options', 'publishrank-seo-portability', array( $this, 'page' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'SEO Migration & Portability', 'publishrank' ), __( 'Migration & Portability', 'publishrank' ), 'publishrank_manage_settings', 'publishrank-seo-portability', array( $this, 'page' ) );
 	}
 
 	/** @return array<string,array<string,mixed>> */
@@ -112,7 +112,7 @@ final class SeoPortability {
 
 	/** Render the dedicated migration screen. */
 	public function page() {
-		if ( ! current_user_can( 'manage_options' ) ) { return; }
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) { return; }
 		$detected = $this->detected();
 		$result   = get_transient( self::RESULT_KEY . '_' . get_current_user_id() );
 		if ( false !== $result ) { delete_transient( self::RESULT_KEY . '_' . get_current_user_id() ); }
@@ -363,8 +363,8 @@ final class SeoPortability {
 		foreach ( $allow as $option => $keys ) { $value = get_option( $option, array() ); if ( ! is_array( $value ) ) { continue; } foreach ( $keys as $key ) { if ( array_key_exists( $key, $value ) ) { $out[ $option ][ $key ] = sanitize_textarea_field( (string) $value[ $key ] ); } } }
 		// PublishRank's own private login address (the on/off switch is left out on purpose).
 		$out['publishrank'] = array(
-			'publishrank_login_slug'           => \PublishRankSEO\Security\PrivateLogin::current_login_slug(),
-			'publishrank_login_redirect' => \PublishRankSEO\Security\PrivateLogin::current_redirect_slug(),
+			'publishrank_login_slug'           => \PublishRankSEO\AccessShield\LoginBridge::current_login_slug(),
+			'publishrank_login_redirect' => \PublishRankSEO\AccessShield\LoginBridge::current_redirect_slug(),
 		);
 		return $out;
 	}
@@ -374,7 +374,7 @@ final class SeoPortability {
 	private function has_values( $row ) { foreach ( $row as $value ) { if ( '' !== trim( (string) $value ) ) { return true; } } return false; }
 	private function post_types( $raw ) { $types = array_filter( array_map( 'sanitize_key', preg_split( '/[,\\s]+/', (string) $raw ) ) ); if ( empty( $types ) ) { $types = PostMeta::post_types(); } return array_values( array_intersect( $types, PostMeta::post_types() ) ); }
 	private function count_source_records( $adapter ) { $keys = array_values( $adapter['keys'] ); if ( empty( $keys ) ) { return 0; } global $wpdb; $like = array(); $args = array(); foreach ( $keys as $key ) { $like[] = 'pm.meta_key = %s'; $args[] = $key; } $sql = 'SELECT COUNT(DISTINCT pm.post_id) FROM ' . $wpdb->postmeta . ' pm INNER JOIN ' . $wpdb->posts . ' p ON p.ID = pm.post_id WHERE (' . implode( ' OR ', $like ) . ') AND pm.meta_value <> %s AND p.post_status <> %s'; $args[] = ''; $args[] = 'trash'; $count = (int) $wpdb->get_var( $wpdb->prepare( $sql, $args ) ); if ( isset( $adapter['id'] ) && 'aioseo' === $adapter['id'] && $this->aioseo_table_exists() ) { $count = max( $count, (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $wpdb->prefix . "aioseo_posts WHERE title <> '' OR description <> ''" ) ); } return $count; }
-	private function guard( $action ) { if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'You are not allowed to use SEO portability.', 'publishrank' ), 403 ); } check_admin_referer( $action ); }
+	private function guard( $action ) { if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) { wp_die( esc_html__( 'You are not allowed to use SEO portability.', 'publishrank' ), 403 ); } check_admin_referer( $action ); }
 	private function finish( $message, $error = false ) { set_transient( self::RESULT_KEY . '_' . get_current_user_id(), array( 'message' => $message, 'error' => $error ), 120 ); wp_safe_redirect( Branding::page_url( 'publishrank-seo-portability' ) ); exit; }
 }
 /* EOF */

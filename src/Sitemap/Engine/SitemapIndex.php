@@ -15,7 +15,7 @@ final class SitemapIndex {
 			$shards = $engine ? $engine->listed_shards( $provider ) : range( 1, max( 0, (int) $provider->get_shard_count() ) );
 			foreach ( $shards as $shard ) {
 				$url     = SitemapUrls::shard_url( $provider->get_slug(), $shard );
-				$lastmod = method_exists( $provider, 'get_lastmod' ) ? $provider->get_lastmod() : '';
+				$lastmod = method_exists( $provider, 'shard_lastmod' ) ? $provider->shard_lastmod( $shard ) : ( method_exists( $provider, 'get_lastmod' ) ? $provider->get_lastmod() : '' );
 				$items[] = '<sitemap><loc>' . esc_xml( esc_url_raw( $url ) ) . '</loc>' . ( $lastmod ? '<lastmod>' . esc_xml( $lastmod ) . '</lastmod>' : '' ) . '</sitemap>';
 			}
 		}

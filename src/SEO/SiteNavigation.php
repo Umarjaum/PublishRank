@@ -26,6 +26,9 @@ final class SiteNavigation {
 
 	const OPTION = 'publishrank_site_navigation';
 
+	/** Hard limit of important pages. */
+	const MAX_PAGES = 12;
+
 	/** @return array<string,string> role => label */
 	public static function roles() {
 		return array(
@@ -56,7 +59,7 @@ final class SiteNavigation {
 			}
 		}
 		return array(
-			'pages'  => $pages,
+			'pages'  => array_slice( $pages, 0, self::MAX_PAGES ),
 			'schema' => isset( $saved['schema'] ) ? (int) (bool) $saved['schema'] : 1,
 		);
 	}

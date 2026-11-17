@@ -17,11 +17,11 @@ final class LLMSTxtPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'AI & llms.txt', 'publishrank' ), __( 'AI & llms.txt', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'AI & llms.txt', 'publishrank' ), __( 'AI & llms.txt', 'publishrank' ), 'publishrank_manage_ai', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function save() {
-		AdminAssets::guard( 'publishrank_llms_save' );
+		AdminAssets::guard( 'publishrank_llms_save', 'publishrank_manage_ai' );
 		check_admin_referer( 'publishrank_llms_save' ); // Explicit nonce verification for the request data read below.
 		$fields = array(
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.

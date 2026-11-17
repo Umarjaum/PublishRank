@@ -17,7 +17,7 @@ final class RobotsPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Robots.txt', 'publishrank' ), __( 'Robots.txt', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Robots.txt', 'publishrank' ), __( 'Robots.txt', 'publishrank' ), 'publishrank_manage_robots', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function settings() {
@@ -133,7 +133,7 @@ final class RobotsPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_robots' ) ) {
 			return;
 		}
 		$d       = RobotsTxt::defaults();

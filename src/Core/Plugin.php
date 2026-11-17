@@ -89,6 +89,7 @@ final class Plugin {
 			$this->loader->register( FrontendBranding::class, false );
 			$this->loader->register( FrontendVisibility::class, false );
 			$this->loader->register( IdentityOverride::class, false );
+			$this->loader->register( \PublishRankSEO\Core\LogoSync::class, false );
 		$this->registry = new OutputRegistry();
 		// Lets the automated tests (and Live Preview style tools) render several requests in one PHP process.
 		add_action( 'publishrank_seo_reset_output_registry', array( $this->registry, 'reset' ) );
@@ -109,14 +110,22 @@ final class Plugin {
 			$this->loader->register( SiteConnections::class, false );
 		$this->loader->register( LocalSEO::class, false );
 		add_action( 'init', array( Installer::class, 'maybe_upgrade' ), 99 );
+		add_action( 'init', array( Installer::class, 'ensure_site' ), 3 );
+		add_action( 'wp_initialize_site', array( Installer::class, 'install_new_site' ), 30, 1 );
 		add_action( 'init', array( ModuleSwitches::class, 'maybe_flush_rewrite_rules' ), 100 );
 				$this->loader->register( IndexNow::class, false );
 			$this->loader->register( BaiduSubmission::class, false );
 		$this->loader->register( \PublishRankSEO\Social\Mastodon::class, false );
 		$this->loader->register( AnalyticsCollector::class, false );
+		$this->loader->register( \PublishRankSEO\Analytics\Tracker::class, false );
+		$this->loader->register( \PublishRankSEO\Compatibility\ThemeSeo::class, false );
+		$this->loader->register( \PublishRankSEO\Newsroom\PublishingDesk::class, false );
+		$this->loader->register( \PublishRankSEO\News\WhatsNew::class, false );
 		$this->loader->register( LiveSync::class, false );
 		$this->loader->register( \PublishRankSEO\Admin\LivePreview::class, false );
 		$this->loader->register( RedirectController::class, false );
+		$this->loader->register( \PublishRankSEO\Redirect\RestApi::class, false );
+		$this->loader->register( \PublishRankSEO\Redirect\AutomaticPermalinkRedirects::class, false );
 		$this->loader->register( NotFoundMonitor::class, false );
 			$this->loader->register( AdvancedFeatures::class, false );
 			$this->loader->register( AutomaticArticleSEO::class, false );
@@ -142,12 +151,17 @@ final class Plugin {
 		$this->loader->register( LLMSTxt::class, false );
 		$this->loader->register( \PublishRankSEO\Schema\LiveBlogSchema::class, false );
 		$this->loader->register( \PublishRankSEO\Feeds\FeedManager::class, false );
+		$this->loader->register( \PublishRankSEO\Feeds\FeedEnhancer::class, false );
+		$this->loader->register( \PublishRankSEO\Schema\Library\Library::class, false );
 		$this->loader->register( \PublishRankSEO\SEO\SiteNavigation::class, false );
 		$this->loader->register( \PublishRankSEO\Integrations\WooCommerceSEO::class, false );
 		$this->loader->register( \PublishRankSEO\SEO\Language\InclusiveLanguage::class, false );
 		$this->register_cache_invalidation();
 		// Register this module on every request: its frontend hooks and shortcode must exist outside wp-admin.
 		$this->loader->register( PreferredSourcesPage::class, false );
+		// Roles & permissions (feature access rules): loaded outside is_admin() so its REST route
+		// (GET publishrank/v1/capabilities, manage_roles only) registers; menu/save hooks stay admin-only.
+		$this->loader->register( \PublishRankSEO\Admin\RolesPage::class, false );
 		if ( is_admin() ) {
 			$this->loader->register( \PublishRankSEO\Compatibility\ConflictNotice::class, false );
 			$this->loader->register( DashboardPage::class, false, array( $this->registry ) );
@@ -178,11 +192,13 @@ final class Plugin {
 				$this->loader->register( ImageOptimizerPage::class, false );
 			$this->loader->register( IndexNowPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\MastodonPage::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\NoticeCenter::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\RatingNotice::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\ClassicEditorNotice::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\FeedsPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\SiteNavigationPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\WooCommerceSeoPage::class, false );
+			$this->loader->register( \PublishRankSEO\Admin\ThemeSeoPage::class, false );
 			$this->loader->register( PublisherToolkitPage::class, false );
 			$this->loader->register( HelpDocumentationPage::class, false );
 				$this->loader->register( SchemaPage::class, false );
@@ -253,18 +269,26 @@ final class Plugin {
 		$invalidate_video    = static function () {
 			SitemapCursorStore::bump( 'video' );
 		};
-		$invalidate_post     = static function ( $post_id = 0 ) {
-			$type      = $post_id ? get_post_type( $post_id ) : '';
-			$providers = array( 'author', 'news', 'image', 'video' );
+		$invalidate_post     = static function ( $post_id = 0, $status_changed = false ) {
+			$post_id = (int) $post_id;
+			$type    = $post_id ? get_post_type( $post_id ) : '';
+			if ( $type && ( wp_is_post_revision( $post_id ) || 'auto-draft' === get_post_status( $post_id ) ) ) {
+				return; }
 			if ( 'attachment' === $type ) {
-				$providers[] = 'attachment';
+				$main = 'attachment';
 			} elseif ( 'page' === $type ) {
-				$providers[] = 'page';
+				$main = 'page';
 			} elseif ( $type && 'post' !== $type ) {
-				$providers[] = 'cpt';
+				$main = 'cpt';
 			} else {
-				$providers[] = 'post'; }
-			SitemapCursorStore::bump_many( $providers );
+				$main = 'post'; }
+			// 2.25: refresh only the sitemap file that holds this post; a full rebuild walks every post on the site.
+			foreach ( array( $main, 'image', 'video' ) as $provider ) {
+				SitemapCursorStore::touch( $provider, $post_id );
+			}
+			SitemapCursorStore::bump( 'news' );
+			if ( $status_changed ) {
+				SitemapCursorStore::bump( 'author' ); }
 		};
 			$invalidate_term = static function () {
 				SitemapCursorStore::bump( 'taxonomy' );
@@ -276,7 +300,7 @@ final class Plugin {
 				'transition_post_status',
 				static function ( $new, $old, $post ) use ( $invalidate_post ) {
 					if ( $new !== $old && $post instanceof \WP_Post ) {
-						$invalidate_post( (int) $post->ID );
+						$invalidate_post( (int) $post->ID, true );
 					} },
 				20,
 				3
@@ -289,12 +313,16 @@ final class Plugin {
 				static function ( $meta_id, $object_id, $meta_key ) use ( $news_meta_keys ) {
 					if ( in_array( $meta_key, $news_meta_keys, true ) ) {
 						SitemapCursorStore::bump( 'news' );
+						if ( in_array( $meta_key, array( '_publishrank_seo_robots', '_publishrank_seo_canonical', '_yoast_wpseo_meta-robots-noindex', 'rank_math_robots' ), true ) ) {
+							$type = get_post_type( (int) $object_id );
+							SitemapCursorStore::touch( 'page' === $type ? 'page' : ( 'post' === $type ? 'post' : ( 'attachment' === $type ? 'attachment' : 'cpt' ) ), (int) $object_id );
+						}
 					} },
 				20,
 				3
 			);
 		}
-			add_action( 'clean_post_cache', $invalidate_post, 20, 1 );
+			// Not clean_post_cache: it also fires for every comment and meta update and would rebuild sitemaps constantly.
 			add_action( 'add_attachment', $invalidate_post, 20, 1 );
 			add_action( 'edit_attachment', $invalidate_post, 20, 1 );
 			add_action( 'delete_attachment', $invalidate_post, 20, 1 );

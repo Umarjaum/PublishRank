@@ -20,29 +20,27 @@ PublishRank is a free, open-source WordPress SEO plugin for local businesses, se
 > PublishRank generates and validates technical publishing signals. Search engines and social networks may still rewrite titles, descriptions, images, snippets, and rich-result presentations.
 
 ## Current release
-
-- **Version:** 2.21.0
+- **Version:** 2.25.0 (experimental candidate; see the release verification report before production use)
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
-- **Requires PHP:** 7.4 or newer
+- **Requires PHP:** 7.4 or newer (target; PHP 7.4 was not available in the reported test environment)
 - **Repository:** <https://github.com/Umarjaum/PublishRank>
 - **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
-- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.21.0/PublishRank-2.21.0-404-fix.zip>
+- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.25.0/PublishRank-2.25.0.zip>
 - **Official website:** <https://publishrankseo.vercel.app/>
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
 
-See the [v2.21.0 release notes](https://github.com/Umarjaum/PublishRank/releases/tag/v2.21.0) for the current plugin changes.
+## What's new in 2.25.0
+- **Theme masking:** maximum-level theme identifier rewriting, fingerprint scan and compatibility checks across nine listed themes; direct static theme files still require a server rule.
+- **Role-based feature access:** role and per-user permissions, presets, an audit log and administrator lockout protection.
+- **Access Shield:** signed live verification report, login protections, optional two-factor and CAPTCHA paths, and security event analytics.
+- **Publishing Desk:** duplicate headline warning, missed-schedule detection/repair, freshness view, News diagnostics and publishing velocity.
+- **Site identity:** PublishRank logo, WordPress Site Logo/Site Icon, title, tagline and description synchronization.
+- **SEO and scale:** 15 additional article trust checks, independently rebuilt sitemap shards and an option preloader (measured on the report's test site).
+- **News & What's New:** validated, cached release feed with bundled changelog fallback; it does not install plugin updates.
 
-## What's new in 2.21.0
-
-- **Movable SEO editor:** one draggable, resizable workspace for metadata, previews and analysis in the block or Classic Editor.
-- **Consistent SEO scoring:** the editor, toolbar, post list, SEO Score screen, Insights and scheduled audits use the same score.
-- **Site operations:** improvements to the 404 Monitor, RSS feed controls, Site Navigation SEO, redirect import/export and redirect-chain tracing.
-- **Commerce and language:** WooCommerce Product schema integration, Arabic and Urdu analysis, and optional, dismissible English inclusive-language suggestions.
-- **Reliability:** fixes for integration sitemaps, description spacing, screen tables and narrow date fields.
-
-The [v2.21.0 feature addendum](docs/FEATURE-CATALOG-2.21.0.md) details these changes. The [2.20.20 source-backed catalog](docs/FEATURE-CATALOG-2.20.20.md) documents the carried-forward feature set, including all 134 Local SEO options across 14 niches.
+**Verification limits:** report tests used WordPress 7.1.4, PHP 8.3 and SQLite. MySQL/MariaDB, PHP 7.4, Apache/Nginx rules, production traffic and the live website deployment were not tested. Review [VERIFICATION-REPORT-2.25.0.md](VERIFICATION-REPORT-2.25.0.md) and [UPGRADE-STATUS.md](UPGRADE-STATUS.md).
 
 ## Actual interface screenshots
 

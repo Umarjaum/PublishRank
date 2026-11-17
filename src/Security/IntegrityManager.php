@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 final class IntegrityManager {
 	const OPTION = 'publishrank_integrity_manifest';
 	/** Bumped when packaged files are rebuilt without a plugin version change, so the baseline is re-created. */
-	const BUILD         = 'r17';
+	const BUILD         = 'r20';
 	const STATUS_OPTION = 'publishrank_integrity_status';
 	const SCHEMA        = 1;
 
@@ -60,7 +60,7 @@ final class IntegrityManager {
 	}
 
 	public function admin_notice() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 			return; }
 		$status = get_option( self::STATUS_OPTION, array() );
 		if ( ! is_array( $status ) || 'tampered' !== ( $status['state'] ?? '' ) ) {

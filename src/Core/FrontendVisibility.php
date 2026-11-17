@@ -2,7 +2,7 @@
 /**
  * Visual-only suppression of the theme's visible site title and tagline.
  *
- * The publication title and description are owned by PublishRank (see PublicationProfile) and reach search engines through
+	 * The publication title and description are shared with WordPress (see PublicationProfile) and reach search engines through
  * titles, meta tags, Open Graph and JSON-LD. The theme's own visible copy of the WordPress Site Title/Tagline is therefore hidden
  * on screen by default (both switches default to on; the publisher can turn each off). The text stays in the page for
  * assistive technology and crawlers (visually-hidden technique, not display:none), and SEO output is untouched.
@@ -74,7 +74,7 @@ final class FrontendVisibility {
 
 	/** Titles, meta and schema use the PublishRank values only, so say so when they are empty (PublishRank screens only). */
 	public function missing_identity_notice() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 			return; }
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 		if ( ! $screen || false === strpos( (string) $screen->id, 'publishrank' ) ) {
@@ -86,6 +86,6 @@ final class FrontendVisibility {
 			$missing[] = __( 'publication description', 'publishrank' ); }
 		if ( empty( $missing ) ) {
 			return; }
-		echo '<div class="notice notice-warning"><p>' . esc_html( sprintf( /* translators: %s: list of missing settings. */ __( 'PublishRank uses its own publication identity, not the WordPress Site Title or Tagline. Set the %s in the setup wizard or Identity settings so titles, meta tags and structured data are complete.', 'publishrank' ), implode( ' / ', $missing ) ) ) . '</p></div>';
+		echo '<div class="notice notice-warning"><p>' . esc_html( sprintf( /* translators: %s: list of missing settings. */ __( 'Set the %s in the setup wizard or WordPress General Settings. The site title and description are shared across both.', 'publishrank' ), implode( ' / ', $missing ) ) ) . '</p></div>';
 	}
 }

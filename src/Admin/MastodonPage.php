@@ -38,11 +38,11 @@ final class MastodonPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Mastodon', 'publishrank' ), __( 'Mastodon', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Mastodon', 'publishrank' ), __( 'Mastodon', 'publishrank' ), 'publishrank_manage_integrations', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_integrations' ) ) {
 			return;
 		}
 		$s         = Mastodon::settings();
@@ -394,7 +394,7 @@ final class MastodonPage {
 			array( 'type' => 'verified' === $result['state'] ? 'success' : 'error', 'message' => (string) $result['message'] ),
 			60
 		);
-		if ( 'page' === $return && current_user_can( 'manage_options' ) ) {
+		if ( 'page' === $return && \PublishRankSEO\Core\Capabilities::can( 'manage_integrations' ) ) {
 			wp_safe_redirect( admin_url( 'admin.php?page=' . self::SLUG ) );
 		} else {
 			wp_safe_redirect( get_current_user_id() === $user_id ? admin_url( 'profile.php#pr-mastodon-user' ) : get_edit_user_link( $user_id ) );
@@ -431,7 +431,7 @@ final class MastodonPage {
 	}
 
 	private function guard( $action ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_integrations' ) ) {
 			wp_die( esc_html__( 'You do not have permission to manage Mastodon settings.', 'publishrank' ), '', array( 'response' => 403 ) );
 		}
 		check_admin_referer( $action );

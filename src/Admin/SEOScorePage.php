@@ -17,7 +17,7 @@ final class SEOScorePage {
 
 	/** Inclusive-language settings (optional analysis; never rewrites content). */
 	public function save_language() {
-		AdminAssets::guard( 'publishrank_inclusive_save' );
+		AdminAssets::guard( 'publishrank_inclusive_save', 'publishrank_manage_settings' );
 		check_admin_referer( 'publishrank_inclusive_save' );
 		$all     = array_keys( \PublishRankSEO\SEO\Language\InclusiveLanguage::rules() );
 		$on      = isset( $_POST['rules'] ) && is_array( $_POST['rules'] ) ? array_map( 'sanitize_key', wp_unslash( $_POST['rules'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -46,9 +46,9 @@ final class SEOScorePage {
 		echo '</div></details><p><button type="submit" class="button button-primary">' . esc_html__( 'Save', 'publishrank' ) . '</button></p></form></div>';
 	}
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'SEO Score', 'publishrank' ), __( 'SEO Score', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) ); }
+		add_submenu_page( Branding::MENU_SLUG, __( 'SEO Score', 'publishrank' ), __( 'SEO Score', 'publishrank' ), 'publishrank_view_reports', self::SLUG, array( $this, 'render' ) ); }
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) ) {
 			return; }
 		$types  = ArticleIntelligence::supported_post_types();
 		$posts  = get_posts(

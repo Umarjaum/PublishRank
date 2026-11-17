@@ -2,8 +2,8 @@
 /**
  * Plugin Name: PublishRank
  * Plugin URI: https://publishrankseo.vercel.app/
- * Description: WordPress SEO for every website, with Local SEO, metadata, schema, sitemaps, redirects and publishing tools.
- * Version: 2.21.0
+ * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
+ * Version: 2.25.0
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar
@@ -28,10 +28,19 @@ define( 'PUBLISHRANK_SEO_FILE', __FILE__ );
 define( 'PUBLISHRANK_SEO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PUBLISHRANK_SEO_URL', plugin_dir_url( __FILE__ ) );
 
-// PublishRank Private Login: private sign-in address; wp-login.php and wp-admin are hidden from visitors.
-// Booted early on plugins_loaded so its own plugins_loaded (9999) handler still runs.
-require_once __DIR__ . '/src/Security/PrivateLogin.php';
-add_action( 'plugins_loaded', array( '\\PublishRankSEO\\Security\\PrivateLogin', 'get_instance' ), 1 );
+// Core services every module relies on: the capability registry, versioned custom tables and
+// Access Shield (private login address, brute-force protection, 2FA, CAPTCHA, hardening).
+// Booted first on plugins_loaded so later modules can rely on them.
+add_action(
+	'plugins_loaded',
+	static function () {
+		\PublishRankSEO\Core\Capabilities::register();
+		\PublishRankSEO\Core\Database::register();
+		\PublishRankSEO\AccessShield\AccessShield::boot();
+		\PublishRankSEO\AI\AiVisibility::boot();
+	},
+	1
+);
 
 // Built-in PublishRank Newsroom editorial workflow module.
 require_once __DIR__ . '/src/Newsroom/advanced.php';
@@ -56,6 +65,25 @@ spl_autoload_register(
 	}
 );
 
+// One query for every small PublishRank setting instead of one query per setting (no-op with a persistent object cache).
+\PublishRankSEO\Core\OptionPreloader::boot();
+
+// Theme masking fast path: neutral asset URLs are answered here, before the theme and the remaining plugins
+// load, so masking adds almost nothing to server load. Costs one autoloaded option lookup on other requests.
+if ( isset( $_SERVER['REQUEST_URI'] ) && ! ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+	$publishrank_mask_route = get_option( 'publishrank_mask_route' );
+	if ( is_array( $publishrank_mask_route ) && ! empty( $publishrank_mask_route['on'] ) && ! empty( $publishrank_mask_route['prefix'] ) ) {
+		$publishrank_mask_path = (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- compared, never output.
+		if ( 0 === strpos( $publishrank_mask_path, (string) $publishrank_mask_route['prefix'] ) ) {
+			$publishrank_mask_cfg = get_option( 'publishrank_mask_config' );
+			if ( is_array( $publishrank_mask_cfg ) && ! empty( $publishrank_mask_cfg['enabled'] ) && \PublishRankSEO\Compatibility\Masking\Config::signature() === ( isset( $publishrank_mask_route['sig'] ) ? $publishrank_mask_route['sig'] : '' ) ) {
+				\PublishRankSEO\Compatibility\Masking\AssetServer::serve( substr( $publishrank_mask_path, strlen( (string) $publishrank_mask_route['prefix'] ) ), $publishrank_mask_cfg );
+			}
+		}
+	}
+	unset( $publishrank_mask_route, $publishrank_mask_path, $publishrank_mask_cfg );
+}
+
 /**
  * Template tag for themes that want to place the PublishRank breadcrumb trail themselves:
  * <?php if ( function_exists( 'publishrank_breadcrumbs' ) ) { publishrank_breadcrumbs(); } ?>
@@ -79,6 +107,15 @@ if ( ! function_exists( 'publishrank_breadcrumbs' ) ) {
 
 if ( defined( 'WP_CLI' ) && WP_CLI && is_readable( __DIR__ . '/src/CLI/PublishRankCommand.php' ) ) {
 	require_once __DIR__ . '/src/CLI/PublishRankCommand.php';
+	add_action(
+		'plugins_loaded',
+		static function () {
+			foreach ( glob( __DIR__ . '/src/CLI/*Command.php' ) as $publishrank_cli ) {
+				require_once $publishrank_cli;
+			}
+		},
+		20
+	);
 }
 
 register_activation_hook(
@@ -110,7 +147,11 @@ register_deactivation_hook(
 		if ( class_exists( '\\PublishRankSEO\\Monitor\\ScheduledAudit' ) ) {
 			\PublishRankSEO\Monitor\ScheduledAudit::clear_schedule();
 		}
+			foreach ( array( 'publishrank_websub_ping', 'uj_newsroom_purge_trash', 'publishrank_404_retention', 'publishrank_shield_daily', 'publishrank_ai_log_retention', 'publishrank_ai_refresh_ip_lists', 'publishrank_ai_rdns_batch', 'publishrank_ai_citation_batch', 'publishrank_ai_citation_schedule' ) as $publishrank_cron_hook ) {
+				wp_clear_scheduled_hook( $publishrank_cron_hook );
+			}
 			wp_clear_scheduled_hook( 'publishrank_daily_analytics_snapshot' );
+			wp_clear_scheduled_hook( 'publishrank_news_refresh' );
 			wp_clear_scheduled_hook( 'publishrank_link_check_cron' );
 			wp_clear_scheduled_hook( 'publishrank_link_check_batch' );
 			flush_rewrite_rules( true );
@@ -120,7 +161,7 @@ register_deactivation_hook(
 
 /** Add PublishRank branding and shortcuts to the WordPress toolbar. */
 function publishrank_seo_admin_toolbar( $wp_admin_bar ) {
-	if ( ! current_user_can( 'manage_options' ) || ! is_object( $wp_admin_bar ) ) {
+	if ( ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) || ! is_object( $wp_admin_bar ) ) {
 		return;
 	}
 
@@ -180,7 +221,7 @@ add_action( 'admin_bar_menu', 'publishrank_seo_admin_toolbar', 100 );
 
 /** Enqueue the local stylesheet needed to align the admin toolbar shortcut. */
 function publishrank_seo_admin_toolbar_styles() {
-	if ( ! is_admin_bar_showing() || ! current_user_can( 'manage_options' ) ) {
+	if ( ! is_admin_bar_showing() || ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) ) {
 		return;
 	}
 	wp_enqueue_style(

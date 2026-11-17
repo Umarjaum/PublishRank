@@ -14,14 +14,14 @@ final class ConfigHistoryPage {
 		add_action( 'admin_post_publishrank_snapshot_restore', array( $this, 'restore' ) );
 	}
 	public function menu() {
-		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'SEO Configuration History', 'publishrank' ), __( 'Configuration History', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'SEO Configuration History', 'publishrank' ), __( 'Configuration History', 'publishrank' ), 'publishrank_view_reports', self::SLUG, array( $this, 'render' ) );
 	}
 	public function create() {
-		AdminAssets::guard( 'publishrank_snapshot_create' );
+		AdminAssets::guard( 'publishrank_snapshot_create', 'publishrank_manage_settings' );
 		SnapshotStore::snapshot( __( 'Manual SEO configuration snapshot', 'publishrank' ) );
 		AdminAssets::done( self::SLUG, 'success', __( 'Snapshot created.', 'publishrank' ) ); }
 	public function restore() {
-		AdminAssets::guard( 'publishrank_snapshot_restore' );
+		AdminAssets::guard( 'publishrank_snapshot_restore', 'publishrank_manage_settings' );
 		check_admin_referer( 'publishrank_snapshot_restore' ); // Explicit nonce verification for the request data read below.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
 		$id = isset( $_POST['snapshot_id'] ) ? sanitize_text_field( wp_unslash( $_POST['snapshot_id'] ) ) : '';
@@ -30,7 +30,7 @@ final class ConfigHistoryPage {
 			AdminAssets::done( self::SLUG, 'error', $r->get_error_message() );
 		} AdminAssets::done( self::SLUG, 'success', __( 'Configuration restored. A safety snapshot was created first.', 'publishrank' ) ); }
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) ) {
 			return; }
 		echo '<div class="wrap">';
 		AdminAssets::header( __( 'SEO Configuration History', 'publishrank' ), __( 'Automatic, bounded snapshots of important PublishRank settings with safe rollback.', 'publishrank' ) );

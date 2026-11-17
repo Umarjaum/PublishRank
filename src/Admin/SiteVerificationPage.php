@@ -28,7 +28,7 @@ final class SiteVerificationPage {
 			Branding::MENU_SLUG,
 			__( 'Site Verification', 'publishrank' ),
 			__( 'Site Verification', 'publishrank' ),
-			'manage_options',
+			'publishrank_manage_integrations',
 			self::SLUG,
 			array( $this, 'render' )
 		);
@@ -55,7 +55,7 @@ final class SiteVerificationPage {
 	/* ---------------------------- handlers ---------------------------- */
 
 	public function save() {
-		AdminAssets::guard( 'publishrank_verification_save' );
+		AdminAssets::guard( 'publishrank_verification_save', 'publishrank_manage_integrations' );
 		check_admin_referer( 'publishrank_verification_save' ); // Explicit nonce verification for the request data read below.
 		$engines = SiteConnections::engines();
 		$posted   = array();
@@ -122,7 +122,7 @@ final class SiteVerificationPage {
 	}
 
 	public function upload() {
-		AdminAssets::guard( 'publishrank_verification_upload' );
+		AdminAssets::guard( 'publishrank_verification_upload', 'publishrank_manage_integrations' );
 		check_admin_referer( 'publishrank_verification_upload' ); // Explicit nonce verification for the request data read below.
 		$ok  = array();
 		$bad = array();
@@ -172,7 +172,7 @@ final class SiteVerificationPage {
 	}
 
 	public function create() {
-		AdminAssets::guard( 'publishrank_verification_create' );
+		AdminAssets::guard( 'publishrank_verification_create', 'publishrank_manage_integrations' );
 		check_admin_referer( 'publishrank_verification_create' ); // Explicit nonce verification for the request data read below.
 		$name    = isset( $_POST['file_name'] ) ? sanitize_file_name( wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
 		$ext     = strtolower( (string) pathinfo( $name, PATHINFO_EXTENSION ) );
@@ -186,7 +186,7 @@ final class SiteVerificationPage {
 	}
 
 	public function delete() {
-		AdminAssets::guard( 'publishrank_verification_delete' );
+		AdminAssets::guard( 'publishrank_verification_delete', 'publishrank_manage_integrations' );
 		check_admin_referer( 'publishrank_verification_delete' ); // Explicit nonce verification for the request data read below.
 		$name = isset( $_POST['file_name'] ) ? sanitize_file_name( wp_unslash( $_POST['file_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
 		if ( SiteConnections::delete_file( $name ) ) {
@@ -198,7 +198,7 @@ final class SiteVerificationPage {
 	}
 
 	public function check() {
-		AdminAssets::guard( 'publishrank_verification_check' );
+		AdminAssets::guard( 'publishrank_verification_check', 'publishrank_manage_integrations' );
 		SiteConnections::purge_caches();
 		AdminAssets::done( self::SLUG, 'success', $this->summary_message( SiteConnections::run_check() ) );
 	}
@@ -235,7 +235,7 @@ final class SiteVerificationPage {
 	/* ------------------------------ page ------------------------------ */
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_integrations' ) ) {
 			return; }
 		$engines = SiteConnections::engines();
 		$files   = SiteConnections::files();

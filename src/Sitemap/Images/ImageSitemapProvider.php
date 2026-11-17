@@ -19,13 +19,42 @@ final class ImageSitemapProvider extends AbstractPostProvider {
 		return true; }
 	public function is_enabled() {
 		return (bool) get_option( 'publishrank_seo_image_sitemap', true ); }
+	/** @var array<int,int[]> parent post ID => attached image IDs (prefetched per chunk). */
+	private $children = array();
+	/** Only posts that can carry an image: featured image, attached image or an <img> in the content. */
+	protected function candidate_where() {
+		global $wpdb;
+		return "( EXISTS (SELECT 1 FROM {$wpdb->postmeta} prx_m WHERE prx_m.post_id = {$wpdb->posts}.ID AND prx_m.meta_key = '_thumbnail_id' AND prx_m.meta_value > 0)"
+			. " OR EXISTS (SELECT 1 FROM {$wpdb->posts} prx_a WHERE prx_a.post_parent = {$wpdb->posts}.ID AND prx_a.post_type = 'attachment' AND prx_a.post_mime_type LIKE 'image/%')"
+			. " OR {$wpdb->posts}.post_content LIKE '%<img%' )";
+	}
+	protected function prefetch( array $ids ) {
+		global $wpdb;
+		$this->children = array();
+		$ids            = array_map( 'intval', $ids );
+		if ( ! $ids ) {
+			return; }
+		$rows = $wpdb->get_results( "SELECT ID, post_parent FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_mime_type LIKE 'image/%' AND post_parent IN (" . implode( ',', $ids ) . ') ORDER BY menu_order, ID' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared -- integer list.
+		$need = array();
+		foreach ( (array) $rows as $r ) {
+			$this->children[ (int) $r->post_parent ][] = (int) $r->ID;
+			$need[]                                     = (int) $r->ID;
+		}
+		foreach ( $ids as $id ) {
+			$thumb = (int) get_post_meta( $id, '_thumbnail_id', true );
+			if ( $thumb ) {
+				$need[] = $thumb; }
+		}
+		if ( $need ) {
+			_prime_post_caches( array_values( array_unique( $need ) ), false, true ); }
+	}
 	protected function extra( $post_id ) {
 		$ids      = array();
 		$featured = get_post_thumbnail_id( $post_id );
 		if ( $featured ) {
 			$ids[] = $featured; }
-		foreach ( get_attached_media( 'image', $post_id ) as $attachment ) {
-			$ids[] = $attachment->ID; }
+		foreach ( isset( $this->children[ $post_id ] ) ? $this->children[ $post_id ] : array() as $attachment_id ) {
+			$ids[] = $attachment_id; }
 		$images  = array();
 		$seen    = array();
 		$license = esc_url_raw( (string) get_option( 'publishrank_image_license_url', '' ) );

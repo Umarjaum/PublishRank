@@ -14,6 +14,7 @@ final class SearchConsoleClient {
 	const PROPERTY      = 'publishrank_gsc_property';
 	const SITES_CACHE   = 'publishrank_gsc_sites_cache';
 	const METRICS       = 'publishrank_gsc_daily_metrics';
+	const DIMENSIONS = 'publishrank_gsc_dimensions';
 	const SITEMAPS      = 'publishrank_gsc_sitemaps';
 	const CONN_ID       = 'publishrank_gsc_conn_id';
 	const CONN_SECRET   = 'publishrank_gsc_conn_secret_enc';
@@ -115,7 +116,7 @@ final class SearchConsoleClient {
 	}
 
 	public function callback() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_indexing' ) ) {
 			wp_die( esc_html__( 'You do not have permission to connect Search Console.', 'publishrank' ), '', array( 'response' => 403 ) ); }
 		$state      = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- bound to one-time state transient and current admin session.
 		$transient  = 'publishrank_gsc_state_' . hash( 'sha256', $state );
@@ -276,6 +277,7 @@ final class SearchConsoleClient {
 			);
 		}
 		ksort( $daily );
+		$this->sync_dimensions( $property, $start, $end, $type );
 		update_option(
 			self::METRICS,
 			array(
@@ -289,6 +291,41 @@ final class SearchConsoleClient {
 			false
 		);
 		return $daily;
+	}
+
+	/** Top queries, pages, countries and devices for the same window (best effort; never blocks the daily sync). */
+	private function sync_dimensions( $property, $start, $end, $type ) {
+		$out = array( 'fetched_at' => gmdate( 'c' ), 'start_date' => $start, 'end_date' => $end );
+		foreach ( array( 'query' => 100, 'page' => 100, 'country' => 50, 'device' => 5 ) as $dim => $limit ) {
+			$result = $this->request(
+				'POST',
+				'/sites/' . rawurlencode( $property ) . '/searchAnalytics/query',
+				array( 'startDate' => $start, 'endDate' => $end, 'dimensions' => array( $dim ), 'type' => $type, 'dataState' => 'all', 'rowLimit' => $limit )
+			);
+			$rows = array();
+			if ( ! is_wp_error( $result ) ) {
+				foreach ( (array) ( $result['rows'] ?? array() ) as $row ) {
+					if ( ! is_array( $row ) || ! isset( $row['keys'][0] ) ) {
+						continue;
+					}
+					$rows[] = array(
+						'key'         => substr( sanitize_text_field( (string) $row['keys'][0] ), 0, 300 ),
+						'clicks'      => max( 0, (int) ( $row['clicks'] ?? 0 ) ),
+						'impressions' => max( 0, (int) ( $row['impressions'] ?? 0 ) ),
+						'ctr'         => max( 0, min( 1, (float) ( $row['ctr'] ?? 0 ) ) ),
+						'position'    => max( 0, (float) ( $row['position'] ?? 0 ) ),
+					);
+				}
+			}
+			$out[ $dim ] = $rows;
+		}
+		update_option( self::DIMENSIONS, $out, false );
+	}
+
+	/** Saved top queries/pages/countries/devices. @return array<string,mixed> */
+	public static function dimensions() {
+		$d = get_option( self::DIMENSIONS, array() );
+		return is_array( $d ) ? $d : array();
 	}
 
 	/** Fetch only the current property's sitemap inventory; never submits or deletes a sitemap. */
@@ -555,7 +592,7 @@ final class SearchConsoleClient {
 	private static function base64url( $data ) {
 		return rtrim( strtr( base64_encode( $data ), '+/', '-_' ), '=' ); }
 	private function guard( $action ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_indexing' ) ) {
 			wp_die( esc_html__( 'You do not have permission to manage Search Console.', 'publishrank' ), '', array( 'response' => 403 ) );
 		} check_admin_referer( $action ); }
 	private function redirect( $type, $message ) {

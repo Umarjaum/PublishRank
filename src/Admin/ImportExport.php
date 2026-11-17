@@ -101,7 +101,7 @@ final class ImportExport {
 			'publishrank_seo_404_monitor',
 			'publishrank_seo_404_log',
 			'publishrank_traffic_guard',
-			// Private login address. The Private Login on/off switch is deliberately not exported, so an import
+			// Private login address. The Access Shield on/off switch is deliberately not exported, so an import
 			// can never hide the login on a site that has not set the address up.
 			'publishrank_login_slug',
 			'publishrank_login_redirect',
@@ -115,7 +115,7 @@ final class ImportExport {
 
 		/** Export only PublishRank-owned options. */
 		public function export() {
-			if ( ! current_user_can( 'manage_options' ) ) {
+			if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 				wp_die( esc_html__( 'You are not allowed to export PublishRank settings.', 'publishrank' ), 403 );
 			}
 			check_admin_referer( 'publishrank_seo_export' );
@@ -135,7 +135,7 @@ final class ImportExport {
 
 		/** Import a schema-validated JSON payload. */
 		public function import() {
-			if ( ! current_user_can( 'manage_options' ) ) {
+			if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 				wp_die( esc_html__( 'You are not allowed to import PublishRank settings.', 'publishrank' ), 403 );
 			}
 			check_admin_referer( 'publishrank_seo_import' );
@@ -146,7 +146,7 @@ final class ImportExport {
 				wp_die( esc_html__( 'The import file is invalid.', 'publishrank' ), 400 );
 			}
 			// Files exported by earlier releases used different names for the private login address.
-			$data = \PublishRankSEO\Security\PrivateLoginMigration::translate_import( $data );
+			$data = \PublishRankSEO\AccessShield\LoginBridge::translate_import( $data );
 			foreach ( $data as $key => $value ) {
 				if ( '_schema' === $key || ! in_array( $key, $this->allowed, true ) ) {
 					continue;
@@ -181,10 +181,10 @@ final class ImportExport {
 				);
 			}
 			if ( 'publishrank_login_slug' === $key ) {
-				return \PublishRankSEO\Security\PrivateLogin::clean_login_slug( $value );
+				return \PublishRankSEO\AccessShield\LoginBridge::clean_login_slug( $value );
 			}
 			if ( 'publishrank_login_redirect' === $key ) {
-				return \PublishRankSEO\Security\PrivateLogin::clean_redirect_slug( $value );
+				return \PublishRankSEO\AccessShield\LoginBridge::clean_redirect_slug( $value );
 			}
 			if ( 'publishrank_indexnow_enabled' === $key ) {
 					return (bool) $value;

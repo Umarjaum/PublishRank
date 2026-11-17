@@ -24,11 +24,11 @@ final class IndexNowPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'IndexNow', 'publishrank' ), __( 'IndexNow', 'publishrank' ), 'manage_options', 'publishrank-indexnow', array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'IndexNow', 'publishrank' ), __( 'IndexNow', 'publishrank' ), 'publishrank_manage_indexing', 'publishrank-indexnow', array( $this, 'render' ) );
 	}
 
 	private function guard( $action ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_indexing' ) ) {
 			wp_die( esc_html__( 'You are not allowed to manage IndexNow settings.', 'publishrank' ) ); }
 		check_admin_referer( $action );
 	}
@@ -94,7 +94,7 @@ final class IndexNowPage {
 	}
 
 	public function export_logs() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_indexing' ) ) {
 			wp_die( esc_html__( 'You are not allowed to export IndexNow history.', 'publishrank' ) ); }
 		check_admin_referer( 'publishrank_indexnow_export' );
 		$logs = get_option( IndexNow::LOG_OPTION, array() );
@@ -240,7 +240,7 @@ final class IndexNowPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_indexing' ) ) {
 			return; }
 		$enabled        = (bool) get_option( 'publishrank_indexnow_enabled', false );
 		$key            = (string) get_option( 'publishrank_indexnow_key', '' );

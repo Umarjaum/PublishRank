@@ -48,6 +48,9 @@ final class SchemaIndexEndpoint {
 			return new \WP_Error( 'publishrank_schema_disabled', __( 'PublishRank schema output is disabled.', 'publishrank' ), array( 'status' => 404 ) );
 		}
 
+		$limited = \PublishRankSEO\Core\RateLimiter::rest( 'schema-index', 120 );
+		if ( $limited ) {
+			return $limited; }
 		$page     = max( 1, absint( $request->get_param( 'page' ) ) );
 		$per_page = min( 100, max( 1, absint( $request->get_param( 'per_page' ) ) ) );
 		$generation = (int) get_option( 'publishrank_schema_index_generation', 1 );

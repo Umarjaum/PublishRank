@@ -12,10 +12,10 @@ final class BaiduSubmissionPage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 15 ); }
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Baidu & Search Engines', 'publishrank' ), __( 'Search Engines', 'publishrank' ), 'manage_options', 'publishrank-baidu', array( $this, 'render' ) ); }
+		add_submenu_page( Branding::MENU_SLUG, __( 'Baidu & Search Engines', 'publishrank' ), __( 'Search Engines', 'publishrank' ), 'publishrank_manage_indexing', 'publishrank-baidu', array( $this, 'render' ) ); }
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_indexing' ) ) {
 			return; }
 		echo '<div class="wrap publishrank-search-engines">';
 		AdminAssets::header( __( 'Search Engines & Baidu', 'publishrank' ), __( 'Publisher-controlled submission for Baidu and participating IndexNow engines.', 'publishrank' ) );

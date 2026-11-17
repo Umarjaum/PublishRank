@@ -212,7 +212,7 @@ final class OnboardingPage {
 							'mirror'        => array( 'publishrank_seo_publisher_logo' ),
 							'person_mirror' => 'publishrank_identity_person_image',
 							'fallback'      => array( 'publishrank_seo_publisher_logo' ),
-							'help'          => __( 'Square or wide logo, at least 112px tall. Used in schema and search knowledge surfaces.', 'publishrank' ),
+							'help'          => __( 'Square or wide logo, at least 112px tall. Used in schema and search knowledge surfaces. Images from your Media Library are also set as the WordPress Site Logo (and Site Icon when none is set and the image is square, 512px or larger), and stay in sync both ways.', 'publishrank' ),
 						)
 					),
 					$f(
@@ -241,14 +241,14 @@ final class OnboardingPage {
 					$f(
 						'publishrank_identity_country',
 						'country',
-						__( 'Country (ISO code)', 'publishrank' ),
+						__( 'Country', 'publishrank' ),
 						array(
 							'san'         => 'country',
 							'required'    => true,
 							'mirror'      => array( 'publishrank_country' ),
 							'fallback'    => array( 'publishrank_country' ),
 							'placeholder' => 'PK',
-							'help'        => __( 'Two-letter code, for example PK, US, GB.', 'publishrank' ),
+							'help'        => __( 'Country or territory', 'publishrank' ),
 						)
 					),
 					$f(
@@ -512,7 +512,7 @@ final class OnboardingPage {
 							'wide'        => true,
 							'san'         => 'sanitize_home_text',
 							'placeholder' => '%%sitename%% %%sep%% %%site_description%%',
-							'help'        => __( 'Plain text, written by you. Type the exact homepage title you want, usually your brand plus a few words on what you cover, or insert variables from the list. The grey text is only an example and is not saved. Leave empty to use the site name.', 'publishrank' ),
+							'help'        => __( 'Shared with your publication name and WordPress Site Title. Changes here update the same title everywhere.', 'publishrank' ),
 						)
 					),
 					$f(
@@ -524,7 +524,7 @@ final class OnboardingPage {
 							'san'         => 'sanitize_home_text',
 							'default'     => '',
 							'placeholder' => __( 'Trusted reporting on the latest national and world news, politics, business, sport and culture.', 'publishrank' ),
-							'help'        => __( 'WordPress has no excerpt for the homepage, so this dedicated field is what search engines and social networks use to describe it. Write one or two plain sentences (about 120 to 160 characters) saying what your site covers, as news brands do on their own homepages, and avoid repeating the title. The grey text is only an example and is not saved. Leave empty to use the front page\'s own SEO description (static front page) or your publication description.', 'publishrank' ),
+							'help'        => __( 'Shared with your publication description and WordPress Tagline. Changes here update the same description everywhere.', 'publishrank' ),
 						)
 					),
 					$f(
@@ -760,6 +760,12 @@ final class OnboardingPage {
 
 	/** On a fresh install, any PublishRank screen other than the wizard opens the wizard until setup is done. */
 	public function maybe_lock_plugin_screens() {
+		// Since 2.24.0 the wizard never blocks other screens (it used to hide WooCommerce SEO, Analytics and
+		// the Dashboard on fresh installs). The reminder card stays until setup is done. Sites that want the
+		// old behaviour can opt back in with this filter.
+		if ( ! apply_filters( 'publishrank_lock_screens_until_setup', false ) ) {
+			return;
+		}
 		if ( wp_doing_ajax() || is_network_admin() || ! current_user_can( \PublishRank_Newsroom::CAP_SETUP ) || ! $this->is_locked() ) {
 			return;
 		}
@@ -985,14 +991,8 @@ final class OnboardingPage {
 		AdminAssets::guard( 'publishrank_onboarding_defaults', \PublishRank_Newsroom::CAP_SETUP );
 		$defaults = array(
 			'publishrank_identity_type'           => 'organization',
-			'publishrank_identity_name'           => '',
-			'publishrank_identity_description'    => '',
-			'publishrank_seo_publication_name'    => '',
-			'publishrank_seo_publisher_name'      => '',
 			'publishrank_seo_publisher_logo'      => '',
 			'publishrank_identity_logo'           => '',
-			'publishrank_home_title'              => '',
-			'publishrank_home_description'        => '',
 			'publishrank_seo_default_robots'      => 'index,follow',
 			'publishrank_seo_title_template_home' => '%%sitename%% %%page%%',
 			'publishrank_seo_title_separator'     => '|',
@@ -1042,12 +1042,11 @@ final class OnboardingPage {
 			case 'bool':
 				return empty( $raw ) ? 0 : 1;
 			case 'country':
-				$code = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $raw ) );
-				return 2 === strlen( $code ) ? $code : '';
+				return \PublishRankSEO\Core\Countries::sanitize( $raw );
 			case 'login_slug':
-				return \PublishRankSEO\Security\PrivateLogin::clean_login_slug( (string) $raw );
+				return \PublishRankSEO\AccessShield\LoginBridge::clean_login_slug( (string) $raw );
 			case 'redirect_slug':
-				return \PublishRankSEO\Security\PrivateLogin::clean_redirect_slug( (string) $raw );
+				return \PublishRankSEO\AccessShield\LoginBridge::clean_redirect_slug( (string) $raw );
 		}
 		return method_exists( $settings, $san ) ? $settings->{$san}( $raw ) : sanitize_text_field( (string) $raw );
 	}
@@ -1094,9 +1093,9 @@ final class OnboardingPage {
 				update_option( $field['person_mirror'], $clean ); }
 		}
 
-		// Saving the Security step is the moment the owner has seen the new address: Private Login may now switch on.
+		// Saving the Security step is the moment the owner has seen the new address: the Access Shield login address may now switch on.
 		if ( 8 === $step && ! $slug_error ) {
-			\PublishRankSEO\Security\PrivateLogin::confirm_login_address();
+			\PublishRankSEO\AccessShield\LoginBridge::confirm_login_address();
 		}
 
 		if ( 7 === $step ) {
@@ -1260,7 +1259,12 @@ final class OnboardingPage {
 					echo '<div class="prw-media"><span class="prw-media__thumb' . ( '' === $thumb ? ' is-empty' : '' ) . '" data-prw-thumb aria-hidden="true">' . $thumb . '<i class="fa-solid fa-image"></i></span><span class="prw-media__ctrl"><input type="text" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $value ) . '" placeholder="https://" inputmode="url" data-prw-media-input' . $req . ' /><button type="button" class="button rhs-media-button prw-media__button" data-target="' . esc_attr( $id ) . '"' . ( $applies ? '' : ' disabled' ) . '><i class="fa-solid fa-photo-film" aria-hidden="true"></i> ' . esc_html__( 'Choose image', 'publishrank' ) . '</button></span></div>'; // phpcs:ignore WordPress.Security.EscapeOutput
 					break;
 				case 'country':
-					echo '<input type="text" class="prw-input--country" id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $value ) . '" maxlength="2" pattern="[A-Za-z]{2}" placeholder="' . esc_attr( $field['placeholder'] ) . '" autocomplete="country"' . $req . ' />'; // phpcs:ignore WordPress.Security.EscapeOutput
+					echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $key ) . '" autocomplete="country"' . $req . '>'; // phpcs:ignore WordPress.Security.EscapeOutput
+					echo '<option value="">' . esc_html__( 'Select country', 'publishrank' ) . '</option>';
+					foreach ( \PublishRankSEO\Core\Countries::all() as $code => $label ) {
+						echo '<option value="' . esc_attr( $code ) . '"' . selected( strtoupper( (string) $value ), $code, false ) . '>' . esc_html( $label ) . '</option>';
+					}
+					echo '</select>';
 					break;
 				case 'posttypes':
 					$selected = array_filter( array_map( 'sanitize_key', preg_split( '/[\s,]+/', (string) $value ) ) );
@@ -1333,7 +1337,7 @@ final class OnboardingPage {
 			array( 5, 'fa-heading', __( 'Homepage SEO title', 'publishrank' ), $title, '' !== trim( (string) get_option( 'publishrank_home_title', '' ) ) ),
 			array( 6, 'fa-sitemap', __( 'Sitemaps', 'publishrank' ), ( $news ? __( 'News sitemap on', 'publishrank' ) : __( 'News sitemap off', 'publishrank' ) ) . ' · ' . str_replace( ',', ', ', (string) get_option( 'publishrank_seo_news_post_types', 'post' ) ), $news ),
 			array( 7, 'fa-location-dot', __( 'Local business', 'publishrank' ), ! empty( $local['enabled'] ) ? ( ! empty( $local['name'] ) ? (string) $local['name'] : __( 'Local business on', 'publishrank' ) ) : __( 'Local SEO off', 'publishrank' ), ! empty( $local['enabled'] ) ),
-			array( 8, 'fa-user-shield', __( 'Private login address', 'publishrank' ), \PublishRankSEO\Security\PrivateLogin::enabled() ? '/' . \PublishRankSEO\Security\PrivateLogin::current_login_slug() : __( 'Private Login is off', 'publishrank' ), \PublishRankSEO\Security\PrivateLogin::enabled() ),
+			array( 8, 'fa-user-shield', __( 'Private login address', 'publishrank' ), \PublishRankSEO\AccessShield\LoginBridge::enabled() ? '/' . \PublishRankSEO\AccessShield\LoginBridge::current_login_slug() : __( 'Access Shield login address is off', 'publishrank' ), \PublishRankSEO\AccessShield\LoginBridge::enabled() ),
 		);
 		echo '<ul class="prw-recap">';
 		foreach ( $items as $item ) {
@@ -1584,17 +1588,17 @@ final class OnboardingPage {
 
 	/** Security step: shows the exact new login address with a copy button before anything moves. */
 	private function render_login_url_notice() {
-		$hide     = \PublishRankSEO\Security\PrivateLogin::get_instance();
+		$hide     = \PublishRankSEO\AccessShield\LoginBridge::get_instance();
 		$url      = $hide->new_login_url();
 		$pretty   = (bool) get_option( 'permalink_structure' );
 		$prefix   = trailingslashit( home_url() ) . ( $pretty ? '' : '?' );
 		$tail     = ( $pretty && '/' === substr( (string) get_option( 'permalink_structure' ), -1 ) ) ? '/' : '';
-		$deferred = \PublishRankSEO\Security\PrivateLogin::is_deferred();
-		$off      = ! $deferred && ! \PublishRankSEO\Security\PrivateLogin::enabled();
+		$deferred = \PublishRankSEO\AccessShield\LoginBridge::is_deferred();
+		$off      = ! $deferred && ! \PublishRankSEO\AccessShield\LoginBridge::enabled();
 		if ( $deferred ) {
 			$text = __( 'Your sign-in page has not moved yet. It moves to the address below when you save this step. After that, wp-login.php and wp-admin are hidden from visitors who are not signed in. Copy the address and keep it somewhere safe.', 'publishrank' );
 		} elseif ( $off ) {
-			$text = __( 'Private Login is switched off under Features, so your address is saved but not active yet. When it is on, your sign-in page is the address below.', 'publishrank' );
+			$text = __( 'Access Shield is switched off under Features, so your address is saved but not active yet. When it is on, your sign-in page is the address below.', 'publishrank' );
 		} else {
 			$text = __( 'After you save, sign in at the address below. Visitors who are not signed in can no longer open wp-login.php or wp-admin. Copy the address before you continue.', 'publishrank' );
 		}

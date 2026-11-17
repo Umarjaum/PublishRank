@@ -17,11 +17,11 @@ final class TrafficGuardPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Traffic Guard', 'publishrank' ), __( 'Traffic Guard', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Traffic Guard', 'publishrank' ), __( 'Traffic Guard', 'publishrank' ), 'publishrank_manage_security', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function save() {
-		AdminAssets::guard( self::ACTION );
+		AdminAssets::guard( self::ACTION, 'publishrank_manage_security' );
 		check_admin_referer( self::ACTION ); // Explicit nonce verification for the request data read below.
 		$blocked   = TrafficGuard::inspect_networks( $this->post_value( 'blocked_ips' ) );
 		$allowed   = TrafficGuard::inspect_networks( $this->post_value( 'allow_ips' ) );
@@ -64,7 +64,7 @@ final class TrafficGuardPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_security' ) ) {
 			return;
 		}
 		$settings    = TrafficGuard::settings();

@@ -12,6 +12,10 @@
  *  - cart, checkout and account pages, sorted/filtered shop URLs and hidden products are noindex,follow;
  *  - products live in their own sitemap that leaves out catalog-hidden and noindex products.
  *
+ * Since 2.24.0 it also boots the WooCommerce SEO suite in src/WooCommerce (rich Google product data,
+ * the product editor tab, templates, store rules, the product audit, the Merchant Center feed, REST
+ * and WP-CLI). Everything is controlled by the "WooCommerce SEO" switch on the Features page.
+ *
  * @package PublishRankSEO
  */
 namespace PublishRankSEO\Integrations;
@@ -20,35 +24,38 @@ defined( 'ABSPATH' ) || exit;
 
 final class WooCommerceSEO {
 
-	const OPTION = 'publishrank_woocommerce_seo';
+	const OPTION = \PublishRankSEO\WooCommerce\Settings::OPTION;
 
 	public static function defaults() {
-		return array(
-			'schema'          => 1,
-			'og_product'      => 1,
-			'noindex_utility' => 1,
-			'noindex_filters' => 1,
-			'noindex_hidden'  => 1,
-			'sitemap'         => 1,
-			'condition'       => 'NewCondition',
-		);
+		return \PublishRankSEO\WooCommerce\Settings::defaults();
 	}
 
 	public static function settings() {
-		$saved = get_option( self::OPTION, array() );
-		$s     = array_merge( self::defaults(), is_array( $saved ) ? $saved : array() );
-		foreach ( array( 'schema', 'og_product', 'noindex_utility', 'noindex_filters', 'noindex_hidden', 'sitemap' ) as $k ) {
-			$s[ $k ] = (int) (bool) $s[ $k ];
-		}
-		$s['condition'] = in_array( $s['condition'], array( 'NewCondition', 'UsedCondition', 'RefurbishedCondition', 'DamagedCondition' ), true ) ? $s['condition'] : 'NewCondition';
-		return $s;
+		return \PublishRankSEO\WooCommerce\Settings::all();
 	}
 
+	/** WooCommerce active and the Features switch on. */
 	public static function active() {
-		return class_exists( 'WooCommerce' ) && function_exists( 'wc_get_product' );
+		return \PublishRankSEO\WooCommerce\Settings::active();
 	}
 
 	public function register() {
+		// Admin screens and the product tab are registered even while WooCommerce is off, so the
+		// screen can always be opened and settings prepared before the shop goes live.
+		( new \PublishRankSEO\WooCommerce\RestApi() )->register();
+		add_action( 'woocommerce_loaded', array( $this, 'boot_store' ) );
+		if ( did_action( 'woocommerce_loaded' ) ) {
+			$this->boot_store();
+		}
+	}
+
+	/** Hooks that only make sense while WooCommerce runs. */
+	public function boot_store() {
+		static $booted = false;
+		if ( $booted || ! \PublishRankSEO\WooCommerce\Settings::switched_on() ) {
+			return;
+		}
+		$booted = true;
 		add_filter( 'publishrank_is_editorial_article', array( $this, 'not_article' ), 10, 2 );
 		add_filter( 'publishrank_schema_graph', array( $this, 'graph' ), 25 );
 		add_filter( 'woocommerce_structured_data_type_for_page', array( $this, 'woo_types' ) );
@@ -59,6 +66,13 @@ final class WooCommerceSEO {
 		add_filter( 'publishrank_sitemap_providers', array( $this, 'sitemap' ) );
 		add_filter( 'publishrank_sitemap_cpt_excluded', array( $this, 'exclude_cpt' ) );
 		add_filter( 'publishrank_sitemap_type_labels', array( $this, 'labels' ) );
+		( new \PublishRankSEO\WooCommerce\ProductSchema() )->register();
+		( new \PublishRankSEO\WooCommerce\StoreRules() )->register();
+		( new \PublishRankSEO\WooCommerce\Templates() )->register();
+		( new \PublishRankSEO\WooCommerce\Feed() )->register();
+		if ( is_admin() ) {
+			( new \PublishRankSEO\WooCommerce\ProductTab() )->register();
+		}
 	}
 
 	/** A real product page, not WooCommerce's "coming soon" screen shown in its place. */
@@ -119,25 +133,9 @@ final class WooCommerceSEO {
 		return get_permalink( $product_id ) . '#product';
 	}
 
-	/** Brand names from the WooCommerce Brands taxonomy, then a "brand" attribute. */
+	/** Brand: product field, WooCommerce Brands, a brand attribute, then the store default. */
 	public static function brand( $product ) {
-		if ( ! $product ) {
-			return '';
-		}
-		$pid = $product->get_parent_id() ? $product->get_parent_id() : $product->get_id();
-		if ( taxonomy_exists( 'product_brand' ) ) {
-			$terms = get_the_terms( $pid, 'product_brand' );
-			if ( $terms && ! is_wp_error( $terms ) ) {
-				return (string) $terms[0]->name;
-			}
-		}
-		foreach ( array( 'pa_brand', 'brand' ) as $attr ) {
-			$value = (string) $product->get_attribute( $attr );
-			if ( '' !== $value ) {
-				return trim( explode( ',', $value )[0] );
-			}
-		}
-		return '';
+		return \PublishRankSEO\WooCommerce\ProductData::brand( $product );
 	}
 
 	/** Enrich WooCommerce's Product node and connect it to the PublishRank graph. */
@@ -166,7 +164,7 @@ final class WooCommerceSEO {
 		if ( $gallery && ! empty( $markup['image'] ) && is_string( $markup['image'] ) ) {
 			$markup['image'] = array_values( array_unique( array_merge( array( $markup['image'] ), $gallery ) ) );
 		}
-		$condition = 'https://schema.org/' . self::settings()['condition'];
+		$condition = 'https://schema.org/' . \PublishRankSEO\WooCommerce\ProductData::condition( $product );
 		if ( ! empty( $markup['offers'] ) && is_array( $markup['offers'] ) ) {
 			foreach ( $markup['offers'] as &$offer ) {
 				if ( is_array( $offer ) ) {
@@ -226,7 +224,15 @@ final class WooCommerceSEO {
 		}
 		$status                      = $product->get_stock_status();
 		$tags['product:availability'] = 'outofstock' === $status ? 'out of stock' : ( 'onbackorder' === $status ? 'available for order' : 'in stock' );
-		$tags['product:condition']    = strtolower( str_replace( 'Condition', '', self::settings()['condition'] ) );
+		$tags['product:condition']    = strtolower( str_replace( 'Condition', '', \PublishRankSEO\WooCommerce\ProductData::condition( $product ) ) );
+		$gtin                        = \PublishRankSEO\WooCommerce\ProductData::gtin( $product );
+		if ( '' !== $gtin ) {
+			$tags['product:gtin'] = $gtin;
+		}
+		$mpn = \PublishRankSEO\WooCommerce\ProductData::mpn( $product );
+		if ( '' !== $mpn ) {
+			$tags['product:mfr_part_no'] = $mpn;
+		}
 		if ( $product->get_sku() ) {
 			$tags['product:retailer_item_id'] = $product->get_sku();
 		}
@@ -282,10 +288,10 @@ final class WooCommerceSEO {
 		return self::active() && self::settings()['sitemap'];
 	}
 
-	/** Catalog-hidden products are not listed. */
+	/** Catalog-hidden products (and sold-out ones, when that store rule is on) are not listed. */
 	public static function in_sitemap( $post_id ) {
 		$product = self::active() ? wc_get_product( (int) $post_id ) : null;
-		return $product && 'hidden' !== $product->get_catalog_visibility();
+		return $product && 'hidden' !== $product->get_catalog_visibility() && ! \PublishRankSEO\WooCommerce\StoreRules::hide( $product );
 	}
 
 	public function exclude_cpt( $excluded ) {
@@ -305,21 +311,11 @@ final class WooCommerceSEO {
 	}
 
 	/**
-	 * Practical product checks for the audit table.
+	 * Practical product checks (kept for older callers; the full audit lives in WooCommerce\Audit).
 	 *
 	 * @return array<string,bool>
 	 */
 	public static function audit( $product ) {
-		$pid  = $product->get_id();
-		$desc = (string) get_post_meta( $pid, '_publishrank_seo_description', true );
-		return array(
-			'image'       => (bool) $product->get_image_id(),
-			'description' => '' !== trim( $desc ) || '' !== trim( wp_strip_all_tags( $product->get_short_description() ) ),
-			'price'       => '' !== (string) $product->get_price() || $product->is_type( 'variable' ) || $product->is_type( 'grouped' ),
-			'sku'         => '' !== (string) $product->get_sku(),
-			'gtin'        => method_exists( $product, 'get_global_unique_id' ) && '' !== (string) $product->get_global_unique_id(),
-			'brand'       => '' !== self::brand( $product ),
-			'indexable'   => false === strpos( strtolower( (string) get_post_meta( $pid, '_publishrank_seo_robots', true ) ), 'noindex' ) && 'hidden' !== $product->get_catalog_visibility(),
-		);
+		return \PublishRankSEO\WooCommerce\Audit::results( $product );
 	}
 }

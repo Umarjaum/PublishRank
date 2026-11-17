@@ -64,7 +64,7 @@ final class CrawlOptimizationPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Crawl Optimization', 'publishrank' ), __( 'Crawl Optimization', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Crawl Optimization', 'publishrank' ), __( 'Crawl Optimization', 'publishrank' ), 'publishrank_manage_robots', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function settings() {
@@ -254,7 +254,7 @@ final class CrawlOptimizationPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) { wp_die( esc_html__( 'You do not have permission to manage PublishRank settings.', 'publishrank' ) ); }
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_robots' ) ) { wp_die( esc_html__( 'You do not have permission to manage PublishRank settings.', 'publishrank' ) ); }
 		$o = self::get_options();
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 		if ( $screen ) { $screen->add_help_tab( array( 'id' => 'publishrank-crawl-help', 'title' => __( 'Safe use', 'publishrank' ), 'content' => '<p>' . esc_html__( 'All cleanup options are off by default. Change one group at a time and test the public site. robots.txt rules are crawler hints, not access controls.', 'publishrank' ) . '</p>' ) ); }

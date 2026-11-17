@@ -33,7 +33,7 @@ final class AdminAssets {
 
 	/** Add a compact, branded welcome link to the admin toolbar. */
 	public function welcome_admin_bar( $wp_admin_bar ) {
-		if ( ! is_admin_bar_showing() || ! current_user_can( 'manage_options' ) || ! is_object( $wp_admin_bar ) ) {
+		if ( ! is_admin_bar_showing() || ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) || ! is_object( $wp_admin_bar ) ) {
 			return; }
 		$wp_admin_bar->add_node(
 			array(
@@ -143,7 +143,7 @@ final class AdminAssets {
 			'publishrank-baidu'              => 'fa-solid fa-globe',
 			'publishrank-google-preferred-sources' => 'fa-solid fa-star',
 			'publishrank-traffic-guard'      => 'fa-solid fa-shield-halved',
-			'publishrank-private-login'      => 'fa-solid fa-key',
+			'publishrank-access-shield'      => 'fa-solid fa-shield-halved',
 			'publishrank-seo-config-history' => 'fa-solid fa-clock-rotate-left',
 			'publishrank-llms-txt'           => 'fa-solid fa-code',
 			'publishrank-verification'       => 'fa-solid fa-circle-check',
@@ -192,7 +192,7 @@ final class AdminAssets {
 	}
 
 	/** Verify capability and nonce for an admin-post handler. */
-		public static function guard( $action, $capability = 'manage_options' ) {
+		public static function guard( $action, $capability = 'publishrank_manage_settings' ) {
 			if ( ! current_user_can( $capability ) ) {
 			wp_die( esc_html__( 'You do not have permission to do this.', 'publishrank' ), '', array( 'response' => 403 ) );
 		}

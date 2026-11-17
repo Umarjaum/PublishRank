@@ -34,6 +34,10 @@ final class SitemapController {
 		if ( '.xml' !== substr( $path, -4 ) ) {
 			return; }
 		$name = substr( $path, 0, -4 );
+		if ( ( in_array( $name, array( 'sitemap', 'sitemap_index' ), true ) || preg_match( '#^wp-sitemap(?:-[a-z0-9-]+)?$#', $name ) ) && ! self::other_sitemap_owner() ) {
+			wp_safe_redirect( SitemapUrls::index_url(), 301, 'PublishRank' );
+			exit;
+		}
 		if ( in_array( $name, array_merge( array( SitemapUrls::base() ), SitemapUrls::aliases() ), true ) ) {
 			$wp->query_vars['publishrank_sitemap'] = 'index';
 			return;
@@ -46,6 +50,23 @@ final class SitemapController {
 			$wp->query_vars['publishrank_sitemap']       = $m[1];
 			$wp->query_vars['publishrank_sitemap_shard'] = 1;
 		}
+	}
+	/** Another SEO plugin that serves its own /sitemap.xml or /sitemap_index.xml (reported as a conflict in Sitemap Hub). */
+	public static function other_sitemap_owner() {
+		$owners = array(
+			'Yoast SEO'          => defined( 'WPSEO_VERSION' ),
+			'Rank Math'          => class_exists( 'RankMath' ),
+			'All in One SEO'     => defined( 'AIOSEO_VERSION' ),
+			'SEOPress'           => defined( 'SEOPRESS_VERSION' ),
+			'The SEO Framework'  => defined( 'THE_SEO_FRAMEWORK_VERSION' ),
+			'Google XML Sitemaps' => class_exists( 'GoogleSitemapGenerator' ),
+			'Jetpack Sitemaps'   => class_exists( 'Jetpack' ) && method_exists( 'Jetpack', 'is_module_active' ) && \Jetpack::is_module_active( 'sitemaps' ),
+		);
+		foreach ( $owners as $label => $active ) {
+			if ( $active ) {
+				return $label; }
+		}
+		return '';
 	}
 	/** Flush rewrite rules once when the sitemap rule is absent from the stored rules. */
 	public function heal_rewrite_rules() {
@@ -78,7 +99,9 @@ final class SitemapController {
 			return; }
 		// WordPress' canonical redirect must never rewrite a sitemap URL.
 		remove_action( 'template_redirect', 'redirect_canonical' );
-		$xml = 'index' === $slug ? $this->engine->index() : $this->engine->render_public( $slug, max( 1, absint( get_query_var( 'publishrank_sitemap_shard', 1 ) ) ) );
+		$shard_raw = (string) get_query_var( 'publishrank_sitemap_shard', '1' );
+		// Shard numbers are 1-based digits only: "0", "-1" or "abc" are a 404, never silently mapped to file 1.
+		$xml = 'index' === $slug ? $this->engine->index() : ( ( '' !== $shard_raw && ! ctype_digit( $shard_raw ) ) || ( '' !== $shard_raw && (int) $shard_raw < 1 ) ? '' : $this->engine->render_public( $slug, max( 1, absint( $shard_raw ) ) ) );
 		// null: a cursor-backed provider is still preparing its checkpoints (large catalogues only).
 		if ( null === $xml ) {
 			$this->discard_output();
@@ -96,24 +119,63 @@ final class SitemapController {
 			exit; }
 		// '': unknown provider, disabled provider or shard number out of range: a genuine 404. (An enabled but empty sitemap returns an empty urlset, not '').
 		if ( '' === $xml ) {
-			global $wp_query;
-			if ( is_object( $wp_query ) ) {
-				$wp_query->set_404();
-			} status_header( 404 );
+			// A small, fast 404 for crawlers: no theme rendering for a sitemap file that does not exist.
+			$this->discard_output();
+			status_header( 404 );
 			nocache_headers();
-			return; }
-		$this->discard_output();
-		status_header( 200 );
-		header( 'Content-Type: application/xml; charset=UTF-8' );
-		header( 'X-Robots-Tag: noindex' );
-		header( 'Cache-Control: public, max-age=' . ( 'news' === $slug ? 60 : 300 ) );
-		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) ) {
+			header( 'Content-Type: text/plain; charset=UTF-8' );
+			header( 'X-Robots-Tag: noindex' );
+			echo 'Sitemap file not found.';
 			exit; }
 		// ?raw=1 returns the bare XML (no stylesheet) so people can inspect exactly what crawlers receive.
 		$raw   = isset( $_GET['raw'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display switch.
 		$style = ( ! $raw && get_option( 'publishrank_sitemap_stylesheet', 1 ) ) ? '<?xml-stylesheet type="text/xsl" href="' . esc_url( SitemapStylesheet::url( $slug, max( 1, absint( get_query_var( 'publishrank_sitemap_shard', 1 ) ) ) ) ) . '"?>' : '';
-		echo '<?xml version="1.0" encoding="UTF-8"?>' . $style . $xml; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$body  = '<?xml version="1.0" encoding="UTF-8"?>' . $style . $xml;
+		$this->discard_output();
+		self::send( $body, 'news' === $slug ? 60 : 300 );
 		exit;
+	}
+
+	/**
+	 * Conditional, cacheable XML response: strong ETag of the exact bytes, Last-Modified from the newest <lastmod>,
+	 * 304 for If-None-Match / If-Modified-Since, gzip when the client accepts it, and a body-less HEAD.
+	 */
+	public static function send( $body, $max_age = 300 ) {
+		$etag = '"' . substr( hash( 'sha256', $body ), 0, 32 ) . '"';
+		$last = 0;
+		if ( preg_match_all( '#<lastmod>([^<]+)</lastmod>#', $body, $m ) ) {
+			foreach ( $m[1] as $value ) {
+				$t = strtotime( $value );
+				if ( $t && $t > $last ) {
+					$last = $t; }
+			}
+		}
+		status_header( 200 );
+		header( 'Content-Type: application/xml; charset=UTF-8' );
+		header( 'X-Robots-Tag: noindex' );
+		header( 'Cache-Control: public, max-age=' . (int) $max_age . ', stale-while-revalidate=60' );
+		header( 'ETag: ' . $etag );
+		header( 'Vary: Accept-Encoding' );
+		if ( $last ) {
+			header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $last ) . ' GMT' ); }
+		$inm = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? trim( (string) wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- compared only.
+		$ims = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? strtotime( (string) wp_unslash( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : false; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$tags = array_map( 'trim', explode( ',', str_replace( 'W/', '', $inm ) ) );
+		if ( ( '' !== $inm && ( in_array( $etag, $tags, true ) || in_array( '*', $tags, true ) ) ) || ( '' === $inm && $ims && $last && $last <= $ims ) ) {
+			status_header( 304 );
+			header_remove( 'Content-Type' );
+			return;
+		}
+		$head = isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) );
+		$enc  = isset( $_SERVER['HTTP_ACCEPT_ENCODING'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_ENCODING'] ) ) ) : '';
+		if ( false !== strpos( $enc, 'gzip' ) && function_exists( 'gzencode' ) && ! ini_get( 'zlib.output_compression' ) && ! headers_sent() && apply_filters( 'publishrank_sitemap_gzip', true ) ) {
+			$body = gzencode( $body, 6 );
+			header( 'Content-Encoding: gzip' );
+		}
+		header( 'Content-Length: ' . strlen( $body ) );
+		if ( ! $head ) {
+			echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML built and escaped by the renderer.
+		}
 	}
 	/** Drop buffered output (themes/plugins) so nothing precedes the XML declaration. */
 	private function discard_output() {

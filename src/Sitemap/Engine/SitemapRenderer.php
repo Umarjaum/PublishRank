@@ -57,10 +57,11 @@ final class SitemapRenderer {
 	}
 	public static function image( $url, $title = '', $caption = '', $geo_location = '', $license = '' ) {
 		$xml = '<image:image><image:loc>' . esc_xml( esc_url_raw( $url ) ) . '</image:loc>';
+		// Element order is fixed by Google's sitemap-image/1.1 XSD: loc, caption, geo_location, title, license.
 		foreach ( array(
-			'title'        => $title,
 			'caption'      => $caption,
 			'geo_location' => $geo_location,
+			'title'        => $title,
 			'license'      => $license,
 		) as $tag => $value ) {
 			if ( $value ) {

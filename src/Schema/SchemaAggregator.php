@@ -15,21 +15,29 @@ add_action( 'rest_api_init', array( $this, 'routes' ) );
 foreach ( array( 'save_post', 'deleted_post', 'trashed_post', 'transition_post_status' ) as $hook ) { add_action( $hook, array( $this, 'invalidate' ) ); }
 }
 public function routes() {
-register_rest_route( self::REST_NAMESPACE, '/schema-aggregator', array( 'methods' => \WP_REST_Server::READABLE, 'callback' => array( $this, 'get' ), 'permission_callback' => '__return_true' ) );
+register_rest_route( self::REST_NAMESPACE, '/schema-aggregator', array( 'methods' => \WP_REST_Server::READABLE, 'callback' => array( $this, 'get' ), 'permission_callback' => '__return_true', 'args' => array(
+	'page'     => array( 'default' => 1, 'sanitize_callback' => 'absint', 'validate_callback' => static function ( $v ) { return is_numeric( $v ) && (int) $v >= 1; } ),
+	'per_page' => array( 'default' => 100, 'sanitize_callback' => 'absint', 'validate_callback' => static function ( $v ) { return is_numeric( $v ) && (int) $v >= 1 && (int) $v <= 100; } ),
+) ) );
 }
-public function get() {
+public function get( $request = null ) {
+$limited = \PublishRankSEO\Core\RateLimiter::rest( 'schema-aggregator', 60 ); if ( $limited ) return $limited;
+$page = $request instanceof \WP_REST_Request ? max( 1, absint( $request->get_param( 'page' ) ) ) : 1;
+$per_page = $request instanceof \WP_REST_Request ? min( 100, max( 1, absint( $request->get_param( 'per_page' ) ) ) ) : 100;
 if ( ! get_option( self::OPTION_ENABLED, 1 ) || ! OutputSettings::schema() ) return new \WP_Error( 'publishrank_schema_aggregator_disabled', __( 'The Schema Aggregator is disabled.', 'publishrank' ), array( 'status' => 404 ) );
 $custom = trim( (string) get_option( self::OPTION_CUSTOM, '' ) );
 if ( get_option( self::OPTION_OVERRIDE, 0 ) && '' !== $custom ) { $json = json_decode( $custom, true ); if ( is_array( $json ) ) return $this->response( $json ); }
-$key = 'publishrank_schema_aggregator_' . (string) get_option( 'publishrank_schema_index_generation', 1 );
+$key = 'publishrank_schema_aggregator_' . (string) get_option( 'publishrank_schema_index_generation', 1 ) . '_' . (int) get_option( 'publishrank_schema_aggregator_gen', 1 ) . '_' . $page . '_' . $per_page;
 $data = get_transient( $key );
-if ( false === $data ) { $data = $this->build(); set_transient( $key, $data, 600 ); }
-return $this->response( $data );
+if ( false === $data ) { $data = $this->build( $page, $per_page ); set_transient( $key, $data, 600 ); }
+$response = $this->response( $data );
+if ( $page < (int) ( $data['totalPages'] ?? 0 ) ) $response->header( 'Link', '<' . esc_url_raw( add_query_arg( array( 'page' => $page + 1, 'per_page' => $per_page ), rest_url( self::REST_NAMESPACE . '/schema-aggregator' ) ) ) . '>; rel="next"' );
+return $response;
 }
 private function response( $data ) { $r = new \WP_REST_Response( $data ); $r->header( 'Content-Type', 'application/ld+json; charset=UTF-8' ); $r->header( 'Cache-Control', 'public, max-age=600, stale-while-revalidate=120' ); return $r; }
-private function build() {
+private function build( $page = 1, $per_page = 100 ) {
 $items = array(); $types = get_post_types( array( 'public' => true, 'publicly_queryable' => true ), 'names' ); unset( $types['attachment'] );
-$q = new \WP_Query( array( 'post_type' => array_values( $types ), 'post_status' => 'publish', 'posts_per_page' => 1000, 'orderby' => 'modified', 'order' => 'DESC', 'no_found_rows' => true, 'ignore_sticky_posts' => true, 'has_password' => false ) );
+$q = new \WP_Query( array( 'post_type' => array_values( $types ), 'post_status' => 'publish', 'posts_per_page' => $per_page, 'paged' => $page, 'orderby' => 'modified', 'order' => 'DESC', 'no_found_rows' => false, 'ignore_sticky_posts' => true, 'has_password' => false, 'meta_query' => array( 'relation' => 'OR', array( 'key' => PostMeta::ROBOTS, 'compare' => 'NOT EXISTS' ), array( 'key' => PostMeta::ROBOTS, 'value' => 'noindex', 'compare' => 'NOT LIKE' ) ) ) );
 foreach ( $q->posts as $post ) {
 if ( ! $post instanceof \WP_Post || post_password_required( $post ) ) continue;
 $robots = strtolower( (string) get_post_meta( $post->ID, PostMeta::ROBOTS, true ) ); if ( false !== strpos( $robots, 'noindex' ) ) continue;
@@ -51,8 +59,8 @@ if ( '' !== trim( (string) $desc ) ) $node['description'] = wp_trim_words( wp_st
 $image = get_the_post_thumbnail_url( $post, 'full' ); if ( $image ) $node['image'] = esc_url_raw( $image );
 $items[] = $node;
 }
-return array( '@context' => 'https://schema.org', '@type' => 'DataFeed', 'name' => sprintf( __( '%s complete schema content index', 'publishrank' ), \PublishRankSEO\Core\PublicationProfile::publication_name() ), 'description' => __( 'A machine-readable index of public, indexable website content for AI crawlers and knowledge systems.', 'publishrank' ), 'url' => rest_url( self::REST_NAMESPACE . '/schema-aggregator' ), 'dateModified' => current_time( 'c', true ), 'numberOfItems' => count( $items ), 'publisher' => array( '@type' => 'Organization', 'name' => \PublishRankSEO\Core\PublicationProfile::publication_name(), 'url' => home_url( '/' ) ), 'dataFeedElement' => $items );
+return array( '@context' => 'https://schema.org', '@type' => 'DataFeed', 'name' => sprintf( __( '%s complete schema content index', 'publishrank' ), \PublishRankSEO\Core\PublicationProfile::publication_name() ), 'description' => __( 'A machine-readable index of public, indexable website content for AI crawlers and knowledge systems.', 'publishrank' ), 'url' => rest_url( self::REST_NAMESPACE . '/schema-aggregator' ), 'dateModified' => current_time( 'c', true ), 'numberOfItems' => count( $items ), 'totalItems' => (int) $q->found_posts, 'page' => $page, 'perPage' => $per_page, 'totalPages' => (int) $q->max_num_pages, 'publisher' => array( '@type' => 'Organization', 'name' => \PublishRankSEO\Core\PublicationProfile::publication_name(), 'url' => home_url( '/' ) ), 'dataFeedElement' => $items );
 }
-public function invalidate() { delete_transient( 'publishrank_schema_aggregator_' . (string) get_option( 'publishrank_schema_index_generation', 1 ) ); }
+public function invalidate() { update_option( 'publishrank_schema_aggregator_gen', (int) get_option( 'publishrank_schema_aggregator_gen', 1 ) + 1, false ); }
 public static function verify() { $enabled = (bool) get_option( self::OPTION_ENABLED, 1 ); $override = (bool) get_option( self::OPTION_OVERRIDE, 0 ); $custom = trim( (string) get_option( self::OPTION_CUSTOM, '' ) ); if ( $override && ( '' === $custom || null === json_decode( $custom, true ) ) ) return array( 'level' => 'error', 'msg' => __( 'Schema Aggregator override is enabled but the custom JSON is invalid or empty.', 'publishrank' ) ); return array( 'level' => $enabled ? 'ok' : 'warn', 'msg' => $enabled ? __( 'Schema Aggregator endpoint is enabled and available to AI crawlers.', 'publishrank' ) : __( 'Schema Aggregator endpoint is disabled.', 'publishrank' ) ); }
 }

@@ -43,13 +43,13 @@ final class DashboardPage {
 		add_menu_page(
 			__( 'PublishRank', 'publishrank' ),
 			__( 'PublishRank', 'publishrank' ),
-			'manage_options',
+			'publishrank_view_reports',
 			Branding::MENU_SLUG,
 			array( $this, 'render' ),
 			Branding::logo_url(),
 			58
 		);
-		add_submenu_page( Branding::MENU_SLUG, __( 'Dashboard', 'publishrank' ), __( 'Dashboard', 'publishrank' ), 'manage_options', Branding::MENU_SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Dashboard', 'publishrank' ), __( 'Dashboard', 'publishrank' ), 'publishrank_view_reports', Branding::MENU_SLUG, array( $this, 'render' ) );
 	}
 
 	/**
@@ -79,11 +79,11 @@ final class DashboardPage {
 		$groups = array(
 			array(
 				'label' => '',
-				'items' => array( Branding::MENU_SLUG, 'publishrank-modules', 'publishrank-onboarding' ),
+				'items' => array( Branding::MENU_SLUG, 'publishrank-modules', 'publishrank-onboarding', 'publishrank-analytics', 'publishrank-woocommerce', 'publishrank-access-shield', 'publishrank-theme-seo' ),
 			),
 			array(
 				'label' => __( 'Content & publishing', 'publishrank' ),
-				'items' => array( 'publishrank-seo-score', 'publishrank-author-expertise', 'publishrank-publisher-toolkit', 'publishrank-image-optimizer', 'publishrank-seo-internal-links', 'publishrank-link-intelligence', 'publishrank-local-seo', 'publishrank-woocommerce' ),
+				'items' => array( 'publishrank-seo-score', 'publishrank-author-expertise', 'publishrank-publisher-toolkit', 'publishrank-image-optimizer', 'publishrank-seo-internal-links', 'publishrank-link-intelligence', 'publishrank-local-seo' ),
 			),
 			array(
 				'label' => __( 'Newsroom', 'publishrank' ),
@@ -95,20 +95,20 @@ final class DashboardPage {
 			),
 			array(
 				'label' => __( 'Measure & maintain', 'publishrank' ),
-				'items' => array( 'publishrank-analytics', 'publishrank-insights', 'publishrank-seo-redirects', 'publishrank-seo-404', 'publishrank-traffic-guard', 'publishrank-private-login', 'publishrank-seo-config-history', 'publishrank-seo-diagnostics' ),
+				'items' => array( 'publishrank-insights', 'publishrank-seo-redirects', 'publishrank-seo-404', 'publishrank-traffic-guard', 'publishrank-seo-config-history', 'publishrank-seo-diagnostics' ),
 			),
 			array(
 				'label' => __( 'Settings & support', 'publishrank' ),
 				'items' => array(
 					'publishrank',
-					array( __( 'Titles & Meta', 'publishrank' ), 'manage_options', 'admin.php?page=publishrank#pr-settings-titles', __( 'PublishRank Title Settings', 'publishrank' ) ),
-					array( __( 'Import / Export', 'publishrank' ), 'manage_options', 'admin.php?page=publishrank#pr-settings-portability', __( 'PublishRank Settings Portability', 'publishrank' ) ),
+					array( __( 'Titles & Meta', 'publishrank' ), 'publishrank_view_reports', 'admin.php?page=publishrank#pr-settings-titles', __( 'PublishRank Title Settings', 'publishrank' ) ),
+					array( __( 'Import / Export', 'publishrank' ), 'publishrank_view_reports', 'admin.php?page=publishrank#pr-settings-portability', __( 'PublishRank Settings Portability', 'publishrank' ) ),
 					'publishrank-documentation',
 				),
 			),
 		);
 
-		$essential = apply_filters( 'publishrank_seo_sidebar_essential_pages', array( Branding::MENU_SLUG, 'publishrank-modules', 'publishrank-onboarding', 'uj-newsroom', 'publishrank', 'publishrank-documentation' ) );
+		$essential = apply_filters( 'publishrank_seo_sidebar_essential_pages', array( Branding::MENU_SLUG, 'publishrank-modules', 'publishrank-onboarding', 'publishrank-analytics', 'publishrank-woocommerce', 'publishrank-access-shield', 'publishrank-theme-seo', 'uj-newsroom', 'publishrank', 'publishrank-documentation' ) );
 		$ordered   = array();
 		foreach ( $groups as $group ) {
 			$items = array();
@@ -158,7 +158,7 @@ final class DashboardPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) ) {
 			return;
 		}
 		$checks = $this->checks();
@@ -183,11 +183,10 @@ final class DashboardPage {
 		$recommendations = max( 0, $total - $passed - $blockers );
 		$blocker_summary = sprintf( _n( '%d blocking issue', '%d blocking issues', $blockers, 'publishrank' ), $blockers );
 		$recommendation_summary = sprintf( _n( '%d recommendation', '%d recommendations', $recommendations, 'publishrank' ), $recommendations );
-		$log    = NotFoundPage::entries();
-		$hits   = 0;
-		foreach ( $log as $entry ) {
-			$hits += (int) ( isset( $entry['count'] ) ? $entry['count'] : 1 );
-		}
+		// 404 Monitor v2 moved its log into \PublishRankSEO\Monitor\NotFoundStore; the old
+		// NotFoundPage::entries() call was removed in 2.23.0 and crashed this screen.
+		$nf_summary = class_exists( '\PublishRankSEO\Monitor\NotFoundStore' ) ? \PublishRankSEO\Monitor\NotFoundStore::summary( 30 ) : array( 'hits' => 0 );
+		$hits       = (int) ( isset( $nf_summary['hits'] ) ? $nf_summary['hits'] : 0 );
 		$counts       = wp_count_posts( 'post' );
 		$published    = $counts && isset( $counts->publish ) ? (int) $counts->publish : 0;
 			$indexnow = get_option( 'publishrank_indexnow_enabled', false ) ? __( 'On', 'publishrank' ) : __( 'Off', 'publishrank' );
@@ -246,6 +245,7 @@ final class DashboardPage {
 						<li><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><?php esc_html_e( 'Lightweight & Fast', 'publishrank' ); ?></li>
 						<li><i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i><?php esc_html_e( 'Seamless WordPress Integration', 'publishrank' ); ?></li>
 					</ul>
+					<?php \PublishRankSEO\News\WhatsNew::dashboard_card(); ?>
 					<?php ModulesPage::render_dashboard_section(); ?>
 					<section class="pr-workflow" aria-labelledby="pr-workflow-title">
 						<p class="pr-workflow__kicker"><?php esc_html_e( 'A practical workflow', 'publishrank' ); ?></p>
@@ -275,7 +275,7 @@ final class DashboardPage {
 			</div>
 			<div class="rhs-card">
 				<p class="rhs-label"><?php esc_html_e( 'Broken URLs (404)', 'publishrank' ); ?></p>
-				<p class="rhs-stat"><?php echo esc_html( number_format_i18n( count( $log ) ) ); ?> <small><?php echo esc_html( sprintf( /* translators: %s: hit count. */ __( '%s hits', 'publishrank' ), number_format_i18n( $hits ) ) ); ?></small></p>
+				<p class="rhs-stat"><?php echo esc_html( number_format_i18n( (int) ( isset( $nf_summary['paths'] ) ? $nf_summary['paths'] : 0 ) ) ); ?> <small><?php echo esc_html( sprintf( /* translators: %s: hit count. */ __( '%s hits', 'publishrank' ), number_format_i18n( $hits ) ) ); ?></small></p>
 				<p><a href="<?php echo esc_url( Branding::page_url( NotFoundPage::SLUG ) ); ?>"><?php esc_html_e( 'Review and redirect', 'publishrank' ); ?></a></p>
 			</div>
 			<div class="rhs-card">
@@ -366,7 +366,7 @@ final class DashboardPage {
 									array( 'slug' => 'publishrank-seo-redirects', 'icon' => 'fa-arrow-right-arrow-left', 'tone' => 'ink', 'kicker' => __( 'Link maintenance', 'publishrank' ), 'title' => __( 'Redirects', 'publishrank' ), 'description' => __( 'Create and review permanent or temporary redirects for changed URLs.', 'publishrank' ), 'button' => __( 'Manage redirects', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-404', 'icon' => 'fa-triangle-exclamation', 'tone' => 'rose', 'kicker' => __( 'Broken links', 'publishrank' ), 'title' => __( '404 monitor', 'publishrank' ), 'description' => __( 'Review not-found requests and decide which URLs need redirects.', 'publishrank' ), 'button' => __( 'Review 404s', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-traffic-guard', 'icon' => 'fa-shield-halved', 'tone' => 'rose', 'kicker' => __( 'Access policy', 'publishrank' ), 'title' => __( 'Traffic Guard', 'publishrank' ), 'description' => __( 'Review optional IP, proxy, and country-based access rules.', 'publishrank' ), 'button' => __( 'Configure Traffic Guard', 'publishrank' ) ),
-									array( 'slug' => 'publishrank-private-login', 'icon' => 'fa-key', 'tone' => 'ink', 'kicker' => __( 'Login & access', 'publishrank' ), 'title' => __( 'Private Login', 'publishrank' ), 'description' => __( 'Review the optional custom login and administration URL settings.', 'publishrank' ), 'button' => __( 'Review login settings', 'publishrank' ), 'new' => ! get_user_meta( get_current_user_id(), \PublishRankSEO\Security\PrivateLogin::META_SEEN, true ) ),
+									array( 'slug' => 'publishrank-access-shield', 'icon' => 'fa-key', 'tone' => 'ink', 'kicker' => __( 'Login & access', 'publishrank' ), 'title' => __( 'Access Shield', 'publishrank' ), 'description' => __( 'Private login address, lockouts, two-factor sign-in and hardening.', 'publishrank' ), 'button' => __( 'Review login settings', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-config-history', 'icon' => 'fa-clock-rotate-left', 'tone' => 'ink', 'kicker' => __( 'Change control', 'publishrank' ), 'title' => __( 'Configuration history', 'publishrank' ), 'description' => __( 'Review recorded SEO configuration changes and prior values.', 'publishrank' ), 'button' => __( 'View configuration history', 'publishrank' ) ),
 									array( 'slug' => 'publishrank-seo-diagnostics', 'icon' => 'fa-stethoscope', 'tone' => 'brass', 'kicker' => __( 'Troubleshooting', 'publishrank' ), 'title' => __( 'Diagnostics', 'publishrank' ), 'description' => __( 'Check plugin health, compatibility notices, and technical configuration.', 'publishrank' ), 'button' => __( 'Run diagnostics', 'publishrank' ) ),
 								),

@@ -1,27 +1,64 @@
 <?php
-/** Storage and validation for redirect rules. */
+/**
+ * Redirect rules facade. Since 2.23 the rules live in the indexed table managed by
+ * RedirectRepository; this class keeps the older array-shaped API for the rest of the plugin.
+ */
 namespace PublishRankSEO\Redirect;
 
 defined( 'ABSPATH' ) || exit;
 
 final class RedirectStore {
 	const OPTION    = 'publishrank_seo_redirects';
-	const MAX_RULES = 2000;
+	const MAX_RULES = 100000;
 
 	/** @return int[] */
 	public static function statuses() {
 		return array( 301, 302, 303, 307, 308, 410, 451 );
 	}
 
-	/** @return array<int,array<string,mixed>> */
+	/** Whether the table-backed engine is in use (always after the 2.23 migration). */
+	public static function v2() {
+		return RedirectRepository::ready() && get_option( RedirectRepository::MIGRATED_OPT );
+	}
+
+	/** Legacy array shape for a repository row. */
+	public static function legacy_shape( array $r ) {
+		return array(
+			'id'             => (int) $r['id'],
+			'source'         => $r['source'],
+			'target'         => $r['target'],
+			'status'         => (int) $r['status'],
+			'regex'          => 'regex' === $r['match_type'] ? 1 : 0,
+			'match_type'     => $r['match_type'],
+			'enabled'        => (int) $r['enabled'],
+			'preserve_query' => 'ignore' === $r['flags']['query'] ? 0 : 1,
+			'note'           => $r['note'],
+			'start_at'       => (int) $r['start_at'],
+			'end_at'         => (int) $r['end_at'],
+			'hits'           => (int) $r['hits'],
+		);
+	}
+
+	/**
+	 * Rules in the legacy array shape (bounded; use RedirectRepository::query() for paging).
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
 	public static function all() {
+		if ( self::v2() ) {
+			$limit = (int) apply_filters( 'publishrank_redirects_all_limit', 20000 );
+			return array_map( array( __CLASS__, 'legacy_shape' ), RedirectRepository::all( $limit ) );
+		}
 		$rules = get_option( self::OPTION, array() );
 		return is_array( $rules ) ? array_values( array_filter( $rules, 'is_array' ) ) : array();
 	}
 
-	/** @param array<int,array<string,mixed>> $rules Rules to store. */
+	/** @param array<int,array<string,mixed>> $rules Rules to store (pre-migration only). */
 	public static function save( array $rules ) {
-		update_option( self::OPTION, array_slice( array_values( $rules ), 0, self::MAX_RULES ), false );
+		if ( self::v2() ) {
+			return;
+		}
+		update_option( self::OPTION, array_slice( array_values( $rules ), 0, 2000 ), false );
 	}
 
 	/** Stable identifier for a rule. */
@@ -52,18 +89,10 @@ final class RedirectStore {
 		return '~' === substr( $pattern, 0, 1 ) ? '~(*LIMIT_MATCH=10000)(*LIMIT_DEPTH=1000)' . substr( $pattern, 1 ) : $pattern;
 	}
 
-	/** Targets must be a path on this site or a full URL on this site's host. */
-	public static function safe_target( $target ) {
-		$target = esc_url_raw( trim( (string) $target ) );
-		if ( '' === $target ) {
-			return '';
-		}
-		$host = wp_parse_url( $target, PHP_URL_HOST );
-		$home = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
-		if ( $host && ( ! $home || strtolower( $host ) !== strtolower( $home ) ) ) {
-			return '';
-		}
-		return $target;
+	/** Targets must be a path on this site, a URL on this site, or an allow-listed external host. */
+	public static function safe_target( $target, $allow_external = false ) {
+		$clean = RedirectRepository::check_target( $target, $allow_external );
+		return is_wp_error( $clean ) ? '' : $clean;
 	}
 
 	/** @return array<string,mixed>|\WP_Error */
@@ -143,13 +172,31 @@ foreach ( array( 'start_at' => __( 'Starts', 'publishrank' ), 'end_at' => __( 'E
 return $out ? implode( ' · ', $out ) : __( 'Always active', 'publishrank' );
 }
 	/** Add a rule, or replace the rule that has the same source. @return true|\WP_Error */
-	public static function add( $source, $target, $status = 301, $regex = false, $start_at = 0, $end_at = 0 ) {
+	public static function add( $source, $target, $status = 301, $regex = false, $start_at = 0, $end_at = 0, array $extra = array() ) {
+		if ( self::v2() ) {
+			$res = RedirectRepository::save(
+				array_merge(
+					array(
+						'source'     => $source,
+						'target'     => $target,
+						'status'     => $status,
+						'match_type' => $regex ? 'regex' : 'exact',
+						'start_at'   => $start_at,
+						'end_at'     => $end_at,
+					),
+					$extra
+				)
+			);
+			return is_wp_error( $res ) ? $res : true;
+		}
 		$rule = self::build_rule( $source, $target, $status, $regex );
 		if ( ! is_wp_error( $rule ) ) {
 			$window = self::schedule_window( $start_at, $end_at );
-			if ( is_wp_error( $window ) ) return $window;
+			if ( is_wp_error( $window ) ) {
+				return $window;
+			}
 			$rule['start_at'] = $window['start_at'];
-			$rule['end_at'] = $window['end_at'];
+			$rule['end_at']   = $window['end_at'];
 		}
 		if ( is_wp_error( $rule ) ) {
 			return $rule;
@@ -162,7 +209,7 @@ return $out ? implode( ' · ', $out ) : __( 'Always active', 'publishrank' );
 				return true;
 			}
 		}
-		if ( count( $rules ) >= self::MAX_RULES ) {
+		if ( count( $rules ) >= 2000 ) {
 			return new \WP_Error( 'publishrank_redirect_limit', __( 'The redirect limit has been reached. Remove unused rules first.', 'publishrank' ) );
 		}
 		$rules[] = $rule;
@@ -170,8 +217,19 @@ return $out ? implode( ' · ', $out ) : __( 'Always active', 'publishrank' );
 		return true;
 	}
 
-	/** @return bool Whether a rule was removed. */
+	/** @param int|string $id Numeric rule id (2.23+) or legacy md5 id. @return bool Whether a rule was removed. */
 	public static function delete( $id ) {
+		if ( self::v2() ) {
+			if ( is_numeric( $id ) ) {
+				return RedirectRepository::delete( (int) $id );
+			}
+			foreach ( self::all() as $rule ) {
+				if ( self::id( $rule ) === (string) $id ) {
+					return RedirectRepository::delete( (int) $rule['id'] );
+				}
+			}
+			return false;
+		}
 		$rules = self::all();
 		$kept  = array();
 		foreach ( $rules as $rule ) {
@@ -202,7 +260,7 @@ return $out ? implode( ' · ', $out ) : __( 'Always active', 'publishrank' );
 			$status = 301;
 			$target = '';
 			if ( 2 === count( $parts ) && in_array( $parts[1], array( '410', '451' ), true ) ) {
-				$status = 410;
+				$status = (int) $parts[1];
 			} elseif ( count( $parts ) >= 2 ) {
 				$target = $parts[1];
 				if ( isset( $parts[2] ) && ctype_digit( $parts[2] ) ) {
@@ -249,10 +307,33 @@ return $out ? implode( ' · ', $out ) : __( 'Always active', 'publishrank' );
 	 * @return array<int,array{path:string,status:int,target:string,regex:bool,loop:bool}>
 	 */
 	public static function trace( $url ) {
-		$path  = self::normalise_path( $url );
 		$hops  = array();
 		$seen  = array();
 		$limit = min( 50, max( 1, absint( get_option( 'publishrank_redirect_max_hops', 10 ) ) ) );
+		if ( self::v2() ) {
+			$path = RedirectRepository::key( $url );
+			for ( $i = 0; $i < $limit; $i++ ) {
+				$m = RedirectRepository::match( $path, array( 'ignore_conditions' => true ) );
+				if ( ! $m ) {
+					break;
+				}
+				$status = (int) $m['rule']['status'];
+				$target = $m['target'];
+				$loop   = isset( $seen[ $path ] );
+				$hops[] = array( 'path' => $path, 'status' => $status, 'target' => $target, 'regex' => 'regex' === $m['rule']['match_type'], 'loop' => $loop, 'rule_id' => (int) $m['rule']['id'], 'match_type' => $m['rule']['match_type'] );
+				$seen[ $path ] = true;
+				if ( $loop || in_array( $status, array( 410, 451 ), true ) || '' === $target ) {
+					break;
+				}
+				$host = wp_parse_url( $target, PHP_URL_HOST );
+				if ( $host && strtolower( (string) $host ) !== RedirectRepository::home_host() ) {
+					break;
+				}
+				$path = RedirectRepository::key( $target );
+			}
+			return $hops;
+		}
+		$path = self::normalise_path( $url );
 		for ( $i = 0; $i < $limit; $i++ ) {
 			$match = null;
 			foreach ( self::all() as $rule ) {

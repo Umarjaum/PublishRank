@@ -277,7 +277,7 @@ final class LiveSync {
 			)
 		);
 		$queue = get_option( 'publishrank_indexnow_queue', array() );
-		$nf    = get_option( 'publishrank_seo_404_log', array() );
+		$nf    = array_fill( 0, \PublishRankSEO\Monitor\NotFoundStore::summary( 30 )['open'], 1 );
 		return array(
 			'published_24h'  => (int) $day->found_posts,
 			'latest'         => $latest,
@@ -313,7 +313,7 @@ final class LiveSync {
 	/* ---------- REST ---------- */
 	public function routes() {
 		$can = static function () {
-			return current_user_can( 'manage_options' );
+			return \PublishRankSEO\Core\Capabilities::can( 'view_reports' );
 		};
 		register_rest_route(
 			'publishrank/v1',
@@ -356,7 +356,7 @@ final class LiveSync {
 		return $settings;
 	}
 	public function heartbeat( $response, $data ) {
-		if ( empty( $data['publishrank_live'] ) || ! current_user_can( 'manage_options' ) ) {
+		if ( empty( $data['publishrank_live'] ) || ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) ) {
 			return $response; }
 		$client_hash = isset( $data['publishrank_live']['hash'] ) ? sanitize_text_field( (string) $data['publishrank_live']['hash'] ) : '';
 		$payload     = self::payload();
@@ -380,7 +380,7 @@ final class LiveSync {
 
 	/* ---------- status bar shown under every PublishRank page header ---------- */
 	public function livebar( $page = '' ) {
-		if ( 'publishrank-search-console' === $page || ! current_user_can( 'manage_options' ) ) {
+		if ( 'publishrank-search-console' === $page || ! \PublishRankSEO\Core\Capabilities::can( 'view_reports' ) ) {
 			return; }
 		$item = static function ( $label, $path, $fmt = 'int' ) {
 			echo '<span class="pr-livebar__item"><span class="pr-livebar__label">' . esc_html( $label ) . '</span><strong data-pr-live="' . esc_attr( $path ) . '" data-fmt="' . esc_attr( $fmt ) . '">—</strong></span>';

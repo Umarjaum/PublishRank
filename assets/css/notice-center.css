@@ -1,0 +1,39 @@
+/* PublishRank Notice Center — one tidy, minimizable tray for admin notices. */
+.prn-tray{--prn-ink:#1d1520;--prn-muted:#6b5f6e;--prn-line:#eadfe6;--prn-bg:#fff;--prn-soft:#fbf7f9;--prn-brand:#8a1c47;--prn-error:#b42318;--prn-warning:#b54708;--prn-success:#1f7a4d;--prn-info:#2f5d8a;
+	margin:14px 20px 14px 2px;background:var(--prn-bg);border:1px solid var(--prn-line);border-radius:14px;box-shadow:0 1px 2px rgba(29,21,32,.04),0 6px 18px -12px rgba(29,21,32,.18);font-size:13px;color:var(--prn-ink);overflow:hidden}
+.prn-tray.has-errors{border-color:#f1c4bf}
+.prn-bar{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 6px;background:linear-gradient(180deg,var(--prn-soft),var(--prn-bg))}
+.prn-bar__toggle{display:inline-flex;align-items:center;gap:8px;flex:1 1 auto;min-height:32px;padding:4px 10px;border:0;background:none;border-radius:10px;cursor:pointer;color:inherit;font:600 13px/1.2 inherit;text-align:left}
+.prn-bar__toggle:hover{background:rgba(138,28,71,.06)}
+.prn-bar__toggle .fa-bell{color:var(--prn-brand)}
+.prn-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--prn-brand);color:#fff;font-size:11px;font-weight:700}
+.prn-alert{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:#fde8e6;color:var(--prn-error);font-size:11px;font-weight:700}
+.prn-chev{margin-left:auto;font-size:11px;color:var(--prn-muted);transition:transform .2s ease}
+[aria-expanded="false"]>.prn-chev{transform:rotate(-90deg)}
+.prn-bar__tools{display:flex;gap:4px;flex-wrap:wrap}
+.prn-link{border:0;background:none;padding:5px 8px;border-radius:8px;color:var(--prn-brand);font-weight:600;font-size:12px;cursor:pointer}
+.prn-link:hover{background:rgba(138,28,71,.07)}
+.prn-list{list-style:none;margin:0;padding:4px 8px 8px;border-top:1px solid var(--prn-line);max-height:min(70vh,900px);overflow:auto}
+.prn-item{margin:6px 0;border:1px solid var(--prn-line);border-left:3px solid var(--prn-info);border-radius:10px;background:var(--prn-bg);transition:box-shadow .15s ease}
+.prn-item:hover{box-shadow:0 2px 10px -6px rgba(29,21,32,.25)}
+.prn-error{border-left-color:var(--prn-error)}.prn-warning{border-left-color:var(--prn-warning)}.prn-success{border-left-color:var(--prn-success)}
+.prn-head{display:flex;align-items:center;gap:4px;padding:2px 4px 2px 2px}
+.prn-toggle{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0;min-height:36px;padding:6px 10px;border:0;background:none;border-radius:8px;cursor:pointer;color:inherit;text-align:left;font:500 13px/1.35 inherit}
+.prn-toggle:hover{background:var(--prn-soft)}
+.prn-title{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prn-item:not(.is-min) .prn-title{font-weight:600}
+.prn-icon{flex:0 0 auto;font-size:14px;color:var(--prn-info)}
+.prn-error .prn-icon{color:var(--prn-error)}.prn-warning .prn-icon{color:var(--prn-warning)}.prn-success .prn-icon{color:var(--prn-success)}
+.prn-actions{display:flex;gap:2px}
+.prn-act{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:8px;background:none;color:var(--prn-muted);cursor:pointer}
+.prn-act:hover{background:var(--prn-soft);color:var(--prn-ink)}
+.prn-body{padding:0 12px 10px 38px}
+.prn-body .notice.prn-pinned,.prn-body .updated.prn-pinned,.prn-body .error.prn-pinned{margin:0!important;padding:0 0 0 0!important;border:0!important;border-left:0!important;box-shadow:none!important;background:transparent!important}
+.prn-body .notice.prn-pinned>p:first-child,.prn-body .notice.prn-pinned>div:first-child{margin-top:0}
+.prn-body>.prn-pinned{position:relative!important}
+.prn-body>.prn-pinned{padding-right:34px!important}
+.prn-empty{margin:0;padding:12px 16px;color:var(--prn-muted);border-top:1px solid var(--prn-line)}
+.prn-tray button:focus-visible{outline:2px solid var(--prn-brand);outline-offset:1px}
+@media (max-width:782px){.prn-tray{margin:10px 10px 10px 0}.prn-bar{flex-wrap:wrap}.prn-body{padding-left:12px}.prn-act{width:40px;height:40px}}
+@media (prefers-reduced-motion:reduce){.prn-chev,.prn-item{transition:none}}
+.prn-tray.is-docked{margin:16px 0}

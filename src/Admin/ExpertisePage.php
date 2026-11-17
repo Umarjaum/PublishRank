@@ -10,9 +10,9 @@ final class ExpertisePage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 11 ); }
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Author Expertise', 'publishrank' ), __( 'Author Expertise', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) ); }
+		add_submenu_page( Branding::MENU_SLUG, __( 'Author Expertise', 'publishrank' ), __( 'Author Expertise', 'publishrank' ), 'publishrank_manage_settings', self::SLUG, array( $this, 'render' ) ); }
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 			return; }
 		$users    = get_users(
 			array(

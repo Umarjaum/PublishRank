@@ -10,13 +10,12 @@ defined( 'ABSPATH' ) || exit;
 
 final class PublicationProfile {
 	/**
-	 * Publication (website) title. Owned by PublishRank: read only from PublishRank settings and never from the WordPress
-	 * Site Title, so the name is the same in titles, meta, schema, sitemaps and llms.txt. Empty until the publisher sets it.
+	 * Shared website title, synchronized with the WordPress Site Title.
 	 *
 	 * @return string
 	 */
 	public static function publication_name() {
-		foreach ( array( 'publishrank_seo_publication_name', 'publishrank_identity_name' ) as $key ) {
+		foreach ( array( 'blogname', 'publishrank_identity_name', 'publishrank_seo_publication_name' ) as $key ) {
 			$name = trim( (string) get_option( $key, '' ) );
 			if ( '' !== $name ) {
 				return sanitize_text_field( $name ); }
@@ -25,12 +24,12 @@ final class PublicationProfile {
 	}
 
 	/**
-	 * Publication description / tagline, owned by PublishRank (never the WordPress Tagline).
+	 * Shared publication description / WordPress tagline.
 	 *
 	 * @return string
 	 */
 	public static function publication_description() {
-		foreach ( array( 'publishrank_identity_description', 'publishrank_schema_org_description' ) as $key ) {
+		foreach ( array( 'blogdescription', 'publishrank_identity_description', 'publishrank_schema_org_description' ) as $key ) {
 			$text = trim( (string) get_option( $key, '' ) );
 			if ( '' !== $text ) {
 				return sanitize_text_field( $text ); }

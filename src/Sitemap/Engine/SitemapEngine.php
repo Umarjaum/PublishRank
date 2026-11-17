@@ -36,6 +36,17 @@ final class SitemapEngine {
 	private $providers = null;
 	public function __construct() {
 		SitemapCursorStore::register();
+		if ( ! has_action( 'publishrank_sitemap_recount' ) ) {
+			add_action(
+				'publishrank_sitemap_recount',
+				function ( $slug ) {
+					$provider = $this->provider( sanitize_key( (string) $slug ) );
+					if ( $provider && method_exists( $provider, 'count_now' ) ) {
+						$provider->count_now();
+					}
+				}
+			);
+		}
 		$this->cache     = new SitemapCache();
 		$this->lock      = new SitemapLock();
 		$this->providers = null;
@@ -62,8 +73,20 @@ final class SitemapEngine {
 				return $provider;
 			}
 		} return null; }
+	/** Index XML, cached until any provider's version changes (content/settings change) or 5 minutes pass. */
 	public function index() {
-		return ( new SitemapIndex() )->render( $this->providers(), $this ); }
+		$versions = array();
+		foreach ( $this->providers() as $provider ) {
+			$versions[] = $provider->get_slug() . ':' . SitemapCursorStore::version( $provider->get_slug() ) . ':' . SitemapCursorStore::gens_hash( $provider->get_slug() ) . ':' . ( $provider->is_enabled() ? 1 : 0 );
+		}
+		$key    = 'publishrank_sitemap_index_' . md5( implode( '|', $versions ) . '|' . gmdate( 'YmdH' ) );
+		$cached = get_transient( $key );
+		if ( is_string( $cached ) && '' !== $cached ) {
+			return $cached; }
+		$xml = ( new SitemapIndex() )->render( $this->providers(), $this );
+		set_transient( $key, $xml, 5 * MINUTE_IN_SECONDS );
+		return $xml;
+	}
 	/** True when the XML holds at least one <url> entry. The sitemap protocol requires one, so an empty <urlset> is rejected by Google Search Console ("Missing XML tag: url"). */
 	public static function has_urls( $xml ) {
 		return is_string( $xml ) && false !== strpos( $xml, '<url>' ); }
@@ -79,9 +102,17 @@ final class SitemapEngine {
 		if ( $count > 1 ) {
 			return range( 1, $count ); }
 		// The News sitemap is always listed, even with no recent articles.
-		if ( 1 === $count && ( 'news' === $provider->get_slug() || '' !== $this->render( $provider->get_slug(), 1 ) ) ) {
+		if ( 1 === $count && ( 'news' === $provider->get_slug() || $this->has_content( $provider ) ) ) {
 			return array( 1 ); }
 		return array();
+	}
+	/** Cheap "does this single-file provider list anything?" check (a count query instead of rendering the file). */
+	private function has_content( $provider ) {
+		if ( method_exists( $provider, 'candidate_total' ) ) {
+			return $provider->candidate_total() > 0; }
+		if ( method_exists( $provider, 'author_total' ) ) {
+			return $provider->author_total() > 0; }
+		return '' !== $this->render( $provider->get_slug(), 1 );
 	}
 	/** Public entry: an enabled provider with no URLs answers 404 instead of serving an invalid empty <urlset>. */
 	public function render( $slug, $shard = 1 ) {
@@ -115,6 +146,8 @@ final class SitemapEngine {
 		if ( ! $provider || ! $provider->is_enabled() || absint( $shard ) < 1 || absint( $shard ) > $provider->get_shard_count() ) {
 			return ''; }
 		$shard = absint( $shard );
+		if ( method_exists( $provider, 'prepare_cursor' ) ) {
+			SitemapCursorStore::verify( $slug, $provider->get_shard_count() ); }
 		// News entries expire on a rolling publication-time window. Never serve
 		// cached or stale XML for this provider, otherwise an expired article can
 		// remain discoverable after its timestamp has left the configured window.
@@ -123,7 +156,7 @@ final class SitemapEngine {
 			return $cached; }
 		if ( method_exists( $provider, 'prepare_cursor' ) && ! SitemapCursorStore::is_ready( $slug, $shard ) ) {
 			// Do not depend on WP-Cron: advance the cursor a bounded number of steps inline first.
-			$this->prepare_inline( $provider, $slug );
+			$this->prepare_inline( $provider, $slug, $shard );
 			if ( ! SitemapCursorStore::is_ready( $slug, $shard ) ) {
 				SitemapCursorStore::request_preparation();
 				return null; }
@@ -156,16 +189,22 @@ final class SitemapEngine {
 		}
 	}
 	/** Bounded synchronous cursor progress, so a missing or disabled WP-Cron cannot leave a shard unavailable. */
-	private function prepare_inline( $provider, $slug ) {
+	private function prepare_inline( $provider, $slug, $shard = 1 ) {
 		if ( ! $this->lock->acquire_provider( $slug ) ) {
 			return; }
+		// Advance in small steps until the requested shard is ready or the time budget is spent (default 6 s),
+		// so a host without WP-Cron still serves the file on the first request instead of a 503 in most cases.
+		$budget = (float) apply_filters( 'publishrank_sitemap_inline_budget', 6.0, $slug );
+		$start  = microtime( true );
 		try {
-			$provider->prepare_cursor( SitemapCursorStore::INLINE_STEPS );
+			do {
+				$provider->prepare_cursor( SitemapCursorStore::INLINE_STEPS );
+			} while ( ! SitemapCursorStore::is_ready( $slug, $shard ) && ! SitemapCursorStore::is_complete( $slug ) && ( microtime( true ) - $start ) < $budget );
 		} finally {
 			$this->lock->release_provider( $slug ); }
 	}
 	public function clear_cache() {
 		$this->cache->clear(); }
 	private function stale_key( $slug, $shard ) {
-		return 'publishrank_sitemap_stale_' . sanitize_key( $slug ) . '_' . absint( $shard ) . '_' . SitemapCursorStore::version( $slug ); }
+		return 'publishrank_sitemap_stale_' . sanitize_key( $slug ) . '_' . absint( $shard ) . '_' . SitemapCursorStore::version( $slug ); } // Stale copy survives per-file refreshes on purpose.
 }

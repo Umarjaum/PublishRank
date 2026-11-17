@@ -284,7 +284,7 @@ final class BaiduSubmission {
 		$plain = openssl_decrypt( substr( $raw, 28 ), 'aes-256-gcm', $key, OPENSSL_RAW_DATA, substr( $raw, 0, 12 ), substr( $raw, 12, 16 ), 'publishrank-baidu-v1' );
 		return false === $plain ? '' : $plain; }
 	private function guard( $action ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_indexing' ) ) {
 			wp_die( esc_html__( 'You do not have permission to manage Baidu submissions.', 'publishrank' ), '', array( 'response' => 403 ) );
 		} check_admin_referer( $action ); }
 	private function redirect( $type, $message ) {

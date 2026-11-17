@@ -13,7 +13,7 @@
 		return { key: key, lower: key.toLowerCase(), text: String(cfg.map[key]) };
 	}).sort(function (a, b) { return b.key.length - a.key.length; });
 
-	var SKIP = '.pr-docs, .pr-modules-nav, .pr-shell-intro, .rhs-header, .pr-shell-nav, .pr-module, .pr-hub-row, .notice, #wpadminbar, #adminmenu, [data-pr-no-help]';
+	var SKIP = '.pr-docs, .pr-modules-nav, .pr-shell-intro, .rhs-header, .pr-shell-nav, .pr-module, .pr-hub-row, .notice, #wpadminbar, #adminmenu, [data-pr-no-help], [class*="prx-news"]';
 	var EXISTING = '.pr-help-icon, [data-pr-help], .dashicons-editor-help, .pr-tip, .rhs-info, .pr-info';
 	var SCOPE = 'tr, fieldset, .pr-set-card, .pr-hub-card, .rhs-card, .pr-field, .pr-seo-field, .postbox, .card, section, form';
 

@@ -32,7 +32,7 @@ final class RatingNotice {
 	}
 
 	private function should_show() {
-		return current_user_can( 'manage_options' )
+		return \PublishRankSEO\Core\Capabilities::can( 'manage_settings' )
 			&& Branding::is_plugin_screen()
 			&& ! get_user_meta( get_current_user_id(), self::META_RATED, true );
 	}
@@ -71,7 +71,7 @@ final class RatingNotice {
 
 	public function ajax() {
 		check_ajax_referer( self::ACTION, 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 			wp_send_json_error( null, 403 );
 		}
 		$do = isset( $_POST['do'] ) ? sanitize_key( wp_unslash( $_POST['do'] ) ) : '';

@@ -23,7 +23,7 @@ final class FeedsPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'RSS Feeds', 'publishrank' ), __( 'RSS Feeds', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'RSS Feeds', 'publishrank' ), __( 'RSS Feeds', 'publishrank' ), 'publishrank_manage_feeds', self::SLUG, array( $this, 'render' ) );
 	}
 
 	public function assets() {
@@ -34,15 +34,29 @@ final class FeedsPage {
 	}
 
 	public function save() {
-		AdminAssets::guard( self::ACTION );
+		AdminAssets::guard( self::ACTION, 'publishrank_manage_feeds' );
 		check_admin_referer( self::ACTION );
 		$raw    = isset( $_POST['feeds'] ) && is_array( $_POST['feeds'] ) ? map_deep( wp_unslash( $_POST['feeds'] ), 'sanitize_textarea_field' ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		// Unchecked checkboxes are absent from the POST: store them as off (otherwise a default of 1 could never be turned off).
+		foreach ( array( 'append_author', 'append_publisher', 'append_copyright', 'append_categories', 'news_feed', 'discovery', 'exclude_noindex', 'websub', 'json_feed', 'utm' ) as $flag ) {
+			if ( ! isset( $raw[ $flag ] ) ) {
+				$raw[ $flag ] = 0; }
+		}
 		$before = FeedManager::settings();
 		$clean  = FeedManager::sanitize( $raw );
 		update_option( FeedManager::OPTION, $clean, false );
 		// Shared with General Settings → Feeds: one option each, never duplicated.
 		update_option( 'publishrank_feed_images', empty( $_POST['feed_images'] ) ? 0 : 1 ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		update_option( 'publishrank_feed_attribution', empty( $_POST['feed_attribution'] ) ? 0 : 1 ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( (int) $before['json_feed'] !== (int) $clean['json_feed'] ) {
+			global $wp_rewrite;
+			if ( $clean['json_feed'] ) {
+				add_feed( \PublishRankSEO\Feeds\FeedEnhancer::JSON_FEED, '__return_null' );
+			} else {
+				$wp_rewrite->feeds = array_values( array_diff( (array) $wp_rewrite->feeds, array( \PublishRankSEO\Feeds\FeedEnhancer::JSON_FEED ) ) );
+			}
+			flush_rewrite_rules( false );
+		}
 		if ( (int) $before['news_feed'] !== (int) $clean['news_feed'] ) {
 			global $wp_rewrite;
 			if ( $clean['news_feed'] ) {
@@ -56,7 +70,7 @@ final class FeedsPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_feeds' ) ) {
 			return;
 		}
 		$s         = FeedManager::settings();
@@ -121,6 +135,32 @@ final class FeedsPage {
 				<label class="pr21-check"><input type="checkbox" name="<?php echo esc_attr( $f( 'append_copyright' ) ); ?>" value="1" <?php checked( $s['append_copyright'] ); ?> /> <?php esc_html_e( 'Copyright notice', 'publishrank' ); ?></label>
 				<div class="pr21-row"><label for="pr21-custom"><?php esc_html_e( 'Custom attribution text', 'publishrank' ); ?></label><textarea id="pr21-custom" class="large-text" rows="2" name="<?php echo esc_attr( $f( 'custom_text' ) ); ?>" placeholder="<?php esc_attr_e( 'Read %%title%% on %%sitename%%.', 'publishrank' ); ?>"><?php echo esc_textarea( $s['custom_text'] ); ?></textarea><p class="description"><?php esc_html_e( 'Plain text. Variables: %%title%%, %%permalink%%, %%sitename%%, %%author%%, %%date%%, %%year%%. Unknown variables are removed.', 'publishrank' ); ?></p></div>
 				<?php $this->render_item_preview(); ?>
+			</section>
+
+			<section class="pr21-card">
+				<h2><span class="fa-solid fa-filter" aria-hidden="true"></span> <?php esc_html_e( 'What feeds leave out', 'publishrank' ); ?></h2>
+				<label class="pr21-check"><input type="checkbox" name="<?php echo esc_attr( $f( 'exclude_noindex' ) ); ?>" value="1" <?php checked( $s['exclude_noindex'] ); ?> /> <?php esc_html_e( 'Leave out articles set to noindex', 'publishrank' ); ?></label>
+				<div class="pr21-row"><label for="pr21-xterms"><?php esc_html_e( 'Leave out these categories or tags (IDs)', 'publishrank' ); ?></label><input id="pr21-xterms" class="regular-text" type="text" inputmode="numeric" name="<?php echo esc_attr( $f( 'exclude_terms' ) ); ?>" value="<?php echo esc_attr( $s['exclude_terms'] ); ?>" placeholder="12, 48" /><p class="description"><?php esc_html_e( 'Comma-separated IDs, for example sponsored or internal sections. Applies to every feed, including category feeds.', 'publishrank' ); ?></p></div>
+				<div class="pr21-row"><label for="pr21-xposts"><?php esc_html_e( 'Leave out these articles (IDs)', 'publishrank' ); ?></label><input id="pr21-xposts" class="regular-text" type="text" inputmode="numeric" name="<?php echo esc_attr( $f( 'exclude_posts' ) ); ?>" value="<?php echo esc_attr( $s['exclude_posts'] ); ?>" /></div>
+				<div class="pr21-row"><label for="pr21-delay"><?php esc_html_e( 'Delay new articles in feeds (minutes)', 'publishrank' ); ?></label><input id="pr21-delay" type="number" min="0" max="1440" name="<?php echo esc_attr( $f( 'delay_minutes' ) ); ?>" value="<?php echo esc_attr( (string) $s['delay_minutes'] ); ?>" /><p class="description"><?php esc_html_e( 'Search engines see the article first; scrapers that copy your feed get it later. 0 = no delay.', 'publishrank' ); ?></p></div>
+			</section>
+
+			<section class="pr21-card">
+				<h2><span class="fa-solid fa-bolt" aria-hidden="true"></span> <?php esc_html_e( 'Instant delivery and formats', 'publishrank' ); ?></h2>
+				<label class="pr21-check"><input type="checkbox" name="<?php echo esc_attr( $f( 'websub' ) ); ?>" value="1" <?php checked( $s['websub'] ); ?> /> <?php esc_html_e( 'WebSub: notify feed readers and aggregators the moment an article is published or updated', 'publishrank' ); ?></label>
+				<div class="pr21-row"><label for="pr21-hub"><?php esc_html_e( 'WebSub hub', 'publishrank' ); ?></label><input id="pr21-hub" class="regular-text" type="url" name="<?php echo esc_attr( $f( 'hub_url' ) ); ?>" value="<?php echo esc_attr( $s['hub_url'] ); ?>" placeholder="<?php echo esc_attr( \PublishRankSEO\Feeds\FeedEnhancer::DEFAULT_HUB ); ?>" />
+				<?php
+				$last = get_option( 'publishrank_websub_last' );
+				if ( is_array( $last ) && ! empty( $last['results'] ) ) {
+					$ok = count( array_filter( $last['results'], static function ( $c ) { return is_int( $c ) && $c >= 200 && $c < 300; } ) );
+					/* translators: 1: time ago 2: ok count 3: total */
+					echo '<p class="description">' . esc_html( sprintf( __( 'Last notification %1$s ago: %2$d of %3$d feeds accepted by the hub.', 'publishrank' ), human_time_diff( (int) $last['time'] ), $ok, count( $last['results'] ) ) ) . '</p>';
+				}
+				?>
+				</div>
+				<label class="pr21-check"><input type="checkbox" name="<?php echo esc_attr( $f( 'json_feed' ) ); ?>" value="1" <?php checked( $s['json_feed'] ); ?> /> <?php echo esc_html( sprintf( /* translators: %s: URL */ __( 'Publish a JSON Feed 1.1 at %s', 'publishrank' ), get_feed_link( \PublishRankSEO\Feeds\FeedEnhancer::JSON_FEED ) ) ); ?></label>
+				<label class="pr21-check"><input type="checkbox" name="<?php echo esc_attr( $f( 'utm' ) ); ?>" value="1" <?php checked( $s['utm'] ); ?> /> <?php esc_html_e( 'Tag item links for analytics (utm_source=rss, utm_medium=feed); item IDs stay unchanged', 'publishrank' ); ?></label>
+				<div class="pr21-row"><label for="pr21-utm"><?php esc_html_e( 'Campaign name', 'publishrank' ); ?></label><input id="pr21-utm" type="text" name="<?php echo esc_attr( $f( 'utm_campaign' ) ); ?>" value="<?php echo esc_attr( $s['utm_campaign'] ); ?>" placeholder="feed" /></div>
 			</section>
 
 			<section class="pr21-card">

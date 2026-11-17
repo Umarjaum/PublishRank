@@ -19,6 +19,10 @@ final class TraceIntegrity {
 	/** Build the markers once so both wp_head and the theme-recovery path use identical output. */
 	public static function markup() {
 		$version = defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : 'unknown';
+		// Access Shield → Hardening can hide every software version from public pages.
+		if ( ! apply_filters( 'publishrank_expose_version', true ) ) {
+			return '';
+		}
 		return '<!-- PublishRank version=' . esc_attr( $version ) . '; fingerprint=' . esc_attr( self::fingerprint() ) . " -->\n"
 			. '<meta name="publishrank-brand" content="PublishRank" />' . "\n"
 			. '<meta name="publishrank-version" content="' . esc_attr( $version ) . '" />' . "\n";

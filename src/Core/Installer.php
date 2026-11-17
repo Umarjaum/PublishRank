@@ -189,14 +189,14 @@ final class Installer {
 		// Fresh installs must complete the setup wizard once; sites that already finished it are left alone.
 		if ( ! get_option( 'publishrank_onboarding_completed_at', '' ) ) {
 			update_option( 'publishrank_setup_required', 1, false );
-			// A new install must not move the login before the owner has seen the new address (Setup Wizard, Security step).
-			// Sites that already saved or switched Private Login are left exactly as they were.
-			\PublishRankSEO\Security\PrivateLogin::upgrade_storage();
-			if ( null === get_option( \PublishRankSEO\Security\PrivateLogin::OPTION, null ) && null === get_option( 'publishrank_login_slug', null ) ) {
-				add_option( \PublishRankSEO\Security\PrivateLogin::OPTION, 0, '', false );
-				add_option( \PublishRankSEO\Security\PrivateLogin::DEFERRED_OPTION, 1, '', false );
-			}
+			// The private login address stays off on fresh installs until the owner picks it in the
+			// Setup Wizard or Access Shield (with a 10-minute confirm-or-undo window).
 		}
+		\PublishRankSEO\Core\Database::install();
+		\PublishRankSEO\Core\Capabilities::install();
+		\PublishRankSEO\AccessShield\AccessShield::maybe_import_legacy();
+		\PublishRankSEO\Redirect\RedirectRepository::migrate_legacy();
+		\PublishRankSEO\Monitor\NotFoundStore::migrate_legacy();
 		\PublishRankSEO\InternalLinks\Store::install();
 		update_option( 'publishrank_seo_cache_epoch', time(), false );
 		update_option( self::VERSION_OPTION, PUBLISHRANK_SEO_VERSION, true );
@@ -207,6 +207,37 @@ final class Installer {
 		flush_rewrite_rules();
 	}
 
+	/**
+	 * Multisite: a site that never ran activation (network-activated before the site existed, or a site nobody has
+	 * visited since network activation) is installed the first time any request reaches it. A short lock keeps parallel
+	 * first requests from installing twice.
+	 */
+	public static function ensure_site() {
+		if ( ! is_multisite() || '' !== (string) get_option( self::VERSION_OPTION, '' ) ) {
+			return;
+		}
+		if ( get_transient( 'publishrank_site_install_lock' ) ) {
+			return;
+		}
+		set_transient( 'publishrank_site_install_lock', 1, 60 );
+		self::activate();
+		delete_transient( 'publishrank_site_install_lock' );
+		do_action( 'publishrank_site_installed', get_current_blog_id() );
+	}
+
+	/** A site created after network activation is installed immediately. */
+	public static function install_new_site( $site ) {
+		if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		if ( ! is_multisite() || ! $site instanceof \WP_Site || ! is_plugin_active_for_network( plugin_basename( PUBLISHRANK_SEO_FILE ) ) ) {
+			return;
+		}
+		switch_to_blog( (int) $site->blog_id );
+		self::activate();
+		restore_current_blog();
+	}
+
 	/** Runs once after the plugin files are updated (admin requests only). */
 	public static function maybe_upgrade() {
 		if ( ! is_admin() || PUBLISHRANK_SEO_VERSION === (string) get_option( self::VERSION_OPTION, '' ) ) {
@@ -215,6 +246,10 @@ final class Installer {
 		$previous_version = (string) get_option( self::VERSION_OPTION, '0' );
 		self::install_defaults();
 		\PublishRankSEO\InternalLinks\Store::install();
+		\PublishRankSEO\Core\Database::maybe_install();
+		\PublishRankSEO\Core\Capabilities::maybe_install();
+		\PublishRankSEO\Redirect\RedirectRepository::migrate_legacy();
+		\PublishRankSEO\Monitor\NotFoundStore::migrate_legacy();
 		( new \PublishRankSEO\Indexing\IndexNow() )->rewrite();
 		( new \PublishRankSEO\AI\LLMSTxt() )->rewrite();
 		// Shard boundaries changed in 2.9.20; bump versions so old cursor checkpoints and cached XML cannot be reused.

@@ -44,7 +44,7 @@ final class BreadcrumbsPage {
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Breadcrumbs', 'publishrank' ), __( 'Breadcrumbs', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( 'Breadcrumbs', 'publishrank' ), __( 'Breadcrumbs', 'publishrank' ), 'publishrank_manage_navigation', self::SLUG, array( $this, 'render' ) );
 	}
 
 	/** Known breadcrumb markup and the renderer that produces it. */
@@ -63,7 +63,7 @@ final class BreadcrumbsPage {
 	}
 
 	public function save() {
-		AdminAssets::guard( 'publishrank_breadcrumbs_save' );
+		AdminAssets::guard( 'publishrank_breadcrumbs_save', 'publishrank_manage_navigation' );
 		$post = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by guard().
 		foreach ( array( 'publishrank_breadcrumbs_enabled', 'publishrank_breadcrumb_frontend_override', 'publishrank_breadcrumb_schema_enabled' ) as $key ) {
 			update_option( $key, isset( $post[ $key ] ) && '1' === (string) $post[ $key ] ? 1 : 0 );
@@ -161,7 +161,7 @@ final class BreadcrumbsPage {
 
 	/** Administrator-triggered, nonce-protected and rate-limited (one run every 20 seconds). */
 	public function scan() {
-		AdminAssets::guard( 'publishrank_breadcrumbs_scan' );
+		AdminAssets::guard( 'publishrank_breadcrumbs_scan', 'publishrank_manage_navigation' );
 		if ( get_transient( self::SCAN_KEY . '_lock' ) ) {
 			AdminAssets::done( self::SLUG, 'error', __( 'A site check ran a moment ago. Wait about 20 seconds and try again.', 'publishrank' ) );
 		}
@@ -189,7 +189,7 @@ final class BreadcrumbsPage {
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_navigation' ) ) {
 			return;
 		}
 		$action  = admin_url( 'admin-post.php' );

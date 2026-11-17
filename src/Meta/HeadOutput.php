@@ -75,9 +75,9 @@ final class HeadOutput {
 		$markers = \PublishRankSEO\Core\OutputSettings::source_markers();
 		if ( $markers ) {
 			echo "<!-- SEO Powered by PublishRank -->\n"; }
-		echo '<!-- PublishRank: begin; version=' . esc_html( $markers ? PUBLISHRANK_SEO_VERSION : '' ) . '; output=technical,social,news -->' . "\n";
+		echo '<!-- PublishRank: begin; version=' . esc_html( $markers && apply_filters( 'publishrank_expose_version', true ) ? PUBLISHRANK_SEO_VERSION : '' ) . '; output=technical,social,news -->' . "\n";
 		if ( $markers ) {
-			echo '<meta name="generator" content="PublishRank ' . esc_attr( PUBLISHRANK_SEO_VERSION ) . '" />' . "\n";
+			echo '<meta name="generator" content="' . esc_attr( apply_filters( 'publishrank_expose_version', true ) ? 'PublishRank ' . PUBLISHRANK_SEO_VERSION : 'PublishRank' ) . '" />' . "\n";
 			echo '<meta name="publishrank" content="active" />' . "\n";
 		}
 		echo "<!-- Technical metadata begin -->\n";

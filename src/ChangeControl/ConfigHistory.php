@@ -11,11 +11,16 @@ final class ConfigHistory {
 			add_action( 'update_option_' . $option, array( $this, 'changed' ), 20, 3 ); }
 	}
 	public function ensure() {
-		if ( ! get_option( SnapshotStore::OPTION, false ) ) {
+		// Only in the admin: reading the (large) history on every public page costs a query and memory for nothing.
+		if ( ! is_admin() || wp_doing_ajax() ) {
+			return;
+		}
+		if ( ! get_option( 'publishrank_seo_config_snapshot_initial', 0 ) && ! get_option( SnapshotStore::OPTION, false ) ) {
 			SnapshotStore::snapshot( __( 'Initial SEO configuration', 'publishrank' ) ); }
+		update_option( 'publishrank_seo_config_snapshot_initial', 1, true );
 	}
 	public function changed( $old, $new, $option ) {
-		if ( wp_doing_ajax() && ! current_user_can( 'manage_options' ) ) {
+		if ( wp_doing_ajax() && ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 			return; }
 		if ( wp_json_encode( $old ) === wp_json_encode( $new ) ) {
 			return; }

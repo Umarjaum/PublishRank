@@ -44,6 +44,15 @@ final class FeedManager {
 			'news_hours'        => 48,
 			'discovery'         => 1,
 			'cache_max_age'     => 0,
+			'exclude_noindex'   => 1,
+			'exclude_terms'     => '',
+			'exclude_posts'     => '',
+			'delay_minutes'     => 0,
+			'websub'            => 0,
+			'hub_url'           => '',
+			'json_feed'         => 0,
+			'utm'               => 0,
+			'utm_campaign'      => '',
 		);
 	}
 
@@ -68,6 +77,20 @@ final class FeedManager {
 					break;
 				case 'cache_max_age':
 					$out[ $key ] = max( 0, min( 86400, absint( $value ) ) );
+					break;
+				case 'delay_minutes':
+					$out[ $key ] = max( 0, min( 1440, absint( $value ) ) );
+					break;
+				case 'exclude_terms':
+				case 'exclude_posts':
+					$out[ $key ] = implode( ',', array_values( array_unique( array_filter( array_map( 'absint', preg_split( '/[\s,;]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY ) ) ) ) ) );
+					break;
+				case 'hub_url':
+					$url         = esc_url_raw( trim( (string) $value ), array( 'https' ) );
+					$out[ $key ] = ( $url && wp_http_validate_url( $url ) ) ? $url : '';
+					break;
+				case 'utm_campaign':
+					$out[ $key ] = sanitize_title( (string) $value );
 					break;
 				case 'content_mode':
 					$out[ $key ] = in_array( $value, array( 'full', 'excerpt' ), true ) ? $value : '';
@@ -337,6 +360,7 @@ final class FeedManager {
 			array(
 				'post_type'           => $types ? $types : array( 'post' ),
 				'post_status'         => 'publish',
+				'publishrank_feed'    => 1, // Feed exclusions and publish delay apply here too.
 				'has_password'        => false,
 				'posts_per_page'      => max( 1, min( 100, $limit ) ),
 				'ignore_sticky_posts' => true,

@@ -42,7 +42,6 @@
 		'publishrank-seo-redirects': ['dashicons-randomize'],
 		'publishrank-seo-404': ['dashicons-warning'],
 		'publishrank-traffic-guard': ['dashicons-lock'],
-		'publishrank-private-login': ['dashicons-hidden'],
 		'publishrank-seo-config-history': ['dashicons-backup'],
 		'publishrank-seo-diagnostics': ['dashicons-heart'],
 		'publishrank': ['dashicons-admin-settings'],

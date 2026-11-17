@@ -1,65 +1,97 @@
 <?php
-/**
- * Makes PublishRank's publication title and description the Site Title and Tagline that WordPress prints on the public site.
- *
- * Only the VALUE returned for the public side is replaced (option_blogname / option_blogdescription), so themes, block themes,
- * Elementor widgets, feeds, the REST index and get_bloginfo() all show the PublishRank identity after a single setup. The values
- * stored in WordPress General Settings are never written or changed, the override is not applied in wp-admin (so General
- * Settings still shows and saves the real WordPress values) nor on the settings REST route, and an empty PublishRank value
- * leaves the WordPress value in place (there is nothing to override it with).
- *
- * @package PublishRankSEO
- */
+/** Keep site identity synchronized across native WordPress and legacy PublishRank settings. */
 namespace PublishRankSEO\Core;
 
 defined( 'ABSPATH' ) || exit;
 
 final class IdentityOverride {
-	const OPTION = 'publishrank_override_wp_identity';
+	const OPTION = 'publishrank_override_wp_identity'; // Retained for import compatibility; identity is always shared.
+	const MIGRATION = 'publishrank_shared_identity_version';
+	private $running = false;
+
+	public static function groups() {
+		return array(
+			array( 'publishrank_identity_name', 'publishrank_seo_publication_name', 'blogname', 'publishrank_home_title', 'publishrank_seo_publisher_name' ),
+			array( 'publishrank_identity_description', 'publishrank_schema_org_description', 'blogdescription', 'publishrank_home_description' ),
+		);
+	}
 
 	public function register() {
-		add_filter( 'option_blogname', array( $this, 'name' ), 20 );
-		add_filter( 'option_blogdescription', array( $this, 'description' ), 20 );
-		add_action( 'admin_notices', array( $this, 'general_settings_notice' ) );
+		add_action( 'updated_option', array( $this, 'updated' ), 5, 3 );
+		add_action( 'added_option', array( $this, 'added' ), 5, 2 );
+		add_action( 'deleted_option', array( $this, 'deleted' ), 5, 1 );
+		add_action( 'init', array( $this, 'migrate' ), 101 );
 	}
 
-	/** Missing option means on. */
 	public static function enabled() {
-		return (bool) get_option( self::OPTION, 1 );
+		return true;
 	}
 
-	/** Whether this request may show the override (public side only; never wp-admin, AJAX/admin-post or the settings REST route). */
-	private function applies() {
-		if ( is_admin() ) {
-			return false; }
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only compared.
-		$route = isset( $_GET['rest_route'] ) ? (string) wp_unslash( $_GET['rest_route'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		if ( false !== strpos( $uri, '/wp/v2/settings' ) || false !== strpos( $route, '/wp/v2/settings' ) ) {
-			return false; }
-		return self::enabled();
+	public function updated( $option, $old, $value ) {
+		$this->sync( $option, $value );
 	}
 
-	public function name( $value ) {
-		if ( ! $this->applies() ) {
-			return $value; }
-		$mine = PublicationProfile::publication_name();
-		return '' !== $mine ? $mine : $value;
+	public function added( $option, $value ) {
+		// Empty installer defaults must not erase an existing site's identity.
+		if ( is_scalar( $value ) && '' !== trim( (string) $value ) ) {
+			$this->sync( $option, $value );
+		}
 	}
 
-	public function description( $value ) {
-		if ( ! $this->applies() ) {
-			return $value; }
-		$mine = PublicationProfile::publication_description();
-		return '' !== $mine ? $mine : $value;
+	public function deleted( $option ) {
+		foreach ( self::groups() as $group ) {
+			if ( in_array( $option, $group, true ) ) {
+				foreach ( $group as $peer ) {
+					if ( $peer !== $option && '' !== (string) get_option( $peer, '' ) ) {
+						$this->sync( $peer, get_option( $peer ) );
+						return;
+					}
+				}
+			}
+		}
 	}
 
-	/** On Settings > General, say that the public site shows the PublishRank values. */
-	public function general_settings_notice() {
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || 'options-general' !== $screen->id || ! current_user_can( 'manage_options' ) || ! self::enabled() ) {
-			return; }
-		if ( '' === PublicationProfile::publication_name() && '' === PublicationProfile::publication_description() ) {
-			return; }
-		echo '<div class="notice notice-info"><p>' . esc_html__( 'PublishRank is overriding the Site Title and Tagline on the public website with the publication title and description set in PublishRank. The values below are left unchanged. Turn this off in PublishRank Settings > Visible publication identity.', 'publishrank' ) . '</p></div>';
+	private function sync( $option, $value ) {
+		if ( $this->running ) {
+			return;
+		}
+		foreach ( self::groups() as $group ) {
+			if ( ! in_array( $option, $group, true ) ) {
+				continue;
+			}
+			$this->running = true;
+			try {
+				$value = sanitize_text_field( (string) $value );
+				foreach ( $group as $peer ) {
+					update_option( $peer, $value );
+				}
+			} finally {
+				$this->running = false;
+			}
+			return;
+		}
+	}
+
+	public function migrate() {
+		if ( get_option( self::MIGRATION ) ) {
+			return;
+		}
+		$backup = array();
+		foreach ( self::groups() as $group ) {
+			foreach ( $group as $option ) {
+				$backup[ $option ] = get_option( $option, null );
+			}
+		}
+		add_option( 'publishrank_shared_identity_backup', $backup, '', false );
+		foreach ( self::groups() as $group ) {
+			foreach ( $group as $option ) {
+				$value = trim( (string) get_option( $option, '' ) );
+				if ( '' !== $value ) {
+					$this->sync( $option, $value );
+					break;
+				}
+			}
+		}
+		update_option( self::MIGRATION, 1, false );
 	}
 }

@@ -55,7 +55,7 @@ final class PublisherToolkitPage {
 			wp_die( esc_html__( 'You do not have permission to access Publisher Toolkit.', 'publishrank' ) );
 		}
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'bulk'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
-		if ( ! in_array( $tab, array( 'bulk', 'images', 'access' ), true ) || ( 'bulk' !== $tab && ! current_user_can( 'manage_options' ) ) ) {
+		if ( ! in_array( $tab, array( 'bulk', 'images', 'access' ), true ) || ( 'bulk' !== $tab && ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) ) {
 			$tab = 'bulk';
 		}
 		echo '<div class="wrap">';
@@ -63,7 +63,7 @@ final class PublisherToolkitPage {
 		$this->notice();
 		echo '<nav class="nav-tab-wrapper">';
 		$tabs = array( 'bulk' => __( 'Bulk SEO Editor', 'publishrank' ) );
-		if ( current_user_can( 'manage_options' ) ) {
+		if ( \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			$tabs['images'] = __( 'Image Alt Assistant', 'publishrank' );
 			$tabs['access'] = __( 'Role Access', 'publishrank' );
 		}
@@ -243,7 +243,7 @@ final class PublisherToolkitPage {
 	}
 
 	public function fill_missing_alt() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			wp_die( esc_html__( 'Only administrators can run the media-library batch operation.', 'publishrank' ), 403 );
 		}
 		check_admin_referer( 'publishrank_fill_missing_alt' );
@@ -284,7 +284,7 @@ final class PublisherToolkitPage {
 	}
 
 	private function access_tab() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Only administrators can change role access settings.', 'publishrank' ) . '</p></div>';
 			return;
 		}
@@ -310,7 +310,7 @@ final class PublisherToolkitPage {
 	}
 
 	public function save_settings() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			wp_die( esc_html__( 'Only administrators can change Publisher Toolkit settings.', 'publishrank' ), 403 );
 		}
 		check_admin_referer( 'publishrank_toolkit_save' );

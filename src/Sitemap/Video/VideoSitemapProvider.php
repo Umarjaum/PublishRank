@@ -19,6 +19,12 @@ final class VideoSitemapProvider extends AbstractPostProvider {
 		return true; }
 	public function is_enabled() {
 		return (bool) get_option( 'publishrank_seo_video_sitemap', true ); }
+	/** Only posts that can carry a video: <video>, a YouTube/Vimeo iframe, or an attached video file. */
+	protected function candidate_where() {
+		global $wpdb;
+		return "( {$wpdb->posts}.post_content LIKE '%<video%' OR {$wpdb->posts}.post_content LIKE '%youtube.com%' OR {$wpdb->posts}.post_content LIKE '%youtu.be%' OR {$wpdb->posts}.post_content LIKE '%vimeo.com%'"
+			. " OR EXISTS (SELECT 1 FROM {$wpdb->posts} prx_v WHERE prx_v.post_parent = {$wpdb->posts}.ID AND prx_v.post_type = 'attachment' AND prx_v.post_mime_type LIKE 'video/%') )";
+	}
 	protected function extra( $post_id ) {
 		$content = (string) get_post_field( 'post_content', $post_id );
 		$items   = array();
@@ -60,8 +66,12 @@ final class VideoSitemapProvider extends AbstractPostProvider {
 		}
 		if ( ! $default_thumb ) {
 			return ''; }
-		$title       = wp_strip_all_tags( get_the_title( $post_id ) );
-		$description = wp_trim_words( wp_strip_all_tags( get_the_excerpt( $post_id ) ), 30 );
+		// Plain text, decoded once: esc_xml() below escapes exactly once (no "&#038;" in titles).
+		$title       = html_entity_decode( wp_strip_all_tags( get_the_title( $post_id ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$description = html_entity_decode( wp_trim_words( wp_strip_all_tags( get_the_excerpt( $post_id ) ), 30 ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		if ( '' === trim( $description ) ) {
+			$description = $title; // Google requires a non-empty video description.
+		}
 		$duration    = absint( get_post_meta( $post_id, PostMeta::VIDEO_DURATION, true ) );
 		$xml         = '';
 		$seen        = array();

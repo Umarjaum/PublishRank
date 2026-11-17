@@ -18,7 +18,7 @@ final class SettingsPage {
 
 	/** Register the settings page. */
 	public function menu() {
-		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'PublishRank Settings', 'publishrank' ), __( 'Settings', 'publishrank' ), 'manage_options', 'publishrank', array( $this, 'page' ) );
+		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'PublishRank Settings', 'publishrank' ), __( 'Settings', 'publishrank' ), 'publishrank_manage_settings', 'publishrank', array( $this, 'page' ) );
 	}
 
 	/** Load the existing variable picker for the global title-template fields. */
@@ -1005,17 +1005,17 @@ final class SettingsPage {
 		return \PublishRankSEO\SEO\SiteConnections::normalize_token( $value ); }
 	/** Private login address: reserved or empty values keep the address already in use. @param mixed $value @return string */
 	public function sanitize_login_slug( $value ) {
-		$clean = \PublishRankSEO\Security\PrivateLogin::clean_login_slug( is_string( $value ) ? $value : '' );
+		$clean = \PublishRankSEO\AccessShield\LoginBridge::clean_login_slug( is_string( $value ) ? $value : '' );
 		if ( '' === $clean ) {
 			add_settings_error( 'publishrank_login_slug', 'publishrank_login_slug', __( 'The login address was not changed because it is empty or reserved by WordPress.', 'publishrank' ), 'error' );
-			return \PublishRankSEO\Security\PrivateLogin::current_login_slug();
+			return \PublishRankSEO\AccessShield\LoginBridge::current_login_slug();
 		}
 		return $clean;
 	}
 
 	/** Where blocked visitors are sent; empty means the 404 page. @param mixed $value @return string */
 	public function sanitize_redirect_slug( $value ) {
-		return \PublishRankSEO\Security\PrivateLogin::clean_redirect_slug( is_string( $value ) ? $value : '' );
+		return \PublishRankSEO\AccessShield\LoginBridge::clean_redirect_slug( is_string( $value ) ? $value : '' );
 	}
 	public function sanitize_sitemap_endpoint( $value ) {
 		return \PublishRankSEO\Sitemap\SitemapUrls::ENDPOINT; }
@@ -1030,7 +1030,7 @@ final class SettingsPage {
 			'output'         => array( 'fa-sliders', __( 'Output and indexing', 'publishrank' ), __( 'What PublishRank prints on your pages and what search engines may index.', 'publishrank' ) ),
 			'international'  => array( 'fa-globe', __( 'Multilingual and international SEO', 'publishrank' ), __( 'Language and regional versions of your site.', 'publishrank' ) ),
 			'attribution'    => array( 'fa-fingerprint', __( 'Attribution', 'publishrank' ), __( 'Technical markers in your page source.', 'publishrank' ) ),
-			'security'       => array( 'fa-user-shield', __( 'Private Login', 'publishrank' ), __( 'Your private sign-in address and where blocked visitors are sent.', 'publishrank' ) ),
+			'security'       => array( 'fa-user-shield', __( 'Access Shield', 'publishrank' ), __( 'Your private sign-in address and where blocked visitors are sent.', 'publishrank' ) ),
 			'infrastructure' => array( 'fa-server', __( 'Infrastructure, speed and syndication', 'publishrank' ), __( 'Media, CDN, video and API hosts, preloading, prefetching and RSS syndication.', 'publishrank' ) ),
 			'news'           => array( 'fa-newspaper', __( 'News SEO and sitemaps', 'publishrank' ), __( 'Google News, XML sitemap content, media sitemaps and monitoring.', 'publishrank' ) ),
 			'portability'    => array( 'fa-file-export', __( 'Settings portability', 'publishrank' ), __( 'Copy these settings to another site, or restore a backup.', 'publishrank' ) ),
@@ -1045,7 +1045,7 @@ final class SettingsPage {
 			'output'         => __( 'Output & indexing', 'publishrank' ),
 			'international'  => __( 'International SEO', 'publishrank' ),
 			'attribution'    => __( 'Attribution', 'publishrank' ),
-			'security'       => __( 'Private Login', 'publishrank' ),
+			'security'       => __( 'Access Shield', 'publishrank' ),
 			'infrastructure' => __( 'Infrastructure', 'publishrank' ),
 			'news'           => __( 'News & sitemaps', 'publishrank' ),
 			'portability'    => __( 'Portability', 'publishrank' ),
@@ -1079,7 +1079,7 @@ final class SettingsPage {
 
 		/** Render the settings form. */
 	public function page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_settings' ) ) {
 			return;
 		}
 		$val = static function ( $key, $default = '' ) {
@@ -1163,7 +1163,7 @@ final class SettingsPage {
 			</tbody></table>
 			<?php self::section_open( 'identity' ); ?>
 			<table class="form-table" role="presentation"><tbody><tr><th scope="row"><label for="publishrank_identity_alternate_names"><?php esc_html_e( 'Organization name variants', 'publishrank' ); ?></label></th><td><textarea id="publishrank_identity_alternate_names" name="publishrank_identity_alternate_names" class="large-text" rows="4" placeholder="One variant per line"><?php echo esc_textarea( $val( 'publishrank_identity_alternate_names', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'Optional. Add recognized names, abbreviations, or spelling variants. Each line becomes an Organization alternateName value.', 'publishrank' ); ?></p></td></tr>
-<tr><th scope="row"><?php esc_html_e( 'Visible publication identity', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_override_wp_identity" value="0" /><label><input name="publishrank_override_wp_identity" type="checkbox" value="1" <?php checked( $val( 'publishrank_override_wp_identity', true ) ); ?> /> <?php esc_html_e( 'Use the PublishRank publication title and description as the WordPress Site Title and Tagline on the public site (on by default)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_hide_visible_site_title" value="0" /><label><input name="publishrank_hide_visible_site_title" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_title', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site/publication title on the public site (on by default)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_hide_visible_site_description" value="0" /><label><input name="publishrank_hide_visible_site_description" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_description', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site description/tagline on the public site (on by default)', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'This is a visual-only control for common WordPress classic and block-theme selectors. It does not remove the site title or description from SEO meta tags, Open Graph, X/Twitter, JSON-LD, feeds or the WordPress General Settings fields. The publication title and description themselves are set in PublishRank (Identity), not taken from WordPress General Settings.', 'publishrank' ); ?></p></td></tr></tbody></table>
+<tr><th scope="row"><?php esc_html_e( 'Visible publication identity', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_hide_visible_site_title" value="0" /><label><input name="publishrank_hide_visible_site_title" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_title', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site/publication title on the public site (on by default)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_hide_visible_site_description" value="0" /><label><input name="publishrank_hide_visible_site_description" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_description', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site description/tagline on the public site (on by default)', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'This is a visual-only control for common WordPress classic and block-theme selectors. It does not remove the site title or description from SEO meta tags, Open Graph, X/Twitter, JSON-LD, feeds or the WordPress General Settings fields. The site title and description are synchronized with WordPress General Settings, PublishRank Identity and homepage SEO settings.', 'publishrank' ); ?></p></td></tr></tbody></table>
 		<?php self::section_open( 'output' ); ?>
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th scope="row"><?php esc_html_e( 'SEO plugin ownership handoff', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_external_seo_handoff" value="0" /><label><input name="publishrank_external_seo_handoff" type="checkbox" value="1" <?php checked( \PublishRankSEO\Core\OutputSettings::external_seo_handoff_preference() ); ?> /> <?php esc_html_e( 'Let a supported active SEO plugin own overlapping page metadata and JSON-LD', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Off by default. When enabled, PublishRank suppresses its titles, descriptions, canonical and robots tags, social metadata, hreflang and page JSON-LD only while Yoast SEO, Rank Math, All in One SEO, SEOPress or The SEO Framework is detected. Confirm the other plugin is configured to provide the output you need. This does not change its settings or your saved PublishRank output switches; redirects, sitemaps and standalone schema feeds are unaffected.', 'publishrank' ); ?></p>
@@ -1231,12 +1231,12 @@ ar-SA=https://example.com/ar/"><?php echo esc_textarea( $val( 'publishrank_seo_h
 			$hl_pretty = (bool) get_option( 'permalink_structure' );
 			$hl_prefix = trailingslashit( home_url() ) . ( $hl_pretty ? '' : '?' );
 			$hl_suffix = ( $hl_pretty && '/' === substr( (string) get_option( 'permalink_structure' ), -1 ) ) ? '/' : '';
-			$hl_on     = \PublishRankSEO\Security\PrivateLogin::enabled();
+			$hl_on     = \PublishRankSEO\AccessShield\LoginBridge::enabled();
 			?>
 				<table class="form-table" role="presentation"><tbody>
-					<tr><th scope="row"><label for="publishrank_login_slug"><?php esc_html_e( 'Private login address', 'publishrank' ); ?> <span class="pr-set-required" aria-hidden="true">*</span></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="publishrank_login_slug" name="publishrank_login_slug" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\Security\PrivateLogin::current_login_slug() ); ?>" required aria-required="true" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Your sign-in page lives here. wp-login.php and wp-admin are hidden from visitors who are not signed in. Bookmark the new address after saving.', 'publishrank' ); ?></p></td></tr>
-					<tr><th scope="row"><label for="publishrank_login_redirect"><?php esc_html_e( 'Send blocked visitors to', 'publishrank' ); ?></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="publishrank_login_redirect" name="publishrank_login_redirect" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\Security\PrivateLogin::current_redirect_slug() ); ?>" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Where visitors land if they open wp-login.php or wp-admin. Leave 404 to show your not-found page.', 'publishrank' ); ?></p></td></tr>
-					<tr><th scope="row"><?php esc_html_e( 'Status', 'publishrank' ); ?></th><td><strong><?php echo esc_html( $hl_on ? __( 'Private Login is on', 'publishrank' ) : __( 'Private Login is off', 'publishrank' ) ); ?></strong><p class="description"><?php esc_html_e( 'Switch Private Login on or off under Features.', 'publishrank' ); ?> <a href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( 'publishrank-modules' ) ); ?>"><?php esc_html_e( 'Open Features', 'publishrank' ); ?></a></p></td></tr>
+					<tr><th scope="row"><label for="publishrank_login_slug"><?php esc_html_e( 'Private login address', 'publishrank' ); ?> <span class="pr-set-required" aria-hidden="true">*</span></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="publishrank_login_slug" name="publishrank_login_slug" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\AccessShield\LoginBridge::current_login_slug() ); ?>" required aria-required="true" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Your sign-in page lives here. wp-login.php and wp-admin are hidden from visitors who are not signed in. Bookmark the new address after saving.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><label for="publishrank_login_redirect"><?php esc_html_e( 'Send blocked visitors to', 'publishrank' ); ?></label></th><td><code><?php echo esc_html( $hl_prefix ); ?></code><input id="publishrank_login_redirect" name="publishrank_login_redirect" type="text" class="regular-text code" value="<?php echo esc_attr( \PublishRankSEO\AccessShield\LoginBridge::current_redirect_slug() ); ?>" autocomplete="off" spellcheck="false" /><?php echo '' !== $hl_suffix ? ' <code>/</code>' : ''; ?><p class="description"><?php esc_html_e( 'Where visitors land if they open wp-login.php or wp-admin. Leave 404 to show your not-found page.', 'publishrank' ); ?></p></td></tr>
+					<tr><th scope="row"><?php esc_html_e( 'Status', 'publishrank' ); ?></th><td><strong><?php echo esc_html( $hl_on ? __( 'Access Shield login address is on', 'publishrank' ) : __( 'Access Shield login address is off', 'publishrank' ) ); ?></strong><p class="description"><?php esc_html_e( 'Switch Access Shield on or off under Features.', 'publishrank' ); ?> <a href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( 'publishrank-modules' ) ); ?>"><?php esc_html_e( 'Open Features', 'publishrank' ); ?></a></p></td></tr>
 				</tbody></table>
 			<?php self::section_open( 'infrastructure' ); ?>
 			<table class="form-table" role="presentation"><tbody>

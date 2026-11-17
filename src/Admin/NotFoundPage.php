@@ -1,285 +1,368 @@
 <?php
-/** 404 monitor screen: review broken URLs and turn them into redirects. */
+/**
+ * PublishRank → 404 Monitor (v2 screen).
+ *
+ * @package PublishRankSEO
+ */
 namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Core\Branding;
-use PublishRankSEO\Core\ModuleSwitches;
-use PublishRankSEO\Redirect\RedirectStore;
+use PublishRankSEO\Core\Capabilities;
+use PublishRankSEO\Monitor\NotFoundStore as S;
 
 defined( 'ABSPATH' ) || exit;
 
 final class NotFoundPage {
 	const SLUG     = 'publishrank-seo-404';
-	const OPTION   = 'publishrank_seo_404_log';
+	const OPTION   = S::LEGACY_OPTION;
 	const PER_PAGE = 50;
 
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 12 );
-		add_action( 'admin_post_publishrank_seo_404_redirect', array( $this, 'handle_redirect' ) );
-		add_action( 'admin_post_publishrank_seo_404_dismiss', array( $this, 'handle_dismiss' ) );
-		add_action( 'admin_post_publishrank_seo_404_clear', array( $this, 'handle_clear' ) );
-		add_action( 'admin_post_publishrank_seo_404_toggle', array( $this, 'handle_toggle' ) );
-	}
-
-	/** Whether 404 recording is on (same switch as Features and Settings). */
-	public static function recording() {
-		return ModuleSwitches::is_on( 'monitor_404' );
-	}
-
-	/** Readable, translated name for a stored visitor category. */
-	public static function visitor_label( $category ) {
-		$labels = array(
-			'browser' => __( 'Browser', 'publishrank' ),
-			'mobile'  => __( 'Mobile', 'publishrank' ),
-			'crawler' => __( 'Crawler', 'publishrank' ),
-		);
-		return isset( $labels[ $category ] ) ? $labels[ $category ] : __( 'Other', 'publishrank' );
-	}
-
-	/** Turn recording on or off from this screen. */
-	public function handle_toggle() {
-		AdminAssets::guard( 'publishrank_seo_404_toggle' );
-		$on = isset( $_POST['enable'] ) && '1' === sanitize_key( wp_unslash( $_POST['enable'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
-		ModuleSwitches::set( 'monitor_404', $on );
-		AdminAssets::done( self::SLUG, 'success', $on ? __( '404 monitoring is on. New broken URLs will appear here.', 'publishrank' ) : __( '404 monitoring is off. Existing entries are kept.', 'publishrank' ) );
-	}
-
-	private static function toggle_form( $enable ) {
-		$out  = '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-flex;margin:0">';
-		$out .= '<input type="hidden" name="action" value="publishrank_seo_404_toggle" />';
-		$out .= '<input type="hidden" name="enable" value="' . ( $enable ? '1' : '0' ) . '" />';
-		$out .= wp_nonce_field( 'publishrank_seo_404_toggle', '_wpnonce', true, false );
-		$out .= '<button type="submit" class="button ' . ( $enable ? 'button-primary' : 'button-secondary' ) . '">' . esc_html( $enable ? __( 'Turn on 404 monitoring', 'publishrank' ) : __( 'Turn off', 'publishrank' ) ) . '</button></form>';
-		return $out;
+		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
+		foreach ( array( 'redirect', 'dismiss', 'clear', 'toggle', 'bulk', 'settings', 'export' ) as $a ) {
+			add_action( 'admin_post_publishrank_seo_404_' . $a, array( $this, 'handle_' . $a ) );
+		}
 	}
 
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( '404 Monitor', 'publishrank' ), __( '404 Monitor', 'publishrank' ), 'manage_options', self::SLUG, array( $this, 'render' ) );
+		add_submenu_page( Branding::MENU_SLUG, __( '404 Monitor', 'publishrank' ), __( '404 Monitor', 'publishrank' ), Capabilities::cap( 'view_404' ), self::SLUG, array( $this, 'render' ) );
 	}
 
-	/** @return array<int,array<string,mixed>> */
-	public static function entries() {
-		$log = get_option( self::OPTION, array() );
-		return is_array( $log ) ? array_values( array_filter( $log, 'is_array' ) ) : array();
+	public function assets() {
+		Suite::enqueue_for( self::SLUG );
 	}
 
-	public static function entry_id( array $entry ) {
-		return md5( (string) ( isset( $entry['path'] ) ? $entry['path'] : '' ) . '|' . (string) ( isset( $entry['agent_category'] ) ? $entry['agent_category'] : '' ) );
-	}
-
-	private function remove_entry( $id ) {
-		$kept = array();
-		foreach ( self::entries() as $entry ) {
-			if ( self::entry_id( $entry ) !== $id ) {
-				$kept[] = $entry;
-			}
-		}
-		update_option( self::OPTION, $kept, false );
-	}
+	/* ------------------------------------------------------------ Handlers */
 
 	public function handle_redirect() {
-		AdminAssets::guard( 'publishrank_seo_404_redirect' );
-		check_admin_referer( 'publishrank_seo_404_redirect' ); // Explicit nonce verification for the request data read below.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- The matching action nonce is validated by the handler guard before request data is processed.
-		$id = isset( $_POST['entry'] ) ? sanitize_key( wp_unslash( $_POST['entry'] ) ) : '';
-		$target = isset( $_POST['target'] ) ? esc_url_raw( wp_unslash( $_POST['target'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by guard.
-		$path   = '';
-		foreach ( self::entries() as $entry ) {
-			if ( self::entry_id( $entry ) === $id ) {
-				$path = (string) $entry['path'];
-				break;
-			}
+		Suite::guard( 'publishrank_seo_404_redirect', 'manage_404' );
+		if ( ! Capabilities::can( 'manage_redirects' ) ) {
+			wp_die( esc_html__( 'Creating redirects needs the “manage redirects” permission.', 'publishrank' ), '', array( 'response' => 403 ) );
 		}
-		if ( '' === $path ) {
-			AdminAssets::done( self::SLUG, 'error', __( 'That entry no longer exists.', 'publishrank' ) );
+		$id     = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
+		$target = isset( $_POST['target'] ) ? sanitize_text_field( wp_unslash( $_POST['target'] ) ) : '';
+		$status = isset( $_POST['status'] ) ? absint( $_POST['status'] ) : 301;
+		$res    = S::redirect( $id, $target, $status );
+		if ( is_wp_error( $res ) ) {
+			Suite::done( self::SLUG, 'error', implode( ' ', $res->get_error_messages() ), self::keep_args() );
 		}
-		if ( '' === trim( $target ) ) {
-			AdminAssets::done( self::SLUG, 'error', __( 'Enter the page or URL to redirect to.', 'publishrank' ) );
-		}
-		$result = RedirectStore::add( $path, $target, 301, false );
-		if ( is_wp_error( $result ) ) {
-			AdminAssets::done( self::SLUG, 'error', $result->get_error_message() );
-		}
-		// The redirect now serves every visitor type, so clear browser, mobile and crawler rows for this path.
-		$kept = array();
-		foreach ( self::entries() as $entry ) {
-			if ( (string) ( $entry['path'] ?? '' ) !== $path ) {
-				$kept[] = $entry;
-			}
-		}
-		update_option( self::OPTION, $kept, false );
-		AdminAssets::done( self::SLUG, 'success', __( 'Redirect created and the address was cleared from the log.', 'publishrank' ) );
+		Suite::done( self::SLUG, 'success', __( 'Redirect created. Visitors to that address now reach the new page.', 'publishrank' ), self::keep_args() );
 	}
 
 	public function handle_dismiss() {
-		AdminAssets::guard( 'publishrank_seo_404_dismiss' );
-		check_admin_referer( 'publishrank_seo_404_dismiss' );
-		$this->remove_entry( isset( $_GET['id'] ) ? sanitize_key( wp_unslash( $_GET['id'] ) ) : '' );
-		AdminAssets::done( self::SLUG, 'success', __( 'Entry dismissed.', 'publishrank' ) );
+		Suite::guard( 'publishrank_seo_404_dismiss', 'manage_404' );
+		S::set_status( array( isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0 ), 'ignored' );
+		Suite::done( self::SLUG, 'success', __( 'Ignored. It stays hidden unless you show ignored entries.', 'publishrank' ), self::keep_args() );
+	}
+
+	public function handle_bulk() {
+		Suite::guard( 'publishrank_seo_404_bulk', 'manage_404' );
+		$ids    = isset( $_POST['ids'] ) && is_array( $_POST['ids'] ) ? array_map( 'absint', wp_unslash( $_POST['ids'] ) ) : array();
+		$action = isset( $_POST['bulk_action'] ) ? sanitize_key( wp_unslash( $_POST['bulk_action'] ) ) : '';
+		if ( ! $ids ) {
+			Suite::done( self::SLUG, 'warning', __( 'Select at least one address.', 'publishrank' ), self::keep_args() );
+		}
+		$n = 0;
+		if ( 'ignore' === $action || 'reopen' === $action ) {
+			$n = S::set_status( $ids, 'ignore' === $action ? 'ignored' : 'open' );
+		} elseif ( 'delete' === $action ) {
+			$n = S::delete( $ids );
+		} elseif ( 'redirect' === $action ) {
+			if ( ! Capabilities::can( 'manage_redirects' ) ) {
+				wp_die( esc_html__( 'Creating redirects needs the “manage redirects” permission.', 'publishrank' ), '', array( 'response' => 403 ) );
+			}
+			$target = isset( $_POST['bulk_target'] ) ? sanitize_text_field( wp_unslash( $_POST['bulk_target'] ) ) : '';
+			$errors = array();
+			\PublishRankSEO\Redirect\RedirectRepository::begin_batch( sprintf( 'Redirects from the 404 monitor (%d)', count( $ids ) ) );
+			foreach ( $ids as $id ) {
+				$row = S::get( $id );
+				$to  = '' !== $target ? $target : ( $row ? ( S::suggestions( $row['path'], 1 )[0]['url'] ?? '' ) : '' );
+				if ( '' === $to ) {
+					$errors[] = $row ? $row['path'] : '#' . $id;
+					continue;
+				}
+				$res = S::redirect( $id, $to, 301 );
+				if ( is_wp_error( $res ) ) {
+					$errors[] = ( $row ? $row['path'] : '#' . $id ) . ': ' . $res->get_error_message();
+				} else {
+					++$n;
+				}
+			}
+			\PublishRankSEO\Redirect\RedirectRepository::end_batch();
+			if ( $errors ) {
+				/* translators: 1: created, 2: list */
+				Suite::done( self::SLUG, 'warning', sprintf( __( '%1$d redirects created. Not created: %2$s', 'publishrank' ), $n, implode( ' · ', array_slice( $errors, 0, 6 ) ) ), self::keep_args() );
+			}
+		}
+		/* translators: %d: rows */
+		Suite::done( self::SLUG, 'success', sprintf( _n( '%d address updated.', '%d addresses updated.', $n, 'publishrank' ), $n ), self::keep_args() );
 	}
 
 	public function handle_clear() {
-		AdminAssets::guard( 'publishrank_seo_404_clear' );
-		update_option( self::OPTION, array(), false );
-		AdminAssets::done( self::SLUG, 'success', __( '404 log cleared.', 'publishrank' ) );
+		Suite::guard( 'publishrank_seo_404_clear', 'manage_404' );
+		S::clear( ! empty( $_POST['with_history'] ) );
+		Suite::done( self::SLUG, 'success', __( 'The 404 log was cleared.', 'publishrank' ) );
+	}
+
+	public function handle_toggle() {
+		Suite::guard( 'publishrank_seo_404_toggle', 'manage_404' );
+		update_option( 'publishrank_seo_404_monitor', S::enabled() ? 0 : 1, false );
+		Suite::done( self::SLUG, 'success', S::enabled() ? __( '404 monitoring is on.', 'publishrank' ) : __( '404 monitoring is off. Existing entries are kept.', 'publishrank' ) );
+	}
+
+	public function handle_settings() {
+		Suite::guard( 'publishrank_seo_404_settings', 'manage_404' );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		update_option( 'publishrank_seo_404_monitor', empty( $_POST['enabled'] ) ? 0 : 1, false );
+		update_option( 'publishrank_404_retention_days', max( 1, min( 3650, isset( $_POST['retention'] ) ? absint( $_POST['retention'] ) : 90 ) ), false );
+		update_option( 'publishrank_404_rate_ceiling', max( 10, min( 1000000, isset( $_POST['ceiling'] ) ? absint( $_POST['ceiling'] ) : 600 ) ), false );
+		update_option( 'publishrank_404_sample_rate', max( 2, min( 1000, isset( $_POST['sample'] ) ? absint( $_POST['sample'] ) : 10 ) ), false );
+		update_option( 'publishrank_404_noise_rules', isset( $_POST['noise'] ) ? sanitize_textarea_field( wp_unslash( $_POST['noise'] ) ) : '', false );
+		// phpcs:enable
+		Suite::done( self::SLUG, 'success', __( '404 settings saved.', 'publishrank' ), array(), 'settings' );
+	}
+
+	public function handle_export() {
+		if ( ! Capabilities::can( 'view_404' ) ) {
+			wp_die( esc_html__( 'You do not have permission to do this.', 'publishrank' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'publishrank_seo_404_export' );
+		$rows   = S::export_rows( self::filters() );
+		$header = array_shift( $rows );
+		Suite::csv( 'publishrank-404-' . gmdate( 'Y-m-d' ) . '.csv', $header, $rows );
+	}
+
+	/* ------------------------------------------------------------ Render */
+
+	private static function filters() {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$g = wp_unslash( $_GET );
+		return array(
+			'search'   => isset( $g['s'] ) ? sanitize_text_field( $g['s'] ) : '',
+			'class'    => isset( $g['class'] ) ? sanitize_key( $g['class'] ) : '',
+			'status'   => isset( $g['state'] ) ? sanitize_key( $g['state'] ) : 'open',
+			'noise'    => isset( $g['noise'] ) && 'show' === $g['noise'] ? 'show' : 'hide',
+			'min_hits' => isset( $g['min'] ) ? absint( $g['min'] ) : 0,
+			'from'     => isset( $g['from'] ) ? sanitize_text_field( $g['from'] ) : '',
+			'to'       => isset( $g['to'] ) ? sanitize_text_field( $g['to'] ) : '',
+			'orderby'  => isset( $g['orderby'] ) ? sanitize_key( $g['orderby'] ) : 'hits',
+			'order'    => isset( $g['order'] ) ? sanitize_key( $g['order'] ) : 'desc',
+		);
+		// phpcs:enable
+	}
+
+	private static function keep_args() {
+		$keep = array();
+		foreach ( array( 's', 'class', 'state', 'noise', 'min', 'from', 'to', 'orderby', 'order', 'paged' ) as $k ) {
+			if ( isset( $_REQUEST[ $k ] ) && '' !== $_REQUEST[ $k ] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$keep[ $k ] = sanitize_text_field( wp_unslash( $_REQUEST[ $k ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			}
+		}
+		return $keep;
+	}
+
+	private static function class_badges( array $r ) {
+		$out = '';
+		foreach ( array( 'hits_human' => array( __( 'people', 'publishrank' ), '' ), 'hits_search' => array( __( 'search', 'publishrank' ), 'info' ), 'hits_ai' => array( __( 'AI', 'publishrank' ), 'warn' ), 'hits_scanner' => array( __( 'scanner', 'publishrank' ), 'muted' ) ) as $k => $lab ) {
+			if ( $r[ $k ] > 0 ) {
+				$out .= Suite::badge( $lab[0] . ' ' . number_format_i18n( $r[ $k ] ), $lab[1] ) . ' ';
+			}
+		}
+		return $out;
 	}
 
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! Capabilities::can( 'view_404' ) ) {
 			return;
 		}
-		$entries   = self::entries();
-		$all_count = count( $entries );
-		$recording = self::recording();
-		$search  = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$visitor = isset( $_GET['visitor'] ) ? sanitize_key( wp_unslash( $_GET['visitor'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$sort    = isset( $_GET['sort'] ) ? sanitize_key( wp_unslash( $_GET['sort'] ) ) : 'hits'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! in_array( $visitor, array( '', 'browser', 'mobile', 'crawler' ), true ) ) {
-			$visitor = ''; }
-		if ( ! in_array( $sort, array( 'hits', 'recent' ), true ) ) {
-			$sort = 'hits'; }
-		if ( '' !== $search || '' !== $visitor ) {
-			$entries = array_values( array_filter( $entries, static function ( $entry ) use ( $search, $visitor ) {
-				$path_match = '' === $search || false !== stripos( (string) ( $entry['path'] ?? '' ), $search );
-				$type_match = '' === $visitor || $visitor === (string) ( $entry['agent_category'] ?? '' );
-				return $path_match && $type_match;
-			} ) );
-		}
-		usort(
-			$entries,
-			static function ( $a, $b ) use ( $sort ) {
-				if ( 'recent' === $sort ) {
-					return strcmp( (string) ( $b['last_seen'] ?? '' ), (string) ( $a['last_seen'] ?? '' ) );
-				}
-				return (int) ( $b['count'] ?? 0 ) - (int) ( $a['count'] ?? 0 );
+		$manage = Capabilities::can( 'manage_404' );
+		$sum    = S::summary( 30 );
+		Suite::open( __( '404 Monitor', 'publishrank' ), __( 'Find the missing addresses that readers and crawlers actually hit, see where they came from, and fix them with one click.', 'publishrank' ) );
+		if ( ! S::enabled() ) {
+			echo '<div class="prx-callout prx-callout--info"><span class="fa-solid fa-circle-info" aria-hidden="true"></span><div><p><strong>' . esc_html__( 'Monitoring is off.', 'publishrank' ) . '</strong> ' . esc_html__( 'Turn it on to record missing addresses. No IP addresses are stored.', 'publishrank' ) . '</p>';
+			if ( $manage ) {
+				Suite::form_open( 'publishrank_seo_404_toggle' );
+				echo '<button class="prx-btn prx-btn--primary" type="submit">' . esc_html__( 'Turn on 404 monitoring', 'publishrank' ) . '</button></form>';
 			}
+			echo '</div></div>';
+		}
+		echo '<div class="prx-grid prx-grid--4">';
+		Suite::kpi( __( 'Open 404 addresses', 'publishrank' ), number_format_i18n( $sum['open'] ), __( 'scanners excluded', 'publishrank' ), true );
+		Suite::kpi( __( 'Hits from people (30 days)', 'publishrank' ), number_format_i18n( $sum['human'] ), sprintf( /* translators: %s: number */ __( '%s today, all visitors', 'publishrank' ), number_format_i18n( $sum['today'] ) ) );
+		Suite::kpi( __( 'Crawler hits (30 days)', 'publishrank' ), number_format_i18n( $sum['search'] + $sum['ai'] ), sprintf( /* translators: 1: search, 2: AI */ __( '%1$s search · %2$s AI', 'publishrank' ), number_format_i18n( $sum['search'] ), number_format_i18n( $sum['ai'] ) ) );
+		Suite::kpi( __( 'Scanner probes blocked from view', 'publishrank' ), number_format_i18n( $sum['scanner'] ), __( 'wp-config, .env, xmlrpc …', 'publishrank' ) );
+		echo '</div>';
+		Suite::tabs(
+			array(
+				'log'      => __( 'Missing addresses', 'publishrank' ),
+				'trends'   => __( 'Trends & crawlers', 'publishrank' ),
+				'settings' => __( 'Settings & privacy', 'publishrank' ),
+			)
 		);
-		$total = count( $entries );
-		$total_hits = array_sum( array_map( static function ( $entry ) { return absint( $entry['count'] ?? 0 ); }, $entries ) );
-		$pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
-		$paged = isset( $_GET['paged'] ) ? min( $pages, max( 1, absint( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$slice = array_slice( $entries, ( $paged - 1 ) * self::PER_PAGE, self::PER_PAGE );
-		$nonce = wp_create_nonce( 'publishrank_seo_404_redirect' );
-		echo '<div class="wrap">';
-		AdminAssets::header( __( '404 Monitor', 'publishrank' ), __( 'Broken URLs visitors and crawlers hit, most frequent first.', 'publishrank' ) );
-		AdminAssets::render_flash();
-			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'PublishRank groups hits by URL and broad visitor category (browser, mobile or crawler). It does not identify individual people or store IP addresses. The monitor ignores common static-asset and infrastructure probes, keeps a 90-day rolling history, and caps storage at 500 entries.', 'publishrank' ) . '</p></div>';
-		if ( ! $recording ) {
-			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The 404 monitor is turned off, so no new broken URLs are being recorded.', 'publishrank' ) . '</p><p>' . self::toggle_form( true ) . '</p></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- toggle_form() escapes its parts.
-		} else {
-			echo '<div class="publishrank-404-status" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0"><span class="dashicons dashicons-yes-alt" aria-hidden="true" style="color:#00a32a"></span><span>' . esc_html__( 'Recording is on.', 'publishrank' ) . '</span>' . self::toggle_form( false ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- toggle_form() escapes its parts.
+		$this->panel_log( $manage );
+		$this->panel_trends();
+		$this->panel_settings( $manage );
+		Suite::close();
+	}
+
+	private function panel_log( $manage ) {
+		$f     = self::filters();
+		$paged = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$res   = S::query( $f + array( 'per_page' => self::PER_PAGE, 'paged' => $paged ) );
+		$can_r = Capabilities::can( 'manage_redirects' );
+		Suite::panel_open( 'log', false );
+		echo '<form method="get" class="prx-filters" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" />';
+		echo '<input class="prx-input" type="search" name="s" value="' . esc_attr( $f['search'] ) . '" placeholder="' . esc_attr__( 'Search address or referring site', 'publishrank' ) . '" aria-label="' . esc_attr__( 'Search', 'publishrank' ) . '" />';
+		echo '<select name="class" aria-label="' . esc_attr__( 'Visitor type', 'publishrank' ) . '">';
+		foreach ( array( '' => __( 'All visitors', 'publishrank' ), 'human' => __( 'People', 'publishrank' ), 'crawler' => __( 'Any crawler', 'publishrank' ), 'search' => __( 'Search crawlers', 'publishrank' ), 'ai' => __( 'AI crawlers', 'publishrank' ), 'scanner' => __( 'Scanners', 'publishrank' ) ) as $k => $v ) {
+			echo '<option value="' . esc_attr( $k ) . '"' . selected( $f['class'], $k, false ) . '>' . esc_html( $v ) . '</option>';
 		}
-			echo '<p><strong>' . esc_html( sprintf( /* translators: 1: number of paths, 2: number of hits. */ __( '%1$d paths · %2$d recorded hits', 'publishrank' ), $total, $total_hits ) ) . '</strong></p>';
-			echo '<form method="get" class="rhs-inline-form" style="margin:12px 0"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" /><label class="screen-reader-text" for="publishrank-404-search">' . esc_html__( 'Search paths', 'publishrank' ) . '</label><input id="publishrank-404-search" type="search" name="s" value="' . esc_attr( $search ) . '" placeholder="' . esc_attr__( 'Search URL paths', 'publishrank' ) . '" /> <select name="visitor"><option value="">' . esc_html__( 'All visitors', 'publishrank' ) . '</option><option value="browser" ' . selected( $visitor, 'browser', false ) . '>' . esc_html__( 'Browser', 'publishrank' ) . '</option><option value="mobile" ' . selected( $visitor, 'mobile', false ) . '>' . esc_html__( 'Mobile', 'publishrank' ) . '</option><option value="crawler" ' . selected( $visitor, 'crawler', false ) . '>' . esc_html__( 'Crawler', 'publishrank' ) . '</option></select> <select name="sort"><option value="hits" ' . selected( $sort, 'hits', false ) . '>' . esc_html__( 'Most hits', 'publishrank' ) . '</option><option value="recent" ' . selected( $sort, 'recent', false ) . '>' . esc_html__( 'Most recent', 'publishrank' ) . '</option></select> <button class="button" type="submit">' . esc_html__( 'Filter', 'publishrank' ) . '</button></form>';
-			if ( $all_count ) {
-			$clear = wp_nonce_url( add_query_arg( 'action', 'publishrank_seo_404_clear', admin_url( 'admin-post.php' ) ), 'publishrank_seo_404_clear' );
-			echo '<p class="rhs-actions"><a class="button" href="' . esc_url( $clear ) . '" onclick="return window.confirm(' . esc_attr( wp_json_encode( __( 'Delete every recorded 404 entry? This cannot be undone.', 'publishrank' ) ) ) . ');">' . esc_html__( 'Clear entire log', 'publishrank' ) . '</a></p>';
+		echo '</select><select name="state" aria-label="' . esc_attr__( 'State', 'publishrank' ) . '">';
+		foreach ( array( 'open' => __( 'Open', 'publishrank' ), 'redirected' => __( 'Has a redirect', 'publishrank' ), 'ignored' => __( 'Ignored', 'publishrank' ), '' => __( 'Any state', 'publishrank' ) ) as $k => $v ) {
+			echo '<option value="' . esc_attr( $k ) . '"' . selected( $f['status'], $k, false ) . '>' . esc_html( $v ) . '</option>';
 		}
-		?>
-		<style>
-			.publishrank-404-table{table-layout:auto}
-			.publishrank-404-table td{vertical-align:middle}
-			.publishrank-404-table .pr404-path code{display:inline-block;max-width:100%;word-break:break-all;white-space:normal}
-			.publishrank-404-table .pr404-path .row-links{margin-top:4px;font-size:12px}
-			.publishrank-404-table .pr404-hits{width:56px;text-align:center;font-weight:600}
-			.publishrank-404-table .pr404-visitor,.publishrank-404-table .pr404-seen{white-space:nowrap}
-			.publishrank-404-table .pr404-visitor span{display:inline-block;padding:2px 9px;border-radius:999px;background:#f0f0f1;font-size:12px}
-			.publishrank-404-table .pr404-visitor .is-crawler{background:#fcf0f1}
-			.publishrank-404-table .pr404-seen small{display:block;color:#646970}
-			.publishrank-404-table .pr404-ref{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-			.publishrank-404-table .pr404-redirect form{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin:0}
-			.publishrank-404-table .pr404-redirect input[type=text]{width:180px;min-width:120px;margin:0}
-			.publishrank-404-table .pr404-redirect .button{margin:0}
-		</style>
-		<div class="rhs-table-wrap"><table class="widefat striped publishrank-404-table">
-			<thead><tr><th scope="col"><?php esc_html_e( 'URL path', 'publishrank' ); ?></th><th scope="col" class="pr404-hits"><?php esc_html_e( 'Hits', 'publishrank' ); ?></th><th scope="col"><?php esc_html_e( 'Visitor', 'publishrank' ); ?></th><th scope="col"><?php esc_html_e( 'Last seen', 'publishrank' ); ?></th><th scope="col"><?php esc_html_e( 'Referrer', 'publishrank' ); ?></th><th scope="col"><?php esc_html_e( 'Redirect to', 'publishrank' ); ?></th></tr></thead>
-			<tbody>
-			<?php
-			if ( ! $slice ) {
-				if ( $all_count ) {
-					$empty = __( 'No entries match this filter.', 'publishrank' );
-				} elseif ( $recording ) {
-					$empty = __( 'No broken URLs recorded yet. When a visitor or crawler opens an address that does not exist, it appears here with a one-click redirect.', 'publishrank' );
-				} else {
-					$empty = __( 'No broken URLs recorded. Turn on 404 monitoring above to start.', 'publishrank' );
-				}
-				echo '<tr class="no-items"><td colspan="6">' . esc_html( $empty ) . '</td></tr>';
+		echo '</select><input class="prx-input prx-input--sm" type="number" min="0" name="min" value="' . esc_attr( $f['min_hits'] ? (string) $f['min_hits'] : '' ) . '" placeholder="' . esc_attr__( 'Min. hits', 'publishrank' ) . '" aria-label="' . esc_attr__( 'Minimum hits', 'publishrank' ) . '" />';
+		echo '<label class="prx-check">' . esc_html__( 'Last seen from', 'publishrank' ) . ' <input type="date" name="from" value="' . esc_attr( $f['from'] ) . '" /></label><label class="prx-check">' . esc_html__( 'to', 'publishrank' ) . ' <input type="date" name="to" value="' . esc_attr( $f['to'] ) . '" /></label>';
+		echo '<label class="prx-check"><input type="checkbox" name="noise" value="show"' . checked( 'show', $f['noise'], false ) . ' /> ' . esc_html__( 'Include scanner noise', 'publishrank' ) . '</label>';
+		echo '<button class="prx-btn" type="submit">' . esc_html__( 'Filter', 'publishrank' ) . '</button>';
+		$export = wp_nonce_url( add_query_arg( array_merge( array( 'action' => 'publishrank_seo_404_export' ), array_filter( array_map( 'strval', array( 's' => $f['search'], 'class' => $f['class'], 'state' => $f['status'], 'noise' => $f['noise'], 'min' => $f['min_hits'] ?: '', 'from' => $f['from'], 'to' => $f['to'] ) ) ) ), admin_url( 'admin-post.php' ) ), 'publishrank_seo_404_export' );
+		echo '<a class="prx-btn prx-btn--ghost" href="' . esc_url( $export ) . '"><span class="fa-solid fa-download" aria-hidden="true"></span> ' . esc_html__( 'Export CSV', 'publishrank' ) . '</a></form>';
+
+		if ( $manage ) {
+			Suite::form_open( 'publishrank_seo_404_bulk', array( 'id' => 'prx-404-bulk' ) );
+			foreach ( self::keep_args() as $k => $v ) {
+				echo '<input type="hidden" name="' . esc_attr( $k ) . '" value="' . esc_attr( $v ) . '" />';
 			}
-			foreach ( $slice as $entry ) :
-				$id         = self::entry_id( $entry );
-				$first      = isset( $entry['first_seen'] ) ? (string) $entry['first_seen'] : ( isset( $entry['time'] ) ? (string) $entry['time'] : '' );
-				$first_text = $first && false !== strtotime( $first ) ? get_date_from_gmt( $first, 'Y-m-d H:i' ) : '—';
-				$last       = isset( $entry['last_seen'] ) ? (string) $entry['last_seen'] : '';
-				$last_text  = $last && false !== strtotime( $last ) ? get_date_from_gmt( $last, 'Y-m-d H:i' ) : '—';
-				$referrer   = isset( $entry['referrer'] ) ? (string) $entry['referrer'] : '';
-				$dismiss    = wp_nonce_url(
-					add_query_arg(
-						array(
-							'action' => 'publishrank_seo_404_dismiss',
-							'id'     => $id,
-						),
-						admin_url( 'admin-post.php' )
-					),
-					'publishrank_seo_404_dismiss'
-				);
-				?>
-				<tr>
-					<td class="pr404-path">
-						<code><?php echo esc_html( isset( $entry['path'] ) ? $entry['path'] : '' ); ?></code>
-						<?php
-						$path_value = isset( $entry['path'] ) ? (string) $entry['path'] : '/';
-						$public_url = home_url( '/' . ltrim( $path_value, '/' ) );
-						$slug_bits  = array_filter( explode( '/', trim( (string) wp_parse_url( $path_value, PHP_URL_PATH ), '/' ) ) );
-						$page_title = $slug_bits ? ucwords( str_replace( array( '-', '_' ), ' ', (string) end( $slug_bits ) ) ) : '';
-						$create_url = add_query_arg(
-							array(
-								'post_type'  => 'page',
-								'post_title' => $page_title,
-							),
-							admin_url( 'post-new.php' )
-						);
-						?>
-						<div class="row-links"><a href="<?php echo esc_url( $public_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open URL', 'publishrank' ); ?></a>
-						| <a href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'Create page', 'publishrank' ); ?></a></div>
-					</td>
-					<td class="pr404-hits"><?php echo esc_html( (string) (int) ( isset( $entry['count'] ) ? $entry['count'] : 1 ) ); ?></td>
-					<?php $agent = isset( $entry['agent_category'] ) ? (string) $entry['agent_category'] : ''; ?>
-					<td class="pr404-visitor"><span class="<?php echo esc_attr( 'crawler' === $agent ? 'is-crawler' : '' ); ?>"><?php echo esc_html( self::visitor_label( $agent ) ); ?></span></td>
-					<td class="pr404-seen"><?php echo esc_html( $last_text ); ?><small>
-					<?php
-					/* translators: %s: date and time the URL was first recorded. */
-					echo esc_html( sprintf( __( 'First: %s', 'publishrank' ), $first_text ) );
-					?>
-					</small></td>
-					<?php $ref_host = $referrer ? wp_parse_url( $referrer, PHP_URL_HOST ) : ''; ?>
-					<td class="pr404-ref"><?php echo $referrer ? '<a href="' . esc_url( $referrer ) . '" title="' . esc_attr( $referrer ) . '" rel="noopener noreferrer nofollow">' . esc_html( $ref_host ? (string) $ref_host : wp_html_excerpt( $referrer, 40, '…' ) ) . '</a>' : '&mdash;'; ?></td>
-					<td class="pr404-redirect">
-						<form class="rhs-inline-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-							<input type="hidden" name="action" value="publishrank_seo_404_redirect" />
-							<input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>" />
-							<input type="hidden" name="entry" value="<?php echo esc_attr( $id ); ?>" />
-							<input type="text" name="target" required placeholder="/new-page" aria-label="<?php esc_attr_e( 'New path or URL', 'publishrank' ); ?>" />
-							<button class="button button-primary" type="submit"><?php esc_html_e( '301', 'publishrank' ); ?></button>
-							<a href="<?php echo esc_url( $dismiss ); ?>"><?php esc_html_e( 'Dismiss', 'publishrank' ); ?></a>
-						</form>
-					</td>
-				</tr>
-			<?php endforeach; ?>
-			</tbody>
-		</table></div>
-		<?php
-		if ( $pages > 1 ) {
-			echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post(
-					paginate_links(
-						array(
-							'base'    => add_query_arg( array_filter( array( 'page' => self::SLUG, 's' => $search, 'visitor' => $visitor, 'sort' => $sort, 'paged' => '%#%' ) ), admin_url( 'admin.php' ) ),
-							'format'  => '',
-						'total'   => $pages,
-						'current' => $paged,
-					)
-				)
-			) . '</div></div>';
+			echo '<div class="prx-toolbar"><select name="bulk_action" aria-label="' . esc_attr__( 'Bulk action', 'publishrank' ) . '"><option value="">' . esc_html__( 'Bulk action…', 'publishrank' ) . '</option>' . ( $can_r ? '<option value="redirect">' . esc_html__( 'Create redirects', 'publishrank' ) . '</option>' : '' ) . '<option value="ignore">' . esc_html__( 'Ignore', 'publishrank' ) . '</option><option value="reopen">' . esc_html__( 'Reopen', 'publishrank' ) . '</option><option value="delete">' . esc_html__( 'Delete', 'publishrank' ) . '</option></select>';
+			if ( $can_r ) {
+				echo '<input class="prx-input" type="text" name="bulk_target" placeholder="' . esc_attr__( 'Redirect target (empty = best suggestion each)', 'publishrank' ) . '" aria-label="' . esc_attr__( 'Redirect target for selected', 'publishrank' ) . '" data-prx-show-when="bulk_action=redirect" />';
+			}
+			echo '<button class="prx-btn" type="submit" data-prx-confirm="' . esc_attr__( 'Apply to the selected addresses?', 'publishrank' ) . '">' . esc_html__( 'Apply', 'publishrank' ) . '</button><span class="prx-muted">' . esc_html( sprintf( /* translators: %s: number */ __( '%s matching', 'publishrank' ), number_format_i18n( $res['total'] ) ) ) . '</span></div></form>';
+		}
+		$sort = static function ( $key, $label ) use ( $f ) {
+			$dir = ( $f['orderby'] === $key && 'desc' === $f['order'] ) ? 'asc' : 'desc';
+			return '<a href="' . esc_url( add_query_arg( array( 'orderby' => $key, 'order' => $dir ) ) ) . '">' . esc_html( $label ) . ( $f['orderby'] === $key ? ' <span class="fa-solid fa-sort-' . ( 'asc' === $f['order'] ? 'up' : 'down' ) . '" aria-hidden="true"></span>' : '' ) . '</a>';
+		};
+		echo '<div class="prx-table-wrap"><table class="prx-table"><thead><tr>' . ( $manage ? '<th class="prx-col-check"><input type="checkbox" data-prx-check-all aria-label="' . esc_attr__( 'Select all on this page', 'publishrank' ) . '" /></th>' : '' ) . '<th>' . $sort( 'path', __( 'Missing address', 'publishrank' ) ) . '</th><th>' . $sort( 'hits', __( 'Hits', 'publishrank' ) ) . '</th><th>' . esc_html__( 'Who', 'publishrank' ) . '</th><th>' . esc_html__( 'Came from', 'publishrank' ) . '</th><th>' . $sort( 'last_seen', __( 'Last seen', 'publishrank' ) ) . '</th><th>' . esc_html__( 'Fix', 'publishrank' ) . '</th></tr></thead><tbody>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		if ( ! $res['rows'] ) {
+			echo '<tr><td colspan="7"><div class="prx-empty"><span class="fa-solid fa-circle-check" aria-hidden="true"></span><p>' . esc_html__( 'No missing addresses match. Nice.', 'publishrank' ) . '</p></div></td></tr>';
+		}
+		foreach ( $res['rows'] as $r ) {
+			$sug  = 'scanner' === $r['ua_class'] ? array() : S::suggestions( $r['path'], 2, 0.35 );
+			$lazy = null === $sug;
+			$sug  = $lazy ? array() : $sug;
+			echo '<tr>' . ( $manage ? '<td class="prx-col-check"><input type="checkbox" form="prx-404-bulk" name="ids[]" value="' . (int) $r['id'] . '" aria-label="' . esc_attr( sprintf( /* translators: %s: path */ __( 'Select %s', 'publishrank' ), $r['path'] ) ) . '" /></td>' : '' );
+			echo '<td><code class="prx-code">' . esc_html( $r['path'] ) . '</code> ' . ( 'redirected' === $r['status'] ? Suite::badge( __( 'redirected', 'publishrank' ), 'good' ) : ( 'ignored' === $r['status'] ? Suite::badge( __( 'ignored', 'publishrank' ), 'muted' ) : '' ) ) . '<div class="prx-muted">' . esc_html( sprintf( /* translators: %s: time */ __( 'first seen %s', 'publishrank' ), Suite::ago( $r['first_seen'] ) ) ) . '</div></td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo '<td><strong>' . esc_html( number_format_i18n( $r['hits'] ) ) . '</strong></td><td>' . self::class_badges( $r ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo '<td>' . ( $r['referrer_host'] ? esc_html( $r['referrer_host'] ) . '<div class="prx-muted">' . esc_html( $r['top_referrer_path'] ) . '</div>' : '<span class="prx-muted">' . esc_html__( 'typed or unknown', 'publishrank' ) . '</span>' ) . '</td>';
+			echo '<td>' . esc_html( Suite::ago( $r['last_seen'] ) ) . '</td><td class="prx-fix">';
+			if ( $manage && $can_r && 'redirected' !== $r['status'] ) {
+				Suite::form_open( 'publishrank_seo_404_redirect', array( 'class' => 'prx-fix__form' ) );
+				foreach ( self::keep_args() as $k => $v ) {
+					echo '<input type="hidden" name="' . esc_attr( $k ) . '" value="' . esc_attr( $v ) . '" />';
+				}
+				$list = 'prx-sug-' . (int) $r['id'];
+				echo '<input type="hidden" name="id" value="' . (int) $r['id'] . '" /><input class="prx-input prx-input--sm" type="text" name="target" list="' . esc_attr( $list ) . '" value="' . esc_attr( $sug ? wp_make_link_relative( $sug[0]['url'] ) : '' ) . '" placeholder="/new-address/"' . ( $lazy ? ' data-prx-suggest="' . esc_url( rest_url( 'publishrank/v1/404/' . (int) $r['id'] . '/suggestions' ) ) . '"' : '' ) . ' aria-label="' . esc_attr( sprintf( /* translators: %s: path */ __( 'Redirect %s to', 'publishrank' ), $r['path'] ) ) . '" required />';
+				echo '<datalist id="' . esc_attr( $list ) . '">';
+				foreach ( $sug as $s ) {
+					echo '<option value="' . esc_attr( wp_make_link_relative( $s['url'] ) ) . '">' . esc_html( $s['title'] . ' (' . $s['score'] . '%)' ) . '</option>';
+				}
+				echo '</datalist><button class="prx-btn prx-btn--sm prx-btn--primary prx-btn--icon" type="submit" title="' . esc_attr__( 'Create redirect', 'publishrank' ) . '"><span class="fa-solid fa-arrow-right" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__( 'Create redirect', 'publishrank' ) . '</span></button></form>';
+				if ( $sug ) {
+					echo '<div class="prx-muted">' . esc_html( sprintf( /* translators: 1: title, 2: score */ __( 'Suggested: %1$s (%2$d%% match)', 'publishrank' ), $sug[0]['title'], $sug[0]['score'] ) ) . '</div>';
+				}
+			}
+			if ( $manage && 'open' === $r['status'] ) {
+				Suite::form_open( 'publishrank_seo_404_dismiss', array( 'class' => 'prx-inline' ) );
+				echo '<input type="hidden" name="id" value="' . (int) $r['id'] . '" /><button class="prx-link-btn" type="submit">' . esc_html__( 'Ignore', 'publishrank' ) . '</button></form>';
+			}
+			echo '</td></tr>';
+		}
+		echo '</tbody></table></div>';
+		if ( $manage && $can_r ) {
+			self::lazy_suggest_script();
+		}
+		Suite::pagination( $res['total'], self::PER_PAGE, $paged );
+		Suite::panel_close();
+	}
+
+	/** Loads suggestions that did not fit the render budget, one at a time, after the page shows. */
+	private static function lazy_suggest_script() {
+		$nonce = wp_create_nonce( 'wp_rest' );
+		echo '<script>(function(){var n=' . wp_json_encode( $nonce ) . ',q=[].slice.call(document.querySelectorAll("input[data-prx-suggest]"));function next(){var el=q.shift();if(!el)return;fetch(el.getAttribute("data-prx-suggest"),{headers:{"X-WP-Nonce":n},credentials:"same-origin"}).then(function(r){return r.ok?r.json():[]}).then(function(list){if(!Array.isArray(list)||!list.length)return;var dl=document.getElementById(el.getAttribute("list"));list.forEach(function(s){var o=document.createElement("option");var u;try{u=new URL(s.url).pathname}catch(e){u=s.url}o.value=u;o.textContent=s.title+" ("+s.score+"%)";dl&&dl.appendChild(o)});if(!el.value){var f;try{f=new URL(list[0].url).pathname}catch(e){f=list[0].url}el.value=f}var m=document.createElement("div");m.className="prx-muted";m.textContent=' . wp_json_encode( __( 'Suggested:', 'publishrank' ) ) . '+" "+list[0].title+" ("+list[0].score+"%)";el.form&&el.form.parentNode.insertBefore(m,el.form.nextSibling)}).catch(function(){}).then(next)}next()})();</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	private function panel_trends() {
+		global $wpdb;
+		Suite::panel_open( 'trends' );
+		echo '<div class="prx-grid prx-grid--2">';
+		Suite::card_open( __( '404 hits per day', 'publishrank' ), 'fa-chart-column', __( 'People (plum) and crawlers (green), last 30 days. Scanner probes are left out.', 'publishrank' ) );
+		echo '<svg class="prx-chart" role="img" aria-label="' . esc_attr__( '404 hits per day', 'publishrank' ) . '" data-prx-chart="' . esc_attr( wp_json_encode( S::series( 30 ) ) ) . '"></svg>';
+		$spikes = S::spikes( 30 );
+		if ( $spikes ) {
+			echo '<div class="prx-callout prx-callout--warn"><p><strong>' . esc_html__( 'Spikes detected', 'publishrank' ) . '</strong> ' . esc_html( implode( ', ', array_map( static function ( $s ) { return $s['day'] . ' (' . number_format_i18n( $s['hits'] ) . ')'; }, $spikes ) ) ) . ' — ' . esc_html__( 'often a broken link in a newsletter, menu or social post.', 'publishrank' ) . '</p></div>';
+		}
+		Suite::card_close();
+		foreach ( array( 'search' => array( __( 'Top 404s from search crawlers', 'publishrank' ), 'fa-magnifying-glass', 'hits_search' ), 'ai' => array( __( 'Top 404s from AI crawlers', 'publishrank' ), 'fa-robot', 'hits_ai' ) ) as $class => $meta ) {
+			Suite::card_open( $meta[0], $meta[1], __( 'Fixing these protects crawl budget and keeps your reporting citable.', 'publishrank' ) );
+			$rows = S::query( array( 'class' => $class, 'orderby' => $meta[2], 'per_page' => 10, 'status' => 'open' ) )['rows'];
+			if ( ! $rows ) {
+				echo '<p class="prx-muted">' . esc_html__( 'None recorded.', 'publishrank' ) . '</p>';
+			} else {
+				echo '<ol class="prx-list">';
+				foreach ( $rows as $r ) {
+					echo '<li><code class="prx-code">' . esc_html( $r['path'] ) . '</code> <strong>' . esc_html( number_format_i18n( $r[ $meta[2] ] ) ) . '</strong></li>';
+				}
+				echo '</ol>';
+			}
+			Suite::card_close();
+		}
+		Suite::card_open( __( 'Top referring sites', 'publishrank' ), 'fa-link', __( 'Ask these sites to update their links, or redirect the address.', 'publishrank' ) );
+		$t    = \PublishRankSEO\Core\Database::table( '404' );
+		$refs = \PublishRankSEO\Core\Database::ready( '404' ) ? $wpdb->get_results( "SELECT referrer_host, COUNT(*) AS paths, SUM(hits) AS hits FROM {$t} WHERE referrer_host <> '' AND ua_class <> 'scanner' GROUP BY referrer_host ORDER BY hits DESC LIMIT 10", ARRAY_A ) : array(); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		echo $refs ? '<ol class="prx-list">' : '<p class="prx-muted">' . esc_html__( 'None recorded.', 'publishrank' ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		foreach ( (array) $refs as $r ) {
+			echo '<li>' . esc_html( $r['referrer_host'] ) . ' <span class="prx-muted">' . esc_html( sprintf( /* translators: 1: paths, 2: hits */ __( '%1$s addresses · %2$s hits', 'publishrank' ), number_format_i18n( (int) $r['paths'] ), number_format_i18n( (int) $r['hits'] ) ) ) . '</span></li>';
+		}
+		echo $refs ? '</ol>' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		Suite::card_close();
+		echo '</div>';
+		Suite::panel_close();
+	}
+
+	private function panel_settings( $manage ) {
+		Suite::panel_open( 'settings' );
+		echo '<div class="prx-grid prx-grid--2">';
+		Suite::card_open( __( 'Recording', 'publishrank' ), 'fa-sliders' );
+		if ( $manage ) {
+			Suite::form_open( 'publishrank_seo_404_settings' );
+		}
+		Suite::switch_field( 'enabled', S::enabled(), __( 'Record missing addresses', 'publishrank' ) );
+		Suite::field( 'number', 'retention', (string) S::retention_days(), __( 'Keep entries for (days)', 'publishrank' ), __( 'A daily clean-up removes older entries in small batches.', 'publishrank' ), array( 'min' => 1, 'max' => 3650 ) );
+		Suite::field( 'number', 'ceiling', (string) S::ceiling(), __( 'Record every hit up to (per minute)', 'publishrank' ), __( 'Above this, only one hit in N is written and counted N times, so totals stay accurate during floods.', 'publishrank' ), array( 'min' => 10 ) );
+		Suite::field( 'number', 'sample', (string) S::sample_rate(), __( 'N (sampling rate above the limit)', 'publishrank' ), '', array( 'min' => 2, 'max' => 1000 ) );
+		Suite::field( 'textarea', 'noise', (string) get_option( 'publishrank_404_noise_rules', '' ), __( 'Extra scanner-noise rules', 'publishrank' ), __( 'One per line. Use * as a wildcard (/old-cms/*.php) or a regular expression. Start a line with ! followed by a built-in rule to switch that rule off.', 'publishrank' ), array( 'rows' => 5, 'class' => 'prx-textarea prx-mono' ) );
+		echo '<details class="prx-details"><summary>' . esc_html__( 'Built-in scanner rules', 'publishrank' ) . '</summary><ul class="prx-list prx-mono">';
+		foreach ( S::default_noise() as $rule ) {
+			echo '<li>' . esc_html( $rule ) . '</li>';
+		}
+		echo '</ul></details>';
+		if ( $manage ) {
+			echo '<div class="prx-actions-row"><button class="prx-btn prx-btn--primary" type="submit">' . esc_html__( 'Save settings', 'publishrank' ) . '</button></div></form>';
+		}
+		Suite::card_close();
+		Suite::card_open( __( 'Privacy', 'publishrank' ), 'fa-user-shield' );
+		echo '<ul class="prx-list"><li>' . esc_html__( 'No IP addresses are stored.', 'publishrank' ) . '</li><li>' . esc_html__( 'Browser identifiers are reduced to a visitor type (person, phone, search crawler, AI crawler, scanner).', 'publishrank' ) . '</li><li>' . esc_html__( 'Referrers keep only the site and path — query strings (which can contain search terms or tokens) are removed.', 'publishrank' ) . '</li><li>' . esc_html__( 'Suggested wording has been added to Settings → Privacy → Policy Guide.', 'publishrank' ) . '</li></ul>';
+		Suite::card_close();
+		if ( $manage ) {
+			Suite::card_open( __( 'Clear the log', 'publishrank' ), 'fa-trash-can' );
+			Suite::form_open( 'publishrank_seo_404_clear', array( 'data-prx-confirm' => __( 'Delete every 404 entry?', 'publishrank' ), 'data-prx-type' => 'DELETE', 'data-prx-danger' => '1' ) );
+			Suite::switch_field( 'with_history', false, __( 'Also delete the daily history used by the chart', 'publishrank' ) );
+			echo '<div class="prx-actions-row"><button class="prx-btn prx-btn--danger" type="submit">' . esc_html__( 'Clear all entries', 'publishrank' ) . '</button></div></form>';
+			Suite::card_close();
 		}
 		echo '</div>';
+		Suite::panel_close();
 	}
 }

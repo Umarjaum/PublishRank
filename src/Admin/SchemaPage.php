@@ -11,7 +11,7 @@ final class SchemaPage {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_init', array( $this, 'settings' ) ); }
 	public function menu() {
-		add_submenu_page( Branding::MENU_SLUG, __( 'Schema', 'publishrank' ), __( 'Schema', 'publishrank' ), 'manage_options', 'publishrank-schema', array( $this, 'render' ) ); }
+		add_submenu_page( Branding::MENU_SLUG, __( 'Schema', 'publishrank' ), __( 'Schema', 'publishrank' ), 'publishrank_manage_schema', 'publishrank-schema', array( $this, 'render' ) ); }
 	public function settings() {
 		register_setting( 'publishrank_schema', 'publishrank_schema_default_post_type', array( 'sanitize_callback' => array( $this, 'clean_type' ) ) );
 		register_setting(
@@ -89,7 +89,7 @@ final class SchemaPage {
 		echo '</select>';
 	}
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_schema' ) ) {
 			return; }
 		echo '<div class="wrap"><h1>' . esc_html__( 'PublishRank News Schema', 'publishrank' ) . '</h1>';
 		echo '<p>' . esc_html__( 'The schema editor supports NewsArticle and specialist Article subtypes, FAQPage, VideoObject, ImageGallery, AudioObject, PodcastEpisode, Event, Product, Recipe and Review. Advanced entities emit only when their type-specific fields are complete; named publisher and WebSite nodes connect automatically once identity setup is complete. Use the Schema Test action to validate live output.', 'publishrank' ) . '</p>';

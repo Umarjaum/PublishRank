@@ -39,6 +39,64 @@ final class SitemapCursorStore {
 
 	public static function version( $provider ) {
 		return max( 1, (int) get_option( self::version_key( $provider ), 1 ) ); }
+
+	/* ---- 2.25 incremental invalidation: one changed post refreshes only the file that holds it. ---- */
+
+	private static function gen_key( $provider ) {
+		return 'publishrank_sitemap_gen_' . sanitize_key( $provider ); }
+
+	/** @return array<int,int> shard => generation, plus 'e' => content epoch. */
+	private static function gens( $provider ) {
+		$g = get_option( self::gen_key( $provider ), array() );
+		return is_array( $g ) && isset( $g['v'] ) && (int) $g['v'] === self::version( $provider ) ? $g : array( 'v' => self::version( $provider ), 'e' => 0 );
+	}
+
+	/** Cache generation of one shard. */
+	public static function gen( $provider, $shard ) {
+		$g = self::gens( $provider );
+		return isset( $g[ (int) $shard ] ) ? (int) $g[ (int) $shard ] : 0;
+	}
+
+	/** Content epoch: changes whenever any post of the provider changes (drives the background recount). */
+	public static function epoch( $provider ) {
+		$g = self::gens( $provider );
+		return (int) $g['e'];
+	}
+
+	/** Short hash of every shard generation (index cache key, per-file lastmod). */
+	public static function gens_hash( $provider ) {
+		return substr( md5( serialize( self::gens( $provider ) ) ), 0, 8 );
+	}
+
+	/** Shard that holds an object ID according to the prepared cursor, or 0 when unknown. */
+	public static function shard_for( $provider, $object_id ) {
+		if ( ! self::is_complete( $provider ) ) {
+			return 0; }
+		$prepared = (int) get_option( self::meta_key( $provider, 'prepared' ), 1 );
+		$shard    = 1;
+		for ( $k = 2; $k <= $prepared; $k++ ) {
+			$c = get_option( self::checkpoint_key( $provider, $k ), false );
+			if ( false === $c || (int) $object_id <= (int) $c ) {
+				break; }
+			$shard = $k;
+		}
+		return $shard;
+	}
+
+	/**
+	 * A post changed: refresh only the file that holds it (or the whole provider when the cursor is not ready).
+	 * New posts have the highest IDs and land in the last file; ID-bounded files never lose or duplicate URLs.
+	 */
+	public static function touch( $provider, $object_id ) {
+		$shard = $object_id ? self::shard_for( $provider, (int) $object_id ) : 0;
+		if ( ! $shard ) {
+			self::bump( $provider );
+			return; }
+		$g             = self::gens( $provider );
+		$g[ $shard ]   = ( isset( $g[ $shard ] ) ? (int) $g[ $shard ] : 0 ) + 1;
+		$g['e']        = (int) $g['e'] + 1;
+		update_option( self::gen_key( $provider ), $g, false );
+	}
 	public static function bump( $provider ) {
 		update_option( self::version_key( $provider ), self::version( $provider ) + 1, false ); }
 	public static function bump_many( $providers ) {
@@ -52,6 +110,18 @@ final class SitemapCursorStore {
 		if ( null === $cursor ) {
 			self::queue();
 			return null; }
+		// Files with a following checkpoint are bounded by ID on both sides, so a post published or restored
+		// inside an older range stays in its file instead of pushing another URL out of every later file.
+		$next = self::is_complete( $provider ) ? get_option( self::checkpoint_key( $provider, (int) $shard + 1 ), false ) : false;
+		if ( false !== $next ) {
+			$rows = self::query_posts( $args, $size + 1, $cursor, (int) $next );
+			if ( count( $rows ) > $size ) {
+				// More than the protocol allows in one file: rebuild the cursor on the next request.
+				self::bump( $provider );
+				$rows = array_slice( $rows, 0, $size );
+			}
+			return $rows;
+		}
 		return self::query_posts( $args, $size, $cursor );
 	}
 	public static function user_page( $provider, $args, $shard, $size ) {
@@ -67,6 +137,27 @@ final class SitemapCursorStore {
 			self::queue();
 			return null; }
 		return self::query_terms( $args, $size, $cursor );
+	}
+	/** [after, upto|null] ID window of a shard when its checkpoints exist; null otherwise. */
+	public static function bounds( $provider, $shard ) {
+		$shard = max( 1, absint( $shard ) );
+		$after = self::checkpoint( $provider, $shard );
+		if ( null === $after ) {
+			return null; }
+		$next = get_option( self::checkpoint_key( $provider, $shard + 1 ), false );
+		return array( (int) $after, false === $next ? null : (int) $next );
+	}
+	/**
+	 * A finished cursor that no longer matches the catalogue (content added without hooks, e.g. SQL import or
+	 * restore) or that is older than STALE_AFTER is rebuilt; this never loops because the rebuild stamps a new time.
+	 */
+	public static function verify( $provider, $expected_shards ) {
+		if ( ! self::is_complete( $provider ) ) {
+			return; }
+		$prepared = (int) get_option( self::meta_key( $provider, 'prepared' ), 1 );
+		$done_at  = (int) get_option( self::meta_key( $provider, 'completed_at' ), 0 );
+		if ( $prepared !== max( 1, (int) $expected_shards ) || ( $done_at && $done_at < time() - self::STALE_AFTER ) ) {
+			self::bump( $provider ); }
 	}
 	public static function is_ready( $provider, $shard ) {
 		return null !== self::checkpoint( $provider, $shard ); }
@@ -91,12 +182,14 @@ final class SitemapCursorStore {
 		self::checkpoint( $provider, 1 );
 		for ( $i = 0; $i < max( 1, (int) $steps ); $i++ ) {
 			$cursor = (int) self::checkpoint( $provider, $prepared );
-			$rows   = 'posts' === $kind ? self::query_posts( $args, $size, $cursor ) : ( 'users' === $kind ? self::query_users( $args, $size, $cursor ) : self::query_terms( $args, $size, $cursor ) );
+			// Preparation only needs the last ID of each page: fetch IDs, not full objects (keeps memory flat on 60k+ terms/users).
+			$rows   = 'posts' === $kind ? self::query_posts( $args, $size, $cursor ) : ( 'users' === $kind ? self::query_users( array_merge( $args, array( 'fields' => 'ID' ) ), $size, $cursor ) : self::query_terms( array_merge( $args, array( 'fields' => 'ids', 'cache_results' => false ) ), $size, $cursor ) );
 			if ( count( $rows ) < $size ) {
 				update_option( self::meta_key( $provider, 'complete' ), 1, false );
+				update_option( self::meta_key( $provider, 'completed_at' ), time(), false );
 				break; }
 			$last = end( $rows );
-			$next = 'posts' === $kind ? (int) $last : ( 'users' === $kind ? (int) $last->ID : (int) $last->term_id );
+			$next = is_object( $last ) ? (int) ( 'users' === $kind ? $last->ID : $last->term_id ) : (int) $last;
 			++$prepared;
 			update_option( self::checkpoint_key( $provider, $prepared ), $next, false );
 			update_option( self::meta_key( $provider, 'prepared' ), $prepared, false );
@@ -177,10 +270,11 @@ final class SitemapCursorStore {
 	private static function checkpoint_key( $provider, $shard ) {
 		return 'publishrank_sitemap_checkpoint_' . sanitize_key( $provider ) . '_' . self::version( $provider ) . '_' . max( 1, absint( $shard ) ); }
 
-	private static function query_posts( $args, $size, $after ) {
-		$where = static function ( $sql ) use ( $after ) {
+	private static function query_posts( $args, $size, $after, $upto = 0 ) {
+		$where = static function ( $sql ) use ( $after, $upto ) {
 			global $wpdb;
-			return $sql . $wpdb->prepare( " AND {$wpdb->posts}.ID > %d", $after );
+			$sql .= $wpdb->prepare( " AND {$wpdb->posts}.ID > %d", $after );
+			return $upto ? $sql . $wpdb->prepare( " AND {$wpdb->posts}.ID <= %d", $upto ) : $sql;
 		};
 		add_filter( 'posts_where', $where, 10, 1 );
 		$args['posts_per_page'] = $size;
