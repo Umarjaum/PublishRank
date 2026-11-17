@@ -86,3 +86,6 @@ Date: 16 November 2026 · Plugin version: **2.25.0** · Website: PublishRank off
 ## Remaining actions for you
 1. **Deploy the website** (Vercel) so the live feed and the 2.25.0 download become available.
 2. Optionally re-test on your production stack (MySQL, your PHP version, Apache/Nginx) and add the server rule from the Theme Masking screen.
+
+## Post-delivery owner follow-up (2026-11-17)
+The project owner reports that all PublishRank 2.25.0 features have since been tested on live sites. This statement was provided after preparation of the original report; the later live-site environments, test cases and logs were not included in the delivered report. The report's earlier test scope and limitations above remain an accurate record of that test run. The official website's 2.25.0 home page, feed and plugin download were subsequently checked and returned successfully.

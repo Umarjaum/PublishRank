@@ -20,7 +20,7 @@ PublishRank is a free, open-source WordPress SEO plugin for local businesses, se
 > PublishRank generates and validates technical publishing signals. Search engines and social networks may still rewrite titles, descriptions, images, snippets, and rich-result presentations.
 
 ## Current release
-- **Version:** 2.25.0 (experimental candidate; see the release verification report before production use)
+- **Version:** 2.25.0 (project owner reports all features tested on live sites)
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
 - **Requires PHP:** 7.4 or newer (target; PHP 7.4 was not available in the reported test environment)
@@ -40,7 +40,7 @@ PublishRank is a free, open-source WordPress SEO plugin for local businesses, se
 - **SEO and scale:** 15 additional article trust checks, independently rebuilt sitemap shards and an option preloader (measured on the report's test site).
 - **News & What's New:** validated, cached release feed with bundled changelog fallback; it does not install plugin updates.
 
-**Verification limits:** report tests used WordPress 7.1.4, PHP 8.3 and SQLite. MySQL/MariaDB, PHP 7.4, Apache/Nginx rules, production traffic and the live website deployment were not tested. Review [VERIFICATION-REPORT-2.25.0.md](VERIFICATION-REPORT-2.25.0.md) and [UPGRADE-STATUS.md](UPGRADE-STATUS.md).
+**Testing record:** the project owner reports that all 2.25.0 features have been tested on live sites. The delivered report records the earlier WordPress 7.1.4 / PHP 8.3 / SQLite test run and does not itemize the later live-site test matrix; PHP 7.4, MySQL/MariaDB and web-server-rule checks were not part of that report. See [VERIFICATION-REPORT-2.25.0.md](VERIFICATION-REPORT-2.25.0.md) for scope.
 
 ## Actual interface screenshots
 
