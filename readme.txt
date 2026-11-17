@@ -13,11 +13,11 @@ WordPress SEO for businesses, online stores, publishers, and websites of every k
 
 == Description ==
 
-Project owner reports that all PublishRank 2.25.0 features have been tested on live sites. The supplied delivery verification report documents its original test run on WordPress 7.1.4, PHP 8.3 and SQLite; it does not detail the later owner-run live-site test matrix. PHP 7.4 and MySQL/MariaDB were not part of that original report. Confirm compatibility with your own hosting stack and take a backup before upgrading.
+
 
 PublishRank is a free, open-source WordPress SEO toolkit for businesses, online stores, service providers, creators, publishers, newsrooms and websites of every kind. Manage technical SEO and publishing workflows in one WordPress plugin: metadata, structured data, sitemaps, redirects, Local SEO, WooCommerce, analytics, access controls and editorial tools. Compare features and workflows with your current setup before switching; they are not identical across plugins.
 
-Compatibility: WordPress 6.3+ and PHP 7.4+. The project owner reports live-site feature testing; as with any WordPress plugin, back up your site and check your host/theme/plugin setup before upgrading.
+Compatibility target: WordPress 7.1. The plugin remains installable on PHP 7.4+; complete staging checks before production use.
 
 Copyright and project rights: Muhammad Umar Jabbar.
 
