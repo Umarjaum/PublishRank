@@ -26,7 +26,7 @@ PublishRank is a free, open-source WordPress SEO plugin for local businesses, se
 - **Requires PHP:** 7.4 or newer (target; PHP 7.4 was not available in the reported test environment)
 - **Repository:** <https://github.com/Umarjaum/PublishRank>
 - **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
-- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.25.0/PublishRank-2.25.0.zip>
+- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.25.0/plugin.zip>
 - **Official website:** <https://publishrankseo.vercel.app/>
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
