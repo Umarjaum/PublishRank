@@ -114,7 +114,7 @@ final class ThemeSeoPage {
 		Suite::open( __( 'Theme SEO & Masking', 'publishrank' ), __( 'Remove duplicate SEO tags from your theme, and hide which theme your site runs from page source, stylesheets, scripts and theme-detector tools.', 'publishrank' ) );
 
 		echo '<div class="prc-screen">';
-		echo '<div class="prx-callout prx-callout--' . esc_attr( 'ok' === $info[1] ? 'ok' : ( 'warn' === $info[1] ? 'warn' : ( 'bad' === $info[1] ? 'bad' : 'info' ) ) ) . '" role="status"><span class="fa-solid ' . esc_attr( 'ok' === $info[1] ? 'fa-shield-halved' : ( 'bad' === $info[1] ? 'fa-triangle-exclamation' : 'fa-circle-info' ) ) . '" aria-hidden="true"></span><p><strong>' . esc_html( $info[0] ) . '</strong> — ' . esc_html( $info[2] );
+		echo '<div class="prx-callout prx-callout--' . esc_attr( 'ok' === $info[1] ? 'ok' : ( 'warn' === $info[1] ? 'warn' : ( 'bad' === $info[1] ? 'bad' : 'info' ) ) ) . '" role="status"><span class="fa-solid ' . esc_attr( 'ok' === $info[1] ? 'fa-shield-halved' : ( 'bad' === $info[1] ? 'fa-triangle-exclamation' : 'fa-circle-question' ) ) . '" aria-hidden="true"></span><p><strong>' . esc_html( $info[0] ) . '</strong> — ' . esc_html( $info[2] );
 		if ( $result ) {
 			/* translators: 1: time ago, 2: seconds */
 			echo ' <span class="prx-help">' . esc_html( sprintf( __( 'Last scan %1$s ago, took %2$ss.', 'publishrank' ), human_time_diff( (int) $result['time'] ), $result['seconds'] ) ) . '</span>';
@@ -244,7 +244,7 @@ final class ThemeSeoPage {
 		echo '<p class="prx-help">' . esc_html__( 'Add the rule only while masking is on and a scan shows no broken files: masked files are read from disk, so they keep working.', 'publishrank' ) . '</p>';
 		Suite::card_close();
 		if ( $warnings ) {
-			Suite::card_open( __( 'Compatibility notes', 'publishrank' ), 'fa-circle-info' );
+			Suite::card_open( __( 'Compatibility notes', 'publishrank' ), 'fa-circle-question' );
 			echo '<ul class="prx-list">';
 			foreach ( $warnings as $w ) {
 				if ( 'probe' === $w ) {

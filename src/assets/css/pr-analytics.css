@@ -49,7 +49,9 @@
 .prc-kpi__value { font-size: 28px; line-height: 1.1; font-weight: 700; letter-spacing: -.02em; margin: 12px 0 6px; color: var(--prc-ink); font-variant-numeric: tabular-nums; }
 .prc-kpi__foot { display: flex; gap: 6px; align-items: center; font-size: 12px; position: relative; z-index: 1; }
 .prc-kpi__vs { color: var(--prc-muted); }
-.prc-kpi__spark { position: absolute; right: 10px; bottom: 10px; width: 44%; height: 40px; opacity: .95; }
+.prc-kpi__spark { position: absolute; left: 16px; right: 16px; bottom: 10px; height: 30px; opacity: .95; }
+/* Sparkline sits in its own strip under the comparison text so the two never overlap in narrow cards. */
+.prc-kpi { padding-bottom: 48px; }
 .prc-spark { width: 100%; height: 100%; display: block; }
 .prc-hint { display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: var(--prc-track); color: var(--prc-muted); font-size: 10px; cursor: help; }
 .prc-delta { display: inline-flex; gap: 4px; align-items: center; font-weight: 700; padding: 2px 7px; border-radius: 999px; font-size: 11.5px; }

@@ -1,0 +1,77 @@
+/* Traffic Guard 2.25.1 */
+.prtg2{display:flex;flex-direction:column;gap:18px;max-width:1320px}
+.prtg2-status{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border:1px solid #e2ddd5;border-radius:12px;background:#fff}
+.prtg2-status strong{font-size:15px}
+.prtg2-status p{margin:2px 0 8px;color:#50575e}
+.prtg2-status > a{margin-left:auto;flex:0 0 auto}
+.prtg2-status__dot{flex:0 0 12px;width:12px;height:12px;margin-top:5px;border-radius:50%;background:#a7aaad}
+.prtg2-status--on{border-color:#b8d8c8;background:#f3faf6}.prtg2-status--on .prtg2-status__dot{background:#2e7d5b;box-shadow:0 0 0 4px rgba(46,125,91,.15)}
+.prtg2-status--monitor{border-color:#ead9b4;background:#fdf8ee}.prtg2-status--monitor .prtg2-status__dot{background:#b08a45;box-shadow:0 0 0 4px rgba(176,138,69,.18)}
+.prtg2-facts{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.prtg2-facts li{margin:0;padding:2px 10px;border-radius:999px;background:rgba(0,0,0,.05);font-size:12px;color:#3c434a}
+.prtg2-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid #dcdcde;scrollbar-width:thin}
+.wrap .prtg2 .prtg2-tab{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:3px solid transparent;color:#3c434a;text-decoration:none;font-weight:500;white-space:nowrap}
+.prtg2-tab:hover{color:#9B1245}
+.prtg2-tab:focus-visible{outline:2px solid #9B1245;outline-offset:-2px;box-shadow:none}
+.wrap .prtg2 .prtg2-tab.is-current{border-bottom-color:#9B1245;color:#9B1245;font-weight:600}
+.prtg2-body{display:flex;flex-direction:column;gap:18px}
+.prtg2-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.prtg2-toolbar .prx-help{margin:0;max-width:760px}
+.prtg2-seg{display:inline-block;padding:6px 12px;border:1px solid #c3c4c7;margin-left:-1px;color:#1d2327;text-decoration:none;background:#fff;font-size:13px}
+.prtg2-seg:first-child{border-radius:8px 0 0 8px;margin-left:0}.prtg2-seg:last-child{border-radius:0 8px 8px 0}
+.prtg2-seg.is-current{background:#9B1245;border-color:#9B1245;color:#fff}
+.prtg2-seg:focus-visible{outline:2px solid #9B1245;outline-offset:2px;position:relative;z-index:1}
+.prtg2-empty{text-align:center;padding:40px 20px;border:1px dashed #c3c4c7;border-radius:12px;background:#fff}
+.prtg2-empty > .fa-solid{font-size:32px;color:#9B1245;opacity:.8}
+.prtg2-empty h2{margin:12px 0 6px;font-size:18px}
+.prtg2-empty p{max-width:560px;margin:0 auto 16px;color:#50575e}
+.prtg2-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end;padding:16px;border:1px solid #e2ddd5;border-radius:12px;background:#fff}
+.prtg2-filters .prx-field{margin:0}
+.prtg2-filters__actions{display:flex;gap:8px;flex-wrap:wrap}
+.prtg2-check{display:flex;align-items:center;gap:6px;padding-bottom:8px}
+.prtg2-events td{vertical-align:top}
+.prtg2-events tr.is-fp{opacity:.7}
+.prtg2-req{max-width:340px}
+.prtg2-req .prx-truncate{display:inline-block;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.prtg2-actions{display:flex;flex-wrap:wrap;gap:6px}
+.prtg2-danger{border:1px solid #f0c9c6;border-radius:10px;padding:10px 14px;background:#fff}
+.prtg2-danger summary{cursor:pointer;color:#a32d2d;font-weight:600}
+.prtg2-back{text-decoration:none;font-weight:500}
+.prtg2-conds{border:1px solid #e2ddd5;border-radius:10px;padding:12px 14px;margin:8px 0 16px}
+.prtg2-conds legend{padding:0 6px;font-weight:600}
+.prtg2-conds__list{margin:0 0 10px;padding:0;list-style:none;counter-reset:cond}
+.prtg2-cond{display:grid;grid-template-columns:minmax(150px,1fr) minmax(140px,1fr) minmax(200px,2fr) auto;gap:8px;align-items:center;margin:0 0 8px}
+.prtg2-cond select,.prtg2-cond .prx-input{width:100%}
+.prtg2-radios{display:flex;flex-direction:column;gap:8px;margin:10px 0 14px;border:0;padding:0}
+.prtg2-radios legend{font-weight:600;margin-bottom:6px}
+.prtg2-savebar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid #e2ddd5;border-radius:12px;background:rgba(255,255,255,.96);box-shadow:0 -4px 16px rgba(0,0,0,.05)}
+.prtg2-inline-form{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:12px}
+.prtg2-inline-form .prx-field{margin:0}
+.prtg2-checks{margin:0;padding:0;list-style:none}
+.prtg2-checks li{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px}
+.prtg2-checks .is-ok .fa-solid{color:#2e7d5b}.prtg2-checks .is-warn .fa-solid{color:#b26200}
+.prtg2-result{padding:18px 20px;border-radius:12px;border:1px solid #e2ddd5;background:#fff}
+.prtg2-result h2{display:flex;align-items:center;gap:10px;margin:0 0 6px;font-size:18px}
+.prtg2-result--block{border-color:#f0c9c6;background:#fdf4f3}.prtg2-result--block h2 .fa-solid{color:#a32d2d}
+.prtg2-result--allow{border-color:#b8d8c8;background:#f3faf6}.prtg2-result--allow h2 .fa-solid{color:#2e7d5b}
+.prtg2-trace{margin:10px 0 10px 20px}
+.prtg2-trace li{margin:0 0 4px}
+[hidden]{display:none !important}
+@media (max-width:782px){
+.prtg2-status{flex-wrap:wrap}.prtg2-status > a{margin-left:0}
+.prtg2-cond{grid-template-columns:1fr 1fr;}
+.prtg2-cond [data-prtg-value]{grid-column:1 / -1}
+.prtg2-events thead{display:none}
+.prtg2-events tr{display:block;border-bottom:1px solid #e2ddd5;padding:8px 0}
+.prtg2-events td{display:block;border:0;padding:4px 8px}
+.prtg2-req,.prtg2-req .prx-truncate{max-width:100%}
+}
+.wrap .prtg2 a.prtg2-seg.is-current,.wrap .prtg2 a.prtg2-seg.is-current:hover{color:#fff}
+.wrap .prtg2 a.prtg2-seg:not(.is-current){color:#1d2327}
+.prtg2-filters input:not([type=checkbox]):not([type=radio]),.prtg2-filters select{min-height:40px;height:40px;line-height:1.4;padding-top:0;padding-bottom:0}
+.prtg2-filters input[type=checkbox]{width:16px;height:16px;min-height:0}
+.prtg2-events .prtg2-ip{white-space:nowrap;min-width:120px}
+.prtg2-events .prtg2-ip .prx-help{white-space:normal}
+.prtg2-events td.prtg2-actions{min-width:150px;max-width:190px}
+.prtg2-actions form{display:inline}
+form.prtg2-filters select,.prx form.prtg2-filters select,.wrap form.prtg2-filters select{padding-top:0!important;padding-bottom:0!important;line-height:38px;height:40px}

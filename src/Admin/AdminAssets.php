@@ -173,7 +173,7 @@ final class AdminAssets {
 		set_transient(
 			'publishrank_seo_flash_' . get_current_user_id(),
 			array(
-				'type'    => 'error' === $type ? 'error' : 'success',
+				'type'    => in_array( $type, array( 'error', 'warning', 'info', 'success' ), true ) ? $type : 'success',
 				'message' => (string) $message,
 			),
 			120

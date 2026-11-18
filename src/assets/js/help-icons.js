@@ -144,7 +144,7 @@
 		btn.id = 'pr-help-btn-' + (++counter);
 		var glyph = document.createElement('span');
 		glyph.setAttribute('aria-hidden', 'true');
-		glyph.textContent = 'i';
+		glyph.textContent = '?';
 		btn.appendChild(glyph);
 
 		if (el.tagName === 'LABEL' && el.querySelector('input, select, textarea')) {

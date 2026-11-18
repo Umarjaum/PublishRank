@@ -10,7 +10,7 @@ namespace PublishRankSEO\Core;
 defined( 'ABSPATH' ) || exit;
 
 final class Database {
-	const VERSION     = 5;
+	const VERSION     = 6;
 	const VERSION_OPT = 'publishrank_db_version';
 
 	/** @var array<string,bool> */
@@ -24,7 +24,7 @@ final class Database {
 
 	/** @return string[] */
 	public static function keys() {
-		return array( 'shield_attempts', 'security_log', '404', '404_daily', 'redirects', 'redirect_groups', 'redirect_history', 'ai_bots', 'ai_bots_daily', 'ai_citations', 'feed_stats', 'traffic_daily', 'traffic_seen' );
+		return array( 'shield_attempts', 'security_log', '404', '404_daily', 'redirects', 'redirect_groups', 'redirect_history', 'ai_bots', 'ai_bots_daily', 'ai_citations', 'feed_stats', 'traffic_daily', 'traffic_seen', 'tg_events', 'tg_blocks' );
 	}
 
 	public static function register() {
@@ -240,6 +240,39 @@ final class Database {
 			KEY prompt_id (prompt_id),
 			KEY provider (provider,created_at),
 			KEY run_id (run_id)
+		) $c;";
+		// 2.25.1: Traffic Guard events (blocked / would-block / rate-limited / false-positive) and temporary blocks.
+		$sql[] = "CREATE TABLE {$t['tg_events']} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			created_at datetime NOT NULL,
+			decision varchar(16) NOT NULL DEFAULT 'blocked',
+			reason varchar(32) NOT NULL DEFAULT '',
+			rule_id varchar(32) NOT NULL DEFAULT '',
+			ip varchar(45) NOT NULL DEFAULT '',
+			country char(2) NOT NULL DEFAULT '',
+			method varchar(8) NOT NULL DEFAULT 'GET',
+			path varchar(255) NOT NULL DEFAULT '',
+			user_agent varchar(255) NOT NULL DEFAULT '',
+			bot varchar(16) NOT NULL DEFAULT '',
+			reference char(10) NOT NULL DEFAULT '',
+			false_positive tinyint(1) unsigned NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			KEY created_at (created_at),
+			KEY decision (decision,created_at),
+			KEY ip (ip),
+			KEY country (country,created_at),
+			KEY reference (reference)
+		) $c;";
+		$sql[] = "CREATE TABLE {$t['tg_blocks']} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			ip varchar(45) NOT NULL,
+			reason varchar(64) NOT NULL DEFAULT '',
+			created_at datetime NOT NULL,
+			expires_at datetime NOT NULL,
+			hits int(10) unsigned NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			UNIQUE KEY ip (ip),
+			KEY expires_at (expires_at)
 		) $c;";
 		$sql[] = "CREATE TABLE {$t['feed_stats']} (
 			day date NOT NULL,

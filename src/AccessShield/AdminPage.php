@@ -19,7 +19,7 @@ final class AdminPage {
 		add_action( 'admin_menu', array( $this, 'menu' ), 12 );
 		add_action( 'admin_init', array( $this, 'redirect_legacy' ), 1 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
-		foreach ( array( 'save', 'unlock', 'export', 'server_rules', 'confirm', 'clear_log', 'master', 'verify', 'verify_export' ) as $a ) {
+		foreach ( array( 'save', 'unlock', 'export', 'server_rules', 'confirm', 'clear_log', 'master', 'verify', 'verify_export', 'design' ) as $a ) {
 			add_action( 'admin_post_publishrank_shield_' . $a, array( $this, 'handle_' . $a ) );
 		}
 	}
@@ -31,6 +31,16 @@ final class AdminPage {
 
 	public function assets() {
 		Suite::enqueue_for( self::SLUG );
+		if ( self::SLUG === Suite::current_page() ) {
+			\PublishRankSEO\Admin\CountryPicker::enqueue();
+			if ( Capabilities::can( 'manage_security' ) ) {
+				wp_enqueue_media();
+				$js = PUBLISHRANK_SEO_PATH . 'assets/js/login-design.js';
+				wp_enqueue_script( 'publishrank-login-design', Branding::asset_url( 'js/login-design.js' ), array( 'jquery' ), Branding::version() . '.' . ( file_exists( $js ) ? (string) filemtime( $js ) : '0' ), true );
+				wp_enqueue_style( 'publishrank-login-design-admin', Branding::asset_url( 'css/login-design.css' ), array(), Branding::version() );
+				wp_localize_script( 'publishrank-login-design', 'publishrankLoginDesign', array( 'choose' => __( 'Choose image', 'publishrank' ), 'use' => __( 'Use this image', 'publishrank' ) ) );
+			}
+		}
 		if ( self::SLUG === Suite::current_page() ) {
 			\PublishRankSEO\Admin\Charts::enqueue( false );
 		}
@@ -132,6 +142,15 @@ final class AdminPage {
 		Settings::update( $in );
 		SecurityLog::add( 'settings', 'info', array( 'detail' => 'Access Shield settings saved (' . $section . ').' ) );
 		Suite::done( self::SLUG, 'success', __( 'Settings saved.', 'publishrank' ), array(), $section );
+	}
+
+	public function handle_design() {
+		Suite::guard( 'publishrank_shield_design', 'manage_security' );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every key is validated by LoginDesign::sanitize().
+		$in = isset( $_POST['design'] ) && is_array( $_POST['design'] ) ? wp_unslash( $_POST['design'] ) : array();
+		LoginDesign::save( $in );
+		SecurityLog::add( 'settings', 'info', array( 'detail' => 'Sign-in page design saved.' ) );
+		Suite::done( self::SLUG, 'success', ! empty( $in['enabled'] ) ? __( 'Sign-in page design saved. Open your login address in a private window to see it.', 'publishrank' ) : __( 'Sign-in page design saved (currently switched off).', 'publishrank' ), array(), 'design' );
 	}
 
 	public function handle_confirm() {
@@ -241,6 +260,7 @@ final class AdminPage {
 			'overview'  => __( 'Overview', 'publishrank' ),
 			'analytics' => __( 'Analytics', 'publishrank' ),
 			'login'     => __( 'Login address', 'publishrank' ),
+			'design'    => __( 'Sign-in page design', 'publishrank' ),
 			'brute'     => __( 'Brute force', 'publishrank' ),
 			'paths'     => __( 'Credential paths', 'publishrank' ),
 			'captcha'   => __( 'CAPTCHA', 'publishrank' ),
@@ -258,6 +278,7 @@ final class AdminPage {
 		$this->tab_analytics();
 		if ( $manage ) {
 			$this->tab_login( $s );
+			$this->tab_design();
 			$this->tab_brute( $s );
 			$this->tab_paths( $s );
 			$this->tab_captcha( $s );
@@ -436,7 +457,7 @@ final class AdminPage {
 			$icons = array( 'login_success' => array( 'fa-circle-check', 'teal' ), 'twofa_success' => array( 'fa-key', 'brass' ), 'login_failed' => array( 'fa-circle-xmark', 'plum' ), 'lockout' => array( 'fa-lock', 'coral' ) );
 			echo '<ul class="prc-activity">';
 			foreach ( $recent as $r ) {
-				$ic = isset( $icons[ $r['event'] ] ) ? $icons[ $r['event'] ] : ( in_array( $r['event'], $groups['blocked'], true ) ? array( 'fa-ban', 'coral' ) : array( 'fa-circle-info', 'slate' ) );
+				$ic = isset( $icons[ $r['event'] ] ) ? $icons[ $r['event'] ] : ( in_array( $r['event'], $groups['blocked'], true ) ? array( 'fa-ban', 'coral' ) : array( 'fa-circle-question', 'slate' ) );
 				$cc = isset( $r['country'] ) ? (string) $r['country'] : '';
 				echo '<li><span class="prc-kpi__icon prc-bg--' . esc_attr( $ic[1] ) . '" style="width:28px;height:28px;font-size:12px"><i class="fa-solid ' . esc_attr( $ic[0] ) . '" aria-hidden="true"></i></span><span class="prc-activity__main"><strong>' . esc_html( isset( $labels[ $r['event'] ] ) ? $labels[ $r['event'] ] : $r['event'] ) . ( '' !== (string) $r['username'] ? ' · ' . esc_html( $r['username'] ) : '' ) . '</strong><small>' . esc_html( $r['ip'] ) . ( '' !== $cc ? ' · ' . esc_html( \PublishRankSEO\Analytics\Geo::flag( $cc ) . ' ' . \PublishRankSEO\Analytics\Geo::name( $cc ) ) : '' ) . '</small></span><time>' . esc_html( sprintf( /* translators: %s: time */ __( '%s ago', 'publishrank' ), human_time_diff( strtotime( $r['created_at'] . ' UTC' ), time() ) ) ) . '</time></li>';
 			}
@@ -470,6 +491,56 @@ final class AdminPage {
 		Suite::panel_close();
 	}
 
+	private function tab_design() {
+		$d = LoginDesign::get();
+		Suite::panel_open( 'design' );
+		Suite::form_open( 'publishrank_shield_design', array( 'class' => 'prl-designer' ) );
+		echo '<div class="prx-grid prx-grid--2"><div class="prx-stack">';
+		Suite::card_open( __( 'Sign-in page design', 'publishrank' ), 'fa-palette', __( 'Brand the sign-in, registration and password screens. Form fields, error messages, CAPTCHA and two-factor stay exactly as they are, so nothing about security or accessibility changes.', 'publishrank' ) );
+		echo '<input type="hidden" name="design[enabled]" value="0" />';
+		Suite::switch_field( 'design[enabled]', ! empty( $d['enabled'] ), __( 'Use this design on the sign-in page', 'publishrank' ) );
+		echo '<div class="prx-fields">';
+		Suite::field( 'select', 'design[layout]', $d['layout'], __( 'Form position', 'publishrank' ), __( 'Left and right apply on wide screens; phones always centre the form.', 'publishrank' ), array( 'data-prl' => 'layout' ), array( 'center' => __( 'Centre', 'publishrank' ), 'left' => __( 'Left', 'publishrank' ), 'right' => __( 'Right', 'publishrank' ) ) );
+		Suite::field( 'select', 'design[font]', $d['font'], __( 'Typeface', 'publishrank' ), '', array( 'data-prl' => 'font' ), array( 'system' => __( 'System (fast, default)', 'publishrank' ), 'serif' => __( 'Serif', 'publishrank' ), 'rounded' => __( 'Rounded', 'publishrank' ) ) );
+		echo '</div>';
+		foreach ( array( 'logo_id' => __( 'Logo', 'publishrank' ), 'bg_image_id' => __( 'Background image', 'publishrank' ) ) as $key => $label ) {
+			$url = $d[ $key ] ? (string) wp_get_attachment_image_url( (int) $d[ $key ], 'medium' ) : '';
+			echo '<div class="prx-field prl-media"><span class="prx-label">' . esc_html( $label ) . '</span><div class="prx-row"><input type="hidden" name="design[' . esc_attr( $key ) . ']" value="' . (int) $d[ $key ] . '" data-prl-media="' . esc_attr( $key ) . '" /><img class="prl-media__thumb" alt="" src="' . esc_url( $url ) . '"' . ( $url ? '' : ' hidden' ) . ' /><button type="button" class="button" data-prl-pick="' . esc_attr( $key ) . '">' . esc_html__( 'Choose image', 'publishrank' ) . '</button> <button type="button" class="button-link" data-prl-clear="' . esc_attr( $key ) . '"' . ( $url ? '' : ' hidden' ) . '>' . esc_html__( 'Remove', 'publishrank' ) . '</button></div></div>';
+		}
+		echo '<div class="prx-fields">';
+		Suite::field( 'number', 'design[logo_width]', $d['logo_width'], __( 'Logo size (px)', 'publishrank' ), '', array( 'min' => 40, 'max' => 320, 'data-prl' => 'logo_width' ) );
+		Suite::field( 'select', 'design[logo_link]', $d['logo_link'], __( 'Logo links to', 'publishrank' ), '', array(), array( 'home' => __( 'Your home page', 'publishrank' ), 'wordpress' => 'WordPress.org' ) );
+		Suite::field( 'number', 'design[bg_overlay]', $d['bg_overlay'], __( 'Darken background image (%)', 'publishrank' ), __( 'Keeps text readable on photos.', 'publishrank' ), array( 'min' => 0, 'max' => 90, 'data-prl' => 'bg_overlay' ) );
+		Suite::field( 'number', 'design[radius]', $d['radius'], __( 'Corner radius (px)', 'publishrank' ), '', array( 'min' => 0, 'max' => 32, 'data-prl' => 'radius' ) );
+		echo '</div><div class="prl-colors">';
+		foreach ( array( 'bg_color' => __( 'Page background', 'publishrank' ), 'card_color' => __( 'Form background', 'publishrank' ), 'text_color' => __( 'Text', 'publishrank' ), 'accent_color' => __( 'Button and focus colour', 'publishrank' ), 'button_text' => __( 'Button text', 'publishrank' ) ) as $key => $label ) {
+			echo '<label class="prl-color"><input type="color" name="design[' . esc_attr( $key ) . ']" value="' . esc_attr( $d[ $key ] ) . '" data-prl="' . esc_attr( $key ) . '" /> ' . esc_html( $label ) . '</label>';
+		}
+		echo '</div><p class="prx-help prl-contrast" data-prl-contrast aria-live="polite"></p>';
+		echo '<input type="hidden" name="design[shadow]" value="0" />';
+		Suite::switch_field( 'design[shadow]', ! empty( $d['shadow'] ), __( 'Soft shadow under the form', 'publishrank' ) );
+		Suite::field( 'text', 'design[heading]', $d['heading'], __( 'Heading above the form', 'publishrank' ), __( 'For example: Newsroom sign-in', 'publishrank' ), array( 'maxlength' => 120, 'data-prl' => 'heading' ) );
+		Suite::field( 'textarea', 'design[message]', $d['message'], __( 'Welcome message', 'publishrank' ), __( 'Shown in a notice box above the form. Plain text.', 'publishrank' ), array( 'rows' => 3, 'maxlength' => 500, 'data-prl' => 'message' ) );
+		Suite::field( 'text', 'design[footer_note]', $d['footer_note'], __( 'Note under the form', 'publishrank' ), __( 'For example: Authorised staff only. Sign-ins are logged.', 'publishrank' ), array( 'maxlength' => 200, 'data-prl' => 'footer_note' ) );
+		echo '<input type="hidden" name="design[hide_back]" value="0" /><input type="hidden" name="design[hide_lang]" value="0" />';
+		Suite::switch_field( 'design[hide_back]', ! empty( $d['hide_back'] ), __( 'Hide the "Go to site" link', 'publishrank' ) );
+		Suite::switch_field( 'design[hide_lang]', ! empty( $d['hide_lang'] ), __( 'Hide the language switcher', 'publishrank' ) );
+		$this->save_button( __( 'Save design', 'publishrank' ) );
+		Suite::card_close();
+		echo '</div><div class="prx-stack">';
+		Suite::card_open( __( 'Live preview', 'publishrank' ), 'fa-eye', __( 'Updates as you change settings. Save to apply it to the real sign-in page.', 'publishrank' ) );
+		$logo = $d['logo_id'] ? (string) wp_get_attachment_image_url( (int) $d['logo_id'], 'medium' ) : '';
+		$bg   = $d['bg_image_id'] ? (string) wp_get_attachment_image_url( (int) $d['bg_image_id'], 'full' ) : '';
+		echo '<div class="prl-preview prl-preview--' . esc_attr( $d['layout'] ) . '" data-prl-preview data-bg="' . esc_url( $bg ) . '" aria-hidden="true">';
+		echo '<div class="prl-preview__col"><div class="prl-preview__logo" data-prl-logo style="' . ( $logo ? 'background-image:url(' . esc_url( $logo ) . ')' : '' ) . '"></div><div class="prl-preview__heading" data-prl-out="heading">' . esc_html( $d['heading'] ) . '</div><div class="prl-preview__message" data-prl-out="message">' . esc_html( $d['message'] ) . '</div>';
+		echo '<div class="prl-preview__card"><span>' . esc_html__( 'Username or Email Address', 'publishrank' ) . '</span><i></i><span>' . esc_html__( 'Password', 'publishrank' ) . '</span><i></i><b>' . esc_html__( 'Log In', 'publishrank' ) . '</b></div>';
+		echo '<div class="prl-preview__links">' . esc_html__( 'Lost your password?', 'publishrank' ) . '</div><div class="prl-preview__note" data-prl-out="footer_note">' . esc_html( $d['footer_note'] ) . '</div></div></div>';
+		echo '<p class="prx-help">' . sprintf( /* translators: %s: login URL */ esc_html__( 'Your sign-in page: %s', 'publishrank' ), '<a href="' . esc_url( wp_login_url() ) . '" target="_blank" rel="noopener">' . esc_html( wp_login_url() ) . '</a>' ) . '</p>';
+		Suite::card_close();
+		echo '</div></div></form>';
+		Suite::panel_close();
+	}
+
 	private function tab_brute( array $s ) {
 		Suite::panel_open( 'brute' );
 		$this->section_form( 'brute' );
@@ -500,10 +571,8 @@ final class AdminPage {
 		echo '<label class="prx-check" style="display:flex;gap:8px;margin:-6px 0 12px"><input type="checkbox" name="add_my_ip" value="1" /> ' . esc_html__( 'Add my current IP to the never-block list', 'publishrank' ) . '</label>';
 		Suite::field( 'textarea', 'shield[allow_ips]', $s['allow_ips'], __( 'Allow (skip throttling)', 'publishrank' ), '', array( 'rows' => 3 ) );
 		Suite::field( 'textarea', 'shield[deny_ips]', $s['deny_ips'], __( 'Deny (no login screen at all)', 'publishrank' ), '', array( 'rows' => 3 ) );
-		echo '<div class="prx-fields">';
-		Suite::field( 'text', 'shield[deny_countries]', $s['deny_countries'], __( 'Deny countries', 'publishrank' ), __( 'Two-letter codes, e.g. RU,KP. Needs a trusted CDN header (Traffic Guard → trusted proxies).', 'publishrank' ) );
-		Suite::field( 'text', 'shield[allow_countries]', $s['allow_countries'], __( 'Only allow countries', 'publishrank' ), __( 'Leave empty to allow everyone.', 'publishrank' ) );
-		echo '</div>';
+		\PublishRankSEO\Admin\CountryPicker::render( 'shield[deny_countries]', Settings::countries( 'deny_countries' ), __( 'Deny countries', 'publishrank' ), __( 'Visitors from these countries never see the login screen. Country data comes only from trusted sources (Traffic Guard → Protection → country source).', 'publishrank' ), true );
+		\PublishRankSEO\Admin\CountryPicker::render( 'shield[allow_countries]', Settings::countries( 'allow_countries' ), __( 'Only allow countries', 'publishrank' ), __( 'Leave empty to allow everyone. When the location is unknown the visitor is allowed, so you cannot lock yourself out through missing geolocation. Your never-block IPs always get through.', 'publishrank' ) );
 		Suite::card_close();
 		Suite::card_open( __( 'Alerts', 'publishrank' ), 'fa-bell' );
 		echo '<input type="hidden" name="shield[alert_enabled]" value="0" />';

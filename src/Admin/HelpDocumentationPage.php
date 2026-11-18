@@ -1,6 +1,6 @@
 <?php
 /**
- * Help & documentation screen and the contextual "i" help icons on PublishRank screens.
+ * Help & documentation screen and the contextual question-mark (?) help icons on PublishRank screens.
  *
  * The screen uses the shared PublishRank frame (header, left navigation, main column) and
  * presents each topic as a searchable card with a short summary and the full explanation
@@ -453,7 +453,7 @@ final class HelpDocumentationPage {
 
 		// Good to know and support.
 		echo '<div class="pr-docs-foot">';
-		echo '<div class="pr-docs-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><p><strong>' . esc_html__( 'Good to know:', 'publishrank' ) . '</strong> ' . esc_html__( 'Values you type yourself always win over automatic ones. Your theme, caching, multilingual plugins and other SEO plugins can also change what appears on a page, so keep only one plugin in charge of each output. Look for the blue “i” icons beside settings for quick explanations.', 'publishrank' ) . '</p></div>';
+		echo '<div class="pr-docs-note"><i class="fa-solid fa-circle-question" aria-hidden="true"></i><p><strong>' . esc_html__( 'Good to know:', 'publishrank' ) . '</strong> ' . esc_html__( 'Values you type yourself always win over automatic ones. Your theme, caching, multilingual plugins and other SEO plugins can also change what appears on a page, so keep only one plugin in charge of each output. Look for the blue “i” icons beside settings for quick explanations.', 'publishrank' ) . '</p></div>';
 		echo '<div class="pr-docs-support"><strong>' . esc_html__( 'Still stuck?', 'publishrank' ) . '</strong><p>' . esc_html__( 'Online documentation and support are on the official website.', 'publishrank' ) . '</p><a class="button button-primary" href="' . esc_url( Branding::website_url() ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Visit the PublishRank website', 'publishrank' ) . '</a></div>';
 		echo '</div>';
 

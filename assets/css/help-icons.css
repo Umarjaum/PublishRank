@@ -1,6 +1,6 @@
 /* PublishRank contextual help icon + shared popover */
 .pr-help-anchor{position:relative}
-.pr-help-icon{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:20px;height:20px;min-width:20px;margin:0 0 0 6px;padding:0;border:1px solid var(--rhs-blue,#9B1245);border-radius:50%;background:#fff;color:var(--rhs-blue,#9B1245);font:700 12px/1 Georgia,"Times New Roman",serif;font-style:italic;cursor:pointer;vertical-align:middle;position:relative}
+.pr-help-icon{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:20px;height:20px;min-width:20px;margin:0 0 0 6px;padding:0;border:1px solid var(--rhs-blue,#9B1245);border-radius:50%;background:#fff;color:var(--rhs-blue,#9B1245);font:700 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-style:normal;cursor:pointer;vertical-align:middle;position:relative}
 .pr-help-icon::after{content:"";position:absolute;inset:-6px}/* 32px touch target */
 .pr-help-icon:hover,.pr-help-icon.is-open{background:var(--rhs-blue,#9B1245);color:#fff}
 .pr-help-icon:focus-visible{outline:2px solid var(--rhs-blue,#9B1245);outline-offset:2px}

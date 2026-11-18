@@ -467,7 +467,8 @@ final class LivePreview {
 								$nested[ $arr['@id'] ] = true; }
 						} }
 				);
-				$issues = array_merge( $issues, $this->check_node( $node, $list ) );
+				// News-specific hints first, then the full per-type rules shared with the SEO Inspector.
+				$issues = array_merge( $issues, $this->check_node( $node, $list ), array_values( array_filter( \PublishRankSEO\Schema\SchemaValidator::check( $node ), static function ( $x ) { return 'info' !== $x['level'] && false === strpos( $x['msg'], 'headline' ) && false === strpos( $x['msg'], 'datePublished' ) && false === strpos( $x['msg'], 'VideoObject' ) && false === strpos( $x['msg'], 'FAQPage' ) && false === strpos( $x['msg'], 'BreadcrumbList' ); } ) ) );
 			}
 			$blocks[] = array(
 				'pretty' => wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),

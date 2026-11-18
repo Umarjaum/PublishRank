@@ -2,9 +2,10 @@
 /**
  * Access Shield login-address helpers used by Settings, the Setup wizard and Import / Export.
  *
- * Replaces the old standalone "WP Private Login" module (removed in 2.24.0). Access Shield is the
- * only login protection now; this class only keeps older saved option names readable so sites that
- * used the old module keep their sign-in address after upgrading.
+ * Access Shield is PublishRank's only login protection. This class keeps the two shared option names
+ * (sign-in address and blocked-request destination) in sync, and lists storage keys that PublishRank
+ * releases before 2.24 wrote so upgrades and uninstall can delete them. Those keys are internal
+ * identifiers only; they never appear in the interface.
  *
  * @package PublishRankSEO
  */
@@ -17,7 +18,7 @@ final class LoginBridge {
 	const SLUG_OPTION     = 'publishrank_login_slug';
 	const REDIRECT_OPTION = 'publishrank_login_redirect';
 
-	/** Option names written by releases before Access Shield. They are read once, then removed. */
+	/** Storage keys written by PublishRank releases before Access Shield (2.24). Deleted once, never read for behaviour. */
 	const LEGACY_OPTIONS = array(
 		'publishrank_private_login_enabled',
 		'publishrank_private_login_deferred',
@@ -129,12 +130,12 @@ final class LoginBridge {
 		return '' !== LoginAddress::slug() ? LoginAddress::url( $scheme ) : wp_login_url();
 	}
 
-	/** Translate WPS Hide Login names inside an imported settings file. @param array<string,mixed> $data */
+	/**
+	 * Normalise an imported PublishRank settings file: drop option names that only older PublishRank
+	 * releases wrote, so an old export can never re-create retired storage. @param array<string,mixed> $data
+	 */
 	public static function translate_import( array $data ) {
-		foreach ( array( 'whl_page' => self::SLUG_OPTION, 'whl_redirect_admin' => self::REDIRECT_OPTION ) as $legacy => $current ) {
-			if ( isset( $data[ $legacy ] ) && ! isset( $data[ $current ] ) ) {
-				$data[ $current ] = $data[ $legacy ];
-			}
+		foreach ( self::LEGACY_OPTIONS as $legacy ) {
 			unset( $data[ $legacy ] );
 		}
 		return $data;

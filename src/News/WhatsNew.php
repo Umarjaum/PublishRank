@@ -455,9 +455,29 @@ final class WhatsNew {
 			$count += (int) $t > $seen ? 1 : 0;
 		}
 		foreach ( (array) $s['announcements'] as $id => $a ) {
-			$count += ( (int) $a[0] > $seen && ! in_array( (string) $id, $dis, true ) ) ? 1 : 0;
+			$count += ( (int) $a[0] > $seen && ! in_array( (string) $id, $dis, true ) && ! self::is_outdated_release( $id, (string) ( $a[2] ?? '' ) ) ) ? 1 : 0;
 		}
 		return $count;
+	}
+
+	/**
+	 * Whether an announcement only says that a release up to the installed version is available
+	 * ("release-2-25-0", "PublishRank 2.25.0 is available"). Those are already installed, so they are
+	 * neither counted as unread nor shown as notices.
+	 */
+	public static function is_outdated_release( $id, $title = '' ) {
+		$current = defined( 'PUBLISHRANK_SEO_VERSION' ) ? PUBLISHRANK_SEO_VERSION : '';
+		if ( '' === $current ) {
+			return false;
+		}
+		if ( preg_match( '/^release-(\d+)-(\d+)(?:-(\d+))?(?:-(\d+))?$/', (string) $id, $m ) ) {
+			$v = $m[1] . '.' . $m[2] . ( isset( $m[3] ) && '' !== $m[3] ? '.' . $m[3] : '' ) . ( isset( $m[4] ) && '' !== $m[4] ? '.' . $m[4] : '' );
+			return version_compare( $v, $current, '<=' );
+		}
+		if ( preg_match( '/\b(\d+\.\d+(?:\.\d+){0,2})\s+is\s+available\b/i', (string) $title, $m ) ) {
+			return version_compare( $m[1], $current, '<=' );
+		}
+		return false;
 	}
 
 	public static function update_available( array $feed ) {
@@ -532,7 +552,7 @@ final class WhatsNew {
 		}
 		$dis = self::dismissed( get_current_user_id() );
 		foreach ( (array) $s['announcements'] as $aid => $a ) {
-			if ( in_array( (string) $aid, $dis, true ) || (int) $a[0] < time() - 60 * DAY_IN_SECONDS || ( 'security' !== $a[1] && ! $ours ) ) {
+			if ( in_array( (string) $aid, $dis, true ) || (int) $a[0] < time() - 60 * DAY_IN_SECONDS || ( 'security' !== $a[1] && ! $ours ) || self::is_outdated_release( $aid, (string) $a[2] ) ) {
 				continue;
 			}
 			$class = 'security' === $a[1] ? 'notice-error' : ( 'important' === $a[1] ? 'notice-warning' : 'notice-info' );
@@ -663,9 +683,9 @@ final class WhatsNew {
 		$icon = array(
 			'ok'   => 'fa-circle-check',
 			'warn' => 'fa-triangle-exclamation',
-			'info' => 'fa-circle-info',
+			'info' => 'fa-circle-question',
 		);
-		echo '<div class="prx-hero"><div class="prx-hero__state"><span class="prx-hero__icon is-' . esc_attr( 'info' === $status[0] ? '' : $status[0] ) . '"><span class="fa-solid ' . esc_attr( $icon[ $status[0] ] ) . '" aria-hidden="true"></span></span><div><h2>' . esc_html( $status[1] ) . '</h2><p class="prx-help" role="status">' . esc_html( $status[2] ) . '</p></div></div>';
+		echo '<div class="prx-hero"><div class="prx-hero__state"><span class="prx-hero__icon is-' . esc_attr( 'info' === $status[0] ? '' : $status[0] ) . '"><span class="fa-solid ' . esc_attr( $icon[ $status[0] ] ) . '" aria-hidden="true"></span></span><div><h2>' . esc_html( $status[1] ) . ( 'live' === $data['source'] ? ' <span class="pr-live-chip">' . UpdateNotifier::live_marker( __( 'Connected to the live feed', 'publishrank' ) ) . esc_html__( 'Live', 'publishrank' ) . '</span>' : '' ) . '</h2><p class="prx-help" role="status">' . esc_html( $status[2] ) . '</p></div></div>';
 		if ( self::remote_enabled() ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="publishrank_news_refresh" />';
 			wp_nonce_field( 'publishrank_news_refresh' );

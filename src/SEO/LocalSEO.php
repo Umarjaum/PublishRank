@@ -1291,7 +1291,7 @@ final class LocalSEO {
 				'ok'    => 'fa-circle-check',
 				'warn'  => 'fa-circle-exclamation',
 				'error' => 'fa-circle-xmark',
-				'info'  => 'fa-circle-info',
+				'info'  => 'fa-circle-question',
 			);
 			echo '<li class="is-' . esc_attr( $c['level'] ) . '"><i class="fa-solid ' . esc_attr( $icon[ $c['level'] ] ) . '" aria-hidden="true"></i><span>' . esc_html( $c['text'] ) . '</span></li>'; }
 		echo '</ul></section>';

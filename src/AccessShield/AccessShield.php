@@ -2,10 +2,10 @@
 /**
  * PublishRank Access Shield bootstrap.
  *
- * Clean-room module built from WordPress's documented hooks (authenticate, wp_login_failed,
- * login_form_*, site_url, wp_redirect, xmlrpc_methods, application-password actions, rest_endpoints).
- * It replaced the former "Private Login" module (fully removed in 2.24.0) and imports its settings (and WPS Hide Login's whl_*
- * options) read-only on first run.
+ * First-party PublishRank security module built on WordPress's documented hooks (authenticate,
+ * wp_login_failed, login_form_*, site_url, wp_redirect, xmlrpc_methods, application-password actions,
+ * rest_endpoints). It succeeded PublishRank's earlier "Private Login" screen (removed in 2.24.0) and
+ * carries that screen's saved sign-in address forward once, on first run.
  *
  * Emergency switches: PUBLISHRANK_DISABLE_ACCESS_SHIELD (everything) and the older
  * PUBLISHRANK_DISABLE_PRIVATE_LOGIN (login address only).
@@ -52,9 +52,10 @@ final class AccessShield {
 		TwoFactor::register();
 		AccountSecurity::register();
 		LoginAddress::register();
+		LoginDesign::register();
 	}
 
-	/** One-time, read-only import of the removed Private Login module and WPS Hide Login settings. */
+	/** One-time, read-only import of the sign-in address saved by PublishRank releases before 2.24. */
 	public static function maybe_import_legacy() {
 		if ( get_option( self::IMPORTED ) ) {
 			return;
@@ -64,15 +65,9 @@ final class AccessShield {
 			$enabled  = get_option( 'publishrank_private_login_enabled', null );
 			$slug     = (string) get_option( 'publishrank_login_slug', '' );
 			$redirect = (string) get_option( 'publishrank_login_redirect', '' );
-			if ( '' === $slug ) {
-				$slug = (string) get_option( 'whl_page', '' );
-			}
-			if ( '' === $redirect ) {
-				$redirect = (string) get_option( 'whl_redirect_admin', '' );
-			}
 			$slug  = LoginAddress::clean_slug( $slug );
 			$input = array();
-			if ( '' !== $slug && ( null === $enabled ? '' !== (string) get_option( 'whl_page', '' ) : (bool) $enabled ) ) {
+			if ( '' !== $slug && (bool) $enabled ) {
 				// The address was already in use before this upgrade: keep it working exactly as it was.
 				$input['login_enabled'] = 1;
 				$input['login_slug']    = $slug;
@@ -81,13 +76,11 @@ final class AccessShield {
 				$input['blocked_behaviour'] = 'redirect';
 				$input['blocked_redirect']  = $redirect;
 			}
-			$tg = get_option( 'publishrank_traffic_guard', array() );
 			update_option( Settings::OPTION, array_merge( Settings::defaults(), Settings::sanitize( $input ) ), true );
 			Settings::flush();
 			if ( ! empty( $input['login_enabled'] ) ) {
 				SecurityLog::add( 'settings', 'info', array( 'detail' => 'Imported the private login address from an earlier version.' ) );
 			}
-			unset( $tg );
 		}
 		update_option( self::IMPORTED, gmdate( 'c' ), false );
 	}

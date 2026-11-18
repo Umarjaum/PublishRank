@@ -180,7 +180,7 @@ final class NotFoundPage {
 		$sum    = S::summary( 30 );
 		Suite::open( __( '404 Monitor', 'publishrank' ), __( 'Find the missing addresses that readers and crawlers actually hit, see where they came from, and fix them with one click.', 'publishrank' ) );
 		if ( ! S::enabled() ) {
-			echo '<div class="prx-callout prx-callout--info"><span class="fa-solid fa-circle-info" aria-hidden="true"></span><div><p><strong>' . esc_html__( 'Monitoring is off.', 'publishrank' ) . '</strong> ' . esc_html__( 'Turn it on to record missing addresses. No IP addresses are stored.', 'publishrank' ) . '</p>';
+			echo '<div class="prx-callout prx-callout--info"><span class="fa-solid fa-circle-question" aria-hidden="true"></span><div><p><strong>' . esc_html__( 'Monitoring is off.', 'publishrank' ) . '</strong> ' . esc_html__( 'Turn it on to record missing addresses. No IP addresses are stored.', 'publishrank' ) . '</p>';
 			if ( $manage ) {
 				Suite::form_open( 'publishrank_seo_404_toggle' );
 				echo '<button class="prx-btn prx-btn--primary" type="submit">' . esc_html__( 'Turn on 404 monitoring', 'publishrank' ) . '</button></form>';

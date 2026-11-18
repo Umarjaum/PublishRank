@@ -224,7 +224,7 @@ final class SitemapHealthPage {
 		echo '<div class="pr-hub-url"><i class="fa-solid fa-link" aria-hidden="true"></i><a class="pr-hub-url__text" href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . esc_html( $url ) . '</a><input type="text" class="pr-hub-url__field" readonly tabindex="-1" value="' . esc_attr( $url ) . '" aria-hidden="true" data-pr-hub-url />';
 		echo '<button type="button" class="pr-hub-btn hide-if-no-js" data-pr-hub-copy><i class="fa-solid fa-copy" aria-hidden="true"></i> ' . esc_html__( 'Copy', 'publishrank' ) . '</button>';
 		echo '<a class="pr-hub-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> ' . esc_html__( 'Open', 'publishrank' ) . '<span class="screen-reader-text"> ' . esc_html__( '(opens in a new tab)', 'publishrank' ) . '</span></a></div>';
-		echo '<p class="pr-hub-robots ' . ( $robots ? 'is-good' : 'is-warn' ) . '"><i class="fa-solid ' . ( $robots ? 'fa-circle-check' : 'fa-circle-info' ) . '" aria-hidden="true"></i> ';
+		echo '<p class="pr-hub-robots ' . ( $robots ? 'is-good' : 'is-warn' ) . '"><i class="fa-solid ' . ( $robots ? 'fa-circle-check' : 'fa-circle-question' ) . '" aria-hidden="true"></i> ';
 		if ( $robots ) {
 			esc_html_e( 'Listed in your robots.txt, so crawlers can find it on their own.', 'publishrank' );
 		} else {
@@ -305,7 +305,7 @@ final class SitemapHealthPage {
 		}
 		if ( ! empty( $report['duplicates'] ) ) {
 			/* translators: %d: number of duplicate sitemap URL entries suppressed in the preview. */
-			echo '<li class="is-info"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>' . esc_html( sprintf( __( '%d duplicate URL entries were found across sitemap providers and suppressed from the preview. News and extension sitemaps may intentionally reference the same canonical article URL.', 'publishrank' ), $report['duplicates'] ) ) . '</span></li>';
+			echo '<li class="is-info"><i class="fa-solid fa-circle-question" aria-hidden="true"></i><span>' . esc_html( sprintf( __( '%d duplicate URL entries were found across sitemap providers and suppressed from the preview. News and extension sitemaps may intentionally reference the same canonical article URL.', 'publishrank' ), $report['duplicates'] ) ) . '</span></li>';
 		}
 		echo '</ul></section>';
 	}
@@ -335,7 +335,7 @@ final class SitemapHealthPage {
 			echo '<span class="pr-hub-row__desc" id="' . esc_attr( $id ) . '-desc">' . esc_html( $row['description'] ) . '</span>';
 			$why = ( ! $always && empty( $row['default'] ) && ! empty( $row['why'] ) ) ? (string) $row['why'] : '';
 			if ( '' !== $why ) {
-				echo '<span class="pr-hub-row__why" id="' . esc_attr( $id ) . '-why"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ' . esc_html( $why ) . '</span>';
+				echo '<span class="pr-hub-row__why" id="' . esc_attr( $id ) . '-why"><i class="fa-solid fa-circle-question" aria-hidden="true"></i> ' . esc_html( $why ) . '</span>';
 			}
 			echo '<span class="pr-hub-row__meta"><span class="pr-hub-row__state" data-pr-hub-state>' . ( $on ? esc_html__( 'Included', 'publishrank' ) : esc_html__( 'Not included', 'publishrank' ) ) . '</span>';
 			if ( $enabled && $on && $provider ) {

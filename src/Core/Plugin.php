@@ -103,6 +103,7 @@ final class Plugin {
 		$this->loader->register( SchemaAggregator::class, false );
 		$this->loader->register( SchemaSuite::class, false );
 		$this->loader->register( \PublishRankSEO\Schema\FAQModule::class, false );
+		$this->loader->register( \PublishRankSEO\Newsroom\SourceDirectory::class, false );
 		$this->loader->register( SitemapController::class, true );
 		$this->loader->register( SitemapStylesheet::class, false );
 			$this->loader->register( RobotsTxt::class, false );
@@ -121,6 +122,8 @@ final class Plugin {
 		$this->loader->register( \PublishRankSEO\Compatibility\ThemeSeo::class, false );
 		$this->loader->register( \PublishRankSEO\Newsroom\PublishingDesk::class, false );
 		$this->loader->register( \PublishRankSEO\News\WhatsNew::class, false );
+		$this->loader->register( \PublishRankSEO\News\UpdateNotifier::class, false );
+		$this->loader->register( \PublishRankSEO\Admin\SeoInspectorPage::class, false );
 		$this->loader->register( LiveSync::class, false );
 		$this->loader->register( \PublishRankSEO\Admin\LivePreview::class, false );
 		$this->loader->register( RedirectController::class, false );

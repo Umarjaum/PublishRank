@@ -687,7 +687,7 @@ final class AnalyticsPage {
 		}
 		echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save settings', 'publishrank' ) . '</button></p></form>';
 		self::card_close();
-		self::card_open( __( 'How it works', 'publishrank' ), 'fa-circle-info' );
+		self::card_open( __( 'How it works', 'publishrank' ), 'fa-circle-question' );
 		echo '<ul class="prc-list"><li>' . esc_html__( 'Each visitor is recognised for one day with a scrambled code that changes every day, so nobody can be followed over time.', 'publishrank' ) . '</li><li>' . esc_html__( 'Search engines, AI crawlers, uptime monitors and other bots are left out automatically.', 'publishrank' ) . '</li><li>' . esc_html__( 'Country comes from your host or CDN (Cloudflare, CloudFront, Fastly…) when it provides it, otherwise from the visitor\'s time zone.', 'publishrank' ) . '</li><li>' . esc_html__( 'Because no cookies are used, a cookie banner is normally not needed for these statistics. Check the rules where you operate.', 'publishrank' ) . '</li></ul>';
 		self::card_close();
 	}

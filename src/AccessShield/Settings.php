@@ -239,6 +239,6 @@ final class Settings {
 	/** @return string[] */
 	public static function countries( $key ) {
 		$v = trim( (string) self::get( $key ) );
-		return '' === $v ? array() : array_filter( explode( ',', $v ) );
+		return '' === $v ? array() : \PublishRankSEO\Core\Countries::parse_list( $v, true )['valid'];
 	}
 }

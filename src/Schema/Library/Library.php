@@ -79,11 +79,89 @@ final class Library {
 				return is_numeric( $raw ) && (float) $raw >= 1 && (float) $raw <= 5 ? array( 'value' => 0 + $raw, 'error' => '' ) : array( 'value' => '', 'error' => __( 'Enter a rating from 1 to 5.', 'publishrank' ) );
 			case 'select':
 				return in_array( $raw, (array) $field['options'], true ) ? array( 'value' => $raw, 'error' => '' ) : array( 'value' => '', 'error' => __( 'Choose one of the listed options.', 'publishrank' ) );
+			case 'json':
+				return self::check_json( $raw );
 			case 'lines':
 				$lines = array_values( array_filter( array_map( 'sanitize_text_field', preg_split( '/\r\n|\r|\n/', (string) $raw ) ) ) );
 				return $lines ? array( 'value' => array_slice( $lines, 0, 50 ), 'error' => '' ) : array( 'value' => array(), 'error' => ! empty( $field['required'] ) ? __( 'Required.', 'publishrank' ) : '' );
 		}
 		return array( 'value' => '', 'error' => __( 'Unsupported field.', 'publishrank' ) );
+	}
+
+	/** Types PublishRank already prints once per page; a custom copy would duplicate them. */
+	const RESERVED_TYPES = array( 'WebSite', 'WebPage', 'BreadcrumbList', 'FAQPage' );
+
+	/**
+	 * Validate a custom JSON-LD object: valid JSON, one object with a schema.org-style @type, no @graph,
+	 * http(s) URLs only, no markup in values, bounded size and depth. Returns normalised JSON.
+	 *
+	 * @return array{value:string,error:string}
+	 */
+	public static function check_json( $raw ) {
+		if ( strlen( $raw ) > 20000 ) {
+			return array( 'value' => '', 'error' => __( 'Keep custom JSON-LD under 20 KB.', 'publishrank' ) );
+		}
+		$data = json_decode( $raw, true );
+		if ( JSON_ERROR_NONE !== json_last_error() ) {
+			/* translators: %s: JSON parser message */
+			return array( 'value' => '', 'error' => sprintf( __( 'This is not valid JSON (%s).', 'publishrank' ), json_last_error_msg() ) );
+		}
+		if ( ! is_array( $data ) || ( array() !== $data && array_keys( $data ) === range( 0, count( $data ) - 1 ) ) ) {
+			return array( 'value' => '', 'error' => __( 'Enter one JSON object that starts with { and ends with }.', 'publishrank' ) );
+		}
+		if ( isset( $data['@graph'] ) ) {
+			return array( 'value' => '', 'error' => __( 'Remove "@graph": add one entity per custom block instead.', 'publishrank' ) );
+		}
+		unset( $data['@context'] );
+		$types = isset( $data['@type'] ) ? (array) $data['@type'] : array();
+		if ( ! $types ) {
+			return array( 'value' => '', 'error' => __( 'Add an "@type", for example "Event".', 'publishrank' ) );
+		}
+		foreach ( $types as $type ) {
+			if ( ! is_string( $type ) || ! preg_match( '/^[A-Z][A-Za-z0-9]{1,60}$/', $type ) ) {
+				return array( 'value' => '', 'error' => __( '"@type" must be a schema.org type name such as "Event".', 'publishrank' ) );
+			}
+			if ( in_array( $type, self::RESERVED_TYPES, true ) ) {
+				/* translators: %s: schema type */
+				return array( 'value' => '', 'error' => sprintf( __( 'PublishRank already outputs %s for every page. Use the FAQ block for questions and the Schema settings for the page and site.', 'publishrank' ), $type ) );
+			}
+		}
+		$problem = '';
+		$clean   = self::clean_json( $data, 0, $problem );
+		if ( '' !== $problem ) {
+			return array( 'value' => '', 'error' => $problem );
+		}
+		return array( 'value' => (string) wp_json_encode( $clean, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ), 'error' => '' );
+	}
+
+	/** @param mixed $v */
+	private static function clean_json( $v, $depth, &$problem, $key = '' ) {
+		if ( $depth > 8 ) {
+			$problem = __( 'The JSON is nested too deeply (8 levels at most).', 'publishrank' );
+			return null;
+		}
+		if ( is_array( $v ) ) {
+			$out = array();
+			foreach ( array_slice( $v, 0, 200, true ) as $k => $item ) {
+				$k = is_int( $k ) ? $k : preg_replace( '/[^A-Za-z0-9@_:-]/', '', (string) $k );
+				if ( '' === $k ) {
+					continue;
+				}
+				$out[ $k ] = self::clean_json( $item, $depth + 1, $problem, is_int( $k ) ? $key : (string) $k );
+			}
+			return $out;
+		}
+		if ( is_string( $v ) ) {
+			$s = trim( wp_strip_all_tags( $v ) );
+			if ( in_array( $key, array( 'url', 'image', 'logo', 'sameAs', 'contentUrl', 'embedUrl', 'thumbnailUrl', '@id' ), true ) && '' !== $s && '#' !== $s[0] ) {
+				if ( ! preg_match( '#^https?://#i', $s ) || ! wp_http_validate_url( $s ) ) {
+					/* translators: %s: property */
+					$problem = sprintf( __( '"%s" must be a full web address starting with https://', 'publishrank' ), $key );
+				}
+			}
+			return substr( $s, 0, 5000 );
+		}
+		return is_bool( $v ) || is_int( $v ) || is_float( $v ) || null === $v ? $v : null;
 	}
 
 	/** Validate and normalise one entry. @return array{type:string,data:array,errors:array<string,string>,valid:bool} */
@@ -232,6 +310,13 @@ final class Library {
 				return $base + array( 'name' => $d['name'], 'hasPart' => $parts ) + ( isset( $d['about'] ) ? array( 'about' => array( '@type' => 'Thing', 'name' => $d['about'] ) ) : array() );
 			case 'VideoGame':
 				return $base + array( 'name' => $d['name'], 'gamePlatform' => $d['gamePlatform'] ) + ( isset( $d['publisher'] ) ? array( 'publisher' => $org( $d['publisher'] ) ) : array() ) + ( isset( $d['genre'] ) ? array( 'genre' => $d['genre'] ) : array() );
+			case 'CustomJsonLd':
+				$custom = json_decode( (string) $d['json'], true );
+				if ( ! is_array( $custom ) ) {
+					return null; }
+				if ( empty( $custom['@id'] ) ) {
+					$custom['@id'] = $url . '#custom-' . substr( md5( (string) $d['json'] ), 0, 8 ); }
+				return $custom;
 			case 'Person':
 				$n = $base + array( 'name' => $d['name'] );
 				foreach ( array( 'jobTitle', 'birthDate', 'deathDate' ) as $k ) {
@@ -334,8 +419,8 @@ final class Library {
 			$value = is_array( $value ) ? implode( "\n", $value ) : (string) $value;
 			$html .= '<p><label for="' . esc_attr( $id ) . '"><strong>' . esc_html( $field['label'] ) . ( ! empty( $field['required'] ) ? ' *' : '' ) . '</strong></label><br />';
 			$fname = $name . '[data][' . $key . ']';
-			if ( in_array( $field['kind'], array( 'textarea', 'lines' ), true ) ) {
-				$html .= '<textarea class="large-text" rows="' . ( 'lines' === $field['kind'] ? 4 : 3 ) . '" id="' . esc_attr( $id ) . '" name="' . esc_attr( $fname ) . '">' . esc_textarea( $value ) . '</textarea>';
+			if ( in_array( $field['kind'], array( 'textarea', 'lines', 'json' ), true ) ) {
+				$html .= '<textarea class="large-text' . ( 'json' === $field['kind'] ? ' code' : '' ) . '" spellcheck="false" rows="' . ( 'json' === $field['kind'] ? 10 : ( 'lines' === $field['kind'] ? 4 : 3 ) ) . '" id="' . esc_attr( $id ) . '" name="' . esc_attr( $fname ) . '">' . esc_textarea( $value ) . '</textarea>';
 			} elseif ( 'select' === $field['kind'] ) {
 				$html .= '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $fname ) . '"><option value=""></option>';
 				foreach ( $field['options'] as $o ) {

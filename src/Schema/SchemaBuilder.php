@@ -96,29 +96,8 @@ final class SchemaBuilder {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function faq_entities( $post ) {
-		if ( ! \PublishRankSEO\Core\OutputSettings::faq() || ! FAQModule::has_visible_faq( $post ) ) {
-			return array(); }
-		$items = get_post_meta( $post->ID, PostMeta::FAQ_ITEMS, true );
-		if ( ! is_array( $items ) ) {
-			return array(); }
-		$entities = array();
-		foreach ( array_slice( $items, 0, 20 ) as $item ) {
-			if ( ! is_array( $item ) ) {
-				continue; }
-			$question = isset( $item['q'] ) ? trim( wp_strip_all_tags( (string) $item['q'] ) ) : '';
-			$answer   = isset( $item['a'] ) ? trim( wp_strip_all_tags( (string) $item['a'] ) ) : '';
-			if ( '' === $question || '' === $answer ) {
-				continue; }
-			$entities[] = array(
-				'@type'          => 'Question',
-				'name'           => $question,
-				'acceptedAnswer' => array(
-					'@type' => 'Answer',
-					'text'  => $answer,
-				),
-			);
-		}
-		return $entities;
+		// One source of truth: the exact items the visitor sees (FAQ block, collection or shortcode).
+		return FAQModule::entities( $post );
 	}
 
 	/** Editor override or global About/Contact assignment for the current singular document ('' = none). */

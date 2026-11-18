@@ -19,7 +19,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE meta_key = %s', $wpdb->postmeta, '_publishrank_schema_library' ) );
 		}
-		// Remove only PublishRank's managed Apache block (legacy marker written by old releases) so uninstall cannot leave /wp-admin blocked.
+		// Remove only the Apache block that PublishRank releases before 2.24 managed (its marker ends in "Login Dashboard"), so uninstall cannot leave /wp-admin blocked.
 		if ( ! function_exists( 'get_home_path' ) && is_readable( ABSPATH . 'wp-admin/includes/file.php' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
@@ -28,7 +28,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 		if ( is_readable( $publishrank_htaccess ) && is_writable( $publishrank_htaccess ) ) {
 			$publishrank_rules = file_get_contents( $publishrank_htaccess );
 			if ( is_string( $publishrank_rules ) ) {
-				$publishrank_rules = preg_replace( '/\n?# BEGIN PublishRank WP Hide Login Dashboard\R.*?\R# END PublishRank WP Hide Login Dashboard\R?/s', "\n", $publishrank_rules, 1 );
+				$publishrank_rules = preg_replace( '/\n?# BEGIN (PublishRank [A-Za-z ]*Login Dashboard)\R.*?\R# END \1\R?/s', "\n", $publishrank_rules, 1 );
 				file_put_contents( $publishrank_htaccess, $publishrank_rules, LOCK_EX );
 			}
 		}
@@ -69,7 +69,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 		$publishrank_cleanup();
 	}
 
-// Access Shield login-address options (and the names used by the removed Private Login module).
+// Access Shield login-address options and storage keys retired by earlier PublishRank releases.
 require_once __DIR__ . '/src/AccessShield/LoginBridge.php';
 $publishrank_login_options = \PublishRankSEO\AccessShield\LoginBridge::uninstall_options();
 foreach ( $publishrank_login_options as $publishrank_login_option ) {

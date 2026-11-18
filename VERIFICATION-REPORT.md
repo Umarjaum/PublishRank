@@ -1,91 +1,88 @@
-# PublishRank 2.25.0 — Delivery & Verification Report
+# PublishRank 2.25.1 — Feature verification report
 
-Date: 16 November 2026 · Plugin version: **2.25.0** · Website: PublishRank official site, 2.25.0 content
+Test environment: WordPress 7.1.4 (SQLite database drop-in), PHP 8.3.36, Twenty Twenty-Five theme, WooCommerce 11.3.0, PHP built-in web server with 6 workers. A second clean site was used for the fresh-install and upgrade tests. Browser checks used Chromium (Playwright) at 1440 px wide.
 
-## What is in this package
+Status key: **Passed** = exercised and behaved as expected · **Partial** = core path exercised, some paths not · **Unverified** = not exercised in this environment · **Failed** = defect found and not fixed.
 
-| Item | Contents |
-|---|---|
-| `PublishRank-2.25.0.zip` | Installable WordPress plugin (upload via Plugins → Add New → Upload). |
-| `PublishRank-Official-website-2.25.0/` (zipped) | Website source, without installed packages or history. Run `bun install` then `bun run dev`. |
-| `screenshots/` | 32 real admin screens captured from the test site, plus a contact sheet. |
-| `VERIFICATION-REPORT.md` | This report. |
+## Automated suites (all run against the live test site)
 
-## Test environment (important)
+| Suite | Checks | Result |
+|---|---:|---|
+| traffic-guard-integration | 70 | Passed |
+| identity-country-integration | 53 | Passed |
+| v2251-integration (identity scan, icons, updates, custom schema, validator, SEO Inspector incl. redirect safety, Access Shield countries, sign-in designer) | 51 | Passed |
+| whats-new-integration | 42 | Passed |
+| faq-integration (fetches real pages over HTTP) | 33 | Passed |
+| language-test | 29 | Passed |
+| source-directory-integration | 29 | Passed |
+| woocommerce-analytics-integration | 28 | Passed |
+| http-enforcement (live HTTP: blocking, private sign-in address, no address leaks) | 27 | Passed |
+| upgrade-integration | 17 | Passed |
+| roles-integration | 15 | Passed |
+| v225-integration | 15 | Passed |
+| **Total** | **409** | **0 failures** |
 
-- WordPress 7.1.4, PHP 8.3, **SQLite** database, no persistent object cache, PHP built-in web server.
-- **Not tested here:** MySQL/MariaDB, PHP 7.4 (none available; a scan of new files found no PHP 8-only syntax), Apache/Nginx rules, premium themes, real production traffic, and the live Vercel deployment.
-- All performance figures are measurements from this test site, not guarantees for every host.
+The suites ship in the development package (`tests/`) and run with `wp eval-file tests/<suite>.php`.
 
-## Automated test results (all passing)
+## Feature-by-feature
 
-| Suite | Result |
-|---|---|
-| Identity & country | 53 checks, 0 failures |
-| Languages | All passed |
-| Upgrade path | 19 checks, 0 failures |
-| WooCommerce analytics | 33 checks, 0 failures |
-| 2.25 features (Publishing Desk, Access Shield, preloader, sitemap cursor) | 15 checks, 0 failures |
-| News & What's New (secure feed, cache, fallback, dismissals) | 42 checks, 0 failures (against both the live local website feed and an offline sample) |
-| **Roles & permissions (new)** | 15 checks, 0 failures |
-| PHP syntax | 237 files, 0 errors |
-| Website test suite | 91 tests, 0 failures |
+### Product identity — Passed
+* Whole-tree scan (PHP, JS, CSS, docs, translations) finds no third-party login-plugin names or prefixes and no wording that misdescribes where the code comes from. Automated in v2251-integration.
+* PublishRank's own older option names (`publishrank_hide_login_*`, `publishrank_wp_hide_login*`) and the `PUBLISHRANK_DISABLE_HIDE_LOGIN` recovery constant are kept only so existing installs migrate and recovery instructions keep working.
 
-## Feature verification
+### Notifications and update notice — Passed
+* Update notice appears from the WordPress.org update data (simulated 2.26.0), with "Go to updates", "What's new" and per-version dismissal; live dot on the menu and toolbar (screenshot).
+* New in this round: announcements saying "version X is available" for a version already installed are no longer shown or counted (found on the dashboard during testing, fixed, covered by tests).
+* Question-mark help icons: scan confirms no "i" information icons remain.
 
-### Feature access rules (role-based system)
-- **Bug found and fixed:** the Roles & permissions screen existed but was never switched on (also true in the original 2.24.0), so admins had no way to assign features. It is now registered, and its data endpoint loads correctly (anonymous requests get *401 not authorised*).
-- Verified in a real browser: admin denied *News* and granted *Theme Masking* to one editor → that editor lost News and gained Theme Masking; other users were unaffected; resetting restored defaults.
-- Role matrix (34 permissions × every role), 8 presets, per-user Grant/Deny/Inherit, "why can/can't they" explainer and audit log.
-- Safety: administrators can never be locked out; non-admin managers cannot remove their own manage-roles permission.
-- Layout fixed: permission names were squashed with 11 roles; the name column is now fixed and roles scroll sideways. Administrator boxes now show as ticked and locked.
+### Country database — Passed
+* 249 ISO 3166-1 entries with alpha-2, alpha-3 and numeric codes; lookups by name, alpha-2 and alpha-3; list parsing; picker renders in Traffic Guard and Access Shield (screenshot).
+* Upgrade: old lists containing `XX` keep their valid countries; `XX` is ignored (unknown location has its own setting).
 
-### Theme masking
-- Live homepage source (154 KB): theme name “astra” found **0** times, `wp-content/themes` **0** times; generator shows PublishRank.
-- Tested on Astra, Astra child, GeneratePress, Kadence, Blocksy, Neve, OceanWP, Hello Elementor and Twenty Twenty-Five.
-- **Known limit:** someone who already guesses the theme can still request `/wp-content/themes/<theme>/style.css` directly. A plugin cannot block static files; the Theme Masking screen shows the exact Apache/Nginx rule to add.
+### Traffic Guard — Passed (Partial for real GeoIP)
+* Rule evaluation, priorities, AND/OR, test mode, temporary blocks with expiry, rate limiting, levels, crawler handling, allow/block lists, false-positive marking, CSV export: automated.
+* Live HTTP: monitor mode never blocks; enforce mode returns 403 with a reference for a UNION SELECT payload and a script payload, a custom rule (curl user agent on /checkout) temporarily blocks the IP, the next normal request is refused until the block is lifted; ordinary pages stay 200.
+* Fixed this round: a search for the words "union select" was refused by Access Shield's request firewall; now allowed in both filters. Firewall refusals now appear in Traffic Guard's log with a reference.
+* Partial: country rules were tested with simulated country values; no real GeoIP module or CDN header was available.
 
-### Sitemaps at scale
-- 200,015 unique URLs split into 5 shards of up to 50,000.
-- Publishing a new post rebuilt only the last shard; editing an old post rebuilt only its shard; comments rebuilt nothing.
+### Access Shield — Passed (Partial for 2FA/CAPTCHA UI)
+* Private sign-in address: the private address shows the sign-in form; `/wp-login.php` (all actions), `/wp-login`, `/wp-admin/`, `/wp-admin/profile.php`, `/wp-signup.php`, `/login`, `/admin`, `/dashboard` return 404 without revealing the address; `admin-ajax.php` stays usable.
+* **Security fix found during this verification:** the private address was printed in the page-preloading (speculation rules) exclusions on every public page. It is now only printed for signed-in users. Verified on home, a page, robots.txt, sitemap, llms.txt, feed, REST index and a 404 page.
+* `wp-activate.php` on a single site redirects to `wp-login.php?action=register` (WordPress core behaviour), which then returns 404; the private address is not revealed.
+* Sign-in page designer: settings save, CSS applied on the real sign-in page (automated fetch), live preview (screenshot).
+* Partial: two-factor and CAPTCHA were not exercised end to end in a browser this round (existing 2.25.0 features, unchanged).
 
-### Bloat check (200,000-post test site)
-- Request-local option preloader cut PublishRank database queries from about 96 to 2–6 per page.
-- A controlled multi-run timing benchmark was **not** repeated.
+### FAQ block and collections — Passed
+* Front end: accordion, search, expand/collapse all, one FAQPage per page, questions deduplicated, answers sanitised (automated + screenshot).
+* Editor: block renders with drag handles, toolbar, "Add question" and completeness counter (screenshot).
+* Collections: list, shortcode column, categories, import/export tools (screenshot). Fixed: the tools panel was being pulled into the notification list.
 
-### Access Shield
-- Private login address, brute-force lockout, 2FA, CAPTCHA, hardening, breach-checked passwords (Have I Been Pwned range API, disclosed in readme), session limits, idle sign-out.
-- Live verification produces a signed report that can be re-checked.
+### Source Directory (new) — Passed
+* Matching (domain and subdomains, look-alike domains rejected), classifications, inactive sources ignored, duplicate domains flagged with priority tie-break, usage counting and recount after edits, saving never changes the article, REST permissions (editor 200, subscriber 403, visitor 401), import/export with duplicate skipping and inactive import: automated.
+* Block editor panel: summary, "Do not cite" warning, per-link status, suggestions, "Insert link" adds a paragraph only when clicked (browser test + screenshot).
+* Unverified: the Classic editor "Sources in this article" box was not opened in a browser.
 
-### Newsroom & Publishing Desk
-- Duplicate-headline warning in the editor, missed-schedule detection and auto-fix, freshness column, news diagnostics, publishing velocity.
+### SEO Inspector, schema validator and custom JSON-LD — Passed
+* Real page inspection with SERP/social previews, page checks and per-entity validation (screenshot).
+* Fixed this round: redirects are now followed only within the site; a redirect to another host (e.g. a cloud metadata address) is reported and not fetched (automated).
 
-### Logo & site identity sync
-- PublishRank logo syncs to WordPress Site Logo and Site Icon, alongside title, tagline and description.
+### Breadcrumbs — Partial (review only)
+* Existing 2.25.0 implementation reviewed: block, `publishrank_breadcrumbs()` PHP function, separators, and a BreadcrumbList built from the same items as the visible trail. On the test page the visible trail "Home → Help centre" and the BreadcrumbList validated together in the SEO Inspector.
+* No new breadcrumb features were added in 2.25.1.
 
-### Advanced SEO
-- 15 additional SEO/trust checks feeding one authoritative score.
+### WooCommerce — Partial
+* Fresh activation alongside WooCommerce 11.3.0 with no PublishRank errors; WooCommerce analytics suite passes.
+* Not re-tested: product schema on a real product catalogue with variations.
 
-### News & What's New (plugin ↔ website)
-- Plugin reads only `https://publishrankseo.vercel.app/publishrank-feed.json`: certificate verified, no redirects followed, 8-second timeout, 256 KB cap, strict validation (HTML, http:// and other-site links dropped), cached with an offline fallback to the bundled changelog. It never installs updates.
-- **Not yet live:** the Vercel domain still returns 404 for the feed until the updated website is deployed. Until then the plugin shows its bundled changelog.
+### Install, upgrade, uninstall — Passed
+* Fresh install on a clean site: activates, database version 6, Traffic Guard defaults to Monitor with level Off (nothing blocked until configured).
+* Upgrade from the original 2.25.0 with Traffic Guard enabled, blocked IPs and countries, a private sign-in address and an existing FAQ block: version 2.25.1, database 5 → 6, Traffic Guard keeps enforcing (level Off so no new automatic blocking), IP list kept, country lists kept, sign-in address kept, FAQ schema still produced.
+* Uninstall: WordPress's own `delete_plugins()` removes the plugin cleanly. (WP-CLI's `plugin uninstall` failed to delete files in this sandbox for every plugin, including an empty test plugin — an environment limitation.)
 
-## Clean-install test
-- Fresh WordPress (no other plugins), installed **from the ZIP** with WordPress's installer and activated: success.
-- **Bug found and fixed:** the first visit after install logged WordPress's “translations loaded too early” notice (a background-task label was translated before WordPress was ready). After the fix, a fresh install and first visits log **0** notices, warnings or errors.
-- Dashboard, Setup, Roles, Theme Masking, Access Shield, News, Publishing Desk and Sitemap Hub all open without errors.
-- With *pretty links* on, robots.txt, sitemaps and llms.txt respond normally. With WordPress's default *plain* links, `/robots.txt` redirects to `/robots.txt/`. This also happens with PublishRank switched off, so it comes from WordPress itself.
-
-## Website
-- Content synced to 2.25.0: release notes / What's New page, 2.25 news story, feature catalogue, download page.
-- Enterprise visual refresh: animated hero, verification console, proof band, spotlight cards, timeline. Animations respect reduced-motion settings.
-- The screenshot gallery now uses the 32 new 2.25.0 captures. Only the setup-wizard screens come from the older 2.12.1 set, and they are labelled that way.
-- Download button serves `/downloads/PublishRank-2.25.0.zip` (the same plugin package, included in the site source).
-- Public feed `/publishrank-feed.json` with caching headers; contract tests reject unsafe content.
-
-## Remaining actions for you
-1. **Deploy the website** (Vercel) so the live feed and the 2.25.0 download become available.
-2. Optionally re-test on your production stack (MySQL, your PHP version, Apache/Nginx) and add the server rule from the Theme Masking screen.
-
-## Post-delivery live-site testing follow-up (2026-11-17)
-All PublishRank 2.25.0 features have since been tested on live sites. This testing took place after preparation of the original report; the later live-site environments, test cases and logs were not included in the delivered report. The report's earlier test scope and limitations above remain an accurate record of that test run. The official website's 2.25.0 home page, feed and plugin download were subsequently checked and returned successfully.
+### Not verified in this environment
+* PHP 7.4, 8.0, 8.1 and 8.4 runtime (PHP 8.2 syntax check of all 249 PHP files passed; PHP 7.4 checked by a static scan for 8.x-only syntax and functions only).
+* Multisite networks.
+* MySQL/MariaDB (tests used SQLite).
+* Page-caching and object-caching plugins, CDNs.
+* Themes other than Twenty Twenty-Five for the new features.
+* Screen-reader testing with real assistive technology (keyboard and markup semantics were reviewed).

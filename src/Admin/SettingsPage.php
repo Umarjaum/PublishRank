@@ -1115,7 +1115,7 @@ final class SettingsPage {
 				<a class="pr-set-wizard-link" href="<?php echo esc_url( \PublishRankSEO\Core\Branding::page_url( \PublishRankSEO\Admin\OnboardingPage::SLUG ) . '&edit=1&step=2' ); ?>"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> <?php esc_html_e( 'Edit in Setup Wizard', 'publishrank' ); ?></a>
 			</div>
 			<div class="pr-set-callout">
-				<span class="pr-set-callout__icon" aria-hidden="true"><i class="fa-solid fa-circle-info"></i></span>
+				<span class="pr-set-callout__icon" aria-hidden="true"><i class="fa-solid fa-circle-question"></i></span>
 				<div><strong><?php esc_html_e( 'One-time setup lives in the Setup Wizard', 'publishrank' ); ?></strong><p><?php esc_html_e( 'Publisher identity, organization or person details, social profiles, site verification, language and country, and homepage metadata are configured once in the wizard. This page keeps the ongoing controls.', 'publishrank' ); ?></p></div>
 			</div>
 			<div class="pr-set-toolbar" data-pr-set-toolbar>

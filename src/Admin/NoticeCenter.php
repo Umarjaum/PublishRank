@@ -127,6 +127,11 @@ final class NoticeCenter {
 			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			return;
 		}
+		if ( false !== strpos( substr( $html, 0, 500 ), 'data-prn-passthrough' ) ) {
+			// Screen tools (not messages) that only use the notices hook for placement stay in the page.
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the callback's own escaped output.
+			return;
+		}
 		if ( preg_match( '/<div[^>]*\shidden(\s|>|=)/i', substr( $html, 0, 2000 ) ) && 1 === substr_count( strtolower( $html ), 'class="notice' ) ) {
 			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- client-side delayed notice keeps its own logic.
 			return;
@@ -226,7 +231,7 @@ final class NoticeCenter {
 				'error'   => 'fa-circle-exclamation',
 				'warning' => 'fa-triangle-exclamation',
 				'success' => 'fa-circle-check',
-				'info'    => 'fa-circle-info',
+				'info'    => 'fa-circle-question',
 			)[ $item['severity'] ];
 			$label = array(
 				'error'   => __( 'Needs attention', 'publishrank' ),

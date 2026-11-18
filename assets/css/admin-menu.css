@@ -190,3 +190,14 @@
   #adminmenu #toplevel_page_publishrank-seo-dashboard > .wp-submenu > li > a { min-height: 40px !important; font-size: 14px; white-space: normal; }
   #adminmenu .pr-submenu-group-toggle { padding: 10px 12px 8px; font-size: 11px; }
 }
+
+/* ===== 2.25.1: live indicator (News & What's New, updates) ===== */
+.pr-live-dot{display:inline-block;position:relative;width:8px;height:8px;margin:0 2px 0 4px;border-radius:50%;background:#d63638;vertical-align:middle;box-shadow:0 0 0 0 rgba(214,54,56,.6)}
+.pr-live-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(214,54,56,.55);opacity:0}
+@media (prefers-reduced-motion:no-preference){.pr-live-dot::after{animation:pr-live-pulse 1.8s ease-out infinite}}
+@keyframes pr-live-pulse{0%{transform:scale(.6);opacity:.9}80%,100%{transform:scale(1.6);opacity:0}}
+#wpadminbar .pr-live-dot--bar{margin:0 6px 0 0;top:-1px}
+#wpadminbar #wp-admin-bar-publishrank-live > .ab-item{display:flex;align-items:center}
+.pr-live-chip{display:inline-flex;align-items:center;gap:2px;margin-left:8px;padding:2px 8px 2px 4px;border-radius:999px;background:#fcf0f1;color:#8a2424;font-size:12px;font-weight:600;line-height:1.6;vertical-align:middle;letter-spacing:.02em;text-transform:uppercase}
+.publishrank-update-notice .pr-live-dot{margin-left:0}
+@media (max-width:782px){#wpadminbar #wp-admin-bar-publishrank-live .ab-label{display:none}#wpadminbar #wp-admin-bar-publishrank-live{display:block}#wpadminbar #wp-admin-bar-publishrank-live > .ab-item{padding:0 10px;justify-content:center}}

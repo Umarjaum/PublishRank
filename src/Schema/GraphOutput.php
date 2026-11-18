@@ -474,6 +474,15 @@ final class GraphOutput {
 					$page['mainEntity'] = $faq;
 				} else {
 					$page['@type'] = 'WebPage'; }
+			} elseif ( $post instanceof \WP_Post && is_string( $page['@type'] ) && in_array( $page['@type'], array( 'WebPage', 'ItemPage', 'AboutPage', 'ContactPage', 'CollectionPage' ), true ) ) {
+				// A visible FAQ block on an ordinary page or article: the page is also an FAQPage. Articles
+				// keep their own node (linked through mainEntityOfPage); the questions become the page's
+				// main entity, so there is exactly one FAQPage per URL.
+				$faq = ( new SchemaBuilder() )->faq_entities( $post );
+				if ( $faq ) {
+					$page['@type']      = array( $page['@type'], 'FAQPage' );
+					$page['mainEntity'] = $faq;
+				}
 			}
 			$found = $post instanceof \WP_Post ? \PublishRankSEO\Meta\SeoData::image_for_post( $post ) : null;
 			$image = $found ? (string) $found['url'] : (string) get_option( 'publishrank_seo_default_social_image', '' );
@@ -838,6 +847,19 @@ final class GraphOutput {
 				$by_id[ $id ] = count( $out ); }
 			$out[] = $node;
 		}
+		// FAQPage is a singleton per URL too: keep the first node that carries it (the WebPage when a
+		// visible FAQ exists) and drop further FAQPage nodes added by custom schema or graph filters.
+		$faq_seen = false;
+		foreach ( $out as $index => $node ) {
+			$types = (array) ( $node['@type'] ?? array() );
+			if ( in_array( 'FAQPage', $types, true ) ) {
+				if ( $faq_seen ) {
+					unset( $out[ $index ] );
+				}
+				$faq_seen = true;
+			}
+		}
+		$out = array_values( $out );
 		// BreadcrumbList is a singleton for the current document. A third-party
 		// graph filter can add a second list with a different @id, so @id-only
 		// deduplication is not sufficient here. Prefer the canonical current-page

@@ -5,7 +5,7 @@
  * when every required field passes validation — never a half-filled stub.
  *
  * Field kinds: text, textarea, url, date, datetime, duration (ISO 8601), number, money, currency, country, lines,
- * rating, select.
+ * rating, select, json (validated custom JSON-LD object).
  *
  * @package PublishRankSEO
  */
@@ -153,6 +153,9 @@ final class Definitions {
 				'deathDate' => $t( __( 'Died', 'publishrank' ), 'date' ),
 				'sameAs'    => $t( __( 'Profiles (one URL per line)', 'publishrank' ), 'lines' ),
 			) ),
+			'CustomJsonLd'                   => array( 'label' => __( 'Custom schema (JSON-LD)', 'publishrank' ), 'group' => 'custom', 'doc' => 'https://schema.org/docs/full.html', 'fields' => array(
+				'json' => $t( __( 'JSON-LD object for one schema.org type, e.g. {"@type":"Event", "name":"…"}. It is checked before it is published and joins the page graph.', 'publishrank' ), 'json', true ),
+			) ),
 		);
 		$defs = (array) apply_filters( 'publishrank_schema_library_types', $defs );
 		return $defs;
@@ -168,6 +171,7 @@ final class Definitions {
 			'products'   => __( 'Software & services', 'publishrank' ),
 			'community'  => __( 'Community', 'publishrank' ),
 			'people'     => __( 'People', 'publishrank' ),
+			'custom'     => __( 'Custom', 'publishrank' ),
 		);
 	}
 }

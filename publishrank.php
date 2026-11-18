@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: PublishRank
+ * Plugin Name: PublishRank SEO for WordPress
  * Plugin URI: https://publishrankseo.vercel.app/
- * Description: Advanced SEO, News SEO, XML sitemaps, schema, redirects and robots controls for WordPress publishers.
- * Version: 2.25.0
+ * Description: Production-ready, free WordPress SEO for businesses, stores, creators, publishers and websites of every kind.
+ * Version: 2.25.1
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Muhammad Umar Jabbar

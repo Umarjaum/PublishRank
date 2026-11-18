@@ -89,7 +89,7 @@ final class LoginAddress {
 	public static function disabled_by_constant() {
 		return ( defined( 'PUBLISHRANK_DISABLE_ACCESS_SHIELD' ) && PUBLISHRANK_DISABLE_ACCESS_SHIELD )
 			|| ( defined( 'PUBLISHRANK_DISABLE_PRIVATE_LOGIN' ) && PUBLISHRANK_DISABLE_PRIVATE_LOGIN )
-			|| ( defined( 'PUBLISHRANK_DISABLE_HIDE_LOGIN' ) && PUBLISHRANK_DISABLE_HIDE_LOGIN );
+			|| ( defined( 'PUBLISHRANK_DISABLE_HIDE_LOGIN' ) && PUBLISHRANK_DISABLE_HIDE_LOGIN ); // Recovery constant documented by PublishRank releases before 2.24; still honoured so old wp-config.php recovery steps keep working.
 	}
 
 	/** Whether the private address is in force on this site. */

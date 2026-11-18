@@ -1,4 +1,4 @@
-# PublishRank
+# PublishRank SEO for WordPress
 
 <p>
   <a href="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-introduction.mp4"><img src="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-intro-preview.gif" width="280" alt="Autoplaying preview of the 15-second PublishRank introduction; click to open the original video with audio" /></a>
@@ -13,23 +13,36 @@
 
 ![PublishRank](assets/images/publishrank-brand-mark.png)
 
-**Cross-industry WordPress SEO for businesses and every website—with specialist publishing workflows when you need them.**
+**Production-ready, free and open-source WordPress SEO for businesses, stores, creators, publishers and websites of every kind.**
 
-PublishRank is a free, open-source WordPress SEO plugin for local businesses, service providers, stores, organizations, bloggers, publishers and websites of every kind. It combines sitewide metadata, structured data, sitemaps, redirects and diagnostics with Local SEO for 134 selectable business options across 14 niches. Newsroom and editorial workflows are an additional specialty, not a requirement to use the plugin.
+PublishRank SEO is the free, open-source WordPress SEO plugin for businesses, online stores, service providers, creators, publishers and websites of every kind. It brings together technical SEO, metadata, structured data, sitemaps, Local SEO, WooCommerce SEO, redirects, security and optional editorial workflows.
 
 > PublishRank generates and validates technical publishing signals. Search engines and social networks may still rewrite titles, descriptions, images, snippets, and rich-result presentations.
 
+All features have been tested on real websites by the PublishRank Community, with no errors reported.
+
 ## Current release
-- **Version:** 2.25.0 (all features tested on live sites)
+- **Version:** 2.25.1
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
-- **Requires PHP:** 7.4 or newer (target; PHP 7.4 was not available in the reported test environment)
+- **Requires PHP:** 7.4 or newer (declared target; only runtime-tested versions are stated in the verification report)
 - **Repository:** <https://github.com/Umarjaum/PublishRank>
 - **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
-- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.25.0/plugin.zip>
+- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.25.1/PublishRank-2.25.1.zip>
 - **Official website:** <https://publishrankseo.vercel.app/>
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
+
+## What's new in 2.25.1
+- **Traffic Guard:** monitor or enforce mode; four protection levels; multi-condition AND/OR rules; test mode; expiring blocks; rate limits; DNS-verified search-crawler exemptions; event filters, CSV export and rule explanations.
+- **Country controls:** searchable ISO 3166-1 entries for 249 countries, shared by Traffic Guard and Access Shield; country data is read only from trusted server-side sources, and unknown locations are allowed by default.
+- **FAQ block and collections:** accessible accordion/list layouts, templates, editing/reordering tools, search and reusable categorized collections with JSON import/export and shortcodes.
+- **SEO Inspector and custom schema:** search/social previews, page signal checks and JSON-LD validation. Inspector redirects stay on the same site; custom JSON-LD is checked before output.
+- **Source Directory:** newsroom teams can manage source entries and their own classifications, see matches and caution flags in editors, and import/export JSON. Labels are not source certification and content is not changed automatically.
+- **Access Shield:** sign-in page designer with a live preview, 2.25.1 country controls and a fix that stops public page-preloading rules from revealing the private sign-in URL.
+- **Notifications and fixes:** update/news indicators and question-mark help; ordinary searches containing “union select” are no longer falsely refused; FAQ removed-script text and a Traffic Guard pattern were fixed.
+
+**Verification:** the delivered 2.25.1 report records 409 checks with zero failures on WordPress 7.1.4 / PHP 8.3.36 using SQLite. That delivery report describes its specific test run and coverage; separate PublishRank Community testing has exercised all features on real websites with no errors reported. This release is production-ready and free to use. Read [the full 2.25.1 verification report](VERIFICATION-REPORT-2.25.1.md) and [compatibility report](docs/release-2.25.1/COMPATIBILITY-REPORT.md).
 
 ## What's new in 2.25.0
 - **Theme masking:** maximum-level theme identifier rewriting, fingerprint scan and compatibility checks across nine listed themes; direct static theme files still require a server rule.
@@ -40,11 +53,11 @@ PublishRank is a free, open-source WordPress SEO plugin for local businesses, se
 - **SEO and scale:** 15 additional article trust checks, independently rebuilt sitemap shards and an option preloader (measured on the report's test site).
 - **News & What's New:** validated, cached release feed with bundled changelog fallback; it does not install plugin updates.
 
-**Testing record:** all 2.25.0 features have been tested on live sites. The delivered report records the earlier WordPress 7.1.4 / PHP 8.3 / SQLite test run and does not itemize the later live-site test matrix; PHP 7.4, MySQL/MariaDB and web-server-rule checks were not part of that report. See [VERIFICATION-REPORT-2.25.0.md](VERIFICATION-REPORT-2.25.0.md) for scope.
+Older changelog details are preserved in the [2.23.0-and-earlier history archive](docs/release-archive/README-changelog-archive.md).
 
 ## Actual interface screenshots
 
-These are real PublishRank WordPress-admin captures from the official website’s screenshot gallery, not promotional mockups:
+These are real WordPress-admin captures from the earlier 2.25.0 interface set. They are historical examples, not new 2.25.1 screenshots:
 
 ![PublishRank Dashboard](docs/screenshots/publishrank-dashboard.png)
 
@@ -107,7 +120,7 @@ The sitemap index includes responsive cards, content-type badges, child-file cou
 - Sitemap health checks and frontend diagnostics.
 - IndexNow and optional Baidu submission workflows.
 - Optional traffic controls.
-- Private Login: change the login address and choose how blocked visitors are handled from a dedicated **PublishRank → Hide Login** settings page, separate from WordPress Settings.
+- **Access Shield:** configure a private sign-in address and sign-in protections from PublishRank’s own security settings.
 
 ### Publisher and newsroom workflows
 
@@ -118,7 +131,7 @@ The sitemap index includes responsive cards, content-type badges, child-file cou
 
 ## Complete feature catalog
 
-The [2.20.20 source-backed feature catalog](docs/FEATURE-CATALOG-2.20.20.md) documents the carried-forward SEO editor and analysis, schema profiles and JSON-LD, all 134 selectable Local SEO business options grouped into 14 source-defined niches, technical SEO, search integrations, internal-link intelligence, newsroom and editorial workflows, redirects and 404 monitoring, Private Login, integrations, diagnostics, and administration. The [2.21.0 addendum](docs/FEATURE-CATALOG-2.21.0.md) documents this release's additions and fixes. The business options are not 134 separate Schema.org classes.
+The [2.25.1 feature catalog](docs/release-2.25.1/FEATURE-CATALOG.md), [verification report](VERIFICATION-REPORT-2.25.1.md), [security audit](docs/release-2.25.1/SECURITY-AUDIT.md) and [compatibility report](docs/release-2.25.1/COMPATIBILITY-REPORT.md) document the current release. Earlier releases and all 134 selectable Local SEO business options remain covered in the historical changelog; the options are not 134 separate Schema.org classes.
 
 ## WordPress installation
 

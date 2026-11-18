@@ -305,9 +305,9 @@
 
 	function renderChecks(d) {
 		var p = panel('checks'); p.replaceChildren();
-		var list = d.issues || [], order = { error: 0, warn: 1, info: 2, ok: 3 }, icons = { error: '✕', warn: '!', info: 'i', ok: '✓' };
+		var list = d.issues || [], order = { error: 0, warn: 1, info: 2, ok: 3 }, icons = { error: '✕', warn: '!', info: '?', ok: '✓' };
 		list.slice().sort(function (a, b) { return order[a.level] - order[b.level]; }).forEach(function (i) {
-			var row = el('div', 'pr-pv-check is-' + i.level); var icon = el('span', 'pr-pv-check__icon', icons[i.level] || 'i'); icon.setAttribute('aria-hidden', 'true'); row.appendChild(icon);
+			var row = el('div', 'pr-pv-check is-' + i.level); var icon = el('span', 'pr-pv-check__icon', icons[i.level] || '?'); icon.setAttribute('aria-hidden', 'true'); row.appendChild(icon);
 			var txt = el('div', 'pr-pv-check__text'); txt.appendChild(el('strong', '', i.area + ' ')); txt.appendChild(document.createTextNode(i.msg)); row.appendChild(txt); p.appendChild(row);
 		});
 		if (!list.length) { p.appendChild(el('p', 'pr-pv-hint', t.allGood)); }

@@ -223,7 +223,8 @@ final class Hardening {
 		return array(
 			'traversal'     => '#(\.\./|\.\.%2f|%2e%2e%2f|%2e%2e/)#i',
 			'sensitive'     => '#(/etc/passwd|/proc/self/environ|wp-config\.php|\.env\b|\.git/)#i',
-			'sql_union'     => '#union(\s|%20|\+|/\*.*?\*/)+(all(\s|%20|\+)+)?select#i',
+			// "union select" alone appears in ordinary searches; require a payload after it (columns, NULL, CONCAT, 0x, "x FROM").
+			'sql_union'     => '#union(?:\s|%20|\+|/\*.*?\*/)+(?:all(?:\s|%20|\+)+)?select(?:\s|%20|\+|/\*.*?\*/)+(?:\d|null\b|(?:group_)?concat\b|char\s*\(|0x|@@|\*|\(|[\w`.]+\s*,|[\w`.]+(?:\s|%20|\+)+from\b)#i',
 			'sql_sleep'     => '#(benchmark\s*\(|sleep\s*\(\s*\d|waitfor\s+delay|information_schema)#i',
 			'script'        => '#(<|%3c)\s*script#i',
 			'php_wrappers'  => '#(php://|phar://|expect://|data:text/html|zip://)#i',
@@ -246,10 +247,18 @@ final class Hardening {
 			return;
 		}
 		SecurityLog::add( 'firewall', 'warn', array( 'detail' => 'Firewall blocked request (' . $hit . ').' ) );
+		$reference = '';
+		if ( class_exists( '\\PublishRankSEO\\Security\\TrafficGuard' ) ) {
+			try {
+				$reference = (string) \PublishRankSEO\Security\TrafficGuard::record_firewall_block( $hit );
+			} catch ( \Throwable $e ) {
+				$reference = '';
+			}
+		}
 		status_header( 403 );
 		nocache_headers();
 		header( 'Content-Type: text/plain; charset=utf-8' );
-		echo 'Forbidden';
+		echo 'Forbidden' . ( '' !== $reference ? "\nReference: " . preg_replace( '/[^A-Z0-9]/', '', $reference ) : '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain text, reference is A-Z0-9 only.
 		exit;
 	}
 

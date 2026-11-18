@@ -178,14 +178,14 @@ final class LLMSTxtPage {
 		$icons  = array(
 			'error' => '✕',
 			'warn'  => '!',
-			'info'  => 'i',
+			'info'  => '?',
 			'ok'    => '✓',
 		);
 		echo '<div class="rhs-card"><h2><span class="dashicons dashicons-visibility" aria-hidden="true"></span> ' . esc_html__( 'Preview of the saved file', 'publishrank' ) . '</h2>';
 		/* translators: 1: links, 2: sections, 3: tokens */
 		echo '<p class="description">' . esc_html( sprintf( __( '%1$s links in %2$s sections, about %3$s tokens. Save to refresh this preview.', 'publishrank' ), number_format_i18n( $stats['links'] ), number_format_i18n( $stats['sections'] ), number_format_i18n( $stats['tokens'] ) ) ) . '</p>';
 		foreach ( $issues as $issue ) {
-			echo '<p class="pr-llms-check is-' . esc_attr( $issue['level'] ) . '"><strong aria-hidden="true">' . esc_html( $icons[ $issue['level'] ] ?? 'i' ) . '</strong> ' . esc_html( $issue['msg'] ) . '</p>'; }
+			echo '<p class="pr-llms-check is-' . esc_attr( $issue['level'] ) . '"><strong aria-hidden="true">' . esc_html( $icons[ $issue['level'] ] ?? '?' ) . '</strong> ' . esc_html( $issue['msg'] ) . '</p>'; }
 		echo '<textarea readonly rows="16" class="large-text code" aria-label="' . esc_attr__( 'Generated llms.txt', 'publishrank' ) . '">' . esc_textarea( $text ) . '</textarea></div>';
 	}
 
