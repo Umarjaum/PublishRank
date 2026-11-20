@@ -1,5 +1,9 @@
 # PublishRank SEO for WordPress
 
+## What's new in 2.26.0
+
+Watch the [90-second PublishRank 2.26.0 release video on the official website](https://publishrankseo.vercel.app/video), or [open the MP4 from this repository](https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-2.26.0-whats-new.mp4).
+
 <p>
   <a href="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-introduction.mp4"><img src="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-intro-preview.gif" width="280" alt="Autoplaying preview of the 15-second PublishRank introduction; click to open the original video with audio" /></a>
 </p>
