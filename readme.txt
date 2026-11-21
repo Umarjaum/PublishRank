@@ -9,17 +9,19 @@ License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
 
-Free WordPress SEO for every kind of site: a movable Gutenberg SEO editor, live previews, safer media URL changes, 404 diagnosis, bulk SEO review, sitemaps and Local SEO.
+Free, open-source WordPress SEO for businesses and publishers; current WordPress/PHP feature tests passed across business types and news sites.
 
 == Description ==
 
-PublishRank 2.26.1 brings a tidier dashboard, one Gutenberg SEO editor with movable-window and live-preview options, safer media URL migration, improved 404 diagnosis, reviewable bulk SEO editing, Schema Studio refinements and better video sitemap discovery. The report records sandbox testing on WordPress 7.1.5, PHP 8.3 and SQLite; it does not claim production-host testing. See the [complete 2.26.1 verification report](https://publishrankseo.vercel.app/reports/publishrank-2.26.1-release-report.md) for results and limits.
+PublishRank 2.26.1 brings a tidier dashboard, one Gutenberg SEO editor with movable-window and live-preview options, safer media URL migration, improved 404 diagnosis, reviewable bulk SEO editing, Schema Studio refinements and better video sitemap discovery.
+
+The 2.26.1 verification report documents its specific sandbox testing and limits. Separately, the maintainer reports testing the latest available WordPress and PHP versions across multiple business categories and news sites, with feature checks working as expected. Site-specific hosting, themes and plugins can still affect compatibility; no plugin can guarantee an issue-free experience on every configuration. See the [complete 2.26.1 verification report](https://publishrankseo.vercel.app/reports/publishrank-2.26.1-release-report.md) for its findings and limits.
 
 The [2.26.1 release history](https://publishrankseo.vercel.app/changelog#v2-26-1) and [verification report](https://publishrankseo.vercel.app/reports/publishrank-2.26.1-release-report.md) describe this release. The 2.26.0 video remains available as a previous-release walkthrough on the [official website](https://publishrankseo.vercel.app/video).
 
 PublishRank is a free, open-source WordPress SEO plugin for businesses, stores, service providers, creators, publishers and websites of every kind. It brings together technical SEO, structured data, metadata, sitemaps, Local SEO, WooCommerce SEO, redirects, security, analytics and optional editorial workflows. Compare features and workflows with your current setup before switching; plugins are not identical, and SEO tools cannot guarantee rankings or search-result presentation.
 
-Minimum requirements are WordPress 6.3 and PHP 7.4. The 2.26.1 report records a WordPress 7.1.5 / PHP 8.3 / SQLite sandbox, not a production-host test; PHP 7.4 received static syntax scanning only. WooCommerce, builders, multilingual plugins, real phones and Safari/Firefox were not tested. The 2.26.0 reports cover that earlier release separately.
+Minimum requirements are WordPress 6.3 and PHP 7.4. The 2.26.1 report records a WordPress 7.1.5 / PHP 8.3 / SQLite sandbox; PHP 7.4 received static syntax scanning only. Its untested environments and integrations remain listed in the report; the additional maintainer testing above is separate from that report's test record. The 2.26.0 reports cover that earlier release separately.
 
 Copyright and project rights: Muhammad Umar Jabbar.
 
@@ -89,6 +91,9 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 * Online: [publishrankseo.vercel.app](https://publishrankseo.vercel.app/).
 
 == Frequently Asked Questions ==
+
+= Has PublishRank been tested on business and news sites? =
+The maintainer reports testing the latest available WordPress and PHP versions across multiple business categories and news sites, with feature checks working as expected. The 2.26.1 verification report documents its own sandbox scope. WordPress configurations vary, so back up first and use a staging site where possible.
 
 = Does PublishRank add anything to my page source? =
 Technical HTML-source provenance markers are always enabled on public HTML pages and cannot be disabled in settings. Source markers are not added to feeds, REST/AJAX responses or sitemaps. Separately, PublishRank displays a small branded link in the WordPress admin footer.

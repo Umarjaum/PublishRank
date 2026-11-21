@@ -21,6 +21,8 @@ PublishRank 2.26.1 is the current release. Read the [2.26.1 change history](http
 
 PublishRank combines technical SEO, metadata, connected structured data, sitemaps, Local SEO, WooCommerce SEO, redirects, security, analytics and optional editorial workflows. SEO tools provide publishing signals and controls; search engines may still rewrite or omit titles, descriptions, images, snippets and rich-result presentations.
 
+The maintainer reports feature checks passing on the latest WordPress and PHP versions tested across multiple business categories and news sites. These additional tests are separate from the version-specific checks documented in each release report; hosting, themes and other plugins can still affect compatibility.
+
 ## Current release
 - **Version:** 2.26.1
 - **License:** GPLv2 or later
@@ -43,6 +45,8 @@ PublishRank combines technical SEO, metadata, connected structured data, sitemap
 - **Responsive/accessibility refinements**, including focus, target-size, reduced-motion and forced-colours handling.
 
 **Verification:** the 2.26.1 report documents sandbox testing on WordPress 7.1.5, PHP 8.3 and SQLite. It explicitly does not claim production-host testing. PHP 7.4 received static syntax scanning only; WooCommerce, builders, multilingual plugins, real phones and Safari/Firefox were not tested. Automated accessibility checks were spot checks, not a full WCAG audit. See the [complete 2.26.1 report](docs/release-2.26.1/VERIFICATION-REPORT.md) for findings, blocked items and limitations.
+
+This report remains the record of that release’s specific sandbox test scope. Separately, the maintainer reports broader testing on the latest available WordPress and PHP versions across multiple business categories and news sites, with feature checks working as expected. This is not a guarantee that every hosting, theme or plugin combination will behave identically.
 
 ## Historical release: 2.25.1
 - Traffic Guard monitor/enforce modes and country controls; an FAQ block and reusable collections; SEO Inspector and validated custom schema; Source Directory; Access Shield refinements; update/news notifications.
