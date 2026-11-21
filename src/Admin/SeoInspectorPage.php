@@ -181,6 +181,73 @@ final class SeoInspectorPage {
 		if ( ! $p['jsonld'] ) {
 			$add( 'info', __( 'Structured data', 'publishrank' ), __( 'No JSON-LD structured data found.', 'publishrank' ) );
 		}
+		return array_merge( $out, self::site_name_checks( $p, $url ) );
+	}
+
+	/**
+	 * Homepage-only checks for the two things Google shows for a homepage: the site name above the URL and the
+	 * homepage title link below it. Returns nothing for any other page.
+	 *
+	 * @return array<int,array{level:string,area:string,msg:string}>
+	 */
+	private static function site_name_checks( array $p, $url ) {
+		$out  = array();
+		$home = untrailingslashit( (string) strtok( \PublishRankSEO\Core\PublicationProfile::primary_url(), '#?' ) );
+		if ( untrailingslashit( (string) strtok( (string) $url, '#?' ) ) !== $home ) {
+			return $out;
+		}
+		$area = __( 'Site name', 'publishrank' );
+		$add  = static function ( $level, $msg ) use ( &$out, $area ) {
+			$out[] = array( 'level' => $level, 'area' => $area, 'msg' => $msg );
+		};
+		$sites = array();
+		$orgs  = array();
+		foreach ( (array) ( $p['jsonld'] ?? array() ) as $raw ) {
+			$data = json_decode( (string) $raw, true );
+			if ( ! is_array( $data ) ) {
+				continue;
+			}
+			$list = isset( $data['@graph'] ) && is_array( $data['@graph'] ) ? $data['@graph'] : ( array_keys( $data ) === range( 0, count( $data ) - 1 ) ? $data : array( $data ) );
+			foreach ( $list as $node ) {
+				if ( ! is_array( $node ) || empty( $node['@type'] ) ) {
+					continue;
+				}
+				$types = array_map( 'strval', (array) $node['@type'] );
+				if ( in_array( 'WebSite', $types, true ) ) {
+					$sites[] = $node;
+				} elseif ( array_intersect( $types, array( 'Organization', 'NewsMediaOrganization', 'Person' ) ) ) {
+					$orgs[] = $node;
+				}
+			}
+		}
+		if ( ! $sites ) {
+			$add( 'warn', __( 'The homepage has no WebSite structured data. Google uses it, with the homepage itself, to choose the site name shown above the URL.', 'publishrank' ) );
+			return $out;
+		}
+		$name  = isset( $sites[0]['name'] ) && is_string( $sites[0]['name'] ) ? trim( $sites[0]['name'] ) : '';
+		$alts  = array();
+		foreach ( (array) ( $sites[0]['alternateName'] ?? array() ) as $alt ) {
+			if ( is_string( $alt ) ) {
+				$alts[] = strtolower( trim( $alt ) );
+			}
+		}
+		$title = trim( (string) $p['title'] );
+		$og    = isset( $p['meta']['og:site_name'][0] ) ? trim( (string) $p['meta']['og:site_name'][0] ) : '';
+		if ( '' !== $name && '' !== $og && 0 !== strcasecmp( $name, $og ) ) {
+			/* translators: 1: WebSite name, 2: og:site_name */
+			$add( 'warn', sprintf( __( 'The WebSite name (%1$s) differs from og:site_name (%2$s). Use one name everywhere so Google is not left to guess.', 'publishrank' ), $name, $og ) );
+		}
+		foreach ( $orgs as $org ) {
+			$org_name = isset( $org['name'] ) && is_string( $org['name'] ) ? trim( $org['name'] ) : '';
+			if ( '' !== $name && '' !== $org_name && 0 !== strcasecmp( $name, $org_name ) && ! in_array( strtolower( $org_name ), $alts, true ) ) {
+				/* translators: 1: WebSite name, 2: Organization or Person name */
+				$add( 'info', sprintf( __( 'The WebSite name (%1$s) and the publisher name (%2$s) differ. That is fine if intended; otherwise list the publisher name as an alternative site name.', 'publishrank' ), $name, $org_name ) );
+				break;
+			}
+		}
+		if ( '' !== $name && '' !== $title && 0 === strcasecmp( $title, $name ) ) {
+			$add( 'info', __( 'The homepage title is only the site name. Add a short description of what the site covers, so the title link says more than the name above it.', 'publishrank' ) );
+		}
 		return $out;
 	}
 

@@ -45,6 +45,10 @@ final class LoginBridge {
 		add_action( 'add_option_' . self::SLUG_OPTION, array( __CLASS__, 'from_slug_option_add' ), 10, 2 );
 		add_action( 'update_option_' . self::REDIRECT_OPTION, array( __CLASS__, 'from_redirect_option' ), 10, 2 );
 		add_action( 'add_option_' . self::REDIRECT_OPTION, array( __CLASS__, 'from_redirect_option_add' ), 10, 2 );
+		// The pre_option filters below make get_option() report Access Shield's value, so on a fresh site (no stored row)
+		// update_option() finds nothing to update and never fires update_option_/add_option_. Sync before the write instead.
+		add_filter( 'pre_update_option_' . self::SLUG_OPTION, array( __CLASS__, 'sync_slug_before_save' ), 10, 2 );
+		add_filter( 'pre_update_option_' . self::REDIRECT_OPTION, array( __CLASS__, 'sync_redirect_before_save' ), 10, 2 );
 		add_filter( 'pre_option_' . self::SLUG_OPTION, array( __CLASS__, 'current_login_slug' ) );
 		add_filter( 'pre_option_' . self::REDIRECT_OPTION, array( __CLASS__, 'current_redirect_slug' ) );
 		add_action( 'admin_init', array( __CLASS__, 'forget_legacy_options' ) );
@@ -71,6 +75,18 @@ final class LoginBridge {
 				LoginAddress::begin_change( $prev, $slug );
 			}
 		}
+	}
+
+	/** @param mixed $value @param mixed $old */
+	public static function sync_slug_before_save( $value, $old ) {
+		self::from_slug_option( $old, $value );
+		return $value;
+	}
+
+	/** @param mixed $value @param mixed $old */
+	public static function sync_redirect_before_save( $value, $old ) {
+		self::from_redirect_option( $old, $value );
+		return $value;
 	}
 
 	public static function from_slug_option_add( $name, $value ) {

@@ -62,6 +62,7 @@ final class AdminShell {
 				'label' => __( 'Search & discovery', 'publishrank' ),
 				'items' => array(
 					'publishrank-schema'                   => array( 'icon' => 'fa-diagram-project', 'label' => __( 'Schema', 'publishrank' ), 'desc' => __( 'Configure publisher, article and media structured data for your site.', 'publishrank' ) ),
+					'publishrank-schema-studio'            => array( 'icon' => 'fa-cubes', 'label' => __( 'Schema Studio', 'publishrank' ), 'desc' => __( 'Templates, dynamic fields, live JSON-LD and validation for any Schema.org type.', 'publishrank' ) ),
 					'publishrank-seo-inspector'            => array( 'icon' => 'fa-magnifying-glass', 'label' => __( 'SEO Inspector', 'publishrank' ), 'desc' => __( 'Preview any page in search and social, and check its metadata and structured data.', 'publishrank' ) ),
 					'publishrank-search-console'           => array( 'icon' => 'fa-magnifying-glass-chart', 'label' => __( 'Search Console', 'publishrank' ), 'desc' => __( 'Connect Google Search Console and review search performance data.', 'publishrank' ) ),
 					'publishrank-indexnow'                 => array( 'icon' => 'fa-bolt', 'label' => __( 'IndexNow', 'publishrank' ), 'desc' => __( 'Tell supported search engines the moment content changes.', 'publishrank' ) ),
@@ -83,6 +84,7 @@ final class AdminShell {
 					'publishrank-seo-score'          => array( 'icon' => 'fa-chart-simple', 'label' => __( 'SEO score', 'publishrank' ), 'desc' => __( 'Practical content and technical checks across the site.', 'publishrank' ) ),
 					'publishrank-author-expertise'   => array( 'icon' => 'fa-user-pen', 'label' => __( 'Author expertise', 'publishrank' ), 'desc' => __( 'Author credentials and expertise that build reader trust.', 'publishrank' ) ),
 					'publishrank-local-seo'          => array( 'icon' => 'fa-location-dot', 'label' => __( 'Local SEO', 'publishrank' ), 'desc' => __( 'Your business location and local search details.', 'publishrank' ) ),
+					'publishrank-media-links'        => array( 'icon' => 'fa-photo-film', 'label' => __( 'Media Links', 'publishrank' ), 'desc' => __( 'Find where media is used and change media URLs safely with preview, verification and rollback.', 'publishrank' ) ),
 					'publishrank-image-optimizer'    => array( 'icon' => 'fa-images', 'label' => __( 'Image optimizer', 'publishrank' ), 'desc' => __( 'Media optimization tools and image delivery settings.', 'publishrank' ) ),
 					'publishrank-publisher-toolkit'  => array( 'icon' => 'fa-toolbox', 'label' => __( 'Publisher toolkit', 'publishrank' ), 'desc' => __( 'Bulk SEO editing and everyday newsroom utilities.', 'publishrank' ) ),
 					'publishrank-seo-internal-links' => array( 'icon' => 'fa-link', 'label' => __( 'Content Graph', 'publishrank' ), 'desc' => __( 'Find orphaned stories and review relevant internal-link opportunities.', 'publishrank' ) ),

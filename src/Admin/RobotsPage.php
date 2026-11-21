@@ -199,7 +199,7 @@ final class RobotsPage {
 					<?php endforeach; ?>
 					<h3 class="pr-rb__kind"><?php esc_html_e( 'Protected paths', 'publishrank' ); ?></h3>
 					<p class="description"><?php esc_html_e( 'One path per line, for example /premium/ or /subscribers/. Every AI crawler that is not fully blocked is asked to stay out of these paths while still reading the rest of your site.', 'publishrank' ); ?></p>
-					<textarea name="<?php echo esc_attr( RobotsTxt::OPT_AI_PATHS ); ?>" rows="4" class="large-text code" placeholder="/premium/&#10;/subscribers/"><?php echo esc_textarea( (string) get_option( RobotsTxt::OPT_AI_PATHS, '' ) ); ?></textarea>
+					<textarea aria-label="<?php esc_attr_e( 'Protected paths', 'publishrank' ); ?>" name="<?php echo esc_attr( RobotsTxt::OPT_AI_PATHS ); ?>" rows="4" class="large-text code" placeholder="/premium/&#10;/subscribers/"><?php echo esc_textarea( (string) get_option( RobotsTxt::OPT_AI_PATHS, '' ) ); ?></textarea>
 					<p class="description"><?php esc_html_e( 'Blocking is a request that well-behaved crawlers honour, not a technical barrier. It never affects Googlebot or Google News.', 'publishrank' ); ?></p>
 				</section>
 
@@ -230,12 +230,12 @@ final class RobotsPage {
 
 				<section class="rhs-card">
 					<h2><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> <?php esc_html_e( 'Custom rules', 'publishrank' ); ?></h2>
-					<textarea id="publishrank_robots_custom" name="<?php echo esc_attr( RobotsTxt::OPT_CUSTOM ); ?>" rows="7" class="large-text code" placeholder="User-agent: *&#10;Disallow: /private/"><?php echo esc_textarea( (string) get_option( RobotsTxt::OPT_CUSTOM, '' ) ); ?></textarea>
+					<textarea id="publishrank_robots_custom" aria-label="<?php esc_attr_e( 'Custom rules', 'publishrank' ); ?>" name="<?php echo esc_attr( RobotsTxt::OPT_CUSTOM ); ?>" rows="7" class="large-text code" placeholder="User-agent: *&#10;Disallow: /private/"><?php echo esc_textarea( (string) get_option( RobotsTxt::OPT_CUSTOM, '' ) ); ?></textarea>
 					<p class="description"><?php esc_html_e( 'Supported lines: User-agent, Disallow, Allow, Crawl-delay, Content-Signal, Sitemap and # comments. Anything else is removed on save. Watch the checks on the right as you type.', 'publishrank' ); ?></p>
 				</section>
 				<section class="rhs-card"><h2><i class="fa-solid fa-file-shield" aria-hidden="true"></i> <?php esc_html_e( 'Full robots.txt override', 'publishrank' ); ?></h2>
 					<?php $this->toggle( RobotsTxt::OPT_OVERRIDE, __( 'Serve custom robots.txt only', 'publishrank' ), __( 'Replaces all generated rules with the verified custom file below. Use this only when you manage every directive yourself.', 'publishrank' ) ); ?>
-					<textarea name="<?php echo esc_attr( RobotsTxt::OPT_OVERRIDE_TEXT ); ?>" rows="8" class="large-text code" placeholder="User-agent: *&#10;Allow: /"><?php echo esc_textarea( (string) get_option( RobotsTxt::OPT_OVERRIDE_TEXT, '' ) ); ?></textarea>
+					<textarea aria-label="<?php esc_attr_e( 'Full robots.txt override', 'publishrank' ); ?>" name="<?php echo esc_attr( RobotsTxt::OPT_OVERRIDE_TEXT ); ?>" rows="8" class="large-text code" placeholder="User-agent: *&#10;Allow: /"><?php echo esc_textarea( (string) get_option( RobotsTxt::OPT_OVERRIDE_TEXT, '' ) ); ?></textarea>
 					<p class="description"><?php esc_html_e( 'The preview and checks on the right validate this override before you publish it.', 'publishrank' ); ?></p>
 				</section>
 				<?php submit_button( __( 'Save robots.txt settings', 'publishrank' ) ); ?>

@@ -99,6 +99,36 @@ final class SchemaValidator {
 	}
 
 	/**
+	 * Site-name checks for a WebSite entity. Google reads the site name that appears above the URL from the homepage
+	 * and its WebSite markup, so the url must be the domain root and the names must be clean and distinct.
+	 *
+	 * @param array $node WebSite node.
+	 * @return array<int,array{0:string,1:string}> Pairs of level and message.
+	 */
+	private static function website_issues( array $node ) {
+		$issues = array();
+		$name   = isset( $node['name'] ) && is_string( $node['name'] ) ? trim( $node['name'] ) : '';
+		if ( isset( $node['url'] ) && is_string( $node['url'] ) ) {
+			$path = (string) wp_parse_url( $node['url'], PHP_URL_PATH );
+			if ( '' !== $path && '/' !== $path ) {
+				$issues[] = array( 'warn', __( 'WebSite url should be the homepage (the domain root). Google reads the site name from the homepage.', 'publishrank' ) );
+			}
+		}
+		if ( '' !== $name && function_exists( 'mb_strlen' ) && mb_strlen( $name ) > 60 ) {
+			$issues[] = array( 'warn', __( 'The WebSite name is very long. Use the short name people know your site by, not a slogan or keyword phrase.', 'publishrank' ) );
+		}
+		if ( '' !== $name && isset( $node['alternateName'] ) ) {
+			foreach ( (array) $node['alternateName'] as $alt ) {
+				if ( is_string( $alt ) && 0 === strcasecmp( trim( $alt ), $name ) ) {
+					$issues[] = array( 'info', __( 'WebSite alternateName repeats the name. Alternative names should be different, such as an abbreviation.', 'publishrank' ) );
+					break;
+				}
+			}
+		}
+		return $issues;
+	}
+
+	/**
 	 * Check one entity and every entity nested in it.
 	 *
 	 * @param array  $node
@@ -110,6 +140,14 @@ final class SchemaValidator {
 		$types = isset( $node['@type'] ) ? array_map( 'strval', (array) $node['@type'] ) : array();
 		$label = '' !== $path ? $path : ( $types ? implode( '/', $types ) : 'Node' );
 		$ref   = isset( $node['@id'] ) && 1 === count( $node );
+		// A nested { @type, @id, name, url } entry (for example a branch listed under subOrganization) points
+		// at an entity described on its own page; it is a labelled reference, not a full entity to check.
+		if ( ! $ref && '' !== $path && isset( $node['@id'] ) && ! array_diff( array_keys( $node ), array( '@type', '@id', 'name', 'url' ) ) ) {
+			$ref = true;
+		}
+		// Google's price requirement applies to product offers. A service listed in an OfferCatalog without a
+		// published price is valid schema.org and must not be reported as an error.
+		$service_offer = isset( $node['itemOffered']['@type'] ) && in_array( 'Service', (array) $node['itemOffered']['@type'], true );
 		$add   = static function ( $level, $msg ) use ( &$out, $label ) {
 			$out[] = array( 'level' => $level, 'area' => $label, 'msg' => $msg );
 		};
@@ -131,6 +169,9 @@ final class SchemaValidator {
 				continue;
 			}
 			foreach ( $rules[ $rt ]['required'] ?? array() as $p ) {
+				if ( 'Offer' === $rt && $service_offer ) {
+					continue;
+				}
 				if ( ! $has( $p ) ) {
 					/* translators: 1: type, 2: property names */
 					$add( 'error', sprintf( __( '%1$s is missing required property %2$s.', 'publishrank' ), $type, str_replace( '|', ' / ', $p ) ) );
@@ -140,6 +181,11 @@ final class SchemaValidator {
 				if ( ! $has( $p ) ) {
 					/* translators: 1: type, 2: property names */
 					$add( 'info', sprintf( __( '%1$s: %2$s is recommended.', 'publishrank' ), $type, str_replace( '|', ' / ', $p ) ) );
+				}
+			}
+			if ( 'WebSite' === $rt ) {
+				foreach ( self::website_issues( $node ) as $issue ) {
+					$add( $issue[0], $issue[1] );
 				}
 			}
 		}

@@ -74,7 +74,7 @@
 
 /* ---- Sign-in hero ---- */
 .pr-gsc-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:center;padding:30px 32px;background:linear-gradient(125deg,#fff 0%,var(--pr-primary-soft) 100%)}
-@media (max-width:900px){.pr-gsc-hero{grid-template-columns:1fr;padding:22px}}
+@media (max-width: 960px){.pr-gsc-hero{grid-template-columns:1fr;padding:22px}}
 .pr-eyebrow{display:inline-block;margin-bottom:8px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pr-primary-strong)}
 .pr-gsc-hero h2{margin:0 0 8px;font-size:26px;color:var(--pr-ink)}
 .pr-gsc-hero__lead{margin:0 0 20px;font-size:15px;line-height:1.55;color:var(--pr-text)}

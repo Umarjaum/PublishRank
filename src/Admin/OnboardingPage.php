@@ -512,7 +512,7 @@ final class OnboardingPage {
 							'wide'        => true,
 							'san'         => 'sanitize_home_text',
 							'placeholder' => '%%sitename%% %%sep%% %%site_description%%',
-							'help'        => __( 'Shared with your publication name and WordPress Site Title. Changes here update the same title everywhere.', 'publishrank' ),
+							'help'        => __( 'The clickable headline for your homepage in search results. Your site name (WordPress Site Title) is set separately on the Publisher step.', 'publishrank' ),
 						)
 					),
 					$f(
@@ -1312,7 +1312,7 @@ final class OnboardingPage {
 			$template = (string) get_option( 'publishrank_seo_title_template_home', '%%sitename%% %%page%%' );
 		}
 		$template = \PublishRankSEO\Meta\TemplateResolver::sanitize_template( $template );
-		$resolved = ( new \PublishRankSEO\Meta\MetaGenerator() )->resolve_template( $template, 0, 'title', array( 'title' => PublicationProfile::publication_name() ) );
+		$resolved = ( new \PublishRankSEO\Meta\MetaGenerator() )->resolve_template( $template, 0, 'title', array( 'title' => PublicationProfile::site_name() ) );
 		return '' !== $resolved ? $resolved : __( 'Not configured', 'publishrank' );
 	}
 
@@ -1570,6 +1570,7 @@ final class OnboardingPage {
 			if ( $missing ) {
 				echo '<div class="prw-alert prw-alert--warn"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><p>' . esc_html( sprintf( /* translators: %s: field list. */ __( 'Still required: %s. Finishing will take you back to the Publisher step.', 'publishrank' ), implode( ', ', $missing ) ) ) . '</p></div>';
 			}
+			$this->render_pending_login_notice();
 			$this->recap( $edit_base );
 			return;
 		}
@@ -1594,7 +1595,8 @@ final class OnboardingPage {
 		$prefix   = trailingslashit( home_url() ) . ( $pretty ? '' : '?' );
 		$tail     = ( $pretty && '/' === substr( (string) get_option( 'permalink_structure' ), -1 ) ) ? '/' : '';
 		$deferred = \PublishRankSEO\AccessShield\LoginBridge::is_deferred();
-		$off      = ! $deferred && ! \PublishRankSEO\AccessShield\LoginBridge::enabled();
+		// "Off" means the Access Shield feature itself is switched off; a fresh site with no address yet gets the normal "after you save" text.
+		$off      = ! $deferred && ! \PublishRankSEO\AccessShield\AccessShield::enabled();
 		if ( $deferred ) {
 			$text = __( 'Your sign-in page has not moved yet. It moves to the address below when you save this step. After that, wp-login.php and wp-admin are hidden from visitors who are not signed in. Copy the address and keep it somewhere safe.', 'publishrank' );
 		} elseif ( $off ) {
@@ -1605,6 +1607,25 @@ final class OnboardingPage {
 		echo '<div class="prw-alert prw-alert--info prw-loginurl" data-prw-loginurl data-prw-input="prw_publishrank_login_slug" data-prw-prefix="' . esc_attr( $prefix ) . '" data-prw-tail="' . esc_attr( $tail ) . '" data-copied="' . esc_attr__( 'Copied', 'publishrank' ) . '" data-copy-failed="' . esc_attr__( 'Press Ctrl+C to copy', 'publishrank' ) . '">';
 		echo '<i class="fa-solid fa-user-shield" aria-hidden="true"></i><div><p>' . esc_html( $text ) . '</p>';
 		echo '<p class="prw-loginurl__row"><code data-prw-loginurl-text>' . esc_html( $url ) . '</code> <button type="button" class="button prw-btn prw-btn--ghost" data-prw-copy-url><i class="fa-regular fa-copy" aria-hidden="true"></i> ' . esc_html__( 'Copy address', 'publishrank' ) . '</button> <span class="prw-loginurl__status" data-prw-copy-status role="status" aria-live="polite"></span></p></div></div>';
+	}
+
+	/**
+	 * A new private sign-in address has a 10-minute safety window: unless it is confirmed, the previous address comes back.
+	 * The wizard must say so and offer the confirmation, otherwise the address silently reverts after setup. A nonce link
+	 * (not a form) because this renders inside the wizard's own form.
+	 */
+	private function render_pending_login_notice() {
+		$pending = \PublishRankSEO\AccessShield\LoginAddress::pending();
+		if ( ! $pending || ! \PublishRankSEO\Core\Capabilities::can( 'manage_security' ) ) {
+			return;
+		}
+		$left    = max( 1, (int) ceil( ( (int) $pending['expires'] - time() ) / 60 ) );
+		$confirm = wp_nonce_url( admin_url( 'admin-post.php?action=publishrank_shield_confirm' ), 'publishrank_shield_confirm' );
+		echo '<div class="prw-alert prw-alert--warn prw-login-pending" role="alert"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i><div>';
+		echo '<p><strong>' . esc_html__( 'Confirm your new sign-in address', 'publishrank' ) . '</strong> — ' . esc_html( sprintf( /* translators: %d: minutes */ __( 'unless you confirm it, the previous address (wp-login.php) comes back automatically in about %d minutes. We also emailed you a confirmation link.', 'publishrank' ), $left ) ) . '</p>';
+		echo '<p><code>' . esc_html( \PublishRankSEO\AccessShield\LoginAddress::url() ) . '</code></p>';
+		echo '<p><a class="button prw-btn prw-btn--primary" href="' . esc_url( $confirm ) . '" target="_blank" rel="noopener">' . esc_html__( 'I have saved it — keep this address', 'publishrank' ) . '<span class="screen-reader-text"> ' . esc_html__( '(opens in a new tab)', 'publishrank' ) . '</span></a></p>';
+		echo '</div></div>';
 	}
 
 	/** The summary shown once setup is complete, inside the shared frame. */
@@ -1632,6 +1653,7 @@ final class OnboardingPage {
 			esc_html_e( 'One-time settings live in this wizard; ongoing controls are in General Settings.', 'publishrank' );
 		}
 		echo '</p></div><a class="button button-primary prw-btn prw-btn--primary" href="' . esc_url( $self . '&edit=1&step=2' ) . '"><i class="fa-solid fa-pen" aria-hidden="true"></i> ' . esc_html__( 'Edit setup', 'publishrank' ) . '</a></div>';
+		$this->render_pending_login_notice();
 		echo '<h3 class="pr-docs-h prw-subhead"><i class="fa-solid fa-list-check" aria-hidden="true"></i>' . esc_html__( 'Your configuration', 'publishrank' ) . '</h3>';
 		$this->recap( $self . '&edit=1' );
 		echo '<div class="prw-complete-actions"><div class="prw-complete-actions__main"><a class="button prw-btn prw-btn--ghost" href="' . esc_url( Branding::page_url( Branding::MENU_SLUG ) ) . '"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> ' . esc_html__( 'Go to dashboard', 'publishrank' ) . '</a><a class="button prw-btn prw-btn--ghost" href="' . esc_url( Branding::page_url( 'publishrank' ) ) . '"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ' . esc_html__( 'General Settings', 'publishrank' ) . '</a><a class="button prw-btn prw-btn--ghost" href="' . esc_url( Branding::page_url( 'publishrank-modules' ) ) . '"><i class="fa-solid fa-toggle-on" aria-hidden="true"></i> ' . esc_html__( 'Features', 'publishrank' ) . '</a></div>';

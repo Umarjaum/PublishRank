@@ -71,6 +71,8 @@ final class AdminAssets {
 			wp_enqueue_style( 'publishrank-seo-admin', Branding::asset_url( 'css/admin.css' ), array( 'dashicons', 'publishrank-fa-solid', 'publishrank-fa-brands' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/admin.css' ) );
 			wp_enqueue_style( 'publishrank-seo-palette', Branding::asset_url( 'css/palette.css' ), array( 'publishrank-seo-admin' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/palette.css' ) );
 			wp_enqueue_style( 'publishrank-seo-website', Branding::asset_url( 'css/website-theme.css' ), array( 'publishrank-seo-palette' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/website-theme.css' ) );
+			// Shared design-system tokens and .pr-ds-* components for every PublishRank screen (2.26).
+			wp_enqueue_style( 'publishrank-design-system', Branding::asset_url( 'css/design-system.css' ), array( 'publishrank-seo-palette' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/design-system.css' ) );
 			wp_enqueue_style( 'publishrank-seo-loader', Branding::asset_url( 'css/loader.css' ), array(), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/loader.css' ) );
 			wp_enqueue_style( 'publishrank-responsive', Branding::asset_url( 'css/responsive.css' ), array( 'publishrank-seo-website' ), Branding::version() . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/css/responsive.css' ) );
 			if ( Branding::is_plugin_screen() ) {

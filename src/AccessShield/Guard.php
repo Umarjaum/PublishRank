@@ -476,6 +476,11 @@ final class Guard {
 			$ok  = 2 === count( $p ) && ctype_digit( $p[0] ) && hash_equals( substr( hash_hmac( 'sha256', $p[0], wp_salt( 'nonce' ) ), 0, 20 ), $p[1] );
 			if ( ! $ok || time() - (int) $p[0] < $min ) {
 				SecurityLog::add( 'honeypot', 'notice', array( 'detail' => $ok ? 'Form submitted too quickly.' : 'Form timestamp invalid.' ) );
+				if ( $ok ) {
+					// A person whose password manager fills and submits instantly has typed the right password:
+					// tell them to try again instead of claiming the details are wrong.
+					return new \WP_Error( 'publishrank_too_fast', __( '<strong>Please try again:</strong> the form was sent a little too quickly. Wait a moment, then sign in.', 'publishrank' ) );
+				}
 				return new \WP_Error( self::GENERIC_CODE, self::generic_message() );
 			}
 		}

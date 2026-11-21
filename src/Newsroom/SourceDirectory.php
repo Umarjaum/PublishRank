@@ -191,7 +191,7 @@ final class SourceDirectory {
 	}
 
 	/** Source whose domain matches a host (exact or a subdomain of it). */
-	public static function match_host( $host, array $sources = null ) {
+	public static function match_host( $host, ?array $sources = null ) {
 		$host = preg_replace( '/^www\./', '', strtolower( (string) $host ) );
 		if ( '' === $host ) {
 			return null;

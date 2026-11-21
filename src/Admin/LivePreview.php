@@ -280,6 +280,11 @@ final class LivePreview {
 		$title = html_entity_decode( wp_get_document_title(), ENT_QUOTES, 'UTF-8' );
 
 		$parsed    = $this->parse_head( $head );
+		$woo_block = $this->woocommerce_product_block( $clone );
+		if ( '' !== $woo_block ) {
+			// WooCommerce prints product markup in the footer, outside wp_head; add it so the preview matches the page.
+			$parsed['jsonld'][] = $woo_block;
+		}
 		$jsonld    = $this->analyze_jsonld( $parsed['jsonld'] );
 		$meta      = $parsed['meta'];
 		$get       = static function ( $k ) use ( $meta ) {
@@ -297,7 +302,7 @@ final class LivePreview {
 			'visible_description' => wp_trim_words( wp_strip_all_tags( get_the_excerpt( $clone ) ), 45, '…' ),
 			'canonical'           => $canonical ? $canonical : $permalink,
 			'robots'              => $get( 'name:robots' ),
-			'site_name'           => (string) \PublishRankSEO\Core\PublicationProfile::publication_name(),
+			'site_name'           => (string) \PublishRankSEO\Core\PublicationProfile::site_name(),
 			'favicon'             => (string) get_site_icon_url( 32 ),
 			'date'                => get_post_time( 'c', true, $clone ),
 			'permalink'           => $permalink,
@@ -401,6 +406,29 @@ final class LivePreview {
 				$out['jsonld'][] = trim( $s->textContent ); } // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOMNode::textContent is the native PHP DOM property.
 		}
 		return $out;
+	}
+
+	/**
+	 * The Product / ProductGroup JSON-LD WooCommerce prints for this product (with PublishRank's product filters
+	 * applied), built exactly as the storefront footer builds it. Prices, stock and variations are the saved values.
+	 */
+	private function woocommerce_product_block( $post ) {
+		if ( 'product' !== $post->post_type || ! function_exists( 'wc_get_product' ) || ! class_exists( '\WC_Structured_Data' ) ) {
+			return '';
+		}
+		$product = wc_get_product( $post->ID );
+		if ( ! $product ) {
+			return '';
+		}
+		$sd = function_exists( 'WC' ) && isset( WC()->structured_data ) && WC()->structured_data instanceof \WC_Structured_Data ? WC()->structured_data : new \WC_Structured_Data();
+		$GLOBALS['product'] = $product; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- request-scoped preview context, as on a product page.
+		$sd->generate_product_data( $product );
+		$types = apply_filters( 'woocommerce_structured_data_type_for_page', array( 'product' ) ); // Same type list a product page uses (adds productgroup).
+		$data  = $sd->get_structured_data( is_array( $types ) ? $types : array( 'product' ) );
+		if ( empty( $data ) ) {
+			return '';
+		}
+		return (string) wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 	}
 
 	private function analyze_jsonld( $raw_blocks ) {

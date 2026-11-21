@@ -15,6 +15,9 @@ defined( 'ABSPATH' ) || exit;
 final class RedirectController {
 	public function register() {
 		add_action( 'template_redirect', array( $this, 'handle' ), 0 );
+		// 2.26.1: a missing uploads file must answer 404 (so it is monitored and diagnosed), not a
+		// canonical "trailing slash" redirect to another address that does not exist either.
+		add_filter( 'redirect_canonical', array( __CLASS__, 'no_canonical_for_missing_upload' ), 10, 2 );
 	}
 
 	/** Path relative to the site root (works for sub-directory installs). */
@@ -29,11 +32,37 @@ final class RedirectController {
 		return '/' . ltrim( $path, '/' );
 	}
 
+	/**
+	 * Whether a request asks for a file under uploads that is not on disk. WordPress can resolve such a path to a
+	 * page or attachment instead of a 404 (and then add a trailing slash), so redirects that the Media Link Manager
+	 * created for moved files must still be checked for it (2.26.1).
+	 */
+	public static function is_missing_upload( $path ) {
+		$up   = wp_get_upload_dir();
+		$base = (string) wp_parse_url( (string) $up['baseurl'], PHP_URL_PATH );
+		$home = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+		$home = '/' === $home ? '' : untrailingslashit( $home );
+		if ( '' !== $home && 0 === strpos( $base, $home ) ) {
+			$base = substr( $base, strlen( $home ) );
+		}
+		$path = untrailingslashit( (string) $path );
+		if ( '' === $base || 0 !== strpos( $path, $base . '/' ) || ! preg_match( '/\.[A-Za-z0-9]{2,5}$/', $path ) ) {
+			return false;
+		}
+		$rel = rawurldecode( substr( $path, strlen( $base ) + 1 ) );
+		return false === strpos( $rel, '..' ) && ! file_exists( trailingslashit( (string) $up['basedir'] ) . $rel );
+	}
+
+	/** @param string|false $redirect @param string $requested */
+	public static function no_canonical_for_missing_upload( $redirect, $requested = '' ) {
+		return $redirect && self::is_missing_upload( self::request_path() ) ? false : $redirect;
+	}
+
 	public function handle() {
 		if ( ! get_option( 'publishrank_redirect_enabled', true ) || is_admin() || wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 			return;
 		}
-		if ( get_option( 'publishrank_redirect_only_404', true ) && ! is_404() ) {
+		if ( get_option( 'publishrank_redirect_only_404', true ) && ! is_404() && ! self::is_missing_upload( self::request_path() ) ) {
 			return;
 		}
 		if ( ! RedirectStore::v2() ) {
@@ -43,6 +72,7 @@ final class RedirectController {
 		$query = isset( $_SERVER['QUERY_STRING'] ) ? (string) wp_unslash( $_SERVER['QUERY_STRING'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- normalised by query_key().
 		$match = RedirectRepository::match( $path, array( 'query' => $query ) );
 		if ( ! $match ) {
+			self::force_404_for_missing_upload( $path );
 			return;
 		}
 		$rule = $match['rule'];
@@ -80,6 +110,20 @@ final class RedirectController {
 		}
 		wp_safe_redirect( $target, $status, 'PublishRank' );
 		exit;
+	}
+
+	/**
+	 * A request for a file in uploads that does not exist sometimes resolves to the home page or an archive (a "soft 404").
+	 * Answer a real 404 so search engines drop it and the 404 Monitor can record and diagnose it (2.26.1).
+	 */
+	private static function force_404_for_missing_upload( $path ) {
+		global $wp_query;
+		if ( is_404() || ! self::is_missing_upload( $path ) || ! apply_filters( 'publishrank_missing_upload_404', true, $path ) ) {
+			return;
+		}
+		$wp_query->set_404();
+		status_header( 404 );
+		nocache_headers();
 	}
 
 	/** Minimal 410 / 451 response with cache headers. */

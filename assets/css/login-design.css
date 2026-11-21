@@ -17,3 +17,11 @@
 .prl-preview__links,.prl-preview__note{text-align:center;font-size:11px;opacity:.85}
 .prl-preview.has-bg .prl-preview__heading,.prl-preview.has-bg .prl-preview__links,.prl-preview.has-bg .prl-preview__note{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
 [data-prl-out][hidden]{display:none}
+
+/* Desktop / mobile preview (2.26): phones always centre the form, as on the real page. */
+.prl-device{display:inline-flex;margin:0 0 10px;border:1px solid #dcdcde;border-radius:8px;overflow:hidden}
+.prl-device__btn{padding:6px 14px;border:0;background:#fff;color:#50575e;font-weight:600;font-size:12px;cursor:pointer}
+.prl-device__btn.is-active{background:var(--pr-primary,#9b1245);color:#fff}
+.prl-device__btn:focus-visible{outline:2px solid var(--pr-primary,#9b1245);outline-offset:-2px}
+.prl-preview.is-mobile{max-width:320px;min-height:560px;margin:0 auto;justify-content:center;border:8px solid #1d2327;border-radius:28px}
+.prl-preview__row{display:flex;align-items:center;justify-content:space-between;margin-top:6px}.prl-preview__row em{font-style:normal;padding-left:16px;position:relative}.prl-preview__row em::before{content:"";position:absolute;left:0;top:1px;width:10px;height:10px;border:1px solid #8c8f94;border-radius:2px;background:#fff}.prl-preview__row b{margin-top:0!important}[data-prl-back][hidden]{display:none}

@@ -384,6 +384,12 @@
 			if (e.target.closest('[data-pr-esc-refresh]')) { e.preventDefault(); busy(); analyzeNow(); return; }
 			if (e.target.closest('[data-pr-esc-mode]')) { e.preventDefault(); setMode(getMode() === 'floating' ? 'docked' : 'floating'); return; }
 			var link = e.target.closest('.pr-esc__report');
+			if (link && window.PublishRankSeoEditor && typeof window.PublishRankSeoEditor.go === 'function') {
+				// 2.26.1 block editor: Article Intelligence lives in the PublishRank SEO sidebar (Insights tab).
+				e.preventDefault();
+				window.PublishRankSeoEditor.go('insights', 'intel');
+				return;
+			}
 			if (link) {
 				var box = document.getElementById('publishrank_article_intelligence');
 				if (box) {

@@ -138,7 +138,7 @@ final class MastodonPage {
 		echo '<p class="description pr-masto-copy-status" id="pr-mastodon-site-status" role="status" aria-live="polite"></p>';
 		echo '<details class="pr-masto-howto"><summary>' . esc_html__( 'Manual fallback: rel="me" code for your site', 'publishrank' ) . '</summary>';
 		echo '<p class="description">' . esc_html__( 'PublishRank already prints this link in your site’s head. Paste it into your theme only if a caching or theme setting removes it.', 'publishrank' ) . '</p>';
-		echo '<div class="pr-mastodon-copy-row pr-mastodon-copy-row--code"><textarea id="pr-mastodon-rel-code" class="large-text code" rows="2" readonly placeholder="' . esc_attr__( 'Enter your Mastodon profile in step 1 to create this code.', 'publishrank' ) . '">' . esc_textarea( $rel_me_code ) . '</textarea>';
+		echo '<div class="pr-mastodon-copy-row pr-mastodon-copy-row--code"><textarea id="pr-mastodon-rel-code" class="large-text code" rows="2" readonly aria-label="' . esc_attr__( 'rel="me" code for your site', 'publishrank' ) . '" placeholder="' . esc_attr__( 'Enter your Mastodon profile in step 1 to create this code.', 'publishrank' ) . '">' . esc_textarea( $rel_me_code ) . '</textarea>';
 		echo '<button type="button" class="button button-secondary" data-pr-copy-target="pr-mastodon-rel-code" data-pr-copy-status="pr-mastodon-rel-status" data-pr-copy-done="' . esc_attr__( 'Copied', 'publishrank' ) . '" data-pr-copy-failed="' . esc_attr__( 'Select and copy the code manually.', 'publishrank' ) . '">' . esc_html__( 'Copy code', 'publishrank' ) . '</button></div>';
 		echo '<p class="description pr-masto-copy-status" id="pr-mastodon-rel-status" role="status" aria-live="polite"></p></details>';
 		$this->step_close();

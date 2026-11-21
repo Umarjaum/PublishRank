@@ -98,10 +98,12 @@
 	}
 
 	/* ---------- rendering ---------- */
-	function meter(label, used, limit, unit) {
+	// Green inside the recommended range, amber when short, red when too long (or missing).
+	function meter(label, used, limit, unit, min) {
 		var wrap = el('div', 'pr-pv-meter'), bar = el('div', 'pr-pv-meter__bar'), fill = el('span', 'pr-pv-meter__fill');
+		var lo = typeof min === 'number' ? min : limit * 0.45;
 		var pct = Math.min(100, used / limit * 100); fill.style.width = pct + '%';
-		fill.className += used > limit ? ' is-over' : (used < limit * 0.45 ? ' is-short' : ' is-good');
+		fill.className += !used ? ' is-over' : (used > limit ? ' is-over' : (used < lo ? ' is-short' : ' is-good'));
 		bar.appendChild(fill); wrap.appendChild(el('span', 'pr-pv-meter__label', label)); wrap.appendChild(bar);
 		wrap.appendChild(el('span', 'pr-pv-meter__val', Math.round(used) + ' ' + unit)); return wrap;
 	}
@@ -142,8 +144,8 @@
 		desc.appendChild(document.createTextNode(clip(d.description || '', dfont, dmax * (mobile ? 3 : 2) - (date ? 70 : 0)))); card.appendChild(desc);
 		p.appendChild(card);
 		var m = el('div', 'pr-pv-meters');
-		m.appendChild(meter(t.title, px(d.title || '', tfont), 600, t.pixels));
-		m.appendChild(meter(t.metaDescription, (d.description || '').length, 160, t.chars));
+		m.appendChild(meter(t.title, px(d.title || '', tfont), 600, t.pixels, 285));
+		m.appendChild(meter(t.metaDescription, (d.description || '').length, 160, t.chars, 120));
 		p.appendChild(m);
 			if (!d.description) { p.appendChild(el('p', 'pr-pv-hint', issueText(d, t.descriptionIssue) || t.descriptionIssue)); }
 		}
@@ -315,7 +317,7 @@
 		if ($count) { $count.hidden = !bad; $count.textContent = bad; $count.className = 'pr-preview__count' + (err ? ' is-error' : ''); }
 	}
 
-		function render(d) { renderSearch(d); renderWebsite(d); renderSocial(d); renderMeta(d); renderJson(d); renderChecks(d); }
+		function render(d) { renderSearch(d); renderWebsite(d); renderSocial(d); renderMeta(d); renderJson(d); renderChecks(d); try { document.dispatchEvent(new CustomEvent('publishrank:live-preview', { detail: d })); } catch (e) { /* old browsers */ } }
 
 	/* ---------- tabs + events ---------- */
 	function activateTab(tab, moveFocus) {
@@ -363,6 +365,8 @@
 			} catch (err) { /* editor not ready */ }
 		});
 	}
+	// Other PublishRank editor UI (the block editor sidebar's Google and social cards) reads the same result.
+	window.PublishRankLivePreview = { last: function () { return state.last; }, refresh: function () { state.lastBody = ''; schedule(0); } };
 	setInterval(tick, 5000);
 		$(function () { schedule(250); });
 }(jQuery));

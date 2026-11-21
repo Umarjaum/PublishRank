@@ -85,7 +85,8 @@ final class HeadOutput {
 		if ( $this->registry->claim( 'description' ) && '' !== $description ) {
 			echo '<meta name="description" content="' . esc_attr( $description ) . '" />' . "\n";
 		}
-		if ( $this->registry->claim( 'canonical' ) ) {
+		// A 404 page has no preferred address; Google advises against canonicalising error pages.
+		if ( ! is_404() && $this->registry->claim( 'canonical' ) ) {
 			echo '<link rel="canonical" href="' . esc_url( $this->meta->canonical() ) . '" />' . "\n";
 		}
 		if ( $this->registry->claim( 'robots' ) ) {
@@ -120,7 +121,7 @@ final class HeadOutput {
 		if ( $this->registry->claim( 'og' ) ) {
 			echo "<!-- Open Graph metadata begin -->\n";
 			echo '<meta property="og:title" content="' . esc_attr( $this->social( PostMeta::OG_TITLE, $this->meta->title() ) ) . '" />' . "\n";
-			echo '<meta property="og:site_name" content="' . esc_attr( PublicationProfile::publication_name() ) . '" />' . "\n";
+			echo '<meta property="og:site_name" content="' . esc_attr( PublicationProfile::site_name() ) . '" />' . "\n";
 			$og_description = $this->social( PostMeta::OG_DESCRIPTION, $description );
 			if ( '' !== $og_description ) {
 				echo '<meta property="og:description" content="' . esc_attr( $og_description ) . '" />' . "\n";
@@ -207,7 +208,7 @@ final class HeadOutput {
 				// Enhanced X/Slack previews: author and reading time.
 				$tw_post    = get_post( get_queried_object_id() );
 				$tw_author  = $tw_post ? (string) get_the_author_meta( 'display_name', (int) $tw_post->post_author ) : '';
-				$tw_words   = $tw_post ? str_word_count( wp_strip_all_tags( strip_shortcodes( (string) $tw_post->post_content ) ) ) : 0;
+				$tw_words   = $tw_post ? \PublishRankSEO\Meta\LanguageAlternates::word_count( strip_shortcodes( (string) $tw_post->post_content ) ) : 0;
 				$tw_minutes = max( 1, (int) ceil( $tw_words / 200 ) );
 				if ( '' !== $tw_author ) {
 					echo '<meta name="twitter:label1" content="' . esc_attr__( 'Written by', 'publishrank' ) . '" />' . "\n";

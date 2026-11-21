@@ -41,6 +41,42 @@ final class ProductSchema {
 			}
 		);
 		add_filter( 'publishrank_schema_graph', array( $this, 'listing' ), 26 );
+		add_action( 'wp', array( $this, 'safe_json_output' ), 20 );
+	}
+
+	/**
+	 * WooCommerce prints its JSON-LD through wc_esc_json( ..., true ), which turns & into &amp;. Inside a
+	 * <script> element entities are not decoded, so variant URLs such as ?attribute_color=Red&attribute_size=42
+	 * reach search engines as "...Red&amp;attribute_size=42". Print the same data with JSON escaping
+	 * that is safe inside a script element instead (WooCommerce's data and filters are unchanged).
+	 */
+	public function safe_json_output() {
+		if ( is_admin() || ! function_exists( 'WC' ) || ! WC()->structured_data || ! method_exists( WC()->structured_data, 'get_data_type_for_page' ) || ! method_exists( WC()->structured_data, 'get_structured_data' ) || ! apply_filters( 'publishrank_woocommerce_safe_json_output', true ) ) {
+			return;
+		}
+		$sd = WC()->structured_data;
+		if ( false === has_action( 'wp_footer', array( $sd, 'output_structured_data' ) ) ) {
+			return; // Another plugin already took over WooCommerce's output.
+		}
+		remove_action( 'wp_footer', array( $sd, 'output_structured_data' ), 10 );
+		add_action(
+			'wp_footer',
+			static function () use ( $sd ) {
+				// get_data_type_for_page() is protected; call it in WooCommerce's own scope so its filters still run.
+				$types = \Closure::bind(
+					function () {
+						return $this->get_data_type_for_page();
+					},
+					$sd,
+					get_class( $sd )
+				)();
+				$data = $sd->get_structured_data( $types );
+				if ( $data ) {
+					echo '<script type="application/ld+json">' . wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON_HEX_* makes the JSON safe inside a script element.
+				}
+			},
+			10
+		);
 	}
 
 	/** Offer-level additions shared by products and variations. */
@@ -189,7 +225,8 @@ final class ProductSchema {
 			if ( ! $v || ! $v->is_purchasable() || 'publish' !== get_post_status( $child_id ) ) {
 				continue;
 			}
-			$url  = $v->get_permalink();
+			// Variation permalinks come back HTML-escaped (&amp;); JSON-LD needs the raw URL.
+			$url  = html_entity_decode( (string) $v->get_permalink(), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 			$node = array(
 				'@type' => 'Product',
 				'@id'   => $url . '#product',
@@ -230,6 +267,10 @@ final class ProductSchema {
 		$markup['productGroupID'] = $group_id;
 		if ( $varies ) {
 			$markup['variesBy'] = array_values( $varies );
+			// The group carries no single value for a property its variants differ by (not "Red | Blue").
+			foreach ( array_keys( $varies ) as $k ) {
+				unset( $markup[ $k ] );
+			}
 		}
 		$markup['hasVariant'] = $variants;
 		unset( $markup['offers'], $markup['gtin'], $markup['mpn'] );

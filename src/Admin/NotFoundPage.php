@@ -9,6 +9,7 @@ namespace PublishRankSEO\Admin;
 use PublishRankSEO\Core\Branding;
 use PublishRankSEO\Core\Capabilities;
 use PublishRankSEO\Monitor\NotFoundStore as S;
+use PublishRankSEO\Monitor\NotFoundDiagnosis as D;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -20,7 +21,7 @@ final class NotFoundPage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 12 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
-		foreach ( array( 'redirect', 'dismiss', 'clear', 'toggle', 'bulk', 'settings', 'export' ) as $a ) {
+		foreach ( array( 'redirect', 'dismiss', 'clear', 'toggle', 'bulk', 'settings', 'export', 'fix_confident' ) as $a ) {
 			add_action( 'admin_post_publishrank_seo_404_' . $a, array( $this, 'handle_' . $a ) );
 		}
 	}
@@ -48,6 +49,16 @@ final class NotFoundPage {
 			Suite::done( self::SLUG, 'error', implode( ' ', $res->get_error_messages() ), self::keep_args() );
 		}
 		Suite::done( self::SLUG, 'success', __( 'Redirect created. Visitors to that address now reach the new page.', 'publishrank' ), self::keep_args() );
+	}
+
+	/** 2.26.1: redirect every open 404 whose cause has an exact, high-confidence fix. */
+	public function handle_fix_confident() {
+		Suite::guard( 'publishrank_seo_404_fix_confident', 'manage_404' );
+		if ( ! Capabilities::can( 'manage_redirects' ) ) {
+			wp_die( esc_html__( 'Creating redirects needs the “manage redirects” permission.', 'publishrank' ), '', array( 'response' => 403 ) );
+		}
+		$n = D::fix_confident( 90, 200 );
+		Suite::done( self::SLUG, 'success', sprintf( /* translators: %d: count */ _n( '%d redirect created from an exact match.', '%d redirects created from exact matches.', $n, 'publishrank' ), $n ), array(), 'causes' );
 	}
 
 	public function handle_dismiss() {
@@ -196,11 +207,13 @@ final class NotFoundPage {
 		Suite::tabs(
 			array(
 				'log'      => __( 'Missing addresses', 'publishrank' ),
+				'causes'   => __( 'Causes & broken links', 'publishrank' ),
 				'trends'   => __( 'Trends & crawlers', 'publishrank' ),
 				'settings' => __( 'Settings & privacy', 'publishrank' ),
 			)
 		);
 		$this->panel_log( $manage );
+		$this->panel_causes( $manage );
 		$this->panel_trends();
 		$this->panel_settings( $manage );
 		Suite::close();
@@ -249,13 +262,28 @@ final class NotFoundPage {
 			echo '<tr><td colspan="7"><div class="prx-empty"><span class="fa-solid fa-circle-check" aria-hidden="true"></span><p>' . esc_html__( 'No missing addresses match. Nice.', 'publishrank' ) . '</p></div></td></tr>';
 		}
 		foreach ( $res['rows'] as $r ) {
+			$diag = 'scanner' === $r['ua_class'] ? null : D::diagnose( $r['path'] );
 			$sug  = 'scanner' === $r['ua_class'] ? array() : S::suggestions( $r['path'], 2, 0.35 );
 			$lazy = null === $sug;
 			$sug  = $lazy ? array() : $sug;
+			if ( $diag && $diag['target'] && $diag['confidence'] >= 90 ) {
+				// An exact cause beats a similarity guess.
+				array_unshift( $sug, array( 'url' => home_url( $diag['target'] ), 'title' => $diag['label'], 'score' => $diag['confidence'] ) );
+				$lazy = false;
+			}
+			$refs = D::refs( (string) $r['path_hash'], 8 );
 			echo '<tr>' . ( $manage ? '<td class="prx-col-check"><input type="checkbox" form="prx-404-bulk" name="ids[]" value="' . (int) $r['id'] . '" aria-label="' . esc_attr( sprintf( /* translators: %s: path */ __( 'Select %s', 'publishrank' ), $r['path'] ) ) . '" /></td>' : '' );
-			echo '<td><code class="prx-code">' . esc_html( $r['path'] ) . '</code> ' . ( 'redirected' === $r['status'] ? Suite::badge( __( 'redirected', 'publishrank' ), 'good' ) : ( 'ignored' === $r['status'] ? Suite::badge( __( 'ignored', 'publishrank' ), 'muted' ) : '' ) ) . '<div class="prx-muted">' . esc_html( sprintf( /* translators: %s: time */ __( 'first seen %s', 'publishrank' ), Suite::ago( $r['first_seen'] ) ) ) . '</div></td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo '<td><code class="prx-code">' . esc_html( $r['path'] ) . '</code> ' . ( 'redirected' === $r['status'] ? Suite::badge( __( 'redirected', 'publishrank' ), 'good' ) : ( 'ignored' === $r['status'] ? Suite::badge( __( 'ignored', 'publishrank' ), 'muted' ) : '' ) ) . '<div class="prx-muted">' . esc_html( sprintf( /* translators: %s: time */ __( 'first seen %s', 'publishrank' ), Suite::ago( $r['first_seen'] ) ) ) . '</div>' . ( $diag ? '<div class="prx-404-cause prx-404-cause--' . esc_attr( $diag['type'] ) . '">' . Suite::badge( $diag['label'], $diag['confidence'] >= 90 ? 'good' : ( 'unknown' === $diag['type'] ? 'muted' : 'warn' ) ) . ' <span class="prx-muted">' . esc_html( $diag['hint'] ) . '</span></div>' : '' ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo '<td><strong>' . esc_html( number_format_i18n( $r['hits'] ) ) . '</strong></td><td>' . self::class_badges( $r ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo '<td>' . ( $r['referrer_host'] ? esc_html( $r['referrer_host'] ) . '<div class="prx-muted">' . esc_html( $r['top_referrer_path'] ) . '</div>' : '<span class="prx-muted">' . esc_html__( 'typed or unknown', 'publishrank' ) . '</span>' ) . '</td>';
+			echo '<td>' . ( $r['referrer_host'] ? esc_html( $r['referrer_host'] ) . '<div class="prx-muted">' . esc_html( $r['top_referrer_path'] ) . '</div>' : '<span class="prx-muted">' . esc_html__( 'typed or unknown', 'publishrank' ) . '</span>' );
+			if ( count( $refs ) > 1 || ( $refs && ! empty( $refs[0]['edit'] ) ) ) {
+				echo '<details class="prx-404-refs"><summary>' . esc_html( sprintf( /* translators: %d: count */ _n( '%d referring page', '%d referring pages', count( $refs ), 'publishrank' ), count( $refs ) ) ) . '</summary><ul>';
+				foreach ( $refs as $ref ) {
+					echo '<li>' . ( $ref['internal'] ? Suite::badge( __( 'your site', 'publishrank' ), 'warn' ) . ' ' : '' ) . '<code class="prx-code">' . esc_html( $ref['ref_host'] . $ref['ref_path'] ) . '</code> <span class="prx-muted">' . esc_html( number_format_i18n( (int) $ref['hits'] ) ) . '</span>' . ( $ref['edit'] ? ' <a href="' . esc_url( $ref['edit'] ) . '">' . esc_html__( 'Edit linking page', 'publishrank' ) . '</a>' : '' ) . '</li>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+				echo '</ul></details>';
+			}
+			echo '</td>';
 			echo '<td>' . esc_html( Suite::ago( $r['last_seen'] ) ) . '</td><td class="prx-fix">';
 			if ( $manage && $can_r && 'redirected' !== $r['status'] ) {
 				Suite::form_open( 'publishrank_seo_404_redirect', array( 'class' => 'prx-fix__form' ) );
@@ -291,6 +319,47 @@ final class NotFoundPage {
 	private static function lazy_suggest_script() {
 		$nonce = wp_create_nonce( 'wp_rest' );
 		echo '<script>(function(){var n=' . wp_json_encode( $nonce ) . ',q=[].slice.call(document.querySelectorAll("input[data-prx-suggest]"));function next(){var el=q.shift();if(!el)return;fetch(el.getAttribute("data-prx-suggest"),{headers:{"X-WP-Nonce":n},credentials:"same-origin"}).then(function(r){return r.ok?r.json():[]}).then(function(list){if(!Array.isArray(list)||!list.length)return;var dl=document.getElementById(el.getAttribute("list"));list.forEach(function(s){var o=document.createElement("option");var u;try{u=new URL(s.url).pathname}catch(e){u=s.url}o.value=u;o.textContent=s.title+" ("+s.score+"%)";dl&&dl.appendChild(o)});if(!el.value){var f;try{f=new URL(list[0].url).pathname}catch(e){f=list[0].url}el.value=f}var m=document.createElement("div");m.className="prx-muted";m.textContent=' . wp_json_encode( __( 'Suggested:', 'publishrank' ) ) . '+" "+list[0].title+" ("+list[0].score+"%)";el.form&&el.form.parentNode.insertBefore(m,el.form.nextSibling)}).catch(function(){}).then(next)}next()})();</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	/** 2.26.1: why addresses are missing, exact fixes, and links on this site that point to missing pages. */
+	private function panel_causes( $manage ) {
+		Suite::panel_open( 'causes' );
+		$sum     = D::cause_summary( 300 );
+		$fixable = 0;
+		foreach ( $sum as $c ) {
+			$fixable += $c['fixable'];
+		}
+		echo '<div class="prx-grid prx-grid--2">';
+		Suite::card_open( __( 'Why addresses are missing', 'publishrank' ), 'fa-stethoscope', __( 'Each open 404 is checked locally against your content: extra characters, wrong case, moved or unpublished posts, moved media, pagination and probes.', 'publishrank' ) );
+		if ( ! $sum ) {
+			echo '<p class="prx-muted">' . esc_html__( 'No open 404s to explain.', 'publishrank' ) . '</p>';
+		} else {
+			echo '<div class="prx-table-wrap"><table class="prx-table"><thead><tr><th>' . esc_html__( 'Cause', 'publishrank' ) . '</th><th class="prx-num">' . esc_html__( 'Addresses', 'publishrank' ) . '</th><th class="prx-num">' . esc_html__( 'Hits', 'publishrank' ) . '</th><th class="prx-num">' . esc_html__( 'Exact fix', 'publishrank' ) . '</th></tr></thead><tbody>';
+			foreach ( $sum as $type => $c ) {
+				echo '<tr><td>' . esc_html( $c['label'] ) . '</td><td class="prx-num">' . esc_html( number_format_i18n( $c['paths'] ) ) . '</td><td class="prx-num">' . esc_html( number_format_i18n( $c['hits'] ) ) . '</td><td class="prx-num">' . esc_html( number_format_i18n( $c['fixable'] ) ) . '</td></tr>';
+			}
+			echo '</tbody></table></div>';
+			if ( $manage && Capabilities::can( 'manage_redirects' ) && $fixable ) {
+				Suite::form_open( 'publishrank_seo_404_fix_confident' );
+				echo '<p><button class="prx-btn prx-btn--primary" type="submit">' . esc_html( sprintf( /* translators: %d: count */ _n( 'Redirect %d address with an exact fix', 'Redirect %d addresses with an exact fix', $fixable, 'publishrank' ), $fixable ) ) . '</button></p><p class="prx-muted">' . esc_html__( 'Only causes PublishRank can resolve with certainty (90% or more): extra characters, wrong case, moved pages and moved media files. Every redirect can be reviewed and rolled back in Redirects.', 'publishrank' ) . '</p></form>';
+			}
+		}
+		Suite::card_close();
+		Suite::card_open( __( 'Broken links on your own site', 'publishrank' ), 'fa-link-slash', __( 'Pages on this site that sent visitors to a missing address. Fixing the link at its source is better than a redirect.', 'publishrank' ) );
+		$broken = D::internal_broken( 100 );
+		if ( ! $broken ) {
+			echo '<p class="prx-muted">' . esc_html__( 'None recorded. Referring pages are collected from new 404 hits.', 'publishrank' ) . '</p>';
+		} else {
+			echo '<ul class="prx-404-broken">';
+			foreach ( $broken as $b ) {
+				echo '<li><strong>' . esc_html( $b['title'] ? $b['title'] : $b['ref_path'] ) . '</strong> → <code class="prx-code">' . esc_html( $b['path'] ) . '</code> <span class="prx-muted">' . esc_html( sprintf( /* translators: %s: hits */ __( '%s hits', 'publishrank' ), number_format_i18n( (int) $b['hits'] ) ) ) . '</span>';
+				echo '<div class="prx-muted">' . ( $b['in_content'] ? esc_html__( 'The link is in the page content.', 'publishrank' ) : esc_html__( 'The link is probably in a menu, widget or template.', 'publishrank' ) ) . ( $b['edit'] ? ' <a href="' . esc_url( $b['edit'] ) . '">' . esc_html__( 'Edit linking page', 'publishrank' ) . '</a>' : '' ) . '</div></li>';
+			}
+			echo '</ul>';
+		}
+		Suite::card_close();
+		echo '</div>';
+		Suite::panel_close();
 	}
 
 	private function panel_trends() {

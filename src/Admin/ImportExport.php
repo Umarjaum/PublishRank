@@ -71,6 +71,8 @@ final class ImportExport {
 			'publishrank_breadcrumb_fallback_label',
 			'publishrank_breadcrumb_fallback_url',
 			'publishrank_breadcrumb_log_errors',
+			'publishrank_site_name',
+			'publishrank_site_alternate_names',
 			'publishrank_hide_visible_site_title',
 			'publishrank_hide_visible_site_description',
 			'publishrank_override_wp_identity',

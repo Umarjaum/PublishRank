@@ -10,7 +10,7 @@ namespace PublishRankSEO\Core;
 defined( 'ABSPATH' ) || exit;
 
 final class Database {
-	const VERSION     = 6;
+	const VERSION     = 8;
 	const VERSION_OPT = 'publishrank_db_version';
 
 	/** @var array<string,bool> */
@@ -24,7 +24,7 @@ final class Database {
 
 	/** @return string[] */
 	public static function keys() {
-		return array( 'shield_attempts', 'security_log', '404', '404_daily', 'redirects', 'redirect_groups', 'redirect_history', 'ai_bots', 'ai_bots_daily', 'ai_citations', 'feed_stats', 'traffic_daily', 'traffic_seen', 'tg_events', 'tg_blocks' );
+		return array( 'shield_attempts', 'security_log', '404', '404_daily', 'redirects', 'redirect_groups', 'redirect_history', 'ai_bots', 'ai_bots_daily', 'ai_citations', 'feed_stats', 'traffic_daily', 'traffic_seen', 'tg_events', 'tg_blocks', 'media_runs', 'media_changes', '404_refs', 'bulk_changes' );
 	}
 
 	public static function register() {
@@ -142,6 +142,77 @@ final class Database {
 			KEY hits (hits),
 			KEY status (status,last_seen),
 			KEY ua_class (ua_class)
+		) $c;";
+		// 2.26.1: Media Link Manager change log. Every change keeps the exact previous value so it can be rolled back.
+		$sql[] = "CREATE TABLE {$t['media_runs']} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			attachment_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			operation varchar(20) NOT NULL DEFAULT '',
+			status varchar(16) NOT NULL DEFAULT 'planned',
+			old_url text NULL,
+			new_url text NULL,
+			plan longtext NULL,
+			report longtext NULL,
+			total int(10) unsigned NOT NULL DEFAULT 0,
+			done int(10) unsigned NOT NULL DEFAULT 0,
+			failed int(10) unsigned NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			KEY attachment_id (attachment_id),
+			KEY status (status,created_at)
+		) $c;";
+		$sql[] = "CREATE TABLE {$t['media_changes']} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			run_id bigint(20) unsigned NOT NULL,
+			seq int(10) unsigned NOT NULL DEFAULT 0,
+			object_type varchar(16) NOT NULL,
+			object_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			sub_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			field varchar(191) NOT NULL DEFAULT '',
+			label varchar(255) NOT NULL DEFAULT '',
+			old_value longtext NULL,
+			new_value longtext NULL,
+			matches int(10) unsigned NOT NULL DEFAULT 0,
+			status varchar(12) NOT NULL DEFAULT 'pending',
+			message varchar(255) NOT NULL DEFAULT '',
+			applied_at datetime NULL DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY run_status (run_id,status),
+			KEY object (object_type,object_id)
+		) $c;";
+		// 2.26.1: Bulk SEO Editor change log. One row per (post, field) change; old values are kept so a batch can be undone.
+		$sql[] = "CREATE TABLE {$t['bulk_changes']} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			batch_id char(16) NOT NULL,
+			post_id bigint(20) unsigned NOT NULL,
+			meta_key varchar(191) NOT NULL,
+			had_old tinyint(1) unsigned NOT NULL DEFAULT 0,
+			old_value longtext NULL,
+			new_value longtext NULL,
+			source varchar(16) NOT NULL DEFAULT 'editor',
+			user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			status varchar(12) NOT NULL DEFAULT 'applied',
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY batch (batch_id),
+			KEY post (post_id),
+			KEY created (created_at)
+		) $c;";
+		// 2.26.1: 404 Monitor referrers, one row per (404 path, referring page). Host + path only, never query strings.
+		$sql[] = "CREATE TABLE {$t['404_refs']} (
+			path_hash char(32) NOT NULL,
+			ref_hash char(32) NOT NULL,
+			ref_host varchar(191) NOT NULL DEFAULT '',
+			ref_path varchar(255) NOT NULL DEFAULT '',
+			internal tinyint(1) unsigned NOT NULL DEFAULT 0,
+			hits bigint(20) unsigned NOT NULL DEFAULT 0,
+			first_seen datetime NOT NULL,
+			last_seen datetime NOT NULL,
+			PRIMARY KEY  (path_hash,ref_hash),
+			KEY internal (internal,last_seen),
+			KEY last_seen (last_seen)
 		) $c;";
 		$sql[] = "CREATE TABLE {$t['404_daily']} (
 			day date NOT NULL,

@@ -324,7 +324,7 @@ final class AdminPage {
 		}
 		if ( $manage ) {
 			Suite::form_open( 'publishrank_shield_unlock', array( 'class' => 'prx-toolbar', 'style' => 'margin-top:12px' ) );
-			echo '<input class="prx-input" type="text" name="target" placeholder="' . esc_attr__( 'IP address or username', 'publishrank' ) . '" /><button class="prx-btn" type="submit">' . esc_html__( 'Unlock', 'publishrank' ) . '</button></form>';
+			echo '<input class="prx-input" type="text" name="target" aria-label="' . esc_attr__( 'IP address or username', 'publishrank' ) . '" placeholder="' . esc_attr__( 'IP address or username', 'publishrank' ) . '" /><button class="prx-btn" type="submit">' . esc_html__( 'Unlock', 'publishrank' ) . '</button></form>';
 		}
 		Suite::card_close();
 		echo '</div><div class="prx-stack">';
@@ -531,10 +531,11 @@ final class AdminPage {
 		Suite::card_open( __( 'Live preview', 'publishrank' ), 'fa-eye', __( 'Updates as you change settings. Save to apply it to the real sign-in page.', 'publishrank' ) );
 		$logo = $d['logo_id'] ? (string) wp_get_attachment_image_url( (int) $d['logo_id'], 'medium' ) : '';
 		$bg   = $d['bg_image_id'] ? (string) wp_get_attachment_image_url( (int) $d['bg_image_id'], 'full' ) : '';
+		echo '<div class="prl-device" role="group" aria-label="' . esc_attr__( 'Preview size', 'publishrank' ) . '"><button type="button" class="prl-device__btn is-active" data-prl-device="desktop" aria-pressed="true">' . esc_html__( 'Desktop', 'publishrank' ) . '</button><button type="button" class="prl-device__btn" data-prl-device="mobile" aria-pressed="false">' . esc_html__( 'Mobile', 'publishrank' ) . '</button></div>';
 		echo '<div class="prl-preview prl-preview--' . esc_attr( $d['layout'] ) . '" data-prl-preview data-bg="' . esc_url( $bg ) . '" aria-hidden="true">';
 		echo '<div class="prl-preview__col"><div class="prl-preview__logo" data-prl-logo style="' . ( $logo ? 'background-image:url(' . esc_url( $logo ) . ')' : '' ) . '"></div><div class="prl-preview__heading" data-prl-out="heading">' . esc_html( $d['heading'] ) . '</div><div class="prl-preview__message" data-prl-out="message">' . esc_html( $d['message'] ) . '</div>';
-		echo '<div class="prl-preview__card"><span>' . esc_html__( 'Username or Email Address', 'publishrank' ) . '</span><i></i><span>' . esc_html__( 'Password', 'publishrank' ) . '</span><i></i><b>' . esc_html__( 'Log In', 'publishrank' ) . '</b></div>';
-		echo '<div class="prl-preview__links">' . esc_html__( 'Lost your password?', 'publishrank' ) . '</div><div class="prl-preview__note" data-prl-out="footer_note">' . esc_html( $d['footer_note'] ) . '</div></div></div>';
+		echo '<div class="prl-preview__card"><span>' . esc_html__( 'Username or Email Address', 'publishrank' ) . '</span><i></i><span>' . esc_html__( 'Password', 'publishrank' ) . '</span><i></i><span class="prl-preview__row"><em>' . esc_html__( 'Remember Me', 'publishrank' ) . '</em><b>' . esc_html__( 'Log In', 'publishrank' ) . '</b></span></div>';
+		echo '<div class="prl-preview__links">' . esc_html__( 'Lost your password?', 'publishrank' ) . '<span data-prl-back' . ( ! empty( $d['hide_back'] ) ? ' hidden' : '' ) . '><br />' . esc_html( sprintf( /* translators: %s: site name */ __( '← Go to %s', 'publishrank' ), get_bloginfo( 'name' ) ) ) . '</span></div><div class="prl-preview__note" data-prl-out="footer_note">' . esc_html( $d['footer_note'] ) . '</div></div></div>';
 		echo '<p class="prx-help">' . sprintf( /* translators: %s: login URL */ esc_html__( 'Your sign-in page: %s', 'publishrank' ), '<a href="' . esc_url( wp_login_url() ) . '" target="_blank" rel="noopener">' . esc_html( wp_login_url() ) . '</a>' ) . '</p>';
 		Suite::card_close();
 		echo '</div></div></form>';

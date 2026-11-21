@@ -416,7 +416,7 @@ body[class*="publishrank"] .wrap :is(.notice a,.description a) { text-underline-
   body[class*="publishrank"] .wrap p.submit { position: relative; padding-bottom: 8px; }
   body[class*="publishrank"] .wrap .tablenav .actions { margin-bottom: 8px; }
 }
-@media (max-width: 480px) {
+@media (max-width: 430px) {
   body[class*="publishrank"] .wrap :is(.button,.button-primary) { min-height: 42px; }
   body[class*="publishrank"] .wrap p.submit .button-primary { width: 100%; }
 }

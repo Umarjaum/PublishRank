@@ -197,7 +197,7 @@
 .pr-docs-support .button.button-primary:hover,
 .pr-docs-support .button.button-primary:focus { background: var(--prm-primary-soft); border-color: var(--prm-primary-soft); color: var(--prm-primary-strong); }
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
 	.pr-docs-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 960px) {
@@ -573,7 +573,7 @@ body[class*="publishrank"] .wrap table.widefat tfoot td {
 
 /* ---------- robots.txt: the two-column layout now lives inside the frame ---------- */
 .pr-shell-wrap .publishrank-robots .pr-rb { margin-top: 0; }
-@media (max-width: 1400px) {
+@media (max-width: 1440px) {
 	.pr-shell-wrap .publishrank-robots .pr-rb { grid-template-columns: minmax(0, 1fr); }
 	.pr-shell-wrap .pr-rb__side { position: static; max-height: none; overflow: visible; }
 }

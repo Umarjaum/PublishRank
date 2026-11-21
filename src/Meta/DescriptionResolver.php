@@ -85,7 +85,7 @@ final class DescriptionResolver {
 		if ( ! $post instanceof \WP_Post ) {
 			return array( 'text' => '', 'source' => 'none' );
 		}
-		$key = (int) $post->ID . ':' . (int) $length . ':' . self::fallback_mode() . ':' . (string) $post->post_modified_gmt . ':' . md5( (string) PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' ) . '|' . (string) get_option( 'publishrank_identity_name', '' ) . '|' . (string) get_option( 'publishrank_seo_publication_name', '' ) . '|' . PublicationProfile::publication_description() );
+		$key = (int) $post->ID . ':' . (int) $length . ':' . self::fallback_mode() . ':' . (string) $post->post_modified_gmt . ':' . md5( (string) PostMeta::get( $post->ID, PostMeta::DESCRIPTION, '' ) . '|' . (string) get_option( 'publishrank_identity_name', '' ) . '|' . (string) get_option( 'publishrank_seo_publication_name', '' ) . '|' . (string) get_option( 'publishrank_site_name', '' ) . '|' . PublicationProfile::publication_description() );
 		if ( isset( self::$cache[ $key ] ) ) {
 			return self::$cache[ $key ];
 		}
@@ -220,7 +220,7 @@ final class DescriptionResolver {
 		if ( '' === $subject ) {
 			return '';
 		}
-		$name = SeoData::clean( PublicationProfile::publication_name() );
+		$name = SeoData::clean( PublicationProfile::site_name() );
 		$head = $subject;
 		if ( '' !== $name && 0 !== strcasecmp( $name, $subject ) ) {
 			/* translators: 1: page title, 2: publication name. */

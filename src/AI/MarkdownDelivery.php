@@ -252,7 +252,7 @@ final class MarkdownDelivery {
 				'language'     => str_replace( '_', '-', get_locale() ),
 				'type'         => $post->post_type,
 				'site'         => html_entity_decode( get_bloginfo( 'name' ), ENT_QUOTES, 'UTF-8' ),
-				'word_count'   => str_word_count( wp_strip_all_tags( $body ) ),
+				'word_count'   => \PublishRankSEO\Meta\LanguageAlternates::word_count( $body ),
 			);
 			$thumb = get_the_post_thumbnail_url( $post, 'full' );
 			if ( $thumb ) {

@@ -157,3 +157,4 @@ body .wrap .pr-hero__badge,body .wrap .pr-hero__badge i{color:#fff!important}
 .wrap .pr-dash-metrics .rhs-url-row:focus-within{border-color:var(--pw-bordeaux)}
 .wrap .pr-dash-metrics a:focus:not(:focus-visible),.wrap .pr-dash-metrics .button:focus:not(:focus-visible){outline:none;box-shadow:none}
 @media(forced-colors:active){.wrap .pr-dash-metrics a:focus-visible,.wrap .pr-dash-metrics .button:focus-visible,.wrap .pr-workflow .pr-step a:focus-visible{outline:3px solid Highlight}}
+.pr-mock__caption{display:block;margin-top:4px;font-size:11px;color:#62636C}

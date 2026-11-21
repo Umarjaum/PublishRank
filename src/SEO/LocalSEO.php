@@ -14,8 +14,10 @@ namespace PublishRankSEO\SEO;
 defined( 'ABSPATH' ) || exit;
 
 final class LocalSEO {
-	const OPTION = 'publishrank_local_seo_profile';
-	const SLUG   = 'publishrank-local-seo';
+	const OPTION    = 'publishrank_local_seo_profile';
+	const LOCATIONS = 'publishrank_local_seo_locations';
+	const SLUG      = 'publishrank-local-seo';
+	const MAX_LOCATIONS = 50;
 
 	/** Register front-end schema and the settings screen. */
 	public function register() {
@@ -23,6 +25,7 @@ final class LocalSEO {
 		if ( is_admin() ) {
 			add_action( 'admin_menu', array( $this, 'menu' ), 18 );
 			add_action( 'admin_post_publishrank_local_seo_save', array( $this, 'save' ) );
+			add_action( 'wp_ajax_publishrank_local_seo_preview', array( $this, 'ajax_preview' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'assets' ), 1002 );
 		}
 	}
@@ -948,17 +951,133 @@ final class LocalSEO {
 		$node = self::connected_node();
 		if ( $node ) {
 			$graph[] = $node; }
+		if ( is_singular() ) {
+			$location = self::location_for_page( (int) get_queried_object_id() );
+			if ( $location ) {
+				$loc_node = self::location_node( $location, (string) get_permalink( (int) get_queried_object_id() ) );
+				if ( $loc_node ) {
+					$graph[] = $loc_node;
+				}
+			}
+		}
 		return $graph;
 	}
 
+	/* --------------------------------------------------------------------------------------------
+	 * Multiple locations
+	 * ------------------------------------------------------------------------------------------ */
+
+	/** Location keys a branch may override; everything else (type, services, profiles ...) is inherited. */
+	public static function location_keys() {
+		return array( 'name', 'page_id', 'type', 'description', 'street', 'city', 'region', 'postal_code', 'country', 'latitude', 'longitude', 'has_map', 'phone', 'email', 'image', 'opening_hours', 'special_hours', 'service_area', 'price_range' );
+	}
+
+	/** @return array<int,array<string,mixed>> Stored locations (sanitised). */
+	public static function locations( $stored = null ) {
+		$stored = null === $stored ? get_option( self::LOCATIONS, array() ) : $stored;
+		return is_array( $stored ) ? array_values( array_filter( $stored, 'is_array' ) ) : array();
+	}
+
+	/** Sanitise the posted location rows. */
+	public static function sanitize_locations( $rows ) {
+		$out = array();
+		foreach ( is_array( $rows ) ? array_slice( $rows, 0, self::MAX_LOCATIONS ) : array() as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$row   = array_intersect_key( $row, array_flip( self::location_keys() ) );
+			$clean = self::sanitize_profile( array_merge( $row, array( 'type' => isset( $row['type'] ) && '' !== $row['type'] ? $row['type'] : 'LocalBusiness' ) ) );
+			$loc   = array_intersect_key( $clean, array_flip( self::location_keys() ) );
+			$loc['type']    = isset( $row['type'] ) && array_key_exists( (string) $row['type'], self::types() ) ? (string) $row['type'] : '';
+			$loc['page_id'] = isset( $row['page_id'] ) ? absint( $row['page_id'] ) : 0;
+			if ( '' === trim( (string) $loc['name'] ) && '' === trim( (string) $loc['city'] ) ) {
+				continue; // An empty row is a removed row.
+			}
+			$out[] = $loc;
+		}
+		return $out;
+	}
+
+	/** The stored location whose landing page is $page_id. */
+	public static function location_for_page( $page_id ) {
+		if ( $page_id <= 0 ) {
+			return null;
+		}
+		foreach ( self::locations() as $loc ) {
+			if ( (int) $loc['page_id'] === $page_id ) {
+				return $loc;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * LocalBusiness node for one branch: the main profile with the branch's own address, contact, hours
+	 * and coordinates, its own @id on its landing page and a parentOrganization link to the main business.
+	 */
+	public static function location_node( array $location, $page_url, $profile = null ) {
+		$main = self::profile( $profile );
+		if ( empty( $main['enabled'] ) ) {
+			return array();
+		}
+		$merged = $main;
+		foreach ( self::location_keys() as $key ) {
+			if ( 'page_id' === $key ) {
+				continue;
+			}
+			$value = isset( $location[ $key ] ) ? $location[ $key ] : '';
+			if ( is_array( $value ) ? ! empty( $value ) : '' !== trim( (string) $value ) ) {
+				$merged[ $key ] = $value;
+			} elseif ( in_array( $key, array( 'street', 'city', 'region', 'postal_code', 'latitude', 'longitude', 'has_map', 'opening_hours', 'special_hours', 'phone', 'email', 'image' ), true ) ) {
+				// A branch never inherits the head office's address, coordinates, hours or contact details.
+				$merged[ $key ] = is_array( $main[ $key ] ) ? array() : '';
+			}
+		}
+		if ( '' === trim( (string) $merged['name'] ) ) {
+			return array();
+		}
+		// A branch with its own street address is a storefront even when the head office serves customers at their location.
+		$merged['hide_address'] = '' !== trim( (string) ( $location['street'] ?? '' ) ) ? 0 : $main['hide_address'];
+		$merged['url'] = $page_url ? $page_url : $main['url'];
+		$node          = self::build_schema( $merged, trailingslashit( \PublishRankSEO\Core\PublicationProfile::primary_url() ) );
+		if ( ! $node ) {
+			return array();
+		}
+		$base                     = trailingslashit( \PublishRankSEO\Core\PublicationProfile::primary_url() );
+		$node['@id']              = trailingslashit( $page_url ? $page_url : $base ) . '#local-business';
+		$node['parentOrganization'] = array( '@id' => $base . '#local-business' );
+		if ( $page_url ) {
+			$node['mainEntityOfPage'] = array( '@id' => trailingslashit( $page_url ) . '#webpage' );
+		}
+		return $node;
+	}
+
 	/** The LocalBusiness node exactly as it is added to the site graph. */
-	public static function connected_node( $profile = null ) {
+	public static function connected_node( $profile = null, $locations = null ) {
 		$profile = self::profile( $profile );
 		$base    = trailingslashit( \PublishRankSEO\Core\PublicationProfile::primary_url() );
 		$node    = self::build_schema( $profile, $base );
 		if ( $node && ! \PublishRankSEO\Core\PublicationProfile::identity_is_person() ) {
 			// parentOrganization supersedes the deprecated branchOf property.
 			$node['parentOrganization'] = array( '@id' => $base . '#organization' );
+		}
+		if ( $node ) {
+			$branches = array();
+			foreach ( null === $locations ? self::locations() : $locations as $loc ) {
+				if ( empty( $loc['page_id'] ) || 'publish' !== get_post_status( (int) $loc['page_id'] ) ) {
+					continue;
+				}
+				$url        = (string) get_permalink( (int) $loc['page_id'] );
+				$branches[] = array(
+					'@type' => self::schema_type( '' !== (string) $loc['type'] ? $loc['type'] : $profile['type'] ),
+					'@id'   => trailingslashit( $url ) . '#local-business',
+					'name'  => sanitize_text_field( '' !== (string) $loc['name'] ? $loc['name'] : $profile['name'] ),
+					'url'   => $url,
+				);
+			}
+			if ( $branches ) {
+				$node['subOrganization'] = $branches;
+			}
 		}
 		return $node;
 	}
@@ -1026,6 +1145,86 @@ final class LocalSEO {
 	 * Admin
 	 * ------------------------------------------------------------------------------------------ */
 
+	/**
+	 * Live preview of unsaved Local SEO settings: the same sanitising and schema builder as the saved
+	 * profile, so the preview is exactly what would be printed after saving.
+	 */
+	public function ajax_preview() {
+		if ( ! \PublishRankSEO\Core\Capabilities::can( 'manage_integrations' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Not allowed.', 'publishrank' ) ), 403 );
+		}
+		check_ajax_referer( 'publishrank_local_seo_save' );
+		$input   = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? map_deep( wp_unslash( $_POST['local_seo'] ), 'sanitize_textarea_field' ) : array();
+		$rows    = isset( $_POST['local_locations'] ) && is_array( $_POST['local_locations'] ) ? map_deep( wp_unslash( $_POST['local_locations'] ), 'sanitize_textarea_field' ) : array();
+		$profile = self::sanitize_profile( $input );
+		$enabled = ! empty( $profile['enabled'] );
+		$posted  = self::sanitize_locations( $rows );
+		$node    = self::connected_node( array_merge( $profile, array( 'enabled' => 1 ) ), $posted );
+		$locs    = array();
+		foreach ( $posted as $loc ) {
+			$url    = ! empty( $loc['page_id'] ) ? (string) get_permalink( (int) $loc['page_id'] ) : '';
+			$locs[] = array(
+				'name'  => '' !== (string) $loc['name'] ? $loc['name'] : $profile['name'],
+				'page'  => $url,
+				'card'  => self::preview_card( array_merge( $profile, array_filter( $loc, static function ( $v ) { return is_array( $v ) ? ! empty( $v ) : '' !== (string) $v; } ) ) ),
+				'node'  => self::location_node( $loc, $url, array_merge( $profile, array( 'enabled' => 1 ) ) ),
+			);
+		}
+		$checks = self::health( $profile );
+		$scored = array_filter( $checks, static function ( $c ) { return 'info' !== $c['level']; } );
+		$passed = count( array_filter( $scored, static function ( $c ) { return 'ok' === $c['level']; } ) );
+		wp_send_json_success(
+			array(
+				'enabled'   => $enabled,
+				'json'      => $node ? (string) wp_json_encode( $node, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) : '',
+				'card'      => self::preview_card( $profile ),
+				'checks'    => array_values( $checks ),
+				'score'     => (int) round( 100 * $passed / max( 1, count( $scored ) ) ),
+				'locations' => $locs,
+				// References to the site's Organization/WebPage resolve on real pages, so they are not reported for this isolated entity.
+				'issues'    => $node && class_exists( '\\PublishRankSEO\\Schema\\Studio\\Validator' ) ? array_values( array_filter( \PublishRankSEO\Schema\Studio\Validator::validate( array( $node ) ), static function ( $i ) { return 'missing-relationship' !== $i['code']; } ) ) : array(),
+			)
+		);
+	}
+
+	/** Plain data for the visual business card preview. */
+	public static function preview_card( array $p ) {
+		$p     = self::profile( $p );
+		$types = self::types();
+		$days  = array( 'Monday' => __( 'Monday', 'publishrank' ), 'Tuesday' => __( 'Tuesday', 'publishrank' ), 'Wednesday' => __( 'Wednesday', 'publishrank' ), 'Thursday' => __( 'Thursday', 'publishrank' ), 'Friday' => __( 'Friday', 'publishrank' ), 'Saturday' => __( 'Saturday', 'publishrank' ), 'Sunday' => __( 'Sunday', 'publishrank' ) );
+		$week  = array_fill_keys( array_keys( $days ), array() );
+		foreach ( self::opening_hours_specification( $p ) as $spec ) {
+			if ( isset( $spec['validFrom'] ) ) {
+				continue;
+			}
+			foreach ( (array) $spec['dayOfWeek'] as $d ) {
+				$d = str_replace( 'https://schema.org/', '', (string) $d );
+				if ( isset( $week[ $d ] ) ) {
+					$week[ $d ][] = substr( (string) $spec['opens'], 0, 5 ) . '–' . substr( (string) $spec['closes'], 0, 5 );
+				}
+			}
+		}
+		$hours = array();
+		foreach ( $days as $key => $label ) {
+			$hours[] = array( 'day' => $label, 'key' => $key, 'times' => $week[ $key ] );
+		}
+		$address = array_filter( array( empty( $p['hide_address'] ) ? $p['street'] : '', $p['city'], $p['region'], $p['postal_code'], $p['country'] ) );
+		return array(
+			'name'        => (string) $p['name'],
+			'type'        => isset( $types[ $p['type'] ] ) ? $types[ $p['type'] ] : $p['type'],
+			'description' => (string) $p['description'],
+			'address'     => implode( ', ', $address ),
+			'phone'       => (string) $p['phone'],
+			'email'       => (string) $p['email'],
+			'url'         => (string) $p['url'],
+			'image'       => '' !== (string) $p['image'] ? (string) $p['image'] : (string) $p['logo'],
+			'price_range' => (string) $p['price_range'],
+			'hours'       => $hours,
+			'geo'         => ( '' !== (string) $p['latitude'] && '' !== (string) $p['longitude'] && empty( $p['hide_address'] ) ) ? array( (float) $p['latitude'], (float) $p['longitude'] ) : null,
+			'areas'       => array_values( (array) $p['service_area'] ),
+		);
+	}
+
 	public function menu() {
 		add_submenu_page( \PublishRankSEO\Core\Branding::MENU_SLUG, __( 'Local SEO', 'publishrank' ), __( 'Local SEO', 'publishrank' ), 'publishrank_manage_integrations', self::SLUG, array( $this, 'page' ) );
 	}
@@ -1049,6 +1248,8 @@ final class LocalSEO {
 		$input   = isset( $_POST['local_seo'] ) && is_array( $_POST['local_seo'] ) ? map_deep( wp_unslash( $_POST['local_seo'] ), 'sanitize_textarea_field' ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_admin_referer() above.
 		$profile = self::sanitize_profile( $input );
 		update_option( self::OPTION, $profile, false );
+		$rows = isset( $_POST['local_locations'] ) && is_array( $_POST['local_locations'] ) ? map_deep( wp_unslash( $_POST['local_locations'] ), 'sanitize_textarea_field' ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_admin_referer() above.
+		update_option( self::LOCATIONS, self::sanitize_locations( $rows ), false );
 		wp_safe_redirect(
 			add_query_arg(
 				array(
@@ -1177,6 +1378,7 @@ final class LocalSEO {
 			'hours'    => array( 'fa-clock', __( 'Hours', 'publishrank' ) ),
 			'offer'    => array( 'fa-tags', __( 'Services', 'publishrank' ) ),
 			'details'  => array( 'fa-sliders', __( 'Type details', 'publishrank' ) ),
+			'locations' => array( 'fa-map-location-dot', __( 'Locations', 'publishrank' ) ),
 			'profiles' => array( 'fa-share-nodes', __( 'Profiles', 'publishrank' ) ),
 		);
 		foreach ( $jumps as $id => $j ) {
@@ -1273,6 +1475,54 @@ final class LocalSEO {
 		$this->field( 'free_entry', __( 'Free entry', 'publishrank' ), $p['free_entry'], array( 'kind' => 'tri', 'families' => 'venue' ) );
 		$this->card_close();
 
+		// Locations.
+		$this->card_open( 'locations', 'fa-map-location-dot', __( 'Locations & branches', 'publishrank' ), __( 'For businesses with several branches. Each branch gets its own LocalBusiness entity on its landing page, linked to the main business. Type, services and profiles are inherited; address, contact, coordinates and hours are the branch\'s own.', 'publishrank' ) );
+		$pages = get_pages( array( 'post_status' => 'publish,draft,private', 'number' => 500, 'sort_column' => 'post_title' ) );
+		echo '<div class="pr-local-field pr-local-field--wide"><div class="pr-local-locs" data-pr-local-locs>';
+		$locations = self::locations();
+		$template  = array_fill_keys( self::location_keys(), '' );
+		foreach ( array_merge( $locations, array( $template ) ) as $i => $loc ) {
+			$is_tpl = $i === count( $locations );
+			echo '<fieldset class="pr-local-loc"' . ( $is_tpl ? ' data-pr-local-loc-template hidden disabled' : '' ) . '><legend>' . esc_html__( 'Location', 'publishrank' ) . ' <span data-pr-local-loc-num>' . (int) ( $i + 1 ) . '</span></legend><div class="pr-local-grid">';
+			$name = static function ( $key ) use ( $i, $is_tpl ) {
+				return 'local_locations[' . ( $is_tpl ? '__i__' : (int) $i ) . '][' . $key . ']';
+			};
+			$row = static function ( $key, $label, $value, $type = 'text', $extra = '' ) use ( $name ) {
+				$id = 'pr_loc_' . md5( $name( $key ) );
+				echo '<div class="pr-local-field"><label class="pr-local-label" for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label>';
+				if ( 'textarea' === $type ) {
+					echo '<textarea id="' . esc_attr( $id ) . '" name="' . esc_attr( $name( $key ) ) . '" rows="3"' . $extra . '>' . esc_textarea( is_array( $value ) ? implode( "\n", $value ) : (string) $value ) . '</textarea>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				} else {
+					echo '<input id="' . esc_attr( $id ) . '" type="' . esc_attr( $type ) . '" name="' . esc_attr( $name( $key ) ) . '" value="' . esc_attr( is_array( $value ) ? '' : (string) $value ) . '"' . $extra . ' />'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+				echo '</div>';
+			};
+			$row( 'name', __( 'Branch name', 'publishrank' ), $loc['name'] );
+			$pid = 'pr_loc_page_' . ( $is_tpl ? 'tpl' : (int) $i );
+			echo '<div class="pr-local-field"><label class="pr-local-label" for="' . esc_attr( $pid ) . '">' . esc_html__( 'Landing page', 'publishrank' ) . '</label><select id="' . esc_attr( $pid ) . '" name="' . esc_attr( $name( 'page_id' ) ) . '"><option value="0">' . esc_html__( '— none —', 'publishrank' ) . '</option>';
+			foreach ( $pages as $pg ) {
+				echo '<option value="' . (int) $pg->ID . '"' . selected( (int) $loc['page_id'], (int) $pg->ID, false ) . '>' . esc_html( $pg->post_title . ( 'publish' !== $pg->post_status ? ' (' . $pg->post_status . ')' : '' ) ) . '</option>';
+			}
+			echo '</select></div>';
+			$tid = 'pr_loc_type_' . ( $is_tpl ? 'tpl' : (int) $i );
+			echo '<div class="pr-local-field"><label class="pr-local-label" for="' . esc_attr( $tid ) . '">' . esc_html__( 'Type (optional)', 'publishrank' ) . '</label><select id="' . esc_attr( $tid ) . '" name="' . esc_attr( $name( 'type' ) ) . '"><option value="">' . esc_html__( 'Same as main business', 'publishrank' ) . '</option>' . self::type_options_html( (string) $loc['type'] ) . '</select></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			$row( 'phone', __( 'Telephone', 'publishrank' ), $loc['phone'], 'tel' );
+			$row( 'email', __( 'Email', 'publishrank' ), $loc['email'], 'email' );
+			$row( 'street', __( 'Street address', 'publishrank' ), $loc['street'] );
+			$row( 'city', __( 'City', 'publishrank' ), $loc['city'] );
+			$row( 'region', __( 'State / province', 'publishrank' ), $loc['region'] );
+			$row( 'postal_code', __( 'Postal code', 'publishrank' ), $loc['postal_code'] );
+			$row( 'country', __( 'Country code', 'publishrank' ), $loc['country'], 'text', ' placeholder="PK"' );
+			$row( 'latitude', __( 'Latitude', 'publishrank' ), $loc['latitude'], 'number', ' step="any" min="-90" max="90"' );
+			$row( 'longitude', __( 'Longitude', 'publishrank' ), $loc['longitude'], 'number', ' step="any" min="-180" max="180"' );
+			$row( 'image', __( 'Photo URL', 'publishrank' ), $loc['image'], 'url' );
+			$row( 'opening_hours', __( 'Opening hours', 'publishrank' ), $loc['opening_hours'], 'textarea', ' placeholder="Mo-Fr 09:00-17:00"' );
+			echo '<div class="pr-local-field"><button type="button" class="button-link button-link-delete" data-pr-local-loc-remove>' . esc_html__( 'Remove this location', 'publishrank' ) . '</button></div>';
+			echo '</div></fieldset>';
+		}
+		echo '</div><button type="button" class="button" data-pr-local-loc-add>' . esc_html__( 'Add a location', 'publishrank' ) . '</button></div>';
+		$this->card_close();
+
 		// Profiles.
 		$this->card_open( 'profiles', 'fa-share-nodes', __( 'Official profiles', 'publishrank' ), __( 'Links that prove this is the same business everywhere (sameAs).', 'publishrank' ) );
 		$this->field( 'same_as', __( 'Profile URLs', 'publishrank' ), $p['same_as'], array( 'kind' => 'textarea', 'wide' => true, 'rows' => 4, 'placeholder' => "https://maps.google.com/?cid=...\nhttps://www.facebook.com/yourbusiness", 'help' => __( 'One full http(s) URL per line: Google Business Profile, Facebook, Instagram, Yelp, TripAdvisor …', 'publishrank' ) ) );
@@ -1296,13 +1546,14 @@ final class LocalSEO {
 			echo '<li class="is-' . esc_attr( $c['level'] ) . '"><i class="fa-solid ' . esc_attr( $icon[ $c['level'] ] ) . '" aria-hidden="true"></i><span>' . esc_html( $c['text'] ) . '</span></li>'; }
 		echo '</ul></section>';
 
+		echo '<section class="pr-local-card pr-local-live" data-pr-local-live data-ajax="' . esc_url( admin_url( 'admin-ajax.php' ) ) . '"><div class="pr-local-preview__bar"><h2 class="pr-local-card__title">' . esc_html__( 'Live preview', 'publishrank' ) . '</h2><span class="pr-local-live__state" data-pr-local-live-state>' . esc_html__( 'Matches saved settings', 'publishrank' ) . '</span></div>';
+		echo '<p class="pr-local-help">' . esc_html__( 'Updates as you type, including unsaved changes. This shows your business details and structured data — not how Google will display them.', 'publishrank' ) . '</p>';
+		echo '<div class="pr-local-live__seg" role="group" aria-label="' . esc_attr__( 'Preview size', 'publishrank' ) . '"><button type="button" aria-pressed="true" data-pr-local-device="desktop">' . esc_html__( 'Desktop', 'publishrank' ) . '</button><button type="button" aria-pressed="false" data-pr-local-device="mobile">' . esc_html__( 'Mobile', 'publishrank' ) . '</button></div>';
+		echo '<div class="pr-local-live__card" data-pr-local-card></div><div data-pr-local-locs-preview></div><div data-pr-local-issues></div></section>';
 		echo '<section class="pr-local-card pr-local-preview"><div class="pr-local-preview__bar"><h2 class="pr-local-card__title">' . esc_html__( 'JSON-LD preview', 'publishrank' ) . '</h2><button type="button" class="button button-small" data-pr-local-copy>' . esc_html__( 'Copy', 'publishrank' ) . '</button></div>';
-		if ( $preview ) {
-			echo '<pre class="pr-local-pre" data-pr-local-json>' . esc_html( (string) wp_json_encode( $preview, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) ) . '</pre>';
-		} else {
-			echo '<p class="pr-local-empty">' . esc_html__( 'Add a business name and save to see the structured data.', 'publishrank' ) . '</p>';
-		}
-		echo '<p class="pr-local-help">' . esc_html__( 'Preview of the saved profile. Save after editing to refresh it.', 'publishrank' ) . '</p>';
+		echo '<pre class="pr-local-pre" data-pr-local-json' . ( $preview ? '' : ' hidden' ) . '>' . ( $preview ? esc_html( (string) wp_json_encode( $preview, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) ) : '' ) . '</pre>';
+		echo '<p class="pr-local-empty" data-pr-local-json-empty' . ( $preview ? ' hidden' : '' ) . '>' . esc_html__( 'Add a business name to see the structured data.', 'publishrank' ) . '</p>';
+		echo '<p class="pr-local-help">' . esc_html__( 'Main business entity, as it will be printed on every public page (preview includes unsaved changes).', 'publishrank' ) . '</p>';
 		echo '<div class="pr-local-tests"><a class="button" target="_blank" rel="noopener noreferrer" href="' . esc_url( 'https://search.google.com/test/rich-results?url=' . rawurlencode( $home ) ) . '"><i class="fa-brands fa-google" aria-hidden="true"></i> ' . esc_html__( 'Rich Results Test', 'publishrank' ) . '</a><a class="button" target="_blank" rel="noopener noreferrer" href="' . esc_url( 'https://validator.schema.org/#url=' . rawurlencode( $home ) ) . '"><i class="fa-solid fa-code" aria-hidden="true"></i> ' . esc_html__( 'Schema validator', 'publishrank' ) . '</a></div>';
 		echo '</section>';
 		echo '</aside></div></form></div>';

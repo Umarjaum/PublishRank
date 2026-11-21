@@ -161,7 +161,7 @@ final class SiteConnections {
 	}
 
 	private static function in_scope() {
-		return 'all' === self::scope() || is_front_page() || is_home();
+		return 'all' === self::scope() || \PublishRankSEO\Meta\MetaGenerator::is_homepage();
 	}
 
 	/** Buffer the document only when there is something to inject. */

@@ -87,7 +87,7 @@ final class SiteNavigation {
 
 	/** Add the navigation list to the homepage graph. */
 	public function graph( $graph ) {
-		if ( ! is_array( $graph ) || ! ( is_front_page() || is_home() ) || is_paged() ) {
+		if ( ! is_array( $graph ) || ! \PublishRankSEO\Meta\MetaGenerator::is_homepage() || is_paged() ) {
 			return $graph;
 		}
 		$s = self::settings();

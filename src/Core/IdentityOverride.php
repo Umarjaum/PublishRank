@@ -11,7 +11,9 @@ final class IdentityOverride {
 
 	public static function groups() {
 		return array(
-			array( 'publishrank_identity_name', 'publishrank_seo_publication_name', 'blogname', 'publishrank_home_title', 'publishrank_seo_publisher_name' ),
+			// The homepage SEO title (publishrank_home_title) is deliberately NOT in this group: Google shows the site name
+			// above the URL and the homepage title as the blue link below it, and they must be manageable separately.
+			array( 'publishrank_identity_name', 'publishrank_seo_publication_name', 'blogname', 'publishrank_seo_publisher_name' ),
 			array( 'publishrank_identity_description', 'publishrank_schema_org_description', 'blogdescription', 'publishrank_home_description' ),
 		);
 	}

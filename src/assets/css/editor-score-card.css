@@ -147,7 +147,7 @@
 /* ---------- footer ---------- */
 .pr-esc__foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--esc-line); background: var(--esc-soft); }
 .pr-esc__status { color: var(--esc-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pr-esc__report { flex: 0 0 auto; color: var(--esc-primary); font-size: 12px; font-weight: 600; text-decoration: none; }
+.pr-esc__report { flex: 0 0 auto; color: var(--esc-primary); font-size: 12px; font-weight: 600; text-decoration: none; min-height: 24px; display: inline-flex; align-items: center; }
 .pr-esc__report:hover { text-decoration: underline; }
 
 /* ---------- minimized pill ---------- */

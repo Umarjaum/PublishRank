@@ -161,7 +161,10 @@ final class EditorPlacement {
 		$post_id = $post instanceof \WP_Post ? (int) $post->ID : ( isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		wp_enqueue_style( self::HANDLE );
 		wp_enqueue_script( self::HANDLE );
-		$this->enqueue_window( $post instanceof \WP_Post ? $post : null );
+		// The movable window is a Classic Editor convenience only; the block editor uses the unified sidebar.
+		if ( ! self::is_block_editor( $post instanceof \WP_Post ? $post : null ) ) {
+			$this->enqueue_window( $post instanceof \WP_Post ? $post : null );
+		}
 		wp_localize_script(
 			self::HANDLE,
 			'publishrankSeoDock',

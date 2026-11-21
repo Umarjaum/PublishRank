@@ -74,7 +74,7 @@ final class LanguageAlternates {
 			// An editor-set list for this exact page always wins.
 			$alternates = $per_post;
 		} elseif ( $site_map ) {
-			if ( is_front_page() || is_home() ) {
+			if ( MetaGenerator::is_homepage() ) {
 				$alternates = $site_map;
 			} elseif ( get_option( 'publishrank_seo_hreflang_mirror', false ) && ! empty( $site_map[ $current ] ) && 0 === strpos( trailingslashit( $canonical ), trailingslashit( $site_map[ $current ] ) ) ) {
 				// Opt-in: language folders share one URL structure, so mirror this page's path under each language root.
@@ -121,7 +121,7 @@ final class LanguageAlternates {
 			if ( ! empty( $per_post['x-default'] ) ) {
 				return $per_post['x-default']; }
 		}
-		if ( ( is_front_page() || is_home() ) ) {
+		if ( MetaGenerator::is_homepage() ) {
 			$configured = esc_url_raw( (string) get_option( 'publishrank_seo_x_default_url', '' ) );
 			if ( $configured ) {
 				return $configured; }
@@ -151,6 +151,36 @@ final class LanguageAlternates {
 				return self::locale( $details['locale'] ); }
 		}
 		return self::default_locale();
+	}
+
+	/**
+	 * Language of a post's content for structured data (BCP 47). A multilingual plugin or the site locale
+	 * wins; only when neither is set per post and the text is clearly written in Arabic or Urdu while the
+	 * site language is different, the detected language is used, so mixed-language publishers without a
+	 * translation plugin do not mark Arabic or Urdu articles as en-US.
+	 */
+	public static function content_language( $post ) {
+		$post   = get_post( $post );
+		$locale = $post ? self::post_locale( $post->ID ) : self::default_locale();
+		if ( ! $post || function_exists( 'pll_get_post_language' ) || has_filter( 'wpml_post_language_details' ) ) {
+			return $locale;
+		}
+		$text = wp_strip_all_tags( (string) $post->post_title . ' ' . strip_shortcodes( (string) $post->post_content ) );
+		$lang = \PublishRankSEO\SEO\Language\LanguageRules::detect( function_exists( 'mb_substr' ) ? mb_substr( $text, 0, 4000 ) : substr( $text, 0, 4000 ), $locale );
+		$site = strtolower( substr( (string) $locale, 0, 2 ) );
+		if ( in_array( $lang, array( 'ar', 'ur' ), true ) && $lang !== $site ) {
+			return (string) apply_filters( 'publishrank_content_language', $lang, $post );
+		}
+		return $locale;
+	}
+
+	/** Unicode-aware word count (str_word_count() counts only ASCII letters, so Arabic and Urdu read as 0). */
+	public static function word_count( $text ) {
+		$text = trim( wp_strip_all_tags( (string) $text ) );
+		if ( '' === $text ) {
+			return 0;
+		}
+		return (int) preg_match_all( '/[\p{L}\p{N}][\p{L}\p{N}\p{M}\'’\-]*/u', $text );
 	}
 
 	/**

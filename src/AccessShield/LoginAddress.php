@@ -240,6 +240,11 @@ final class LoginAddress {
 			$wp_query->set_404();
 		}
 		$template = function_exists( 'get_404_template' ) ? get_404_template() : '';
+		if ( is_admin() ) {
+			// A theme template rendered for a hidden /wp-admin/ address runs wp_head() in admin context, where core only unhooks
+			// the deprecated print_emoji_styles() from admin_print_styles. Unhook the front-end copy too (avoids a PHP deprecation notice).
+			remove_action( 'wp_print_styles', 'print_emoji_styles' );
+		}
 		if ( $template && is_readable( $template ) ) {
 			include $template;
 		} else {

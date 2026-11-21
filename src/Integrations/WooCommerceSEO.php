@@ -150,9 +150,17 @@ final class WooCommerceSEO {
 		if ( '' !== $brand && empty( $markup['brand'] ) ) {
 			$markup['brand'] = array( '@type' => 'Brand', 'name' => $brand );
 		}
-		$cats = wc_get_product_category_list( $product->get_id(), ' > ' );
-		if ( $cats && empty( $markup['category'] ) ) {
-			$markup['category'] = wp_strip_all_tags( $cats );
+		// Leave out WooCommerce's fallback "Uncategorized" term: it describes nothing.
+		$names   = array();
+		$default = (int) get_option( 'default_product_cat', 0 );
+		$terms   = get_the_terms( $product->get_id(), 'product_cat' );
+		foreach ( is_array( $terms ) ? $terms : array() as $term ) {
+			if ( (int) $term->term_id !== $default && 'uncategorized' !== $term->slug ) {
+				$names[] = $term->name;
+			}
+		}
+		if ( $names && empty( $markup['category'] ) ) {
+			$markup['category'] = implode( ' > ', $names );
 		}
 		$gallery = array();
 		foreach ( array_slice( (array) $product->get_gallery_image_ids(), 0, 6 ) as $img ) {

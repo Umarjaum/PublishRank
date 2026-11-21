@@ -50,6 +50,8 @@ final class Installer {
 				'publishrank_twitter_card'                => 'summary_large_image',
 				'publishrank_facebook_app_id'             => '',
 				'publishrank_home_title'                  => '',
+				'publishrank_site_name'                   => '',
+				'publishrank_site_alternate_names'        => '',
 				'publishrank_home_description'            => '',
 				'publishrank_seo_description_fallback'     => 'page_type',
 				'publishrank_noindex_author_archives'     => 0,

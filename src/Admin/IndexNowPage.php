@@ -282,7 +282,7 @@ final class IndexNowPage {
 		echo '<div class="card"><h2>' . esc_html__( 'Submit URLs manually', 'publishrank' ) . '</h2><p>' . esc_html__( 'Enter one URL per line (maximum 100 per action). URLs must belong to this website and use the generated public key. Automatic submissions are controlled separately above.', 'publishrank' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="publishrank_indexnow_manual">';
 		wp_nonce_field( 'publishrank_indexnow_manual' );
-		echo '<textarea class="large-text code" rows="5" name="urls" placeholder="' . esc_attr( home_url( '/' ) ) . '"></textarea>';
+		echo '<textarea class="large-text code" rows="5" name="urls" aria-label="' . esc_attr__( 'URLs to submit, one per line', 'publishrank' ) . '" placeholder="' . esc_attr( home_url( '/' ) ) . '"></textarea>';
 		submit_button( __( 'Submit URLs', 'publishrank' ), 'primary' );
 		echo '</form></div>';
 		echo '<h2>' . esc_html__( 'Recent submission activity', 'publishrank' ) . '</h2><form class="publishrank-indexnow-inline-form" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="publishrank_indexnow_export">';

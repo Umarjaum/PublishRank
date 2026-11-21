@@ -58,7 +58,7 @@ final class Scanner {
 		);
 	}
 
-	private static function count( $text, array $d, array &$examples = null ) {
+	private static function count( $text, array $d, ?array &$examples = null ) {
 		$n = 0;
 		foreach ( array( 'words', 'pre' ) as $k ) {
 			if ( '' === $d[ $k ] ) {

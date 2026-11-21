@@ -94,7 +94,7 @@
 .prc-line__key[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
 .prc-line__key:focus-visible, .prc-seg button:focus-visible { outline: 2px solid var(--prc-plum); outline-offset: 2px; }
 .prc-seg { display: inline-flex; background: var(--prc-track); border-radius: 999px; padding: 3px; }
-.prc-seg button { border: 0; background: transparent; border-radius: 999px; padding: 4px 12px; font-size: 12px; cursor: pointer; color: var(--prc-muted); font-weight: 600; }
+.prc-seg button { border: 0; background: transparent; border-radius: 999px; padding: 4px 12px; min-height: 24px; font-size: 12px; cursor: pointer; color: var(--prc-muted); font-weight: 600; }
 .prc-seg button[aria-pressed="true"] { background: var(--prc-surface); color: var(--prc-plum); box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
 .prc-line__plot { position: relative; width: 100%; min-height: var(--prc-h, 300px); }
 .prc-line__svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -201,7 +201,7 @@
 .prc-list { margin: 0; padding-left: 18px; list-style: disc; display: grid; gap: 8px; color: var(--prc-text); }
 
 @media (max-width: 1280px) { .prc-grid--three { grid-template-columns: 1fr 1fr; } .prc-grid--three > :nth-child(3):last-child { grid-column: 1 / -1; } }
-@media (max-width: 1100px) { .prc-grid--main, .prc-grid--two { grid-template-columns: 1fr; } }
+@media (max-width: 1280px) { .prc-grid--main, .prc-grid--two { grid-template-columns: 1fr; } }
 @media (max-width: 782px) {
 	.prc-grid--three { grid-template-columns: 1fr; }
 	.prc-kpis { grid-template-columns: 1fr 1fr; }

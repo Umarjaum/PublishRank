@@ -146,5 +146,12 @@
 		if (!row || row.scrollWidth <= row.clientWidth) { return; }
 		row.scrollLeft = Math.max(0, current.parentNode.offsetLeft - 12);
 	}
-	if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', reveal); } else { reveal(); }
+	/* Phones: keep "More tools" collapsed on load so the screen's own content is not pushed below ~40 chips. */
+	function collapseMore() {
+		if (!window.matchMedia || !window.matchMedia('(max-width: 782px)').matches) { return; }
+		var more = document.querySelector('.pr-simple-nav__more[open]');
+		if (more) { more.removeAttribute('open'); }
+	}
+	function run() { collapseMore(); reveal(); }
+	if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', run); } else { run(); }
 }());

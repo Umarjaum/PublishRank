@@ -82,8 +82,8 @@ final class SchemaPage {
 		return SchemaTypes::resolve_in( $value, SchemaTypes::search_types(), 'SearchResultsPage' ); }
 	public function clean_page_type( $value ) {
 		return SchemaTypes::resolve_in( $value, SchemaTypes::page_default_types(), 'WebPage' ); }
-	private function select( $name, $types, $current ) {
-		echo '<select name="' . esc_attr( $name ) . '">';
+	private function select( $name, $types, $current, $label = '' ) {
+		echo '<select name="' . esc_attr( $name ) . '"' . ( '' !== $label ? ' aria-label="' . esc_attr( $label ) . '"' : '' ) . '>';
 		foreach ( $types as $key => $label ) {
 			echo '<option value="' . esc_attr( $key ) . '"' . selected( $current, $key, false ) . '>' . esc_html( $label ) . '</option>'; }
 		echo '</select>';
@@ -100,13 +100,13 @@ final class SchemaPage {
 		echo '<form method="post" action="options.php">';
 		settings_fields( 'publishrank_schema' );
 		echo '<table class="form-table"><tr><th scope="row">' . esc_html__( 'Default schema for news posts', 'publishrank' ) . '</th><td>';
-		$this->select( 'publishrank_schema_default_post_type', SchemaTypes::default_article_types(), (string) get_option( 'publishrank_schema_default_post_type', 'NewsArticle' ) );
+		$this->select( 'publishrank_schema_default_post_type', SchemaTypes::default_article_types(), (string) get_option( 'publishrank_schema_default_post_type', 'NewsArticle' ), __( 'Default schema for news posts', 'publishrank' ) );
 		echo '<p class="description">' . esc_html__( 'Use News Article for standard newsroom content. Choose Article for non-news editorial content or Live Blog Post for timestamped coverage.', 'publishrank' ) . '</p></td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Default schema for pages', 'publishrank' ) . '</th><td>';
-		$this->select( 'publishrank_schema_default_page_type', SchemaTypes::page_default_types(), (string) get_option( 'publishrank_schema_default_page_type', 'WebPage' ) );
+		$this->select( 'publishrank_schema_default_page_type', SchemaTypes::page_default_types(), (string) get_option( 'publishrank_schema_default_page_type', 'WebPage' ), __( 'Default schema for pages', 'publishrank' ) );
 		echo '<p class="description">' . esc_html__( 'Every public page receives this WebPage-family node by default. Standard Web Page is the safe default for About, Contact, Privacy, Terms and other normal pages.', 'publishrank' ) . '</p></td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Homepage schema', 'publishrank' ) . '</th><td>';
-		$this->select( 'publishrank_schema_home_type', SchemaTypes::page_default_types(), (string) get_option( 'publishrank_schema_home_type', 'WebPage' ) );
+		$this->select( 'publishrank_schema_home_type', SchemaTypes::page_default_types(), (string) get_option( 'publishrank_schema_home_type', 'WebPage' ), __( 'Homepage schema', 'publishrank' ) );
 		echo '<p class="description">' . esc_html__( 'Select a WebPage-family type only; static front pages can still use their per-page override.', 'publishrank' ) . '</p></td></tr>';
 		$rows = array(
 			array( 'publishrank_schema_category_type', __( 'Category archives', 'publishrank' ), SchemaTypes::archive_types(), 'CollectionPage', __( 'Individual categories can override this on their edit screen.', 'publishrank' ) ),
@@ -117,7 +117,7 @@ final class SchemaPage {
 		);
 		foreach ( $rows as $row ) {
 			echo '<tr><th scope="row">' . esc_html( $row[1] ) . '</th><td>';
-			$this->select( $row[0], $row[2], (string) get_option( $row[0], $row[3] ) );
+			$this->select( $row[0], $row[2], (string) get_option( $row[0], $row[3] ), (string) $row[1] );
 			if ( '' !== $row[4] ) {
 				echo '<p class="description">' . esc_html( $row[4] ) . '</p>'; }
 			echo '</td></tr>';

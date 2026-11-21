@@ -19,6 +19,8 @@ final class MultilingualStrings {
 	public static function options() {
 		$names = array(
 			'publishrank_seo_publication_name',
+			'publishrank_site_name',
+			'publishrank_home_title',
 			'publishrank_home_description',
 			'publishrank_seo_description_fallback',
 			'publishrank_identity_description',

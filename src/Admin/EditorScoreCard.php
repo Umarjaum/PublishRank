@@ -56,20 +56,7 @@ final class EditorScoreCard {
 				)
 			);
 		}
-		global $post;
-		$screen_type = function_exists( 'get_current_screen' ) && get_current_screen() ? (string) get_current_screen()->post_type : '';
-		$block       = $post instanceof \WP_Post && function_exists( 'use_block_editor_for_post' )
-			? use_block_editor_for_post( $post )
-			: ( function_exists( 'use_block_editor_for_post_type' ) && use_block_editor_for_post_type( $screen_type ) );
-		if ( $block ) {
-			$sidebar = PUBLISHRANK_SEO_PATH . 'assets/js/block-editor-sidebar.js';
-			$deps    = array( 'wp-plugins', 'wp-element', 'wp-components', 'wp-data', 'wp-i18n', 'wp-editor', 'wp-edit-post' );
-			if ( wp_script_is( EditorPlacement::HANDLE, 'registered' ) ) {
-				$deps[] = EditorPlacement::HANDLE;
-			}
-			wp_enqueue_script( 'publishrank-block-sidebar', Branding::asset_url( 'js/block-editor-sidebar.js' ), $deps, Branding::version() . '.' . ( file_exists( $sidebar ) ? (string) filemtime( $sidebar ) : '0' ), true );
-			wp_set_script_translations( 'publishrank-block-sidebar', 'publishrank' );
-		}
+		// 2.26.1: the block editor sidebar is provided by \PublishRankSEO\Editor\UnifiedEditor (assets/js/seo-editor.js).
 	}
 
 	/** Translated strings shared by PHP and JavaScript rendering. */

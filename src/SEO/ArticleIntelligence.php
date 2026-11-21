@@ -681,18 +681,42 @@ final class ArticleIntelligence {
 				$add( 'structure_heading_spacing', 'structure', $gap > 350 ? 'ok' : 'good', 1, $gap > 350 ? __( 'Some sections run over 350 words without a subheading.', 'publishrank' ) : __( 'Subheadings are spaced evenly.', 'publishrank' ) );
 			}
 		}
-		$prev    = 1;
-		$skipped = false;
-		$h1      = false;
+		// The theme prints the headline as H1, so content headings start from an implied level 1.
+		$prev     = 1;
+		$skipped  = array();
+		$h1       = false;
+		$empty    = 0;
+		$seen     = array();
+		$repeated = array();
 		foreach ( $headings as $h ) {
 			if ( 1 === $h['level'] ) {
 				$h1 = true; }
-			if ( $h['level'] > $prev + 1 && $prev >= 2 ) {
-				$skipped = true; }
+			if ( $h['level'] > $prev + 1 ) {
+				$skipped[] = 'H' . $prev . '→H' . $h['level']; }
+			if ( '' === $h['text'] ) {
+				++$empty;
+			} else {
+				$key = function_exists( 'mb_strtolower' ) ? mb_strtolower( $h['text'] ) : strtolower( $h['text'] );
+				if ( isset( $seen[ $key ] ) ) {
+					$repeated[ $key ] = $h['text']; }
+				$seen[ $key ] = true;
+			}
 			$prev = $h['level'];
 		}
 		if ( $headings ) {
-			$add( 'structure_hierarchy', 'structure', ( $skipped || $h1 ) ? 'ok' : 'good', 1, $h1 ? __( 'The content contains an H1; the theme already outputs the headline as H1, so use H2 and below.', 'publishrank' ) : ( $skipped ? __( 'Heading levels skip a step (for example H2 to H4). Keep the hierarchy sequential.', 'publishrank' ) : __( 'The heading hierarchy is clean.', 'publishrank' ) ) );
+			$problems = array();
+			if ( $h1 ) {
+				$problems[] = __( 'The content contains an H1; the theme already outputs the headline as H1, so use H2 and below.', 'publishrank' ); }
+			if ( $skipped ) {
+				/* translators: %s: list of skipped heading steps, e.g. H1→H4, H3→H5. */
+				$problems[] = sprintf( __( 'Heading levels skip a step (%s). Keep the hierarchy sequential.', 'publishrank' ), implode( ', ', array_unique( $skipped ) ) ); }
+			if ( $empty ) {
+				/* translators: %d: number of empty headings. */
+				$problems[] = sprintf( _n( '%d heading is empty.', '%d headings are empty.', $empty, 'publishrank' ), $empty ); }
+			if ( $repeated ) {
+				/* translators: %s: repeated heading texts. */
+				$problems[] = sprintf( __( 'Repeated headings: %s. Give each section its own heading.', 'publishrank' ), implode( ', ', array_map( static function ( $t ) { return '“' . $t . '”'; }, array_values( $repeated ) ) ) ); }
+			$add( 'structure_hierarchy', 'structure', $problems ? ( ( $empty || count( $problems ) > 1 ) ? 'bad' : 'ok' ) : 'good', 1, $problems ? implode( ' ', $problems ) : __( 'The heading hierarchy is clean.', 'publishrank' ) );
 		}
 		if ( $paragraphs ) {
 			$long = 0;

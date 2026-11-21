@@ -1,8 +1,8 @@
 # PublishRank SEO for WordPress
 
-## What's new in 2.26.0
+## What's new in 2.26.1
 
-Watch the [90-second PublishRank 2.26.0 release video on the official website](https://publishrankseo.vercel.app/video), or [open the MP4 from this repository](https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-2.26.0-whats-new.mp4).
+PublishRank 2.26.1 is the current release. Read the [2.26.1 change history](https://publishrankseo.vercel.app/changelog#v2-26-1), the [verification report](docs/release-2.26.1/VERIFICATION-REPORT.md), and the [previous 2.26.0 release video](https://publishrankseo.vercel.app/video).
 
 <p>
   <a href="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-introduction.mp4"><img src="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-intro-preview.gif" width="280" alt="Autoplaying preview of the 15-second PublishRank introduction; click to open the original video with audio" /></a>
@@ -17,36 +17,36 @@ Watch the [90-second PublishRank 2.26.0 release video on the official website](h
 
 ![PublishRank](assets/images/publishrank-brand-mark.png)
 
-**Production-ready, free and open-source WordPress SEO for businesses, stores, creators, publishers and websites of every kind.**
+**Free and open-source WordPress SEO for businesses, stores, creators, publishers and websites of every kind.**
 
-PublishRank SEO is the free, open-source WordPress SEO plugin for businesses, online stores, service providers, creators, publishers and websites of every kind. It brings together technical SEO, metadata, structured data, sitemaps, Local SEO, WooCommerce SEO, redirects, security and optional editorial workflows.
-
-> PublishRank generates and validates technical publishing signals. Search engines and social networks may still rewrite titles, descriptions, images, snippets, and rich-result presentations.
-
-All features have been tested on real websites by the PublishRank Community, with no errors reported.
+PublishRank combines technical SEO, metadata, connected structured data, sitemaps, Local SEO, WooCommerce SEO, redirects, security, analytics and optional editorial workflows. SEO tools provide publishing signals and controls; search engines may still rewrite or omit titles, descriptions, images, snippets and rich-result presentations.
 
 ## Current release
-- **Version:** 2.25.1
+- **Version:** 2.26.1
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
-- **Requires PHP:** 7.4 or newer (declared target; only runtime-tested versions are stated in the verification report)
+- **Requires PHP:** 7.4 or newer (the report distinguishes runtime tests from static syntax scanning)
 - **Repository:** <https://github.com/Umarjaum/PublishRank>
 - **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
-- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.25.1/PublishRank-2.25.1.zip>
+- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.26.1/PublishRank-2.26.1.zip>
 - **Official website:** <https://publishrankseo.vercel.app/>
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
 
-## What's new in 2.25.1
-- **Traffic Guard:** monitor or enforce mode; four protection levels; multi-condition AND/OR rules; test mode; expiring blocks; rate limits; DNS-verified search-crawler exemptions; event filters, CSV export and rule explanations.
-- **Country controls:** searchable ISO 3166-1 entries for 249 countries, shared by Traffic Guard and Access Shield; country data is read only from trusted server-side sources, and unknown locations are allowed by default.
-- **FAQ block and collections:** accessible accordion/list layouts, templates, editing/reordering tools, search and reusable categorized collections with JSON import/export and shortcodes.
-- **SEO Inspector and custom schema:** search/social previews, page signal checks and JSON-LD validation. Inspector redirects stay on the same site; custom JSON-LD is checked before output.
-- **Source Directory:** newsroom teams can manage source entries and their own classifications, see matches and caution flags in editors, and import/export JSON. Labels are not source certification and content is not changed automatically.
-- **Access Shield:** sign-in page designer with a live preview, 2.25.1 country controls and a fix that stops public page-preloading rules from revealing the private sign-in URL.
-- **Notifications and fixes:** update/news indicators and question-mark help; ordinary searches containing “union select” are no longer falsely refused; FAQ removed-script text and a Traffic Guard pattern were fixed.
+### 2.26.1 release highlights
+- **A tidier dashboard** with clearer site metrics, compact feature cards and technical-health rows that stack on phones.
+- **One Gutenberg SEO editor** in the persistent sidebar, with saved preferences, live Google and social previews, and a movable/resizable window that can be minimised or docked. Duplicate SEO boxes below Gutenberg are removed; Classic Editor retains its consolidated box.
+- **Media Link Manager** for locating references and reviewing URL changes before applying them; it checks collisions, verifies migrations, supports redirects and rollback, and reports ambiguous references instead of guessing.
+- **Advanced 404 diagnosis** with own-site linking pages, likely causes and redirects only for high-confidence fixes.
+- **A reviewable Bulk SEO Editor** with conflict checks, change history and undo, plus safeguarded CSV import/export.
+- **Schema Studio refinements** and improved YouTube/Vimeo video-sitemap discovery.
+- **Responsive/accessibility refinements**, including focus, target-size, reduced-motion and forced-colours handling.
 
-**Verification:** the delivered 2.25.1 report records 409 checks with zero failures on WordPress 7.1.4 / PHP 8.3.36 using SQLite. That delivery report describes its specific test run and coverage; separate PublishRank Community testing has exercised all features on real websites with no errors reported. This release is production-ready and free to use. Read [the full 2.25.1 verification report](VERIFICATION-REPORT-2.25.1.md) and [compatibility report](docs/release-2.25.1/COMPATIBILITY-REPORT.md).
+**Verification:** the 2.26.1 report documents sandbox testing on WordPress 7.1.5, PHP 8.3 and SQLite. It explicitly does not claim production-host testing. PHP 7.4 received static syntax scanning only; WooCommerce, builders, multilingual plugins, real phones and Safari/Firefox were not tested. Automated accessibility checks were spot checks, not a full WCAG audit. See the [complete 2.26.1 report](docs/release-2.26.1/VERIFICATION-REPORT.md) for findings, blocked items and limitations.
+
+## Historical release: 2.25.1
+- Traffic Guard monitor/enforce modes and country controls; an FAQ block and reusable collections; SEO Inspector and validated custom schema; Source Directory; Access Shield refinements; update/news notifications.
+- The [2.25.1 verification report](VERIFICATION-REPORT-2.25.1.md) records that release's specific checks and scope. It does not replace the 2.26.1 report.
 
 ## What's new in 2.25.0
 - **Theme masking:** maximum-level theme identifier rewriting, fingerprint scan and compatibility checks across nine listed themes; direct static theme files still require a server rule.
@@ -135,7 +135,7 @@ The sitemap index includes responsive cards, content-type badges, child-file cou
 
 ## Complete feature catalog
 
-The [2.25.1 feature catalog](docs/release-2.25.1/FEATURE-CATALOG.md), [verification report](VERIFICATION-REPORT-2.25.1.md), [security audit](docs/release-2.25.1/SECURITY-AUDIT.md) and [compatibility report](docs/release-2.25.1/COMPATIBILITY-REPORT.md) document the current release. Earlier releases and all 134 selectable Local SEO business options remain covered in the historical changelog; the options are not 134 separate Schema.org classes.
+The [2.26.1 verification report](docs/release-2.26.1/VERIFICATION-REPORT.md) documents the current release's test results and limits. The [2.25.1 feature catalog](docs/release-2.25.1/FEATURE-CATALOG.md), [verification report](VERIFICATION-REPORT-2.25.1.md), [security audit](docs/release-2.25.1/SECURITY-AUDIT.md) and [compatibility report](docs/release-2.25.1/COMPATIBILITY-REPORT.md) remain available as historical documentation. Earlier releases and all 134 selectable Local SEO business options remain covered in the historical changelog; the options are not 134 separate Schema.org classes.
 
 ## WordPress installation
 

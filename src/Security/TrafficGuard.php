@@ -168,7 +168,7 @@ final class TrafficGuard {
 	}
 
 	/** Facts about the current request used by rules. */
-	public static function request_context( array $settings = null ) {
+	public static function request_context( ?array $settings = null ) {
 		$settings = null === $settings ? self::settings() : $settings;
 		$ip       = self::client_ip( $settings['trusted_proxies'] );
 		$uri      = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- parsed and length-limited below, never output unescaped.

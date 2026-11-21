@@ -299,12 +299,14 @@
 	function readDraft() { try { var d = JSON.parse(window.sessionStorage.getItem(DRAFT) || 'null'); return d && Date.now() - (d.t || 0) < 43200000 ? d : null; } catch (e) { return null; } }
 	function writeDraft(cur) { try { window.sessionStorage.setItem(DRAFT, JSON.stringify({ base: base, cur: cur, t: Date.now() })); } catch (e) {} }
 	function clearDraft() { try { window.sessionStorage.removeItem(DRAFT); } catch (e) {} }
+	// 2.26.1: in the block editor the unified PublishRank SEO editor owns change tracking and drafts.
+	function unified() { return isBlock && !!window.PublishRankSeoEditor; }
 	function markEditorDirty() {
-		if (!isBlock || !window.wp || !wp.data || !cfg.touchKey) { return; }
+		if (!isBlock || unified() || !window.wp || !wp.data || !cfg.touchKey) { return; }
 		try { var d = wp.data.dispatch('core/editor'); if (d && d.editPost) { var m = {}; m[cfg.touchKey] = String(Date.now()); d.editPost({ meta: m }); } } catch (e) {}
 	}
 	function tick() {
-		if (base === null) { return; }
+		if (base === null || unified()) { return; }
 		refreshCounters();
 		var cur = snapshot(), str = JSON.stringify(cur);
 		if (str === lastStr) { return; }
@@ -321,7 +323,7 @@
 		window.setTimeout(function () { if (n.parentNode) { n.parentNode.removeChild(n); } }, 15000);
 	}
 	function initTracking() {
-		if (!roots().length) { return; }
+		if (!roots().length || unified()) { return; }
 		base = snapshot(); baseStr = JSON.stringify(base); lastStr = baseStr;
 		var d = readDraft();
 		if (d && d.base && JSON.stringify(d.base) === baseStr && d.cur) {

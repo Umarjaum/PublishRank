@@ -91,7 +91,22 @@
 				}
 			}
 			var home = defaults.home || __( 'Home', 'publishrank' );
-			var middle = catName || ( type === 'page' ? __( 'Parent page', 'publishrank' ) : __( 'Category', 'publishrank' ) );
+			// Hierarchical content (pages, nested CPTs): show the real ancestors, as the published trail does.
+			var ancestors = [], parent = editor && editor.getEditedPostAttribute ? editor.getEditedPostAttribute( 'parent' ) : 0, guard = 0;
+			if ( parent && type ) {
+				var coreStore = select( 'core' );
+				while ( parent && guard < 6 && coreStore && coreStore.getEntityRecord ) {
+					var p = coreStore.getEntityRecord( 'postType', type, parent );
+					if ( ! p ) { break; }
+					ancestors.unshift( ( p.title && ( p.title.raw || p.title.rendered ) ) || __( 'Parent page', 'publishrank' ) );
+					parent = p.parent; guard++;
+				}
+				if ( ! ancestors.length ) { ancestors = [ __( 'Parent page', 'publishrank' ) ]; }
+			}
+			if ( type === 'page' || ancestors.length ) {
+				return [ home ].concat( ancestors, [ title || __( 'This page', 'publishrank' ) ] );
+			}
+			var middle = catName || __( 'Category', 'publishrank' );
 			return [ home, middle, title || __( 'This page', 'publishrank' ) ];
 		}, [] );
 	}

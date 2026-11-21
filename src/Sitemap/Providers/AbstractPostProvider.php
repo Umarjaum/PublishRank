@@ -198,7 +198,30 @@ abstract class AbstractPostProvider implements SitemapProviderInterface {
 	protected function is_indexable( $post_id ) {
 		$robots = strtolower( (string) get_post_meta( $post_id, '_publishrank_seo_robots', true ) );
 		$post   = get_post( $post_id );
-		return $post && '' === (string) $post->post_password && in_array( $post->post_status, (array) $this->post_statuses, true ) && false === strpos( $robots, 'noindex' ) && ! wp_is_post_revision( $post_id ) && ! wp_is_post_autosave( $post_id ); }
+		return $post && '' === (string) $post->post_password && in_array( $post->post_status, (array) $this->post_statuses, true ) && false === strpos( $robots, 'noindex' ) && ! wp_is_post_revision( $post_id ) && ! wp_is_post_autosave( $post_id ) && ! in_array( (int) $post_id, self::excluded_ids(), true ); }
+
+	/**
+	 * Pages that are never search landing pages and are served with noindex by their owner plugin
+	 * (WooCommerce cart, checkout and account pages). Filterable for other plugins.
+	 *
+	 * @return int[]
+	 */
+	public static function excluded_ids() {
+		static $ids = null;
+		if ( null === $ids ) {
+			$ids = array();
+			if ( function_exists( 'wc_get_page_id' ) ) {
+				foreach ( array( 'cart', 'checkout', 'myaccount' ) as $page ) {
+					$id = (int) wc_get_page_id( $page );
+					if ( $id > 0 ) {
+						$ids[] = $id;
+					}
+				}
+			}
+			$ids = array_map( 'intval', (array) apply_filters( 'publishrank_sitemap_excluded_post_ids', $ids ) );
+		}
+		return $ids;
+	}
 	protected function is_bad_url( $url ) {
 		$parsed = wp_parse_url( $url );
 		$home   = wp_parse_url( home_url( '/' ) );

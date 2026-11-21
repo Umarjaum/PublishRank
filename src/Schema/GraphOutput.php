@@ -94,7 +94,21 @@ final class GraphOutput {
 		}
 		foreach ( ( new SchemaBuilder() )->extra_nodes() as $node ) {
 			$graph[] = $node; }
+		/**
+		 * Final graph, after every PublishRank node is present and before de-duplication. Schema Studio
+		 * merges its templates here so it can enrich existing nodes instead of printing duplicates.
+		 */
+		$final = apply_filters( 'publishrank_schema_graph_final', $graph, $this );
+		$graph = is_array( $final ) ? array_values( array_filter( $final, 'is_array' ) ) : $graph;
 		$graph = self::dedupe_graph( $graph );
+		// Never print empty top-level values such as "description": "" (search and archive pages without text).
+		foreach ( $graph as $gi => $gnode ) {
+			foreach ( $gnode as $gk => $gv ) {
+				if ( is_string( $gk ) && '@' !== $gk[0] && ( '' === $gv || array() === $gv || null === $gv ) ) {
+					unset( $graph[ $gi ][ $gk ] );
+				}
+			}
+		}
 		// "Organization and website schema" is a separate switch: the identity and WebSite nodes are removed here, after
 		// every filter and extra node has been merged, together with any reference that would otherwise point at them.
 		$identity_on = OutputSettings::org_website_schema() && PublicationProfile::identity_schema_ready();
@@ -425,11 +439,12 @@ final class GraphOutput {
 	/** @return array<string, mixed> */
 	private function website() {
 		$url = trailingslashit( PublicationProfile::primary_url() );
-		return array(
+		$alt = PublicationProfile::site_alternate_names();
+		$node = array(
 			'@type'           => 'WebSite',
 			'@id'             => $url . '#website',
 			'url'             => $url,
-			'name'            => PublicationProfile::publication_name(),
+			'name'            => PublicationProfile::site_name(),
 			'description'     => wp_strip_all_tags( (string) \PublishRankSEO\Core\PublicationProfile::publication_description() ),
 			'publisher'       => array( '@id' => $this->identity_id() ),
 			'inLanguage'      => \PublishRankSEO\Meta\LanguageAlternates::current_locale(),
@@ -442,6 +457,17 @@ final class GraphOutput {
 				'query-input' => 'required name=search_term_string',
 			),
 		);
+		if ( ! empty( $alt ) ) {
+			// Place alternateName right after name, as Google's site name documentation shows it.
+			$ordered = array();
+			foreach ( $node as $key => $value ) {
+				$ordered[ $key ] = $value;
+				if ( 'name' === $key ) {
+					$ordered['alternateName'] = 1 === count( $alt ) ? $alt[0] : $alt; }
+			}
+			$node = $ordered;
+		}
+		return $node;
 	}
 
 	/** @return array<string, mixed> */
@@ -454,7 +480,8 @@ final class GraphOutput {
 			'url'         => $canonical,
 			'name'        => wp_get_document_title(),
 			'description' => ( new \PublishRankSEO\Meta\MetaGenerator() )->description(),
-			'inLanguage'  => \PublishRankSEO\Meta\LanguageAlternates::current_locale(),
+			// A singular page's language follows its content (an Arabic or Urdu post on an English site), matching the Article node.
+			'inLanguage'  => is_singular() ? \PublishRankSEO\Meta\LanguageAlternates::content_language( (int) get_queried_object_id() ) : \PublishRankSEO\Meta\LanguageAlternates::current_locale(),
 			'isPartOf'    => array( '@id' => trailingslashit( PublicationProfile::primary_url() ) . '#website' ),
 			'about'       => array( '@id' => $this->identity_id() ),
 		);
@@ -526,7 +553,7 @@ final class GraphOutput {
 			'datePublished'       => get_post_time( DATE_W3C, true, $post ),
 			'dateModified'        => get_post_modified_time( DATE_W3C, true, $post ),
 			'dateCreated'         => get_post_time( DATE_W3C, true, $post ),
-			'inLanguage'          => \PublishRankSEO\Meta\LanguageAlternates::post_locale( $post->ID ),
+			'inLanguage'          => \PublishRankSEO\Meta\LanguageAlternates::content_language( $post ),
 			'isAccessibleForFree' => '1' !== (string) PostMeta::get( $post->ID, PostMeta::ACCESSIBLE_FOR_FREE, '1' ) ? false : true,
 			'isPartOf'            => array( '@id' => $site_url . '#website' ),
 			'author'              => array( '@id' => $author_node_id ),
@@ -537,7 +564,7 @@ final class GraphOutput {
 			'articleSection'      => $this->article_section( $post ),
 			'genre'               => NewsroomSignals::genre( $post ),
 			'articleBody'         => wp_trim_words( wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) ), 500, '' ),
-			'wordCount'           => str_word_count( wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) ) ),
+			'wordCount'           => \PublishRankSEO\Meta\LanguageAlternates::word_count( strip_shortcodes( (string) $post->post_content ) ),
 			'copyrightYear'       => (int) get_post_time( 'Y', true, $post ),
 			'copyrightHolder'     => array( '@id' => $this->identity_id() ),
 		);

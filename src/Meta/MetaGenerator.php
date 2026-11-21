@@ -11,6 +11,35 @@ use PublishRankSEO\Core\PublicationProfile;
 defined( 'ABSPATH' ) || exit;
 
 final class MetaGenerator {
+	/**
+	 * True on the site's homepage only.
+	 *
+	 * With a static front page, is_home() is true on the separate "Posts page" (the blog index), which is not the
+	 * homepage and must not receive the homepage title, description or canonical. is_home() alone is only treated
+	 * as the homepage when no Posts page is designated (the classic latest-posts home).
+	 *
+	 * @return bool
+	 */
+	public static function is_homepage() {
+		if ( is_front_page() ) {
+			return true; }
+		return is_home() && 0 === (int) get_option( 'page_for_posts' );
+	}
+
+	/**
+	 * ID of the designated Posts page when it is the current request, otherwise 0.
+	 *
+	 * @return int
+	 */
+	public static function posts_page_id() {
+		if ( is_home() && ! is_front_page() ) {
+			$id = (int) get_option( 'page_for_posts' );
+			if ( $id > 0 ) {
+				return $id; }
+		}
+		return 0;
+	}
+
 	/** @return string */
 	public function title() {
 		// Integrations (for example BuddyPress member and group screens) may supply the title of virtual pages.
@@ -18,8 +47,9 @@ final class MetaGenerator {
 		if ( is_string( $pre ) && '' !== trim( $pre ) ) {
 			return function_exists( 'mb_substr' ) ? mb_substr( $pre, 0, 180 ) : substr( $pre, 0, 180 );
 		}
-		$post_id = is_singular() ? get_queried_object_id() : 0;
-		if ( is_front_page() || is_home() ) {
+		$posts_page = self::posts_page_id();
+		$post_id    = is_singular() ? get_queried_object_id() : $posts_page;
+		if ( self::is_homepage() ) {
 			$home_title = $this->resolve_template( TemplateResolver::sanitize_template( (string) get_option( 'publishrank_home_title', '' ) ), $post_id, 'title' );
 			if ( '' !== $home_title ) {
 				return function_exists( 'mb_substr' ) ? mb_substr( $home_title, 0, 180 ) : substr( $home_title, 0, 180 ); }
@@ -34,7 +64,7 @@ final class MetaGenerator {
 				// An override that resolves to nothing (for example only unknown variables) falls back to the global template.
 			}
 		}
-		$context = is_front_page() || is_home() ? 'home' : ( $this->is_editorial_article() ? 'post' : ( is_singular() ? 'page' : 'archive' ) );
+		$context = self::is_homepage() ? 'home' : ( $posts_page ? 'page' : ( $this->is_editorial_article() ? 'post' : ( is_singular() ? 'page' : 'archive' ) ) );
 		return $this->render_title( $context, $post_id );
 	}
 
@@ -91,8 +121,8 @@ final class MetaGenerator {
 		if ( is_string( $pre ) && '' !== SeoData::clean( $pre ) ) {
 			return array( 'text' => SeoData::truncate( SeoData::clean( $pre ), $limit ), 'source' => 'archive' );
 		}
-		$post_id = is_singular() ? get_queried_object_id() : 0;
-		$is_home = is_front_page() || is_home();
+		$post_id = is_singular() ? get_queried_object_id() : self::posts_page_id();
+		$is_home = self::is_homepage();
 		if ( $is_home ) {
 			$home_description = SeoData::clean( $this->resolve_template( TemplateResolver::sanitize_template( (string) get_option( 'publishrank_home_description', '' ) ), $post_id, 'description' ) );
 			if ( '' !== $home_description ) {
@@ -154,7 +184,7 @@ final class MetaGenerator {
 	 */
 	public function resolve_template( $template, $post_id, $field = 'title', $extra = array() ) {
 		$post_id = absint( $post_id );
-		$main_id = is_singular() ? (int) get_queried_object_id() : 0;
+		$main_id = is_singular() ? (int) get_queried_object_id() : self::posts_page_id();
 		$context = array_merge(
 			array(
 				'field'   => $field,
@@ -191,8 +221,14 @@ final class MetaGenerator {
 		if ( is_singular() ) {
 			return $this->canonical_for_post( get_queried_object_id() );
 		}
-		if ( is_home() || is_front_page() ) {
+		$paged = max( 1, (int) get_query_var( 'paged' ) );
+		$posts_page = self::posts_page_id();
+		if ( $posts_page && 1 === $paged ) {
+			// The designated Posts page is its own page: an editor-set canonical or its permalink, never the homepage.
+			return $this->canonical_for_post( $posts_page ); }
+		if ( self::is_homepage() && 1 === $paged ) {
 			return $primary; }
+		// Page 2 and beyond of the homepage, the Posts page and archives are canonical to themselves.
 		if ( function_exists( 'get_pagenum_link' ) ) {
 			$paged_url = PublicationProfile::normalize_url( (string) get_pagenum_link( max( 1, (int) get_query_var( 'paged' ) ) ) );
 			if ( $paged_url ) {
@@ -277,7 +313,8 @@ final class MetaGenerator {
 
 	/** @return string */
 	public function robots() {
-		$directive = is_singular() ? PostMeta::get( get_queried_object_id(), PostMeta::ROBOTS, '' ) : '';
+		$robots_id = is_singular() ? (int) get_queried_object_id() : self::posts_page_id();
+		$directive = $robots_id ? PostMeta::get( $robots_id, PostMeta::ROBOTS, '' ) : '';
 		if ( $directive ) {
 			return $this->normalize_robots( $directive ); }
 		if ( is_search() || is_404() || is_feed() ) {
@@ -309,7 +346,7 @@ final class MetaGenerator {
 	/** @param string $context @return string */
 	private function context_title( $context ) {
 		if ( 'home' === $context ) {
-			return \PublishRankSEO\Core\PublicationProfile::publication_name();
+			return \PublishRankSEO\Core\PublicationProfile::site_name();
 		}
 		if ( function_exists( 'get_the_archive_title' ) && ( is_archive() || is_search() ) ) {
 			return wp_strip_all_tags( (string) get_the_archive_title() );
@@ -317,7 +354,7 @@ final class MetaGenerator {
 		if ( is_404() ) {
 			return __( 'Page not found', 'publishrank' );
 		}
-		return \PublishRankSEO\Core\PublicationProfile::publication_name();
+		return \PublishRankSEO\Core\PublicationProfile::site_name();
 	}
 
 	private function is_media_host( $host ) {

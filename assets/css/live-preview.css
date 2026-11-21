@@ -48,9 +48,9 @@
 .pr-pv-meter{display:grid;grid-template-columns:90px 1fr 90px;align-items:center;gap:10px;font-size:12px;color:var(--pv-muted)}
 .pr-pv-meter__bar{height:8px;border-radius:99px;background:var(--pr-track,#e3ecf8);overflow:hidden}
 .pr-pv-meter__fill{display:block;height:100%;border-radius:99px;transition:width .25s}
-.pr-pv-meter__fill.is-good{background:var(--pr-teal,#0a8c7c)}
-.pr-pv-meter__fill.is-short{background:var(--pr-cyan,#00a0f0)}
-.pr-pv-meter__fill.is-over{background:var(--pr-coral,#a62f48)}
+.pr-pv-meter__fill.is-good{background:#16a34a}
+.pr-pv-meter__fill.is-short{background:#d97706}
+.pr-pv-meter__fill.is-over{background:#d1343e}
 .pr-pv-meter__val{text-align:right;font-variant-numeric:tabular-nums}
 
 /* Social */

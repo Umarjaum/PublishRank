@@ -159,7 +159,7 @@ td.when{white-space:nowrap;color:var(--muted);font-size:13px}
 .foot{margin:30px auto 40px;padding:0 20px;color:var(--muted);font-size:13px;text-align:center}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 
-@media (max-width:980px){
+@media (max-width: 960px){
 	.intro{grid-template-columns:1fr;gap:20px}
 	.rows__head{display:none}
 	.row{grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"ico main open" "ico count when" "ico share share";gap:8px 14px}
@@ -175,7 +175,7 @@ td.when{white-space:nowrap;color:var(--muted);font-size:13px}
 	.row__share .meter{display:inline-block;width:calc(100% - 80px);vertical-align:middle}
 	.good ul{grid-template-columns:1fr}
 }
-@media (max-width:760px){
+@media (max-width: 782px){
 	.wrap{padding:0 14px}
 	.top__in{padding:10px 14px}
 	.intro{margin-top:16px;padding:20px 18px;border-radius:18px}

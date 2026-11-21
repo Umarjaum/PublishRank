@@ -18,6 +18,10 @@ final class PublisherToolkitPage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 16 );
 		add_action( 'admin_post_publishrank_bulk_seo_update', array( $this, 'bulk_update' ) );
+		add_action( 'admin_post_publishrank_bulk_seo_preview', array( $this, 'bulk_preview' ) );
+		add_action( 'admin_post_publishrank_bulk_seo_import', array( $this, 'bulk_import' ) );
+		add_action( 'admin_post_publishrank_bulk_seo_rollback', array( $this, 'bulk_rollback' ) );
+		add_action( 'admin_post_publishrank_bulk_seo_export', array( $this, 'bulk_export' ) );
 		add_action( 'admin_post_publishrank_toolkit_save', array( $this, 'save_settings' ) );
 		add_action( 'admin_post_publishrank_fill_missing_alt', array( $this, 'fill_missing_alt' ) );
 		add_filter( 'user_has_cap', array( $this, 'grant_toolkit_capability' ), 10, 4 );
@@ -55,14 +59,15 @@ final class PublisherToolkitPage {
 			wp_die( esc_html__( 'You do not have permission to access Publisher Toolkit.', 'publishrank' ) );
 		}
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'bulk'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
-		if ( ! in_array( $tab, array( 'bulk', 'images', 'access' ), true ) || ( 'bulk' !== $tab && ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) ) {
+		if ( ! in_array( $tab, array( 'bulk', 'history', 'images', 'access' ), true ) || ( ! in_array( $tab, array( 'bulk', 'history' ), true ) && ! \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) ) {
 			$tab = 'bulk';
 		}
 		echo '<div class="wrap">';
 		AdminAssets::header( __( 'Publisher Toolkit', 'publishrank' ), __( 'Editorial-scale SEO workflows inspired by publisher needs: bulk metadata, missing image alt text, and role-based access.', 'publishrank' ) );
 		$this->notice();
+		AdminAssets::render_flash();
 		echo '<nav class="nav-tab-wrapper">';
-		$tabs = array( 'bulk' => __( 'Bulk SEO Editor', 'publishrank' ) );
+		$tabs = array( 'bulk' => __( 'Bulk SEO Editor', 'publishrank' ), 'history' => __( 'Change history', 'publishrank' ) );
 		if ( \PublishRankSEO\Core\Capabilities::can( 'bulk_edit' ) ) {
 			$tabs['images'] = __( 'Image Alt Assistant', 'publishrank' );
 			$tabs['access'] = __( 'Role Access', 'publishrank' );
@@ -86,6 +91,8 @@ final class PublisherToolkitPage {
 		echo '</nav>';
 		if ( 'images' === $tab ) {
 			$this->images_tab();
+		} elseif ( 'history' === $tab ) {
+			$this->history_tab();
 		} elseif ( 'access' === $tab ) {
 			$this->access_tab();
 		} else {
@@ -109,105 +116,294 @@ final class PublisherToolkitPage {
 		}
 	}
 
+	/* ------------------------------------------------------------ Bulk SEO Editor (2.26.1) */
+
+	private static function bulk_url( array $args = array() ) {
+		return add_query_arg( array_merge( array( 'page' => self::SLUG, 'tab' => 'bulk' ), $args ), admin_url( 'admin.php' ) );
+	}
+
 	private function bulk_tab() {
-		$page_num = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
-		$search   = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display/pagination/OAuth-callback parameter; sanitized here, nothing is saved.
-		$query    = new \WP_Query(
-			array(
-				'post_type'      => $this->editable_post_types(),
-				'post_status'    => array( 'publish', 'draft', 'pending', 'private', 'future' ),
-				'posts_per_page' => 30,
-				'paged'          => $page_num,
-				's'              => $search,
-				'orderby'        => 'modified',
-				'order'          => 'DESC',
-				'no_found_rows'  => false,
-			)
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only filters and review token.
+		if ( ! empty( $_GET['review'] ) ) {
+			$this->bulk_review( sanitize_key( wp_unslash( $_GET['review'] ) ) );
+			return;
+		}
+		$f = BulkSeo::filters( wp_unslash( $_GET ) );
+		// phpcs:enable
+		$q      = BulkSeo::query( $f, 30 );
+		$counts = BulkSeo::issue_counts();
+		$defs   = BulkSeo::fields();
+		echo '<div class="pr-bulk" data-pr-no-help>';
+		echo '<p class="pr-bulk__intro">' . esc_html__( 'Edit SEO fields for many items at once. Nothing is saved until you review the changes. Every applied batch can be undone from Change history.', 'publishrank' ) . '</p>';
+		// Filters.
+		echo '<form method="get" class="pr-bulk__filters" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" /><input type="hidden" name="tab" value="bulk" />';
+		echo '<label><span>' . esc_html__( 'Search', 'publishrank' ) . '</span><input type="search" name="s" value="' . esc_attr( $f['s'] ) . '" /></label>';
+		echo '<label><span>' . esc_html__( 'Content type', 'publishrank' ) . '</span><select name="ptype"><option value="">' . esc_html__( 'All types', 'publishrank' ) . '</option>';
+		foreach ( BulkSeo::post_types() as $t ) {
+			$o = get_post_type_object( $t );
+			echo '<option value="' . esc_attr( $t ) . '"' . selected( $f['type'], $t, false ) . '>' . esc_html( $o ? $o->labels->name : $t ) . '</option>';
+		}
+		echo '</select></label><label><span>' . esc_html__( 'Status', 'publishrank' ) . '</span><select name="pstatus"><option value="">' . esc_html__( 'Any status', 'publishrank' ) . '</option>';
+		foreach ( array( 'publish', 'draft', 'pending', 'private', 'future' ) as $s ) {
+			$o = get_post_status_object( $s );
+			echo '<option value="' . esc_attr( $s ) . '"' . selected( $f['status'], $s, false ) . '>' . esc_html( $o ? $o->label : $s ) . '</option>';
+		}
+		echo '</select></label><label><span>' . esc_html__( 'Category', 'publishrank' ) . '</span>';
+		wp_dropdown_categories( array( 'name' => 'cat', 'selected' => $f['cat'], 'show_option_all' => __( 'All categories', 'publishrank' ), 'hide_empty' => false, 'hierarchical' => true ) );
+		echo '</label><label><span>' . esc_html__( 'Show', 'publishrank' ) . '</span><select name="issue">';
+		$issues = array(
+			''                => __( 'Everything', 'publishrank' ),
+			'no_title'        => __( 'No SEO title (uses template)', 'publishrank' ),
+			'no_desc'         => __( 'No meta description', 'publishrank' ),
+			/* translators: %d: count */
+			'dup_title'       => sprintf( __( 'Duplicate SEO titles (%d)', 'publishrank' ), $counts['dup_title'] ),
+			/* translators: %d: count */
+			'dup_desc'        => sprintf( __( 'Duplicate descriptions (%d)', 'publishrank' ), $counts['dup_desc'] ),
+			'long_title'      => __( 'SEO title over 60 characters', 'publishrank' ),
+			'long_desc'       => __( 'Description over 160 characters', 'publishrank' ),
+			'noindex'         => __( 'Set to noindex', 'publishrank' ),
+			'canonical_other' => __( 'Custom canonical URL', 'publishrank' ),
 		);
-		echo '<p>' . esc_html__( 'Select content and set only the fields you want to change. Blank fields are left unchanged unless you explicitly select “Clear this field”. Per-post edit permissions are checked before every update.', 'publishrank' ) . '</p>';
-		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( self::SLUG ) . '" /><input type="hidden" name="tab" value="bulk" /><label class="screen-reader-text" for="publishrank-bulk-search">' . esc_html__( 'Search content', 'publishrank' ) . '</label><input id="publishrank-bulk-search" type="search" name="s" value="' . esc_attr( $search ) . '" placeholder="' . esc_attr__( 'Search posts and pages', 'publishrank' ) . '" /><button class="button">' . esc_html__( 'Search', 'publishrank' ) . '</button></form>';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		wp_nonce_field( 'publishrank_bulk_seo_update' );
-		echo '<input type="hidden" name="action" value="publishrank_bulk_seo_update" />';
-		echo '<table class="widefat striped" style="margin-top:12px"><thead><tr><td><input type="checkbox" id="publishrank-select-all" aria-label="' . esc_attr__( 'Select all visible content', 'publishrank' ) . '" /></td><th>' . esc_html__( 'Content', 'publishrank' ) . '</th><th>' . esc_html__( 'SEO title', 'publishrank' ) . '</th><th>' . esc_html__( 'Meta description', 'publishrank' ) . '</th><th>' . esc_html__( 'Robots', 'publishrank' ) . '</th></tr></thead><tbody>';
-		if ( $query->have_posts() ) {
-			foreach ( $query->posts as $post ) {
-				if ( ! current_user_can( 'edit_post', $post->ID ) ) {
-					continue;
-				}
-				echo '<tr><td><input type="checkbox" name="post_ids[]" value="' . (int) $post->ID . '" /></td><td><strong><a href="' . esc_url( get_edit_post_link( $post->ID ) ) . '">' . esc_html( ! empty( get_the_title( $post ) ) ? get_the_title( $post ) : __( '(no title)', 'publishrank' ) ) . '</a></strong><br><small>' . esc_html( get_post_status_object( $post->post_status )->label ?? $post->post_status ) . ' · ID ' . (int) $post->ID . '</small></td><td>' . esc_html( (string) get_post_meta( $post->ID, PostMeta::TITLE, true ) ) . '</td><td>' . esc_html( (string) get_post_meta( $post->ID, PostMeta::DESCRIPTION, true ) ) . '</td><td>' . esc_html( (string) get_post_meta( $post->ID, PostMeta::ROBOTS, true ) ) . '</td></tr>';
-			}
-		} else {
-			echo '<tr><td colspan="5">' . esc_html__( 'No content found.', 'publishrank' ) . '</td></tr>';
+		foreach ( $issues as $k => $v ) {
+			echo '<option value="' . esc_attr( $k ) . '"' . selected( $f['issue'], $k, false ) . '>' . esc_html( $v ) . '</option>';
 		}
-		echo '</tbody></table><h2>' . esc_html__( 'Apply changes to selected content', 'publishrank' ) . '</h2>';
-		echo '<p><label>' . esc_html__( 'SEO title', 'publishrank' ) . ' <input type="text" name="seo_title" maxlength="255" class="regular-text" /></label> <label><input type="checkbox" name="clear_title" value="1" /> ' . esc_html__( 'Clear this field', 'publishrank' ) . '</label></p>';
-		echo '<p><label>' . esc_html__( 'Meta description', 'publishrank' ) . ' <textarea name="seo_description" rows="2" maxlength="320" class="large-text"></textarea></label> <label><input type="checkbox" name="clear_description" value="1" /> ' . esc_html__( 'Clear this field', 'publishrank' ) . '</label></p>';
-		echo '<p><label>' . esc_html__( 'Robots directive', 'publishrank' ) . ' <select name="robots"><option value="">' . esc_html__( 'Leave unchanged', 'publishrank' ) . '</option><option value="index,follow">index, follow</option><option value="noindex,follow">noindex, follow</option><option value="index,nofollow">index, nofollow</option><option value="noindex,nofollow">noindex, nofollow</option></select></label></p>';
-		submit_button( __( 'Update selected content', 'publishrank' ) );
-		echo '</form>';
-		if ( $query->max_num_pages > 1 ) {
-			echo '<p>';
-			for ( $i = 1; $i <= (int) $query->max_num_pages; $i++ ) {
-				$url = add_query_arg(
-					array(
-						'page'  => self::SLUG,
-						'tab'   => 'bulk',
-						'paged' => $i,
-						's'     => $search,
-					),
-					admin_url( 'admin.php' )
-				);
-				echo ' <a class="button ' . ( $i === $page_num ? 'button-primary' : '' ) . '" href="' . esc_url( $url ) . '">' . (int) $i . '</a> ';
+		echo '</select></label><button class="button">' . esc_html__( 'Filter', 'publishrank' ) . '</button>';
+		$export = wp_nonce_url( add_query_arg( array_merge( array( 'action' => 'publishrank_bulk_seo_export' ), array_filter( array( 's' => $f['s'], 'ptype' => $f['type'], 'pstatus' => $f['status'], 'cat' => $f['cat'] ?: '', 'issue' => $f['issue'] ) ) ), admin_url( 'admin-post.php' ) ), 'publishrank_bulk_seo_export' );
+		echo ' <a class="button" href="' . esc_url( $export ) . '">' . esc_html__( 'Export CSV', 'publishrank' ) . '</a></form>';
+
+		// Editable grid.
+		echo '<form method="post" id="pr-bulk-form" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		wp_nonce_field( 'publishrank_bulk_seo_preview' );
+		echo '<input type="hidden" name="action" value="publishrank_bulk_seo_preview" /><input type="hidden" name="back" value="' . esc_attr( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) ) . '" />'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		echo '<div class="pr-ds-table-wrap pr-bulk__wrap"><table class="widefat striped pr-bulk__table"><thead><tr><td class="check-column"><input type="checkbox" id="publishrank-select-all" aria-label="' . esc_attr__( 'Select all visible content', 'publishrank' ) . '" /></td><th scope="col">' . esc_html__( 'Content', 'publishrank' ) . '</th><th scope="col">' . esc_html( $defs['title']['label'] ) . '</th><th scope="col">' . esc_html( $defs['description']['label'] ) . '</th><th scope="col">' . esc_html( $defs['robots']['label'] ) . '</th><th scope="col">' . esc_html( $defs['canonical']['label'] ) . '</th><th scope="col">' . esc_html( $defs['focus']['label'] ) . '</th></tr></thead><tbody>';
+		$shown = 0;
+		foreach ( $q->posts as $post ) {
+			if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+				continue;
 			}
-			echo '</p>';
+			++$shown;
+			$v     = BulkSeo::values( $post->ID );
+			$id    = (int) $post->ID;
+			$title = get_the_title( $post );
+			$st    = get_post_status_object( $post->post_status );
+			echo '<tr data-pr-bulk-row><th scope="row" class="check-column"><input type="checkbox" name="post_ids[]" value="' . $id . '" aria-label="' . esc_attr( sprintf( /* translators: %s: post title */ __( 'Select %s', 'publishrank' ), $title ) ) . '" /></th>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo '<td class="pr-bulk__content"><strong><a href="' . esc_url( (string) get_edit_post_link( $id ) ) . '">' . esc_html( '' !== $title ? $title : __( '(no title)', 'publishrank' ) ) . '</a></strong><div class="pr-bulk__meta">' . esc_html( ( $st ? $st->label : $post->post_status ) . ' · ' . $post->post_type . ' · ID ' . $id ) . '</div></td>';
+			echo '<td><input type="text" class="pr-bulk__in" data-pr-count="60" name="rows[' . $id . '][title]" value="' . esc_attr( $v['title'] ) . '" data-orig="' . esc_attr( $v['title'] ) . '" placeholder="' . esc_attr__( 'Template', 'publishrank' ) . '" aria-label="' . esc_attr( sprintf( /* translators: %s: post */ __( 'SEO title for %s', 'publishrank' ), $title ) ) . '" /><span class="pr-bulk__count" aria-hidden="true"></span></td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo '<td><textarea class="pr-bulk__in" rows="2" data-pr-count="160" name="rows[' . $id . '][description]" data-orig="' . esc_attr( $v['description'] ) . '" placeholder="' . esc_attr__( 'Automatic', 'publishrank' ) . '" aria-label="' . esc_attr( sprintf( /* translators: %s: post */ __( 'Meta description for %s', 'publishrank' ), $title ) ) . '">' . esc_textarea( $v['description'] ) . '</textarea><span class="pr-bulk__count" aria-hidden="true"></span></td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo '<td><select class="pr-bulk__in" name="rows[' . $id . '][robots]" data-orig="' . esc_attr( $v['robots'] ) . '" aria-label="' . esc_attr( sprintf( /* translators: %s: post */ __( 'Robots for %s', 'publishrank' ), $title ) ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			$opts = array( '' => __( 'Site default', 'publishrank' ), 'index,follow' => 'index, follow', 'noindex,follow' => 'noindex, follow', 'index,nofollow' => 'index, nofollow', 'noindex,nofollow' => 'noindex, nofollow' );
+			if ( '' !== $v['robots'] && ! isset( $opts[ $v['robots'] ] ) ) {
+				$opts[ $v['robots'] ] = $v['robots'];
+			}
+			foreach ( $opts as $k => $l ) {
+				echo '<option value="' . esc_attr( $k ) . '"' . selected( $v['robots'], $k, false ) . '>' . esc_html( $l ) . '</option>';
+			}
+			echo '</select></td><td><input type="text" inputmode="url" class="pr-bulk__in" name="rows[' . $id . '][canonical]" value="' . esc_attr( $v['canonical'] ) . '" data-orig="' . esc_attr( $v['canonical'] ) . '" placeholder="' . esc_attr__( 'This page', 'publishrank' ) . '" aria-label="' . esc_attr( sprintf( /* translators: %s: post */ __( 'Canonical URL for %s', 'publishrank' ), $title ) ) . '" /></td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo '<td><input type="text" class="pr-bulk__in" name="rows[' . $id . '][focus]" value="' . esc_attr( $v['focus'] ) . '" data-orig="' . esc_attr( $v['focus'] ) . '" aria-label="' . esc_attr( sprintf( /* translators: %s: post */ __( 'Focus keyword for %s', 'publishrank' ), $title ) ) . '" /></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
+		if ( ! $shown ) {
+			echo '<tr><td colspan="7">' . esc_html__( 'No content matches these filters.', 'publishrank' ) . '</td></tr>';
+		}
+		echo '</tbody></table></div>';
+		// Same value for all selected rows.
+		echo '<fieldset class="pr-bulk__set"><legend>' . esc_html__( 'Set the same value on selected rows', 'publishrank' ) . '</legend>';
+		echo '<label><span>' . esc_html__( 'SEO title', 'publishrank' ) . '</span><input type="text" name="set[title]" maxlength="255" /></label>';
+		echo '<label><span>' . esc_html__( 'Meta description', 'publishrank' ) . '</span><textarea name="set[description]" rows="2" maxlength="320"></textarea></label>';
+		echo '<label><span>' . esc_html__( 'Robots', 'publishrank' ) . '</span><select name="set[robots]"><option value="__keep">' . esc_html__( 'Leave unchanged', 'publishrank' ) . '</option><option value="">' . esc_html__( 'Site default', 'publishrank' ) . '</option><option value="index,follow">index, follow</option><option value="noindex,follow">noindex, follow</option><option value="index,nofollow">index, nofollow</option><option value="noindex,nofollow">noindex, nofollow</option></select></label>';
+		echo '<label class="pr-bulk__check"><input type="checkbox" name="clear[title]" value="1" /> ' . esc_html__( 'Clear SEO title (use template)', 'publishrank' ) . '</label><label class="pr-bulk__check"><input type="checkbox" name="clear[description]" value="1" /> ' . esc_html__( 'Clear meta description', 'publishrank' ) . '</label><label class="pr-bulk__check"><input type="checkbox" name="clear[canonical]" value="1" /> ' . esc_html__( 'Clear canonical URL', 'publishrank' ) . '</label>';
+		echo '<p class="pr-bulk__hint">' . esc_html__( 'Template variables such as %%title%% and %%sep%% work in titles and descriptions.', 'publishrank' ) . '</p></fieldset>';
+		echo '<p class="pr-bulk__actions"><button type="submit" class="button button-primary">' . esc_html__( 'Review changes', 'publishrank' ) . '</button> <span class="pr-bulk__dirty" aria-live="polite"></span></p></form>';
+		if ( $q->max_num_pages > 1 ) {
+			echo '<nav class="pr-bulk__pages" aria-label="' . esc_attr__( 'Pages', 'publishrank' ) . '">';
+			for ( $i = 1; $i <= min( 200, (int) $q->max_num_pages ); $i++ ) {
+				echo '<a class="button' . ( $i === $f['paged'] ? ' button-primary' : '' ) . '"' . ( $i === $f['paged'] ? ' aria-current="page"' : '' ) . ' href="' . esc_url( self::bulk_url( array_filter( array( 's' => $f['s'], 'ptype' => $f['type'], 'pstatus' => $f['status'], 'cat' => $f['cat'] ?: '', 'issue' => $f['issue'], 'paged' => $i ) ) ) ) . '">' . (int) $i . '</a> ';
+			}
+			echo '</nav>';
+		}
+		// CSV import.
+		echo '<form method="post" enctype="multipart/form-data" class="pr-bulk__import" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		wp_nonce_field( 'publishrank_bulk_seo_import' );
+		echo '<input type="hidden" name="action" value="publishrank_bulk_seo_import" /><h3>' . esc_html__( 'Import from CSV', 'publishrank' ) . '</h3><p>' . esc_html__( 'Export a CSV, edit it in a spreadsheet, then import it. Only the columns in your file are changed, and you review every change before it is saved.', 'publishrank' ) . '</p>';
+		echo '<label><span class="screen-reader-text">' . esc_html__( 'CSV file', 'publishrank' ) . '</span><input type="file" name="csv" accept=".csv,text/csv" required /></label> <button class="button">' . esc_html__( 'Upload and review', 'publishrank' ) . '</button></form>';
+		echo '</div>';
+		self::bulk_script();
 		wp_reset_postdata();
 	}
 
-	public function bulk_update() {
+	/** Small progressive enhancement: counters, changed-row highlight, select-all. The form works without it. */
+	private static function bulk_script() {
+		$i18n = array( 'changed' => __( '%d fields changed', 'publishrank' ) ); // phpcs:ignore WordPress.WP.I18n.MissingTranslatorsComment
+		echo '<script>(function(){var f=document.getElementById("pr-bulk-form");if(!f)return;var t=' . wp_json_encode( $i18n ) . ';function cnt(el){var s=el.parentNode.querySelector(".pr-bulk__count");if(!s)return;var n=el.value.length,m=+el.getAttribute("data-pr-count");s.textContent=n?n+"/"+m:"";s.className="pr-bulk__count"+(n>m?" is-over":"")}function dirty(){var n=0;f.querySelectorAll("[data-orig]").forEach(function(el){var c=el.value!==el.getAttribute("data-orig");el.classList.toggle("is-changed",c);if(c)n++});var d=f.querySelector(".pr-bulk__dirty");if(d)d.textContent=n?t.changed.replace("%d",n):""}f.addEventListener("input",function(e){if(e.target.hasAttribute("data-pr-count"))cnt(e.target);dirty()});f.addEventListener("change",dirty);f.querySelectorAll("[data-pr-count]").forEach(cnt);var all=document.getElementById("publishrank-select-all");if(all)all.addEventListener("change",function(){f.querySelectorAll("input[name=\'post_ids[]\']").forEach(function(c){c.checked=all.checked})});f.addEventListener("submit",function(){f.querySelectorAll("[data-orig]").forEach(function(el){if(el.value===el.getAttribute("data-orig"))el.disabled=true})})})();</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	private function bulk_guard( $nonce ) {
 		if ( ! current_user_can( 'manage_publishrank_seo' ) ) {
-			wp_die( esc_html__( 'You do not have permission to bulk-edit SEO metadata.', 'publishrank' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to bulk-edit SEO metadata.', 'publishrank' ), '', array( 'response' => 403 ) );
 		}
-		check_admin_referer( 'publishrank_bulk_seo_update' );
-		$ids          = isset( $_POST['post_ids'] ) ? array_values( array_unique( array_filter( array_map( 'absint', (array) wp_unslash( $_POST['post_ids'] ) ) ) ) ) : array();
-		$ids          = array_slice( $ids, 0, 100 );
-		$title        = isset( $_POST['seo_title'] ) ? sanitize_text_field( wp_unslash( $_POST['seo_title'] ) ) : '';
-		$description  = isset( $_POST['seo_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['seo_description'] ) ) : '';
-		$robots       = isset( $_POST['robots'] ) ? sanitize_key( wp_unslash( $_POST['robots'] ) ) : '';
-		$valid_robots = array( '', 'index,follow', 'noindex,follow', 'index,nofollow', 'noindex,nofollow' );
-		if ( ! in_array( $robots, $valid_robots, true ) ) {
-			$robots = '';
+		check_admin_referer( $nonce );
+	}
+
+	/** Step 1: build a plan from the grid and the "same value" fields, then show it for review. */
+	public function bulk_preview() {
+		$this->bulk_guard( 'publishrank_bulk_seo_preview' );
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every value is validated by BulkSeo::validate().
+		$req  = array();
+		$rows = isset( $_POST['rows'] ) && is_array( $_POST['rows'] ) ? wp_unslash( $_POST['rows'] ) : array();
+		foreach ( $rows as $id => $fields ) {
+			foreach ( (array) $fields as $k => $v ) {
+				$req[ absint( $id ) ][ sanitize_key( $k ) ] = is_scalar( $v ) ? (string) $v : '';
+			}
 		}
+		$ids   = isset( $_POST['post_ids'] ) ? array_filter( array_map( 'absint', (array) wp_unslash( $_POST['post_ids'] ) ) ) : array();
+		$set   = isset( $_POST['set'] ) && is_array( $_POST['set'] ) ? wp_unslash( $_POST['set'] ) : array();
+		$clear = isset( $_POST['clear'] ) && is_array( $_POST['clear'] ) ? wp_unslash( $_POST['clear'] ) : array();
+		// Legacy (2.26.0) form fields.
+		foreach ( array( 'seo_title' => 'title', 'seo_description' => 'description' ) as $legacy => $k ) {
+			if ( isset( $_POST[ $legacy ] ) && '' !== $_POST[ $legacy ] ) {
+				$set[ $k ] = (string) wp_unslash( $_POST[ $legacy ] );
+			}
+		}
+		if ( isset( $_POST['robots'] ) && '' !== $_POST['robots'] ) {
+			$set['robots'] = (string) wp_unslash( $_POST['robots'] );
+		}
+		// phpcs:enable
 		foreach ( $ids as $id ) {
-			if ( ! current_user_can( 'edit_post', $id ) || ! in_array( get_post_type( $id ), $this->editable_post_types(), true ) ) {
-				continue;
+			foreach ( array( 'title', 'description', 'canonical' ) as $k ) {
+				if ( ! empty( $clear[ $k ] ) ) {
+					$req[ $id ][ $k ] = '';
+				} elseif ( isset( $set[ $k ] ) && '' !== trim( (string) $set[ $k ] ) ) {
+					$req[ $id ][ $k ] = (string) $set[ $k ];
+				}
 			}
-			if ( ! empty( $_POST['clear_title'] ) ) {
-				delete_post_meta( $id, PostMeta::TITLE );
-			} elseif ( '' !== $title ) {
-				update_post_meta( $id, PostMeta::TITLE, substr( $title, 0, 255 ) );
-			}
-			if ( ! empty( $_POST['clear_description'] ) ) {
-				delete_post_meta( $id, PostMeta::DESCRIPTION );
-			} elseif ( '' !== $description ) {
-				update_post_meta( $id, PostMeta::DESCRIPTION, substr( $description, 0, 320 ) );
-			}
-			if ( '' !== $robots ) {
-				update_post_meta( $id, PostMeta::ROBOTS, explode( ',', $robots ) );
+			if ( isset( $set['robots'] ) && '__keep' !== $set['robots'] ) {
+				$req[ $id ]['robots'] = (string) $set['robots'];
 			}
 		}
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page'               => self::SLUG,
-					'tab'                => 'bulk',
-					'publishrank_notice' => 'updated',
-				),
-				admin_url( 'admin.php' )
-			)
-		);
+		$plan = BulkSeo::plan( $req, 'editor' );
+		$this->to_review( $plan );
+	}
+
+	public function bulk_import() {
+		$this->bulk_guard( 'publishrank_bulk_seo_import' );
+		$file = isset( $_FILES['csv'] ) && is_array( $_FILES['csv'] ) ? $_FILES['csv'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( empty( $file['tmp_name'] ) || ! is_uploaded_file( $file['tmp_name'] ) || (int) $file['size'] > 5 * MB_IN_BYTES ) {
+			$this->bulk_done( 'error', __( 'Choose a CSV file under 5 MB.', 'publishrank' ) );
+		}
+		$res = BulkSeo::parse_csv( $file['tmp_name'] );
+		if ( '' !== $res['error'] ) {
+			$this->bulk_done( 'error', $res['error'] );
+		}
+		$this->to_review( BulkSeo::plan( $res['requested'], 'csv' ) );
+	}
+
+	private function to_review( array $plan ) {
+		if ( ! $plan['rows'] ) {
+			$this->bulk_done( 'info', __( 'Nothing to change: every value already matches.', 'publishrank' ) );
+		}
+		wp_safe_redirect( self::bulk_url( array( 'review' => BulkSeo::stash( $plan ) ) ) );
 		exit;
+	}
+
+	private function bulk_done( $type, $message, $tab = 'bulk' ) {
+		AdminAssets::flash( $type, $message );
+		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'tab' => $tab ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	/** Step 2: the review screen. */
+	private function bulk_review( $token ) {
+		$plan = BulkSeo::unstash( $token );
+		if ( ! $plan ) {
+			echo '<div class="notice notice-warning"><p>' . esc_html__( 'This review has expired. Make the changes again.', 'publishrank' ) . '</p></div><p><a class="button" href="' . esc_url( self::bulk_url() ) . '">' . esc_html__( 'Back to the editor', 'publishrank' ) . '</a></p>';
+			return;
+		}
+		$defs = BulkSeo::fields();
+		echo '<div class="pr-bulk pr-bulk--review" data-pr-no-help><h2>' . esc_html__( 'Review changes', 'publishrank' ) . '</h2>';
+		/* translators: 1: changes, 2: errors, 3: unchanged */
+		echo '<p>' . esc_html( sprintf( __( '%1$d changes ready · %2$d cannot be applied · %3$d already had that value.', 'publishrank' ), $plan['changes'], $plan['errors'], $plan['skipped'] ) ) . '</p>';
+		echo '<div class="pr-ds-table-wrap"><table class="widefat striped pr-bulk__diff"><thead><tr><th scope="col">' . esc_html__( 'Content', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'Field', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'Now', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'After', 'publishrank' ) . '</th></tr></thead><tbody>';
+		foreach ( $plan['rows'] as $r ) {
+			$t = $r['post_id'] ? get_the_title( $r['post_id'] ) : '';
+			echo '<tr class="' . ( $r['error'] ? 'is-error' : '' ) . '"><td>' . esc_html( '' !== $t ? $t : '#' . $r['post_id'] ) . ' <span class="pr-bulk__meta">ID ' . (int) $r['post_id'] . '</span></td><td>' . esc_html( $defs[ $r['field'] ]['label'] ) . '</td><td><del>' . ( '' === $r['old'] ? '<em>' . esc_html__( 'default', 'publishrank' ) . '</em>' : esc_html( $r['old'] ) ) . '</del></td><td>' . ( $r['error'] ? '<strong class="pr-bulk__err">' . esc_html( $r['error'] ) . '</strong> <code>' . esc_html( $r['new'] ) . '</code>' : '<ins>' . ( '' === $r['new'] ? '<em>' . esc_html__( 'default', 'publishrank' ) . '</em>' : esc_html( $r['new'] ) ) . '</ins>' ) . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
+		echo '</tbody></table></div>';
+		echo '<form method="post" class="pr-bulk__actions" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		wp_nonce_field( 'publishrank_bulk_seo_update' );
+		echo '<input type="hidden" name="action" value="publishrank_bulk_seo_update" /><input type="hidden" name="token" value="' . esc_attr( $token ) . '" />';
+		if ( $plan['changes'] ) {
+			/* translators: %d: number of changes */
+			echo '<button class="button button-primary" type="submit">' . esc_html( sprintf( _n( 'Apply %d change', 'Apply %d changes', $plan['changes'], 'publishrank' ), $plan['changes'] ) ) . '</button> ';
+		}
+		echo '<a class="button" href="' . esc_url( self::bulk_url() ) . '">' . esc_html__( 'Cancel', 'publishrank' ) . '</a></form></div>';
+	}
+
+	/** Step 3: apply a reviewed plan. Requests without a reviewed plan are turned into a review, never applied blindly. */
+	public function bulk_update() {
+		if ( empty( $_POST['token'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified below / by bulk_preview().
+			$this->bulk_guard( 'publishrank_bulk_seo_update' );
+			$_POST['_wpnonce'] = wp_create_nonce( 'publishrank_bulk_seo_preview' );
+			$_REQUEST['_wpnonce'] = $_POST['_wpnonce'];
+			$this->bulk_preview();
+			return;
+		}
+		$this->bulk_guard( 'publishrank_bulk_seo_update' );
+		$plan = BulkSeo::unstash( sanitize_key( wp_unslash( $_POST['token'] ) ), true );
+		if ( ! $plan ) {
+			$this->bulk_done( 'error', __( 'This review has expired. Nothing was changed.', 'publishrank' ) );
+		}
+		$res = BulkSeo::apply( $plan );
+		/* translators: 1: applied, 2: conflicts, 3: errors */
+		$msg = sprintf( __( '%1$d changes saved. %2$d skipped because the field was edited after your review. %3$d could not be saved.', 'publishrank' ), $res['applied'], $res['conflicts'], $res['errors'] );
+		$this->bulk_done( $res['applied'] ? 'success' : 'warning', $msg, $res['applied'] ? 'history' : 'bulk' );
+	}
+
+	public function bulk_rollback() {
+		$this->bulk_guard( 'publishrank_bulk_seo_rollback' );
+		$res = BulkSeo::rollback( isset( $_POST['batch'] ) ? sanitize_key( wp_unslash( $_POST['batch'] ) ) : '' );
+		/* translators: 1: restored, 2: conflicts */
+		$this->bulk_done( 'success', sprintf( __( '%1$d values restored. %2$d kept because they were edited again later.', 'publishrank' ), $res['restored'], $res['conflicts'] ), 'history' );
+	}
+
+	public function bulk_export() {
+		if ( ! current_user_can( 'manage_publishrank_seo' ) ) {
+			wp_die( esc_html__( 'You do not have permission to export SEO metadata.', 'publishrank' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'publishrank_bulk_seo_export' );
+		$rows = BulkSeo::export_rows( BulkSeo::filters( wp_unslash( $_GET ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitised by filters().
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="publishrank-seo-' . gmdate( 'Y-m-d' ) . '.csv"' );
+		$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		fwrite( $out, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+		foreach ( $rows as $i => $r ) {
+			fputcsv( $out, $i ? array_map( array( BulkSeo::class, 'csv_cell' ), $r ) : $r, ',', '"', '\\' );
+		}
+		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		exit;
+	}
+
+	private function history_tab() {
+		$rows = BulkSeo::batches( 50 );
+		echo '<div class="pr-bulk" data-pr-no-help><h2>' . esc_html__( 'Change history', 'publishrank' ) . '</h2><p>' . esc_html__( 'Each saved batch keeps the previous values. Undo restores them, except fields that were edited again since.', 'publishrank' ) . '</p>';
+		echo '<div class="pr-ds-table-wrap"><table class="widefat striped"><thead><tr><th scope="col">' . esc_html__( 'When', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'By', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'Source', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'Changes', 'publishrank' ) . '</th><th scope="col">' . esc_html__( 'Undo', 'publishrank' ) . '</th></tr></thead><tbody>';
+		if ( ! $rows ) {
+			echo '<tr><td colspan="5">' . esc_html__( 'No bulk changes yet.', 'publishrank' ) . '</td></tr>';
+		}
+		foreach ( $rows as $b ) {
+			$u = get_userdata( (int) $b['user_id'] );
+			echo '<tr><td>' . esc_html( get_date_from_gmt( $b['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ) . '</td><td>' . esc_html( $u ? $u->display_name : '—' ) . '</td><td>' . esc_html( 'csv' === $b['source'] ? __( 'CSV import', 'publishrank' ) : __( 'Bulk editor', 'publishrank' ) ) . '</td>';
+			/* translators: 1: total, 2: undone, 3: conflicts */
+			echo '<td>' . esc_html( sprintf( __( '%1$d fields · %2$d undone · %3$d kept (edited later)', 'publishrank' ), (int) $b['total'], (int) $b['undone'], (int) $b['conflicts'] ) ) . '</td><td>';
+			if ( (int) $b['active'] > 0 ) {
+				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+				wp_nonce_field( 'publishrank_bulk_seo_rollback' );
+				echo '<input type="hidden" name="action" value="publishrank_bulk_seo_rollback" /><input type="hidden" name="batch" value="' . esc_attr( $b['batch_id'] ) . '" /><button class="button" type="submit">' . esc_html__( 'Undo batch', 'publishrank' ) . '</button></form>';
+			} else {
+				echo '<span aria-hidden="true">—</span>';
+			}
+			echo '</td></tr>';
+		}
+		echo '</tbody></table></div></div>';
 	}
 
 	private function images_tab() {

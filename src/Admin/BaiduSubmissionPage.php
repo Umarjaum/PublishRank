@@ -53,7 +53,7 @@ final class BaiduSubmissionPage {
 	private function render_bulk() {
 		echo '<section class="rhs-card"><h2>' . esc_html__( 'Manual URL submission', 'publishrank' ) . '</h2><p>' . esc_html__( 'Submit 1–2,000 unique URLs from this exact site in one plain-text request. Blank lines are ignored. The request is sent only after you submit this form.', 'publishrank' ) . '</p><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="publishrank_baidu_submit">';
 		wp_nonce_field( 'publishrank_baidu_submit' );
-		echo '<textarea class="large-text code" rows="8" name="urls" placeholder="https://example.com/news/story/" required></textarea>';
+		echo '<textarea class="large-text code" rows="8" name="urls" aria-label="' . esc_attr__( 'URLs to submit, one per line', 'publishrank' ) . '" placeholder="https://example.com/news/story/" required></textarea>';
 		submit_button( __( 'Submit URLs to Baidu', 'publishrank' ), 'primary', 'submit', false );
 		echo '</form></section>';
 	}

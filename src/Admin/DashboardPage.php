@@ -25,6 +25,7 @@ final class DashboardPage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 9 );
 		add_action( 'admin_menu', array( $this, 'organize_submenu' ), 100 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_dashboard_css' ), 1100 );
 		// Keep every registered destination in WordPress's submenu registry. The
 		// dashboard cards link directly to these pages and WordPress uses that
 		// registry when authorizing admin.php?page=... requests.
@@ -36,6 +37,26 @@ final class DashboardPage {
 	 */
 	public function shorten_submenu() {
 		return;
+	}
+
+	/**
+	 * Dashboard-only layout layer (compact feature/tool cards, balanced stat row,
+	 * stacked health table on phones). Loads after every shared stylesheet.
+	 *
+	 * @param string $hook Current admin page hook.
+	 */
+	public function enqueue_dashboard_css( $hook ) {
+		if ( 'toplevel_page_' . Branding::MENU_SLUG !== $hook ) {
+			return;
+		}
+		$deps = array();
+		foreach ( array( 'publishrank-responsive', 'publishrank-modules', 'publishrank-shell', 'publishrank-seo-website', 'publishrank-design-system' ) as $handle ) {
+			if ( wp_style_is( $handle, 'registered' ) || wp_style_is( $handle, 'enqueued' ) ) {
+				$deps[] = $handle;
+			}
+		}
+		$file = PUBLISHRANK_SEO_PATH . 'assets/css/dashboard.css';
+		wp_enqueue_style( 'publishrank-dashboard', Branding::asset_url( 'css/dashboard.css' ), $deps, Branding::version() . '.' . ( file_exists( $file ) ? (string) filemtime( $file ) : '0' ) );
 	}
 
 	/** Top-level menu with the PublishRank icon, plus the Dashboard entry. */
@@ -230,7 +251,9 @@ final class DashboardPage {
 												<?php endforeach; ?>
 											</ul>
 										</div>
-										<svg class="pr-mock__chart" viewBox="0 0 300 80" preserveAspectRatio="none" focusable="false"><polyline points="0,70 50,62 100,55 150,50 200,42 250,28 300,10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+										<?php $pr_trend = self::publishing_trend( 14 ); ?>
+										<svg class="pr-mock__chart" viewBox="0 0 300 80" preserveAspectRatio="none" focusable="false"><polyline points="<?php echo esc_attr( $pr_trend['points'] ); ?>" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+										<small class="pr-mock__caption"><?php /* translators: %d: number of articles. */ echo esc_html( sprintf( _n( '%d article published in the last 14 days', '%d articles published in the last 14 days', $pr_trend['total'], 'publishrank' ), $pr_trend['total'] ) ); ?></small>
 									</div>
 								</div>
 							</div>
@@ -261,7 +284,7 @@ final class DashboardPage {
 					<p class="pr-workflow__kicker"><?php esc_html_e( 'At a glance', 'publishrank' ); ?></p>
 					<h2 id="pr-dash-metrics-title"><?php esc_html_e( 'Your site today', 'publishrank' ); ?></h2>
 					<p class="pr-workflow__lead"><?php esc_html_e( 'Checks, coverage and the addresses search engines use to find your stories.', 'publishrank' ); ?></p>
-				<div class="rhs-grid">
+				<div class="rhs-grid pr-dash-stats">
 			<div class="rhs-card rhs-score rhs-score--<?php echo esc_attr( $score >= 90 ? 'good' : ( $score >= 70 ? 'ok' : 'bad' ) ); ?>" style="--rhs-score:<?php echo (int) $score; ?>">
 				<p class="rhs-label"><?php esc_html_e( 'Configuration checklist', 'publishrank' ); ?></p>
 				<div class="pr-ring" style="--pr-score:<?php echo (int) $score; ?>"><span class="pr-ring__num"><?php echo esc_html( (string) $score ); ?><small>%</small></span></div>
@@ -284,8 +307,8 @@ final class DashboardPage {
 				<p><?php echo esc_html( sprintf( /* translators: %s: On or Off. */ __( 'IndexNow: %s', 'publishrank' ), $indexnow ) ); ?></p>
 			</div>
 		</div>
-		<div class="rhs-grid">
-			<div class="rhs-card">
+		<div class="rhs-grid pr-dash-pair">
+			<div class="rhs-card pr-dash-sitemaps">
 				<h2><?php esc_html_e( 'Sitemap URLs', 'publishrank' ); ?></h2>
 				<?php foreach ( $urls as $url => $label ) : ?>
 					<div class="rhs-url-row">
@@ -295,7 +318,6 @@ final class DashboardPage {
 				<?php endforeach; ?>
 					<p class="description"><?php esc_html_e( 'Submit these in Google Search Console and Bing Webmaster Tools.', 'publishrank' ); ?></p>
 				</div>
-			</div>
 			<section class="rhs-card pr-dashboard-config-summary" aria-labelledby="pr-dashboard-config-summary-title">
 				<h2 id="pr-dashboard-config-summary-title"><?php esc_html_e( 'Current configuration', 'publishrank' ); ?></h2>
 				<div class="pr-dashboard-config-summary__grid">
@@ -304,6 +326,7 @@ final class DashboardPage {
 				</div>
 				<p><a class="button button-secondary" href="<?php echo esc_url( Branding::page_url( OnboardingPage::SLUG ) . '&edit=1&step=2' ); ?>"><?php esc_html_e( 'Review setup', 'publishrank' ); ?></a> <a class="button button-secondary" href="<?php echo esc_url( Branding::page_url( 'publishrank' ) . '#pr-settings-titles' ); ?>"><?php esc_html_e( 'Edit Titles & Meta', 'publishrank' ); ?></a></p>
 			</section>
+			</div>
 				</section>
 				<section class="pr-dashboard-workspace" aria-labelledby="pr-dashboard-workspace-title">
 					<div class="pr-dashboard-workspace__heading"><div><p class="pr-dashboard-kicker"><?php esc_html_e( 'Publisher workspace', 'publishrank' ); ?></p><h2 id="pr-dashboard-workspace-title"><?php esc_html_e( 'Tools Showcase', 'publishrank' ); ?></h2><p><?php esc_html_e( 'Explore PublishRank tools from one dashboard. Search by name or description instead of opening a long submenu.', 'publishrank' ); ?></p></div></div>
@@ -396,7 +419,7 @@ final class DashboardPage {
 											<p class="pr-action-card__kicker"><?php echo esc_html( $card['kicker'] ); ?></p>
 							<?php if ( ! empty( $card['new'] ) ) : ?><span class="pr-action-card__new"><?php esc_html_e( 'New', 'publishrank' ); ?></span><?php endif; ?>
 											<h4><?php echo esc_html( $card['title'] ); ?></h4>
-											<p class="pr-action-card__description"><?php echo esc_html( $card['description'] ); ?></p>
+											<p class="pr-action-card__description" title="<?php echo esc_attr( $card['description'] ); ?>"><?php echo esc_html( $card['description'] ); ?></p>
 											<a class="button button-secondary pr-action-card__button" href="<?php echo esc_url( isset( $card['url'] ) ? $card['url'] : Branding::page_url( $card['slug'] ) ); ?>"><?php echo esc_html( $card['button'] ); ?><span class="fa-solid fa-arrow-right" aria-hidden="true"></span></a>
 										</article>
 									<?php endforeach; ?>
@@ -409,11 +432,11 @@ final class DashboardPage {
 <h2><?php esc_html_e( 'Technical health', 'publishrank' ); ?></h2>
 <?php $attention = $total - $passed; ?>
 <p class="pr-health-summary"><?php echo esc_html( $attention ? sprintf( /* translators: %d: number of checks that need review. */ _n( '%d check needs review. Blocking issues and recommendations are labelled separately; use an action link to review each one.', '%d checks need review. Blocking issues and recommendations are labelled separately; use an action link to review each one.', $attention, 'publishrank' ), $attention ) : __( 'All technical checks are passing. Review this page again after major site or plugin changes.', 'publishrank' ) ); ?></p>
-<div class="rhs-table-wrap pr-health-table-wrap" role="region" aria-label="<?php esc_attr_e( 'Technical health checks', 'publishrank' ); ?>" tabindex="0"><table class="widefat striped">
+<div class="rhs-table-wrap pr-health-table-wrap pr-dash-health" role="region" aria-label="<?php esc_attr_e( 'Technical health checks', 'publishrank' ); ?>" tabindex="0"><table class="widefat striped">
 <thead><tr><th><?php esc_html_e( 'Area', 'publishrank' ); ?></th><th><?php esc_html_e( 'Status', 'publishrank' ); ?></th><th><?php esc_html_e( 'Details', 'publishrank' ); ?></th><th><?php esc_html_e( 'Next step', 'publishrank' ); ?></th></tr></thead>
 <tbody>
 <?php foreach ( $checks as $check ) : ?>
-<tr><td><strong><?php echo esc_html( $check['label'] ); ?></strong><?php if ( 'PASS' !== $check['status'] ) : ?><br /><span class="pr-check-priority pr-check-priority--<?php echo esc_attr( $check['id'] ); ?>"><?php if ( 'search_visibility' === $check['id'] ) : esc_html_e( 'Blocking issue', 'publishrank' ); elseif ( 'seo_plugin_conflicts' === $check['id'] ) : esc_html_e( 'Potential conflict', 'publishrank' ); else : esc_html_e( 'Recommendation', 'publishrank' ); endif; ?></span><?php endif; ?></td><td><span class="rhs-pill rhs-pill--<?php echo esc_attr( strtolower( $check['status'] ) ); ?>"><?php echo esc_html( $check['status'] ); ?></span></td><td><?php echo esc_html( $check['message'] ); ?></td><td><?php $action = $this->remediation( $check ); if ( $action ) : ?><a class="button button-small" href="<?php echo esc_url( $action['url'] ); ?>"><?php echo esc_html( $action['label'] ); ?></a><?php if ( ! empty( $action['hint'] ) ) : ?><p class="description"><?php echo esc_html( $action['hint'] ); ?></p><?php endif; ?><?php else : ?><span class="pr-no-action">&mdash;</span><?php endif; ?></td></tr>
+<tr><td data-label="<?php esc_attr_e( 'Area', 'publishrank' ); ?>"><strong><?php echo esc_html( $check['label'] ); ?></strong><?php if ( 'PASS' !== $check['status'] ) : ?><br /><span class="pr-check-priority pr-check-priority--<?php echo esc_attr( $check['id'] ); ?>"><?php if ( 'search_visibility' === $check['id'] ) : esc_html_e( 'Blocking issue', 'publishrank' ); elseif ( 'seo_plugin_conflicts' === $check['id'] ) : esc_html_e( 'Potential conflict', 'publishrank' ); else : esc_html_e( 'Recommendation', 'publishrank' ); endif; ?></span><?php endif; ?></td><td data-label="<?php esc_attr_e( 'Status', 'publishrank' ); ?>"><span class="rhs-pill rhs-pill--<?php echo esc_attr( strtolower( $check['status'] ) ); ?>"><?php echo esc_html( $check['status'] ); ?></span></td><td data-label="<?php esc_attr_e( 'Details', 'publishrank' ); ?>"><?php echo esc_html( $check['message'] ); ?></td><td data-label="<?php esc_attr_e( 'Next step', 'publishrank' ); ?>"><?php $action = $this->remediation( $check ); if ( $action ) : ?><a class="button button-small" href="<?php echo esc_url( $action['url'] ); ?>"><?php echo esc_html( $action['label'] ); ?></a><?php if ( ! empty( $action['hint'] ) ) : ?><p class="description"><?php echo esc_html( $action['hint'] ); ?></p><?php endif; ?><?php else : ?><span class="pr-no-action">&mdash;</span><?php endif; ?></td></tr>
 <?php endforeach; ?>
 </tbody>
 </table></div>
@@ -517,5 +540,49 @@ final class DashboardPage {
 			);
 
 			return $checks;
+	}
+
+	/**
+	 * Real publishing activity for the dashboard sparkline: published posts per day (site timezone).
+	 *
+	 * @return array{points:string,total:int,days:int[]}
+	 */
+	public static function publishing_trend( $days = 14 ) {
+		$cached = get_transient( 'publishrank_dash_trend_' . (int) $days );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+		$counts = array();
+		$tz     = wp_timezone();
+		$today  = new \DateTimeImmutable( 'today', $tz );
+		$ids    = get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'publish',
+				'date_query'     => array( array( 'after' => $today->modify( '-' . ( $days - 1 ) . ' days' )->format( 'Y-m-d 00:00:00' ), 'inclusive' => true ) ),
+				'fields'         => 'ids',
+				'posts_per_page' => 2000,
+				'no_found_rows'  => true,
+			)
+		);
+		for ( $i = $days - 1; $i >= 0; $i-- ) {
+			$counts[ $today->modify( '-' . $i . ' days' )->format( 'Y-m-d' ) ] = 0;
+		}
+		foreach ( $ids as $id ) {
+			$d = get_post_time( 'Y-m-d', false, $id );
+			if ( isset( $counts[ $d ] ) ) {
+				++$counts[ $d ];
+			}
+		}
+		$max    = max( 1, max( $counts ) );
+		$points = array();
+		$i      = 0;
+		foreach ( $counts as $n ) {
+			$points[] = round( 300 * $i / max( 1, $days - 1 ) ) . ',' . round( 74 - 64 * $n / $max );
+			++$i;
+		}
+		$out = array( 'points' => implode( ' ', $points ), 'total' => array_sum( $counts ), 'days' => array_values( $counts ) );
+		set_transient( 'publishrank_dash_trend_' . (int) $days, $out, 10 * MINUTE_IN_SECONDS );
+		return $out;
 	}
 }

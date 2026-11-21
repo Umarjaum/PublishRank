@@ -210,7 +210,7 @@
 	.publishrank-breadcrumbs--steps li { min-width: 5em; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 782px) {
 	.publishrank-breadcrumbs {
 		font-size: .82em;
 		line-height: 1.4;
@@ -236,7 +236,7 @@
 	.publishrank-breadcrumbs--steps li { min-width: 4.5em; }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 430px) {
 	/* Ribbon and progress-step looks remain one usable row and scroll within the trail, never the page. */
 	.publishrank-breadcrumbs {
 		font-size: .8em;

@@ -9939,7 +9939,7 @@ msgid "Used for Open Graph and X/Twitter when an article has no image. Recommend
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:515
-msgid "Shared with your publication name and WordPress Site Title. Changes here update the same title everywhere."
+msgid "The clickable headline for your homepage in search results. Your site name (WordPress Site Title) is set separately on the Publisher step."
 msgstr ""
 
 #: src/Admin/OnboardingPage.php:521

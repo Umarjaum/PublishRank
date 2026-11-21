@@ -259,7 +259,14 @@ final class ModulesPage {
 				$note = sprintf( __( 'Locked: %s is not installed. Install and activate it to unlock this feature.', 'publishrank' ), $plugin_name );
 				$link = current_user_can( 'install_plugins' ) ? '<a href="' . esc_url( admin_url( 'plugin-install.php?s=' . rawurlencode( $plugin_name ) . '&tab=search&type=term' ) ) . '">' . esc_html__( 'Get the plugin', 'publishrank' ) . '</a>' : '';
 			}
-			echo '<p class="pr-module__lock"><i class="fa-solid fa-lock" aria-hidden="true"></i><span>' . esc_html( $note ) . ' ' . $link . '</span></p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $link is built from escaped parts.
+			if ( $compact ) {
+				// Dashboard cards stay one row tall: a short "Needs X" line, full explanation for screen readers and on hover.
+				/* translators: %s: plugin name. */
+				$short = sprintf( __( 'Needs %s', 'publishrank' ), $plugin_name );
+				echo '<p class="pr-module__lock pr-module__lock--compact" title="' . esc_attr( $note ) . '"><i class="fa-solid fa-lock" aria-hidden="true"></i><span><span aria-hidden="true">' . esc_html( $short ) . '</span><span class="screen-reader-text">' . esc_html( $note ) . '</span>' . ( $link ? ' &middot; ' . $link : '' ) . '</span></p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $link is built from escaped parts.
+			} else {
+				echo '<p class="pr-module__lock"><i class="fa-solid fa-lock" aria-hidden="true"></i><span>' . esc_html( $note ) . ' ' . $link . '</span></p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $link is built from escaped parts.
+			}
 		}
 		echo '<div class="pr-module__meta"><span class="pr-module__state" data-pr-module-state>' . ( $locked ? esc_html__( 'Locked', 'publishrank' ) : ( $on ? esc_html__( 'On', 'publishrank' ) : esc_html__( 'Off', 'publishrank' ) ) ) . '</span>';
 		if ( '' !== $page && ! $locked ) {

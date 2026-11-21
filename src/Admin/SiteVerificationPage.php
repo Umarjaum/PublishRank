@@ -301,7 +301,7 @@ final class SiteVerificationPage {
 		}
 		echo '</div>';
 		echo '<h3>' . esc_html__( 'Any other verification tag', 'publishrank' ) . '</h3><p class="description">' . esc_html__( 'Paste one or more complete <meta> tags. Known engines are recognised automatically; others (Ahrefs, Norton, Yahoo Japan, Apple and so on) are printed as they are. Tags that could change crawling, such as robots or viewport, are refused.', 'publishrank' ) . '</p>';
-		echo '<textarea class="large-text code" rows="4" name="custom" spellcheck="false" placeholder="' . esc_attr( '<meta name="example-site-verification" content="abc123" />' ) . '">' . esc_textarea( $custom ) . '</textarea>';
+		echo '<textarea class="large-text code" rows="4" name="custom" spellcheck="false" aria-label="' . esc_attr__( 'Any other verification tag', 'publishrank' ) . '" placeholder="' . esc_attr( '<meta name="example-site-verification" content="abc123" />' ) . '">' . esc_textarea( $custom ) . '</textarea>';
 		echo '<h3>' . esc_html__( 'Where to print the tags', 'publishrank' ) . '</h3>';
 		echo '<p><label><input type="radio" name="scope" value="all" ' . checked( 'all', $scope, false ) . '> ' . esc_html__( 'Every page (recommended, works for domain and URL-prefix properties)', 'publishrank' ) . '</label><br>';
 		echo '<label><input type="radio" name="scope" value="home" ' . checked( 'home', $scope, false ) . '> ' . esc_html__( 'Home page only', 'publishrank' ) . '</label></p>';
@@ -313,7 +313,7 @@ final class SiteVerificationPage {
 		echo '<p class="description">' . esc_html__( 'Upload the file you downloaded from Google (google….html), Bing (BingSiteAuth.xml), Yandex, Baidu or Naver. PublishRank serves it from your site root at the exact address the search engine expects. You do not need FTP and nothing is written to disk.', 'publishrank' ) . '</p>';
 		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( $action ) . '" class="rhs-vf-upload"><input type="hidden" name="action" value="publishrank_verification_upload">';
 		wp_nonce_field( 'publishrank_verification_upload' );
-		echo '<input type="file" name="verification_files[]" accept=".html,.htm,.xml,.txt" multiple required> ';
+		echo '<input type="file" name="verification_files[]" accept=".html,.htm,.xml,.txt" multiple required aria-label="' . esc_attr__( 'Verification file', 'publishrank' ) . '"> ';
 		submit_button( __( 'Upload and test', 'publishrank' ), 'primary', 'submit', false );
 		echo '</form>';
 		echo '<details class="rhs-vf-details"><summary>' . esc_html__( 'No file to upload? Create it by pasting the content', 'publishrank' ) . '</summary>';

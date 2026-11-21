@@ -125,7 +125,7 @@ final class LLMSTxtPage {
 			<div class="rhs-card"><h2><span class="dashicons dashicons-editor-ul" aria-hidden="true"></span> <?php esc_html_e( 'Curated resources', 'publishrank' ); ?></h2>
 				<p><?php esc_html_e( 'Add important resources that PublishRank cannot infer reliably. One resource per line:', 'publishrank' ); ?></p>
 				<code>Section | Link title | https://example.com/page | Short description</code>
-				<textarea class="large-text code" rows="8" name="<?php echo esc_attr( LLMSTxt::OPTION_CUSTOM ); ?>" placeholder="Editorial Policy | Editorial Policy | https://example.com/editorial-policy/ | How editorial decisions and corrections are handled."><?php echo esc_textarea( get_option( LLMSTxt::OPTION_CUSTOM, '' ) ); ?></textarea>
+				<textarea class="large-text code" rows="8" aria-label="<?php esc_attr_e( 'Curated resources', 'publishrank' ); ?>" name="<?php echo esc_attr( LLMSTxt::OPTION_CUSTOM ); ?>" placeholder="Editorial Policy | Editorial Policy | https://example.com/editorial-policy/ | How editorial decisions and corrections are handled."><?php echo esc_textarea( get_option( LLMSTxt::OPTION_CUSTOM, '' ) ); ?></textarea>
 				<p class="description"><?php esc_html_e( 'Recommended for authoritative pages such as About, Editorial Policy, Fact-Checking Policy, Contact, topic hubs, datasets, documentation or newsroom standards.', 'publishrank' ); ?></p>
 			</div>
 
@@ -139,12 +139,12 @@ final class LLMSTxtPage {
 				<p><?php esc_html_e( 'Publishes one JSON-LD endpoint containing every public, indexable page and article. The endpoint is linked from llms.txt and robots.txt so compatible AI crawlers can discover it.', 'publishrank' ); ?></p>
 				<p><label><input type="checkbox" name="<?php echo esc_attr( SchemaAggregator::OPTION_ENABLED ); ?>" value="1" <?php checked( get_option( SchemaAggregator::OPTION_ENABLED, 1 ) ); ?> /> <strong><?php esc_html_e( 'Enable Schema Aggregator endpoint', 'publishrank' ); ?></strong></label></p>
 				<p><label><input type="checkbox" name="<?php echo esc_attr( SchemaAggregator::OPTION_OVERRIDE ); ?>" value="1" <?php checked( get_option( SchemaAggregator::OPTION_OVERRIDE, 0 ) ); ?> /> <strong><?php esc_html_e( 'Use custom JSON-LD instead of generated content', 'publishrank' ); ?></strong></label></p>
-				<textarea class="large-text code" rows="8" name="<?php echo esc_attr( SchemaAggregator::OPTION_CUSTOM ); ?>" placeholder="&#123; &quot;@context&quot;: &quot;https://schema.org&quot;, &quot;@type&quot;: &quot;DataFeed&quot; &#125;"><?php echo esc_textarea( get_option( SchemaAggregator::OPTION_CUSTOM, '' ) ); ?></textarea>
+				<textarea class="large-text code" rows="8" aria-label="<?php esc_attr_e( 'Custom Schema Aggregator JSON-LD', 'publishrank' ); ?>" name="<?php echo esc_attr( SchemaAggregator::OPTION_CUSTOM ); ?>" placeholder="&#123; &quot;@context&quot;: &quot;https://schema.org&quot;, &quot;@type&quot;: &quot;DataFeed&quot; &#125;"><?php echo esc_textarea( get_option( SchemaAggregator::OPTION_CUSTOM, '' ) ); ?></textarea>
 				<p class="description"><?php esc_html_e( 'Custom JSON is checked before saving. Leave override off to keep the automatically generated feed.', 'publishrank' ); ?></p>
 			</div>
 			<div class="rhs-card"><h2><span class="dashicons dashicons-lock" aria-hidden="true"></span> <?php esc_html_e( 'Override llms.txt', 'publishrank' ); ?></h2>
 				<p><label><input type="checkbox" name="<?php echo esc_attr( LLMSTxt::OPTION_OVERRIDE ); ?>" value="1" <?php checked( get_option( LLMSTxt::OPTION_OVERRIDE, 0 ) ); ?> /> <strong><?php esc_html_e( 'Serve my custom llms.txt text', 'publishrank' ); ?></strong></label></p>
-				<textarea class="large-text code" rows="8" name="<?php echo esc_attr( LLMSTxt::OPTION_OVERRIDE_TEXT ); ?>" placeholder="# My custom llms.txt
+				<textarea class="large-text code" rows="8" aria-label="<?php esc_attr_e( 'Custom llms.txt text', 'publishrank' ); ?>" name="<?php echo esc_attr( LLMSTxt::OPTION_OVERRIDE_TEXT ); ?>" placeholder="# My custom llms.txt
 
 > A short description of this site."><?php echo esc_textarea( get_option( LLMSTxt::OPTION_OVERRIDE_TEXT, '' ) ); ?></textarea>
 				<p class="description"><?php esc_html_e( 'When enabled, this replaces the generated root /llms.txt file. The extended /llms-full.txt file remains separate.', 'publishrank' ); ?></p>

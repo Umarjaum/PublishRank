@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Capabilities {
 	const PREFIX        = 'publishrank_';
-	const VERSION       = 4;
+	const VERSION       = 5;
 	const VERSION_OPT   = 'publishrank_caps_version';
 	const SNAPSHOT_OPT  = 'publishrank_caps_role_snapshot';
 	const AUDIT_OPT     = 'publishrank_caps_audit';
@@ -68,6 +68,7 @@ final class Capabilities {
 			'manage_roles'         => array( __( 'Manage roles and permissions', 'publishrank' ), 'core', __( 'This permission matrix, presets and per-user overrides.', 'publishrank' ) ),
 			'edit_seo'             => array( __( 'Edit SEO fields on posts', 'publishrank' ), 'content', __( 'The SEO panel in the editor for posts the user can already edit.', 'publishrank' ) ),
 			'bulk_edit'            => array( __( 'Bulk-edit SEO', 'publishrank' ), 'content', __( 'Publisher toolkit bulk editing and the Content Graph.', 'publishrank' ) ),
+			'manage_media_links'   => array( __( 'Manage media links', 'publishrank' ), 'content', __( 'Media Link Manager: scan media references, relocate files, change media URLs, roll back changes and set the media host.', 'publishrank' ) ),
 			'manage_schema'        => array( __( 'Manage schema', 'publishrank' ), 'discovery', __( 'Structured data defaults and the schema library.', 'publishrank' ) ),
 			'manage_sitemaps'      => array( __( 'Manage sitemaps', 'publishrank' ), 'discovery', __( 'Sitemap Hub, news sitemap and sitemap cache.', 'publishrank' ) ),
 			'manage_robots'        => array( __( 'Manage robots.txt and crawl rules', 'publishrank' ), 'discovery', __( 'Robots.txt, crawl optimization and breadcrumbs.', 'publishrank' ) ),
@@ -273,7 +274,7 @@ final class Capabilities {
 		$all = array_keys( self::definitions() );
 		return array(
 			'administrator'    => array( 'label' => __( 'Administrator', 'publishrank' ), 'desc' => __( 'Everything. Administrators always pass every check.', 'publishrank' ), 'base' => 'administrator', 'caps' => $all ),
-			'seo_manager'      => array( 'label' => __( 'SEO Manager', 'publishrank' ), 'desc' => __( 'All SEO, discovery, AI and maintenance tools; no security or roles.', 'publishrank' ), 'base' => 'editor', 'caps' => array( 'manage_settings', 'manage_modules', 'edit_seo', 'bulk_edit', 'manage_schema', 'manage_sitemaps', 'manage_robots', 'manage_indexing', 'manage_feeds', 'manage_navigation', 'manage_ai', 'view_ai_log', 'manage_redirects', 'view_404', 'manage_404', 'manage_integrations', 'view_reports', 'newsroom_access', 'manage_branding', 'manage_theme_masking', 'manage_woocommerce_seo', 'view_analytics', 'view_news' ) ),
+			'seo_manager'      => array( 'label' => __( 'SEO Manager', 'publishrank' ), 'desc' => __( 'All SEO, discovery, AI and maintenance tools; no security or roles.', 'publishrank' ), 'base' => 'editor', 'caps' => array( 'manage_settings', 'manage_modules', 'edit_seo', 'bulk_edit', 'manage_media_links', 'manage_schema', 'manage_sitemaps', 'manage_robots', 'manage_indexing', 'manage_feeds', 'manage_navigation', 'manage_ai', 'view_ai_log', 'manage_redirects', 'view_404', 'manage_404', 'manage_integrations', 'view_reports', 'newsroom_access', 'manage_branding', 'manage_theme_masking', 'manage_woocommerce_seo', 'view_analytics', 'view_news' ) ),
 			'editor_in_chief'  => array( 'label' => __( 'Editor-in-Chief', 'publishrank' ), 'desc' => __( 'Runs the Newsroom and edits SEO on every story.', 'publishrank' ), 'base' => 'editor', 'caps' => array( 'edit_seo', 'bulk_edit', 'view_404', 'view_reports', 'view_ai_log', 'manage_navigation', 'newsroom_access', 'newsroom_create', 'newsroom_edit_any', 'newsroom_assign', 'newsroom_publish_handoff', 'newsroom_delete', 'newsroom_restore', 'newsroom_manage', 'view_analytics', 'view_news' ) ),
 			'desk_editor'      => array( 'label' => __( 'Desk Editor', 'publishrank' ), 'desc' => __( 'Assigns and edits stories on a desk and hands them off for publishing.', 'publishrank' ), 'base' => 'editor', 'caps' => array( 'edit_seo', 'view_reports', 'newsroom_access', 'newsroom_create', 'newsroom_edit_any', 'newsroom_assign', 'newsroom_publish_handoff', 'newsroom_restore', 'view_news' ) ),
 			'reporter'         => array( 'label' => __( 'Reporter', 'publishrank' ), 'desc' => __( 'Pitches and writes own stories and edits their SEO fields.', 'publishrank' ), 'base' => 'author', 'caps' => array( 'edit_seo', 'newsroom_access', 'newsroom_create' ) ),
@@ -370,6 +371,14 @@ final class Capabilities {
 						}
 					}
 					update_user_meta( (int) $uid, self::USER_META, $o );
+				}
+			}
+			// 2.26.1 (registry 5): the Media Link Manager goes to roles that could already change site-wide settings.
+			if ( $previous < 5 ) {
+				foreach ( wp_roles()->role_objects as $role ) {
+					if ( $role->has_cap( self::cap( 'manage_settings' ) ) ) {
+						$role->add_cap( self::cap( 'manage_media_links' ) );
+					}
 				}
 			}
 			self::audit( 'upgrade', '', '', sprintf( 'Registry upgraded from %d to %d.', $previous, self::VERSION ) );

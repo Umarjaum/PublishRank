@@ -177,6 +177,14 @@ final class NotFoundStore {
 		if ( '' !== $rh ) {
 			self::$buffer[ $h ]['rh'] = $rh;
 			self::$buffer[ $h ]['rp'] = $rp;
+			// 2.26.1: every referring page is kept (host + path only), so broken links can be fixed at their source.
+			$rk = $rh . $rp;
+			if ( ! isset( self::$buffer[ $h ]['refs'][ $rk ] ) && count( isset( self::$buffer[ $h ]['refs'] ) ? self::$buffer[ $h ]['refs'] : array() ) < 20 ) {
+				self::$buffer[ $h ]['refs'][ $rk ] = array( 'h' => $rh, 'p' => $rp, 'n' => 0 );
+			}
+			if ( isset( self::$buffer[ $h ]['refs'][ $rk ] ) ) {
+				self::$buffer[ $h ]['refs'][ $rk ]['n'] += $weight;
+			}
 		}
 		if ( ! self::$hooked ) {
 			self::$hooked = true;
@@ -246,6 +254,7 @@ final class NotFoundStore {
 				$wpdb->query( $wpdb->prepare( "INSERT INTO {$d} (day, ua_class, hits) VALUES (%s, %s, %d) ON DUPLICATE KEY UPDATE hits = hits + VALUES(hits)", $day, $class, $c ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 			}
 		}
+		NotFoundDiagnosis::store_refs( self::$buffer );
 		self::$buffer = array();
 		return $n;
 	}
@@ -484,6 +493,9 @@ final class NotFoundStore {
 		if ( ! $ids ) {
 			return 0;
 		}
+		if ( Database::ready( '404_refs' ) ) {
+			$wpdb->query( 'DELETE FROM ' . Database::table( '404_refs' ) . ' WHERE path_hash IN (SELECT path_hash FROM ' . Database::table( '404' ) . ' WHERE id IN (' . implode( ',', $ids ) . '))' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+		}
 		return (int) $wpdb->query( 'DELETE FROM ' . Database::table( '404' ) . ' WHERE id IN (' . implode( ',', $ids ) . ')' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 	}
 
@@ -491,6 +503,9 @@ final class NotFoundStore {
 	public static function clear( $all = true ) {
 		global $wpdb;
 		$wpdb->query( 'TRUNCATE TABLE ' . Database::table( '404' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+		if ( Database::ready( '404_refs' ) ) {
+			$wpdb->query( 'DELETE FROM ' . Database::table( '404_refs' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+		}
 		if ( $all ) {
 			$wpdb->query( 'TRUNCATE TABLE ' . Database::table( '404_daily' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 		}
@@ -502,7 +517,7 @@ final class NotFoundStore {
 	 *
 	 * @return int|\WP_Error Redirect id.
 	 */
-	public static function redirect( $id, $target, $status = 301 ) {
+	public static function redirect( $id, $target, $status = 301, array $flags = array() ) {
 		$row = self::get( $id );
 		if ( ! $row ) {
 			return new \WP_Error( 'missing', __( 'That 404 entry no longer exists.', 'publishrank' ) );
@@ -514,7 +529,7 @@ final class NotFoundStore {
 				'status' => (int) $status,
 				'origin' => '404',
 				'note'   => sprintf( /* translators: %s: hits */ __( 'Created from the 404 monitor (%s hits).', 'publishrank' ), number_format_i18n( (int) $row['hits'] ) ),
-			)
+			) + ( $flags ? array( 'flags' => $flags ) : array() )
 		);
 		if ( ! is_wp_error( $res ) ) {
 			self::set_status( array( (int) $id ), 'redirected' );
@@ -568,6 +583,9 @@ final class NotFoundStore {
 			if ( $n < 5000 ) {
 				break;
 			}
+		}
+		if ( Database::ready( '404_refs' ) ) {
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . Database::table( '404_refs' ) . ' WHERE last_seen < %s', $cut ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 		}
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . Database::table( '404_daily' ) . ' WHERE day < %s', gmdate( 'Y-m-d', time() - max( 400, self::retention_days() ) * DAY_IN_SECONDS ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 		return $deleted;

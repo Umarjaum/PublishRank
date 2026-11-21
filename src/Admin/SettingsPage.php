@@ -315,6 +315,22 @@ final class SettingsPage {
 					'default'           => false,
 				)
 			); }
+		$this->reg(
+			'publishrank_site_name',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => '',
+			)
+		);
+		$this->reg(
+			'publishrank_site_alternate_names',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_textarea_field',
+				'default'           => '',
+			)
+		);
 		foreach ( array( 'publishrank_home_title', 'publishrank_home_description' ) as $field ) {
 			$this->reg(
 				$field,
@@ -1162,6 +1178,13 @@ final class SettingsPage {
 				<?php endforeach; ?>
 			</tbody></table>
 			<?php self::section_open( 'identity' ); ?>
+			<h3><?php esc_html_e( 'How your homepage appears in Google', 'publishrank' ); ?></h3>
+			<p class="description"><?php esc_html_e( 'Google shows two separate things for your homepage: the site name (the line above the URL) and the homepage title link (the blue link below the URL). Manage each one here.', 'publishrank' ); ?></p>
+			<table class="form-table" role="presentation"><tbody>
+				<tr><th scope="row"><label for="publishrank_site_name"><?php esc_html_e( 'Site name', 'publishrank' ); ?></label></th><td><input id="publishrank_site_name" name="publishrank_site_name" type="text" class="regular-text" value="<?php echo esc_attr( $val( 'publishrank_site_name', '' ) ); ?>" placeholder="<?php echo esc_attr( \PublishRankSEO\Core\PublicationProfile::publication_name() ); ?>" /><p class="description"><?php esc_html_e( 'Appears above the URL in Google results. Written to the WebSite "name" in structured data and to og:site_name. Also used for the %%sitename%% variable in title templates, so titles and structured data agree. Leave empty to use your WordPress Site Title. Use the name people know you by, not a keyword phrase.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="publishrank_site_alternate_names"><?php esc_html_e( 'Alternative site names', 'publishrank' ); ?></label></th><td><textarea id="publishrank_site_alternate_names" name="publishrank_site_alternate_names" class="large-text" rows="3" placeholder="<?php esc_attr_e( 'One name per line, for example an abbreviation', 'publishrank' ); ?>"><?php echo esc_textarea( $val( 'publishrank_site_alternate_names', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'Optional. Written to the WebSite "alternateName" so Google can choose a shorter or alternative name. Google makes the final choice and may take time to update.', 'publishrank' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="publishrank_home_title"><?php esc_html_e( 'Homepage title link', 'publishrank' ); ?></label></th><td><input id="publishrank_home_title" name="publishrank_home_title" type="text" class="large-text code" value="<?php echo esc_attr( $val( 'publishrank_home_title', '' ) ); ?>" /> <?php echo VariablePicker::slot( 'publishrank_home_title', 'title', 'home' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by VariablePicker::slot(). ?><p class="description"><?php esc_html_e( 'Appears below the URL as the blue link, and is the homepage <title>. It is independent from the site name above. Leave empty to use the Homepage template in Titles.', 'publishrank' ); ?></p></td></tr>
+			</tbody></table>
 			<table class="form-table" role="presentation"><tbody><tr><th scope="row"><label for="publishrank_identity_alternate_names"><?php esc_html_e( 'Organization name variants', 'publishrank' ); ?></label></th><td><textarea id="publishrank_identity_alternate_names" name="publishrank_identity_alternate_names" class="large-text" rows="4" placeholder="One variant per line"><?php echo esc_textarea( $val( 'publishrank_identity_alternate_names', '' ) ); ?></textarea><p class="description"><?php esc_html_e( 'Optional. Add recognized names, abbreviations, or spelling variants. Each line becomes an Organization alternateName value.', 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><?php esc_html_e( 'Visible publication identity', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_hide_visible_site_title" value="0" /><label><input name="publishrank_hide_visible_site_title" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_title', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site/publication title on the public site (on by default)', 'publishrank' ); ?></label><br /><input type="hidden" name="publishrank_hide_visible_site_description" value="0" /><label><input name="publishrank_hide_visible_site_description" type="checkbox" value="1" <?php checked( $val( 'publishrank_hide_visible_site_description', true ) ); ?> /> <?php esc_html_e( 'Hide the visible site description/tagline on the public site (on by default)', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'This is a visual-only control for common WordPress classic and block-theme selectors. It does not remove the site title or description from SEO meta tags, Open Graph, X/Twitter, JSON-LD, feeds or the WordPress General Settings fields. The site title and description are synchronized with WordPress General Settings, PublishRank Identity and homepage SEO settings.', 'publishrank' ); ?></p></td></tr></tbody></table>
 		<?php self::section_open( 'output' ); ?>

@@ -95,7 +95,8 @@ final class TemplateResolver {
 
 		switch ( $name ) {
 			case 'sitename':
-				return self::plain( \PublishRankSEO\Core\PublicationProfile::publication_name() );
+				// The same site name Google reads from the WebSite markup, so title suffixes and structured data agree.
+				return self::plain( \PublishRankSEO\Core\PublicationProfile::site_name() );
 			case 'site_description':
 				return self::plain( \PublishRankSEO\Core\PublicationProfile::publication_description() );
 			case 'page':

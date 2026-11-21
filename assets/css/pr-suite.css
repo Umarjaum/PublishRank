@@ -21,8 +21,8 @@
 .prx-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .prx-row--between{justify-content:space-between}
 .prx-spacer{flex:1}
-@media (max-width:1100px){.prx-grid--4{grid-template-columns:repeat(2,minmax(0,1fr))}.prx-grid--side,.prx-grid--3{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:700px){.prx-grid--2,.prx-grid--4{grid-template-columns:minmax(0,1fr)}}
+@media (max-width: 1280px){.prx-grid--4{grid-template-columns:repeat(2,minmax(0,1fr))}.prx-grid--side,.prx-grid--3{grid-template-columns:minmax(0,1fr)}}
+@media (max-width: 782px){.prx-grid--2,.prx-grid--4{grid-template-columns:minmax(0,1fr)}}
 
 /* Cards */
 .prx-card{background:var(--x-surface);border:1px solid var(--x-border);border-radius:var(--x-radius);box-shadow:var(--x-shadow);padding:18px 20px;min-width:0}
@@ -102,7 +102,7 @@
 .prx-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--x-primary);color:#fff;font-size:11px;font-weight:700}
 
 /* Tables */
-.prx-table-wrap{overflow:auto;border:1px solid var(--x-border);border-radius:var(--x-radius-sm);background:var(--x-surface);max-width:100%}
+.prx-table-wrap{position:relative;overflow:auto;border:1px solid var(--x-border);border-radius:var(--x-radius-sm);background:var(--x-surface);max-width:100%}
 .prx-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.8px}
 .prx-table th,.prx-table td{padding:9px 12px;text-align:start;border-bottom:1px solid var(--x-border);vertical-align:middle}
 .prx-table td>strong:only-child{white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -248,7 +248,7 @@
 .prx-fix .prx-input--sm{width:150px;min-width:0;min-height:32px!important;height:32px;padding:4px 8px}
 .prx-btn--icon{width:32px;min-width:32px;padding:0;justify-content:center}
 .prx-fix{min-width:210px}
-.prx-link-btn{border:0;background:none;padding:2px 0;color:var(--x-muted);text-decoration:underline;cursor:pointer;font-size:12px}
+.prx-link-btn{border:0;background:none;padding:2px 0;min-height:24px;color:var(--x-muted);text-decoration:underline;cursor:pointer;font-size:12px}
 .prx-link-btn:hover{color:var(--x-primary)}
 .uj-bulkbar{position:sticky;top:32px;z-index:5;background:var(--x-surface);padding:8px 10px;border:1px solid var(--x-border);border-radius:var(--x-radius-sm);margin-bottom:10px}
 .uj-bulkbar.is-active{border-color:var(--x-primary);box-shadow:var(--x-shadow)}
@@ -308,5 +308,20 @@
 .prx-news-links li,.prx-news-facts li,.prx-news-mini li{margin:0 0 6px}
 .prx-news-dash{margin:18px 0}
 .prx-news-dash__body{display:flex;flex-direction:column;gap:10px}
-@media (max-width:1100px){.prx-news-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:700px){.prx-news-grid,.prx-news-groups{grid-template-columns:minmax(0,1fr)}.prx-news-announce{flex-direction:column}}
+@media (max-width: 1280px){.prx-news-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width: 782px){.prx-news-grid,.prx-news-groups{grid-template-columns:minmax(0,1fr)}.prx-news-announce{flex-direction:column}}
+
+/* 404 Monitor 2.26.1: causes and referring pages */
+.prx-404-cause{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;max-width:52ch}
+.prx-404-cause .prx-muted{font-size:12px;line-height:1.45}
+.prx-404-refs{margin-top:6px}
+.prx-404-refs summary{cursor:pointer;color:var(--x-primary);font-size:12px;min-height:24px;display:inline-flex;align-items:center}
+.prx-404-refs summary:focus-visible{outline:2px solid var(--x-primary);outline-offset:2px;border-radius:3px}
+.prx-404-refs ul{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+.prx-404-refs li{overflow-wrap:anywhere;font-size:12px}
+@media (max-width:600px){.prx-404-cause{max-width:none}}
+.prx-404-broken{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.prx-404-broken li{padding:10px 0;border-top:1px solid var(--x-border);overflow-wrap:anywhere;line-height:1.5}
+.prx-404-broken li:first-child{border-top:0;padding-top:0}
+.prx-404-broken .prx-code{white-space:normal;word-break:break-all}
+.prx-404-broken a{display:inline-block;min-height:24px}

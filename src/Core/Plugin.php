@@ -156,6 +156,10 @@ final class Plugin {
 		$this->loader->register( \PublishRankSEO\Feeds\FeedManager::class, false );
 		$this->loader->register( \PublishRankSEO\Feeds\FeedEnhancer::class, false );
 		$this->loader->register( \PublishRankSEO\Schema\Library\Library::class, false );
+		$this->loader->register( \PublishRankSEO\Schema\Studio\Output::class, false );
+		$this->loader->register( \PublishRankSEO\Schema\Studio\RestApi::class, false );
+		$this->loader->register( \PublishRankSEO\Schema\Studio\PostPanel::class, false );
+		$this->loader->register( \PublishRankSEO\MediaLinks\Module::class, false );
 		$this->loader->register( \PublishRankSEO\SEO\SiteNavigation::class, false );
 		$this->loader->register( \PublishRankSEO\Integrations\WooCommerceSEO::class, false );
 		$this->loader->register( \PublishRankSEO\SEO\Language\InclusiveLanguage::class, false );
@@ -173,6 +177,7 @@ final class Plugin {
 			$this->loader->register( \PublishRankSEO\Admin\AdminShell::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\EditorPlacement::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\EditorScoreCard::class, false );
+			$this->loader->register( \PublishRankSEO\Editor\UnifiedEditor::class, false );
 			$this->loader->register( SiteVerificationPage::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\VariablePicker::class, false );
 			$this->loader->register( \PublishRankSEO\Admin\BreadcrumbsPage::class, false );
@@ -205,6 +210,7 @@ final class Plugin {
 			$this->loader->register( PublisherToolkitPage::class, false );
 			$this->loader->register( HelpDocumentationPage::class, false );
 				$this->loader->register( SchemaPage::class, false );
+				$this->loader->register( \PublishRankSEO\Admin\SchemaStudioPage::class, false );
 				$this->loader->register( SEOScorePage::class, false );
 				$this->loader->register( ExpertisePage::class, false );
 				$this->loader->register( \PublishRankSEO\Admin\TrafficGuardPage::class, false );

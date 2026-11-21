@@ -24,6 +24,33 @@ final class PublicationProfile {
 	}
 
 	/**
+	 * Site name for Google's "site name" result element (the line above the URL), WebSite structured data and og:site_name.
+	 * Managed separately from the homepage SEO title, which is the blue title link below the URL.
+	 * Falls back to the shared publication name when no dedicated site name is set.
+	 *
+	 * @return string
+	 */
+	public static function site_name() {
+		$name = sanitize_text_field( trim( (string) get_option( 'publishrank_site_name', '' ) ) );
+		return '' !== $name ? $name : self::publication_name();
+	}
+
+	/**
+	 * Alternative site names (abbreviations, spelling variants) for WebSite alternateName.
+	 *
+	 * @return string[]
+	 */
+	public static function site_alternate_names() {
+		$main  = self::site_name();
+		$names = array();
+		foreach ( self::alternate_names( (string) get_option( 'publishrank_site_alternate_names', '' ) ) as $name ) {
+			if ( 0 !== strcasecmp( $name, $main ) ) {
+				$names[] = $name; }
+		}
+		return $names;
+	}
+
+	/**
 	 * Shared publication description / WordPress tagline.
 	 *
 	 * @return string

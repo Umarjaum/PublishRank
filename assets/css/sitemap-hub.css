@@ -233,7 +233,7 @@
 .pr-hub-note.is-warn { background: var(--prh-warn-soft); color: var(--prh-warn); }
 .pr-hub-note.is-bad { background: var(--prh-bad-soft); color: var(--prh-bad); }
 
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
 	.pr-hub-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.pr-hub-columns { grid-template-columns: 1fr; }
 }
