@@ -80,7 +80,8 @@
 .pr-set-wrap .pr-set-chips a:focus-visible { outline: 2px solid var(--prm-primary); outline-offset: 1px; box-shadow: none; }
 .pr-set-chips a.is-hidden { display: none; }
 .pr-set-search { flex: 0 0 auto; }
-.pr-set-search input[type="search"] { min-width: 220px; }
+body[class*="publishrank"] .wrap .pr-set-search input[type="search"],
+.pr-set-search input[type="search"] { min-width: 240px; }
 .pr-set-search-status { margin: -6px 0 14px; color: var(--prm-muted); font-size: 13px; }
 
 /* ---------- section cards ---------- */
@@ -250,7 +251,9 @@
 
 @media (max-width: 960px) {
 	.pr-set-toolbar { flex-wrap: wrap; }
-	.pr-set-search, .pr-set-search input[type="search"] { width: 100%; min-width: 0; }
+	.pr-set-search,
+	body[class*="publishrank"] .wrap .pr-set-search input[type="search"],
+	.pr-set-search input[type="search"] { width: 100%; min-width: 0; }
 }
 @media (max-width: 782px) {
 	.pr-set-toolbar { top: 46px; }
@@ -293,3 +296,8 @@
 
 /* Saving state: the save button cannot be pressed twice */
 .pr-set-savebar.is-saving .button-primary{opacity:.7;pointer-events:none}
+
+/* News sitemap category search list: let [hidden] hide non-matching categories cleanly. */
+.pr-news-category-item { display: flex; gap: 7px; align-items: flex-start; }
+.pr-set-wrap .pr-set-card label.pr-news-category-item[hidden],
+.pr-news-category-item[hidden] { display: none; }

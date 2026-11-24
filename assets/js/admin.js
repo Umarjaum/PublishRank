@@ -364,8 +364,64 @@
 			$empty.prop('hidden', visible !== 0);
 		}
 		$search.on('input', filterTools);
+			$search.on('search', filterTools);
 		$category.on('change', filterTools);
-		$('#pr-tools-clear').on('click', function () { $search.val(''); $category.val('all'); filterTools(); $search.trigger('focus'); });
+			$('#pr-tools-clear').on('click', function () { $search.val(''); $category.val('all'); filterTools(); $search[0].dispatchEvent(new Event('input', { bubbles: true })); $search.trigger('focus'); });
 		filterTools();
 	});
+
+		/* Shared search-box controls: clicking the magnifying glass focuses and triggers search;
+		 * the clear button and Escape reset the query without submitting enclosing forms. */
+		$(function () {
+			function fire(input) {
+				['input', 'search'].forEach(function (type) {
+					try { input.dispatchEvent(new Event(type, { bubbles: true })); } catch (e) { $(input).trigger(type); }
+				});
+			}
+			document.querySelectorAll('.pr-modules-search').forEach(function (wrap) {
+				var input = wrap.querySelector('input[type="search"]');
+				if (!input) { return; }
+				var btn = wrap.querySelector('.pr-modules-search__btn');
+				var clear = wrap.querySelector('.pr-modules-search__clear');
+				function sync() {
+					var has = input.value.length > 0;
+					wrap.classList.toggle('has-value', has);
+					if (clear) { clear.hidden = !has; }
+				}
+				input.addEventListener('input', sync);
+				input.addEventListener('search', sync);
+				input.addEventListener('change', sync);
+				input.addEventListener('keydown', function (e) {
+					if (e.key === 'Escape' && input.value !== '') {
+						e.preventDefault();
+						input.value = '';
+						sync();
+						fire(input);
+					} else if (e.key === 'Enter') {
+						var form = input.form;
+						if (!form || String(form.method || '').toLowerCase() !== 'get') {
+							e.preventDefault();
+						}
+						fire(input);
+					}
+				});
+				if (btn) {
+					btn.addEventListener('click', function () {
+						input.focus();
+						if (input.value !== '') {
+							fire(input);
+						}
+					});
+				}
+				if (clear) {
+					clear.addEventListener('click', function () {
+						input.value = '';
+						sync();
+						fire(input);
+						input.focus();
+					});
+				}
+				sync();
+			});
+		});
 })(jQuery);

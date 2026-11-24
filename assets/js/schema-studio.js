@@ -312,6 +312,7 @@
 		else { meta.appendChild(badge('No Google rich result for this type', '')); }
 		box.appendChild(meta);
 		if (g && g.note) { box.appendChild(el('div', { class: 'pr-ds-notice pr-ds-notice--warn', text: g.note })); }
+		if (g && g.reviewed) { meta.appendChild(badge('Google notes reviewed ' + g.reviewed, '')); }
 		var grid = el('div', { class: 'pr-ds-grid pr-ds-grid--2' });
 		grid.appendChild(field('Name', bind(t, 'name', el('input', { type: 'text', value: t.name, placeholder: 'e.g. Hospital department page' }))));
 		var typeBtn = el('button', { type: 'button', class: 'pr-ds-btn', text: 'Change type (' + t.type + ')', onclick: function () { chooseType(function (nt) { if (nt === t.type) { return; } t.type = nt; changed(); renderEditor(); }); } });
@@ -590,7 +591,8 @@
 				e.missing.length ? el('div', { class: 'pr-ds-help', text: 'Required: ' + e.missing.join(', ') }) : null,
 				e.recommended.length ? el('div', { class: 'pr-ds-help', text: 'Recommended, not set: ' + e.recommended.join(', ') }) : null,
 				e.note ? el('div', { class: 'pr-ds-help', text: e.note }) : null,
-				el('a', { href: e.doc, target: '_blank', rel: 'noopener noreferrer', text: 'Google documentation' })]));
+				el('a', { href: e.doc, target: '_blank', rel: 'noopener noreferrer', text: 'Google documentation' }),
+				e.reviewed ? el('span', { class: 'pr-ds-help pr-ss-reviewed', text: ' · Requirements last reviewed ' + e.reviewed }) : null]));
 		});
 		if (tools) { wrap.appendChild(el('div', { class: 'pr-ds-btn-row' }, [el('a', { class: 'pr-ds-btn pr-ds-btn--sm', href: tools.rich_results, target: '_blank', rel: 'noopener noreferrer', text: 'Open Rich Results Test' }), el('a', { class: 'pr-ds-btn pr-ds-btn--sm', href: tools.schema_org, target: '_blank', rel: 'noopener noreferrer', text: 'Open Schema Markup Validator' })])); }
 		return wrap;

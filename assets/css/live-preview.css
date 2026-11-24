@@ -150,3 +150,17 @@
 .pr-sp__chip.is-warn{background:#fdf3e2;color:#8a5a06}
 .pr-sp__chip.is-bad{background:#fdecee;color:#a3222b}
 .pr-sp__tip{padding:8px 12px;border-radius:8px;background:#fdf3e2;color:#8a5a06}
+/* 2.26.2: engine switch, Bing simulation, separate social cards */
+.pr-pv-switches{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.pr-pv-switches .pr-pv-switch{margin:0}
+.pr-serp--bing{font-family:"Segoe UI",Arial,Helvetica,sans-serif}
+.pr-serp--bing .pr-serp__title{color:#001ba0}
+.pr-serp--bing .pr-serp__url{color:#006d21}
+.pr-serp--bing .pr-serp__desc{color:#444}
+.pr-sp__badge--linkedin{background:#0a66c2;font-size:11px}
+.pr-sp__badge--whatsapp{background:#25d366}
+.pr-sp__fb--whatsapp{background:#d9fdd3;border-color:#c4e8be;border-radius:10px}
+.pr-sp__fb--whatsapp .pr-sp__fbbody{background:#d1f4cc}
+.pr-sp__fb--linkedin .pr-sp__fbbody{background:#fff}
+.pr-sp__facts{margin:6px 0 0;font-size:11.5px;color:#50575e}
+.pr-sp__warn{color:#8a5a00!important}

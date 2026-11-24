@@ -61,7 +61,7 @@ final class ProductSchema {
 		remove_action( 'wp_footer', array( $sd, 'output_structured_data' ), 10 );
 		add_action(
 			'wp_footer',
-			static function () use ( $sd ) {
+			function () use ( $sd ) {
 				// get_data_type_for_page() is protected; call it in WooCommerce's own scope so its filters still run.
 				$types = \Closure::bind(
 					function () {

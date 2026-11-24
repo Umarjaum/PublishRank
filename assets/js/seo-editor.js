@@ -34,8 +34,9 @@
 	var PLUGIN = 'publishrank-seo', SIDEBAR = 'publishrank-seo-sidebar', FULL = PLUGIN + '/' + SIDEBAR;
 	var DOC_PANEL = 'publishrank-seo-panel', DOC_FULL = PLUGIN + '/' + DOC_PANEL;
 	var SCOPE = 'publishrank/seo-editor';
-	var DEFAULTS = { openOnLoad: true, userClosed: false, rememberSection: true, lastTab: 'seo', panelsOpen: {}, expand: 'essential', density: 'comfortable', floating: false, floatMin: false, floatPos: null };
+	var DEFAULTS = { pinTouched: false, sidebarWidth: 0, floatSize: null, openOnLoad: true, userClosed: false, rememberSection: true, lastTab: 'seo', panelsOpen: {}, expand: 'essential', density: 'comfortable', floating: false, floatMin: false, floatPos: null };
 	var REST = cfg.restKeys || {};
+	var CAN_EDIT = cfg.canEdit !== false;
 
 	/* ------------------------------------------------------------------ preferences */
 	var prefStore = null;
@@ -207,9 +208,9 @@
 		if (REST[key] !== 'list') { return String(value); }
 		return String(value).split(/[\r\n]+/).map(function (s) { return s.trim(); }).filter(Boolean);
 	}
-	function inEditorRoots(node) { return !!(node && node.closest && node.closest('.pr-ue-box, [data-pr-ue-slot]')); }
+	function inEditorRoots(node) { return !!(node && node.closest && node.closest('.pr-ue-box, [data-pr-ue-slot]') && !node.closest('.pr-mt')); }
 	function touch() {
-		var d = dispatchSafe('core/editor'); if (!d || !d.editPost || !cfg.touchKey) { return; }
+		var d = dispatchSafe('core/editor'); if (!d || !d.editPost || !cfg.touchKey || !CAN_EDIT) { return; }
 		var m = {}; m[cfg.touchKey] = String(Date.now()); d.editPost({ meta: m });
 	}
 	/* Only real edits count: trusted events, or script changes that directly follow a user action (Fix / Apply buttons). */
@@ -217,7 +218,7 @@
 	['pointerdown', 'keydown'].forEach(function (type) { document.addEventListener(type, function (e) { if (e.isTrusted && inEditorRoots(e.target)) { lastUserAction = Date.now(); } }, true); });
 	function onFieldEvent(e) {
 		var t = e.target;
-		if (syncing || !t || !inEditorRoots(t)) { return; }
+		if (syncing || !t || !inEditorRoots(t) || !CAN_EDIT) { return; }
 		if (!e.isTrusted && Date.now() - lastUserAction > 2500) { return; }
 		bridgeDirty = true;
 		if (t.name && REST.hasOwnProperty(t.name) && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT') && t.type !== 'checkbox' && t.type !== 'hidden') {
@@ -254,7 +255,7 @@
 		var seen = [];
 		roots.forEach(function (root) {
 			root.querySelectorAll('input[name], select[name], textarea[name]').forEach(function (f) {
-				if (seen.indexOf(f) >= 0 || f.disabled) { return; }
+				if (seen.indexOf(f) >= 0 || f.disabled || f.closest('.pr-mt')) { return; }
 				seen.push(f);
 				var type = (f.type || '').toLowerCase();
 				if (type === 'file' || type === 'submit' || type === 'button' || type === 'image' || type === 'reset') { return; }
@@ -266,15 +267,19 @@
 		return fd;
 	}
 	function bridgeSave(force) {
-		if (bridgeBusy || (!bridgeDirty && !force) || !host()) { return Promise.resolve(false); }
+		if (!CAN_EDIT || bridgeBusy || (!bridgeDirty && !force) || !host()) { return Promise.resolve(false); }
 		bridgeBusy = true;
+		var ed0 = dispatchSafe('core/editor');
+		// Block another save while the SEO fields are being saved, so the two saves can never interleave.
+		try { if (ed0 && ed0.lockPostSaving) { ed0.lockPostSaving('publishrank-bridge'); } } catch (e) {}
+		function unlock() { try { if (ed0 && ed0.unlockPostSaving) { ed0.unlockPostSaving('publishrank-bridge'); } } catch (e) {} }
 		var fd = collect();
 		fd.append('action', cfg.action); fd.append(cfg.nonceField, cfg.nonce); fd.append('post_ID', String(postId()));
 		setStatus('saving');
 		return window.fetch(cfg.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
 			.then(function (r) { return r.json().catch(function () { return { success: false, data: { message: 'HTTP ' + r.status } }; }); })
 			.then(function (j) {
-				bridgeBusy = false;
+				bridgeBusy = false; unlock();
 				if (j && j.success) {
 					bridgeDirty = false; setStatus('saved');
 					try { document.dispatchEvent(new CustomEvent('publishrank:editor-saved', { detail: j.data || {} })); } catch (e) {}
@@ -283,7 +288,7 @@
 				throw new Error((j && j.data && j.data.message) || __('Unknown error', 'publishrank'));
 			})
 			.catch(function (err) {
-				bridgeBusy = false; setStatus('error');
+				bridgeBusy = false; unlock(); setStatus('error');
 				var n = notices();
 				if (n && n.createErrorNotice) {
 					n.createErrorNotice(sprintf(__('PublishRank SEO fields were not saved: %s', 'publishrank'), err.message), { id: 'publishrank-seo-save', isDismissible: true, actions: [{ label: __('Try again', 'publishrank'), onClick: function () { bridgeSave(true); } }] });
@@ -308,6 +313,14 @@
 		wasSaving = saving;
 	});
 	window.addEventListener('beforeunload', function (e) { if (bridgeDirty && host()) { e.preventDefault(); e.returnValue = ''; } });
+
+	/* Read-only for roles without edit_seo: PHP-rendered fields stay visible but cannot change. */
+	if (!CAN_EDIT) {
+		var roTimer = 0;
+		var lockFields = function () { document.querySelectorAll('.pr-ue-box input, .pr-ue-box select, .pr-ue-box textarea, [data-pr-ue-slot] input, [data-pr-ue-slot] select, [data-pr-ue-slot] textarea').forEach(function (f) { if (f.type === 'hidden' || f.closest('.pr-mt')) { return; } if (f.tagName === 'SELECT' || f.type === 'checkbox' || f.type === 'radio') { f.disabled = true; } else { f.readOnly = true; } }); };
+		document.addEventListener('publishrank:section-shown', function () { window.clearTimeout(roTimer); roTimer = window.setTimeout(lockFields, 50); });
+		if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', lockFields); } else { window.setTimeout(lockFields, 0); }
+	}
 
 	/* ------------------------------------------------------------------ structure */
 	var OV = 'publishrank-seo-overrides';
@@ -334,12 +347,16 @@
 			{ id: 'multilingual', title: __('Multilingual SEO', 'publishrank'), parts: [{ box: 'publishrank-localized-seo' }], empty: __('Multilingual SEO appears when a translation plugin or extra languages are configured.', 'publishrank') },
 			{ id: 'more', title: __('Other PublishRank fields', 'publishrank'), leftovers: true }
 		] },
+		{ name: 'media', title: __('Media', 'publishrank'), panels: [
+			{ id: 'media', title: __('Images in this item', 'publishrank'), essential: true, render: function () { return el(MediaPanel); } }
+		] },
 		{ name: 'insights', title: __('Insights', 'publishrank'), panels: [
 			{ id: 'intel', title: __('Article Intelligence', 'publishrank'), essential: true, parts: [{ box: 'publishrank_article_intelligence' }], empty: __('Article Intelligence is switched off or not available for this content type.', 'publishrank') },
 			{ id: 'links', title: __('Internal linking', 'publishrank'), render: function () { return el(LinksPanel); } },
 			{ id: 'diagnostics', title: __('Indexing & technical diagnostics', 'publishrank'), essential: true, parts: [{ box: OV, sel: '[data-publishrank-resolved-summary]' }], render: function () { return el(Diagnostics); } }
 		] }
 	];
+	if (!CAN_EDIT || !window.PublishRankMediaTab) { TABS = TABS.filter(function (t) { return t.name !== 'media'; }); }
 	function allPanels() { var out = []; TABS.forEach(function (t) { t.panels.forEach(function (p) { out.push({ tab: t.name, panel: p }); }); }); return out; }
 
 	/** Top-level children of the boxes that no group displays (so no field is ever silently dropped). */
@@ -394,7 +411,7 @@
 	function useMeta() {
 		return data.useSelect(function (s) { var ed = s('core/editor'); return (ed && ed.getEditedPostAttribute && ed.getEditedPostAttribute('meta')) || {}; }, []);
 	}
-	function setMeta(key, value) { var d = dispatchSafe('core/editor'); if (d && d.editPost) { var m = {}; m[key] = value; d.editPost({ meta: m }); } }
+	function setMeta(key, value) { if (!CAN_EDIT) { return; } var d = dispatchSafe('core/editor'); if (d && d.editPost) { var m = {}; m[key] = value; d.editPost({ meta: m }); } }
 	function counter(len, lo, hi) { return len === 0 ? 'is-auto' : (len < lo ? 'is-short' : (len > hi ? 'is-long' : 'is-ok')); }
 	function QuickSummary() {
 		var meta = useMeta();
@@ -477,6 +494,32 @@
 				el(C.Button, { variant: 'secondary', href: cfg.links.inspector, target: '_blank' }, __('Open in SEO Inspector', 'publishrank')),
 				el(C.Button, { variant: 'tertiary', onClick: showJsonLd }, __('JSON-LD preview', 'publishrank'))));
 	}
+
+	/* ------------------------------------------------------------------ Media tab (shared media-tab.js) */
+	function setSocialImage(url, id) {
+		setMeta('_publishrank_seo_og_image', String(url || ''));
+		document.querySelectorAll('.pr-ue-box [name="_publishrank_seo_og_image"], [data-pr-ue-slot] [name="_publishrank_seo_og_image"]').forEach(function (f) { syncing = true; f.value = String(url || ''); try { f.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {} syncing = false; });
+		bridgeDirty = true;
+	}
+	function MediaPanel() {
+		var ref = useRef(null), apiRef = useRef(null);
+		var st = data.useSelect(function (s) {
+			var ed = s('core/editor') || {};
+			var meta = (ed.getEditedPostAttribute && ed.getEditedPostAttribute('meta')) || {};
+			return { featured: ed.getEditedPostAttribute ? ed.getEditedPostAttribute('featured_media') : 0, og: String(meta._publishrank_seo_og_image || ''), content: ed.getEditedPostContent ? ed.getEditedPostContent() : '' };
+		}, []);
+		var latest = useRef(st); latest.current = st;
+		useLayoutEffect(function () {
+			if (!ref.current || !window.PublishRankMediaTab) { return; }
+			apiRef.current = window.PublishRankMediaTab.mount(ref.current, { postId: postId(), restRoot: cfg.restRoot, nonce: cfg.restNonce, canEdit: CAN_EDIT, setSocialImage: setSocialImage,
+				getState: function () { return { featured: latest.current.featured || 0, og_image: latest.current.og, content: latest.current.content }; } });
+			return function () { if (apiRef.current) { apiRef.current.destroy(); } };
+		}, []);
+		useEffect(function () { if (apiRef.current) { apiRef.current.schedule(); } }, [st.featured, st.og, st.content]);
+		if (!window.PublishRankMediaTab) { return el('p', { className: 'pr-ue-empty' }, __('The Media tab is not available for your role.', 'publishrank')); }
+		return el('div', { ref: ref, className: 'pr-ue-media' });
+	}
+	document.addEventListener('publishrank:media-changed', function () { if (window.PublishRankLivePreview && window.PublishRankLivePreview.refresh) { window.setTimeout(function () { window.PublishRankLivePreview.refresh(); }, 300); } });
 
 	/* ------------------------------------------------------------------ Google + social previews */
 	// Exact values come from the Live Preview endpoint (the same code that prints the page <head>); live-preview.js
@@ -561,50 +604,112 @@
 			return el(C.Button, { key: o.value, size: 'small', variant: on ? 'primary' : 'secondary', 'aria-pressed': on ? 'true' : 'false', onClick: function () { props.onChange(o.value); } }, o.label);
 		}));
 	}
+	function textPx(str, font) {
+		if (!measureCtx) { try { measureCtx = document.createElement('canvas').getContext('2d'); } catch (e) { measureCtx = false; } }
+		if (!measureCtx) { return String(str).length * 9; }
+		measureCtx.font = font;
+		return Math.round(measureCtx.measureText(String(str)).width);
+	}
+	/* Engine profiles: estimated display widths, never exact limits. Both engines rewrite snippets freely. */
+	var ENGINES = {
+		google: { name: 'Google', font: '20px Arial,sans-serif', mfont: '18px Arial,sans-serif', title: [285, 600], mtitle: [285, 640], desc: [120, 160], mdesc: [120, 130] },
+		bing: { name: 'Bing', font: '20px "Segoe UI",Arial,sans-serif', mfont: '18px "Segoe UI",Arial,sans-serif', title: [285, 590], mtitle: [285, 620], desc: [120, 168], mdesc: [100, 140] }
+	};
 	function GooglePreview(props) {
 		var v = previewValues(usePreviewData());
 		var ds = useState('desktop'), device = ds[0];
+		var es = useState('google'), engine = props.compact ? 'google' : es[0];
+		var E = ENGINES[engine], mobile = device === 'mobile' || props.compact;
 		var date = '';
 		if (v.date) { try { date = new Date(v.date).toLocaleDateString(document.documentElement.lang || undefined, { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { date = ''; } }
 		var fav = safeHttp(v.favicon);
 		var site = v.site || urlHost(v.url);
-		return el('div', { className: 'pr-ue-pv pr-ue-pv--google' },
+		var label = sprintf(__('%1$s %2$s result (simulation)', 'publishrank'), E.name, mobile ? __('mobile', 'publishrank') : __('desktop', 'publishrank'));
+		var tr = mobile ? E.mtitle : E.title, dr = mobile ? E.mdesc : E.desc;
+		return el('div', { className: 'pr-ue-pv pr-ue-pv--google pr-ue-pv--' + engine },
 			el('div', { className: 'pr-ue-pv__bar' },
-				el('strong', { className: 'pr-ue-pv__label' }, __('Google preview', 'publishrank')),
+				el('strong', { className: 'pr-ue-pv__label' }, props.compact ? __('Google preview (simulation)', 'publishrank') : __('Search preview', 'publishrank')),
+				props.compact ? null : el(Switch, { label: __('Search engine', 'publishrank'), value: engine, onChange: es[1], options: [{ value: 'google', label: 'Google' }, { value: 'bing', label: 'Bing' }] }),
 				props.compact ? null : el(Switch, { label: __('Search snippet preview size', 'publishrank'), value: device, onChange: ds[1], options: [{ value: 'desktop', label: __('Desktop', 'publishrank') }, { value: 'mobile', label: __('Mobile', 'publishrank') }] })),
-			el('div', { className: 'pr-ue-serp' + (device === 'mobile' || props.compact ? ' is-mobile' : ''), role: 'img', 'aria-label': sprintf(__('Google result preview: %1$s. %2$s', 'publishrank'), v.title, v.desc) },
-				el('div', { className: 'pr-ue-serp__top' },
-					fav ? el('img', { className: 'pr-ue-serp__fav', src: fav, alt: '' }) : el('span', { className: 'pr-ue-serp__fav is-letter', 'aria-hidden': 'true' }, (site || 'S').charAt(0).toUpperCase()),
-					el('span', { className: 'pr-ue-serp__who' }, el('span', { className: 'pr-ue-serp__site' }, site), el('span', { className: 'pr-ue-serp__url' }, urlCrumbs(v.url)))),
-				el('div', { className: 'pr-ue-serp__title' }, v.title || __('(no title)', 'publishrank')),
-				el('div', { className: 'pr-ue-serp__desc' }, date ? el('span', { className: 'pr-ue-serp__date' }, date + ' — ') : null, v.desc || __('No meta description: Google will pick text from the page.', 'publishrank'))),
+			engine === 'bing'
+				? el('div', { className: 'pr-ue-serp pr-ue-serp--bing' + (mobile ? ' is-mobile' : ''), role: 'img', 'aria-label': label + ': ' + v.title + '. ' + v.desc },
+					el('div', { className: 'pr-ue-serp__top' },
+						fav ? el('img', { className: 'pr-ue-serp__fav', src: fav, alt: '' }) : el('span', { className: 'pr-ue-serp__fav is-letter', 'aria-hidden': 'true' }, (site || 'S').charAt(0).toUpperCase()),
+						el('span', { className: 'pr-ue-serp__who' }, el('span', { className: 'pr-ue-serp__site' }, site), el('span', { className: 'pr-ue-serp__url' }, String(v.url || '').replace(/^https?:\/\//, '')))),
+					el('div', { className: 'pr-ue-serp__title' }, v.title || __('(no title)', 'publishrank')),
+					el('div', { className: 'pr-ue-serp__desc' }, date ? el('span', { className: 'pr-ue-serp__date' }, date + ' · ') : null, v.desc || __('No meta description: Bing will pick text from the page.', 'publishrank')))
+				: el('div', { className: 'pr-ue-serp' + (mobile ? ' is-mobile' : ''), role: 'img', 'aria-label': label + ': ' + v.title + '. ' + v.desc },
+					el('div', { className: 'pr-ue-serp__top' },
+						fav ? el('img', { className: 'pr-ue-serp__fav', src: fav, alt: '' }) : el('span', { className: 'pr-ue-serp__fav is-letter', 'aria-hidden': 'true' }, (site || 'S').charAt(0).toUpperCase()),
+						el('span', { className: 'pr-ue-serp__who' }, el('span', { className: 'pr-ue-serp__site' }, site), el('span', { className: 'pr-ue-serp__url' }, urlCrumbs(v.url)))),
+					el('div', { className: 'pr-ue-serp__title' }, v.title || __('(no title)', 'publishrank')),
+					el('div', { className: 'pr-ue-serp__desc' }, date ? el('span', { className: 'pr-ue-serp__date' }, date + ' — ') : null, v.desc || __('No meta description: Google will pick text from the page.', 'publishrank'))),
 			el('div', { className: 'pr-ue-meters' },
-				el(LengthBar, { label: __('Title width', 'publishrank'), value: v.title ? titlePx(v.title) : 0, min: 285, max: 600, unit: __('px', 'publishrank') }),
-				el(LengthBar, { label: __('Description', 'publishrank'), value: v.desc.length, min: 120, max: 160, unit: __('characters', 'publishrank') })),
+				el(LengthBar, { label: sprintf(__('Title width (estimate for %s)', 'publishrank'), E.name), value: v.title ? textPx(v.title, mobile ? E.mfont : E.font) : 0, min: tr[0], max: tr[1], unit: __('px', 'publishrank') }),
+				el(LengthBar, { label: __('Description (estimate)', 'publishrank'), value: v.desc.length, min: dr[0], max: dr[1], unit: __('characters', 'publishrank') })),
+			props.compact ? null : el('p', { className: 'pr-ue-help' }, __('Simulation. Search engines decide the final title and snippet and may truncate at different widths.', 'publishrank')),
 			props.compact ? null : previewNote(v));
 	}
+	/** Natural size of an image URL (loaded by the browser; nothing is sent to PublishRank). */
+	var sizeCache = {};
+	function useImageSize(url) {
+		var st = useState(sizeCache[url] || null);
+		useEffect(function () {
+			if (!url) { st[1](null); return; }
+			if (sizeCache[url]) { st[1](sizeCache[url]); return; }
+			var img = new window.Image(), alive = true;
+			img.onload = function () { sizeCache[url] = { w: img.naturalWidth, h: img.naturalHeight }; if (alive) { st[1](sizeCache[url]); } };
+			img.onerror = function () { if (alive) { st[1]({ w: 0, h: 0, error: true }); } };
+			img.src = url;
+			return function () { alive = false; };
+		}, [url]);
+		return st[0];
+	}
+	function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+	function ratioText(sz) { if (!sz || !sz.w || !sz.h) { return ''; } var g = gcd(sz.w, sz.h); var r = (sz.w / sz.h).toFixed(2); return sz.w + '×' + sz.h + ' · ' + (sz.w / g <= 32 ? (sz.w / g) + ':' + (sz.h / g) : r + ':1'); }
+	/* Network profiles: approximate card layouts and recommended minimum image sizes. */
+	var NETWORKS = {
+		facebook: { name: 'Facebook', badge: 'f', min: [1200, 630], title: [25, 88], desc: [50, 200], upper: true },
+		linkedin: { name: 'LinkedIn', badge: 'in', min: [1200, 627], title: [25, 120], desc: [0, 0], upper: false },
+		whatsapp: { name: 'WhatsApp', badge: 'W', min: [300, 200], title: [20, 65], desc: [40, 160], upper: false },
+		x: { name: 'X (Twitter)', badge: '𝕏', min: [1200, 628], title: [20, 70], desc: [50, 200], upper: false }
+	};
 	function SocialCard(props) {
-		var img = safeHttp(props.image), small = props.kind === 'x' && props.card === 'summary';
-		return el('section', { className: 'pr-ue-sc pr-ue-sc--' + props.kind + (small ? ' is-small' : ''), 'aria-label': props.name },
-			el('header', { className: 'pr-ue-sc__head' }, el('span', { className: 'pr-ue-sc__badge pr-ue-sc__badge--' + props.kind, 'aria-hidden': 'true' }, props.badge), el('strong', null, props.name)),
+		var N = NETWORKS[props.kind], img = safeHttp(props.image), small = props.kind === 'x' && props.card === 'summary';
+		var sz = useImageSize(img);
+		var minW = small ? 144 : N.min[0], minH = small ? 144 : N.min[1];
+		var tooSmall = sz && sz.w && (sz.w < minW || sz.h < minH);
+		return el('section', { className: 'pr-ue-sc pr-ue-sc--' + props.kind + (small ? ' is-small' : ''), 'aria-label': sprintf(__('%s preview (approximation)', 'publishrank'), N.name) },
+			el('header', { className: 'pr-ue-sc__head' }, el('span', { className: 'pr-ue-sc__badge pr-ue-sc__badge--' + props.kind, 'aria-hidden': 'true' }, N.badge), el('strong', null, N.name), el('span', { className: 'pr-ue-sc__approx' }, __('approximation', 'publishrank'))),
 			el('div', { className: 'pr-ue-sc__frame' },
-				el('div', { className: 'pr-ue-sc__media' + (img ? '' : ' is-empty') }, img ? el('img', { src: img, alt: '', loading: 'lazy' }) : el('span', null, __('No social image — set a featured image or a social image below.', 'publishrank'))),
+				el('div', { className: 'pr-ue-sc__media' + (img ? '' : ' is-empty') }, img ? el('img', { src: img, alt: '', loading: 'lazy' }) : el('span', null, __('No social image — set a featured image or choose one in the Media tab.', 'publishrank'))),
 				el('div', { className: 'pr-ue-sc__body' },
-					el('div', { className: 'pr-ue-sc__host' }, props.kind === 'x' ? props.host : String(props.host).toUpperCase()),
+					props.kind === 'whatsapp' ? null : el('div', { className: 'pr-ue-sc__host' }, N.upper ? String(props.host).toUpperCase() : props.host),
 					el('div', { className: 'pr-ue-sc__title' }, props.title || __('(no title)', 'publishrank')),
-					props.desc ? el('div', { className: 'pr-ue-sc__desc' }, props.desc) : null)),
+					props.desc && N.desc[1] ? el('div', { className: 'pr-ue-sc__desc' }, props.desc) : null,
+					props.kind === 'whatsapp' ? el('div', { className: 'pr-ue-sc__host' }, props.host) : null)),
+			el('div', { className: 'pr-ue-sc__facts' },
+				el('span', null, img ? (sz ? (sz.error ? __('Image could not be loaded', 'publishrank') : ratioText(sz)) : __('Measuring image…', 'publishrank')) : __('No image', 'publishrank')),
+				el('span', null, sprintf(__('Host: %s', 'publishrank'), props.host || '—'))),
+			tooSmall ? el('p', { className: 'pr-ue-sc__warn', role: 'note' }, sprintf(__('The image is %1$d×%2$d. %3$s works best with at least %4$d×%5$d.', 'publishrank'), sz.w, sz.h, N.name, minW, minH)) : null,
 			el('div', { className: 'pr-ue-meters' },
-				el(LengthBar, { label: __('Title', 'publishrank'), value: props.title.length, min: props.kind === 'x' ? 20 : 25, max: props.kind === 'x' ? 70 : 88, unit: __('characters', 'publishrank') }),
-				el(LengthBar, { label: __('Description', 'publishrank'), value: props.desc.length, min: 50, max: 200, unit: __('characters', 'publishrank') })));
+				el(LengthBar, { label: __('Title', 'publishrank'), value: props.title.length, min: N.title[0], max: N.title[1], unit: __('characters', 'publishrank') }),
+				N.desc[1] ? el(LengthBar, { label: __('Description', 'publishrank'), value: props.desc.length, min: N.desc[0], max: N.desc[1], unit: __('characters', 'publishrank') }) : null));
 	}
 	function SocialPreview() {
 		var v = previewValues(usePreviewData()), host = urlHost(v.url) || urlHost(cfg.homeUrl);
+		var ns = useState('facebook'), net = ns[0];
+		var card = net === 'x'
+			? el(SocialCard, { kind: 'x', host: host, title: v.xTitle, desc: v.xDesc, image: v.xImage, card: v.xCard })
+			: el(SocialCard, { kind: net, host: host, title: v.ogTitle, desc: v.ogDesc, image: v.ogImage });
 		return el('div', { className: 'pr-ue-pv pr-ue-pv--social' },
-			el(SocialCard, { kind: 'facebook', badge: 'f', name: __('Facebook, LinkedIn, WhatsApp & others', 'publishrank'), host: host, title: v.ogTitle, desc: v.ogDesc, image: v.ogImage }),
-			el(SocialCard, { kind: 'x', badge: '𝕏', name: __('X (Twitter)', 'publishrank'), host: host, title: v.xTitle, desc: v.xDesc, image: v.xImage, card: v.xCard }),
+			el(Switch, { label: __('Social network', 'publishrank'), value: net, onChange: ns[1], options: [{ value: 'facebook', label: 'Facebook' }, { value: 'linkedin', label: 'LinkedIn' }, { value: 'whatsapp', label: 'WhatsApp' }, { value: 'x', label: 'X' }] }),
+			card,
+			el('p', { className: 'pr-ue-help' }, __('Approximations. Each network crops images and shortens text in its own way and may change its layout at any time.', 'publishrank')),
 			previewNote(v),
 			el('div', { className: 'pr-ue-actions' },
 				el(C.Button, { variant: 'secondary', onClick: function () { state.go('social', 'social'); window.setTimeout(function () { var f = document.querySelector('[data-pr-ue-slot="social"] input, [data-pr-ue-slot="social"] textarea'); if (f) { if (f.scrollIntoView) { f.scrollIntoView({ block: 'center' }); } f.focus(); } }, 300); } }, __('Edit social title, text & image', 'publishrank')),
+				el(C.Button, { variant: 'tertiary', onClick: function () { state.go('media', 'media'); } }, __('Choose image', 'publishrank')),
 				window.PublishRankLivePreview ? el(C.Button, { variant: 'tertiary', onClick: function () { window.PublishRankLivePreview.refresh(); } }, __('Refresh preview', 'publishrank')) : null));
 	}
 
@@ -637,6 +742,19 @@
 			window.addEventListener('resize', onResize);
 			return function () { window.removeEventListener('resize', onResize); };
 		}, [floating]);
+		useEffect(function () {
+			// Remember the size after the publisher resizes the window from its corner.
+			if (!floating || !ref.current || !window.ResizeObserver) { return; }
+			var t = 0, first = true;
+			var ro = new window.ResizeObserver(function (entries) {
+				if (first) { first = false; return; }
+				var r = entries[0] && entries[0].target; if (!r || r.classList.contains('is-min') || r.classList.contains('is-sheet')) { return; }
+				window.clearTimeout(t);
+				t = window.setTimeout(function () { setPref('floatSize', { w: Math.round(r.offsetWidth), h: Math.round(r.offsetHeight) }); }, 400);
+			});
+			ro.observe(ref.current);
+			return function () { ro.disconnect(); window.clearTimeout(t); };
+		}, [floating, !!prefs.floatMin]);
 		if (!floating || !wp.element.createPortal) { return null; }
 		function width() { return ref.current ? ref.current.offsetWidth : FLOAT_W; }
 		function down(e) {
@@ -655,7 +773,8 @@
 			var np = clampPos(nx, ny, width()); setPos(np); setPref('floatPos', np);
 		}
 		var min = !!prefs.floatMin;
-		var style = small || !pos ? undefined : { left: pos.x + 'px', top: pos.y + 'px' };
+		var fs = prefs.floatSize && prefs.floatSize.w ? prefs.floatSize : null;
+		var style = small || !pos ? undefined : { left: pos.x + 'px', top: pos.y + 'px', width: fs && !min ? Math.min(fs.w, window.innerWidth - 16) + 'px' : undefined, height: fs && !min ? Math.min(fs.h, window.innerHeight - 60) + 'px' : undefined };
 		return wp.element.createPortal(
 			el('div', { ref: ref, className: 'pr-ue-float' + (min ? ' is-min' : '') + (small ? ' is-sheet' : ''), style: style, role: 'dialog', 'aria-modal': 'false', 'aria-label': __('PublishRank SEO window', 'publishrank') },
 				el('div', { className: 'pr-ue-float__head', onPointerDown: down, onPointerMove: move, onPointerUp: up, onPointerCancel: up, title: small ? undefined : __('Drag to move', 'publishrank') },
@@ -665,7 +784,8 @@
 					el(C.Button, { icon: min ? 'arrow-up-alt2' : 'minus', size: 'small', label: min ? __('Restore window', 'publishrank') : __('Minimize window', 'publishrank'), 'aria-expanded': min ? 'false' : 'true', onClick: function () { setPref('floatMin', !min); } }),
 					el(C.Button, { icon: 'align-pull-right', size: 'small', label: __('Dock in the right sidebar', 'publishrank'), onClick: dockBack }),
 					el(C.Button, { icon: 'no-alt', size: 'small', label: __('Close window', 'publishrank'), onClick: function () { setPref('floating', false); } })),
-				el('div', { className: 'pr-ue-float__body', hidden: min }, el(SidebarBody, { inFloat: true }))),
+				el('div', { className: 'pr-ue-float__body', hidden: min }, el(SidebarBody, { inFloat: true })),
+				min || small ? null : el('span', { className: 'pr-ue-float__grip', 'aria-hidden': 'true', title: __('Drag the corner to resize', 'publishrank') })),
 			floatContainer());
 	}
 	function SidebarContent() {
@@ -685,7 +805,7 @@
 		if (prefs.rememberSection && prefs.panelsOpen && prefs.panelsOpen.hasOwnProperty(p.id)) { return !!prefs.panelsOpen[p.id]; }
 		if (prefs.expand === 'all') { return true; }
 		if (prefs.expand === 'none') { return p.id === 'overview'; }
-		return !!p.essential && (p.id === 'overview' || p.id === 'meta' || p.id === 'social-preview' || p.id === 'social' || p.id === 'schema-studio' || p.id === 'robots' || p.id === 'intel');
+		return !!p.essential && (p.id === 'overview' || p.id === 'meta' || p.id === 'social-preview' || p.id === 'social' || p.id === 'schema-studio' || p.id === 'robots' || p.id === 'intel' || p.id === 'media');
 	}
 	function Group(props) {
 		var p = props.panel, prefs = props.prefs;
@@ -740,6 +860,31 @@
 		return el(PluginSidebarMoreMenuItem, { target: SIDEBAR, icon: 'chart-line' }, __('PublishRank SEO editor', 'publishrank'));
 	}
 
+	/* Resizable right sidebar: drag the left edge (or focus it and use the arrow keys). Width is a per-user preference. */
+	var SB_MIN = 280, SB_MAX = 720;
+	function applySidebarWidth(w) {
+		var n = parseInt(w, 10) || 0;
+		if (n >= SB_MIN) { document.body.style.setProperty('--pr-ue-sidebar-w', Math.min(n, SB_MAX, window.innerWidth - 120) + 'px'); document.body.classList.add('pr-ue-sized'); }
+		else { document.body.style.removeProperty('--pr-ue-sidebar-w'); document.body.classList.remove('pr-ue-sized'); }
+	}
+	function SidebarResizer() {
+		var prefs = usePrefs(), drag = useRef(null);
+		useEffect(function () { applySidebarWidth(prefs.sidebarWidth); }, [prefs.sidebarWidth]);
+		useEffect(function () { return function () { document.body.classList.remove('pr-ue-sized'); }; }, []);
+		function current() { var a = document.querySelector('.interface-interface-skeleton__sidebar:has(.pr-ue-sidebar)') || document.querySelector('.pr-ue-sidebar'); return a ? a.getBoundingClientRect().width : (prefs.sidebarWidth || SB_MIN); }
+		function down(e) { if (e.button !== 0) { return; } drag.current = { x: e.clientX, w: current() }; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (er) {} document.body.classList.add('pr-ue-resizing'); e.preventDefault(); }
+		function move(e) { if (!drag.current) { return; } applySidebarWidth(Math.max(SB_MIN, drag.current.w + (drag.current.x - e.clientX))); }
+		function up() { if (!drag.current) { return; } drag.current = null; document.body.classList.remove('pr-ue-resizing'); setPref('sidebarWidth', Math.round(current())); }
+		function key(e) {
+			var w = current(), step = e.shiftKey ? 80 : 20;
+			if (e.key === 'ArrowLeft') { w += step; } else if (e.key === 'ArrowRight') { w -= step; } else if (e.key === 'Home') { w = SB_MIN; } else { return; }
+			e.preventDefault(); w = Math.max(SB_MIN, Math.min(SB_MAX, w)); applySidebarWidth(w); setPref('sidebarWidth', Math.round(w));
+		}
+		if (window.innerWidth <= 782) { return null; }
+		return el('div', { className: 'pr-ue-resizer', role: 'separator', tabIndex: 0, 'aria-orientation': 'vertical', 'aria-label': __('Resize the PublishRank SEO sidebar: drag, or use the left and right arrow keys. Double-click to reset.', 'publishrank'), 'aria-valuemin': SB_MIN, 'aria-valuemax': SB_MAX, 'aria-valuenow': Math.round(prefs.sidebarWidth || SB_MIN), title: __('Drag to resize · double-click to reset', 'publishrank'),
+			onPointerDown: down, onPointerMove: move, onPointerUp: up, onPointerCancel: up, onKeyDown: key, onDoubleClick: function () { setPref('sidebarWidth', 0); applySidebarWidth(0); } });
+	}
+
 	function SidebarBody(props) {
 		var prefs = usePrefs(), inFloat = !!(props && props.inFloat);
 		var st = useState(false), showPrefs = st[0], setShowPrefs = st[1];
@@ -753,6 +898,8 @@
 			return function () { state.listeners = state.listeners.filter(function (f) { return f !== on; }); };
 		}, []);
 		return el('div', { className: 'pr-ue-root is-' + (prefs.density || 'comfortable') },
+			inFloat ? null : el(SidebarResizer),
+			CAN_EDIT ? null : el(C.Notice, { status: 'info', isDismissible: false, className: 'pr-ue-readonly' }, __('You can view these SEO settings, but your role is not allowed to change them. Ask an administrator for the "Edit SEO fields on posts" permission.', 'publishrank')),
 			el('div', { className: 'pr-ue-head' },
 				el(Badge, { large: true }),
 				el('div', { className: 'pr-ue-head__text' }, el('strong', null, __('Live SEO score', 'publishrank')), el(SaveState), el('span', { className: 'pr-ue-help' }, __('Tabs group every SEO setting for this item.', 'publishrank'))),
@@ -778,9 +925,10 @@
 		var t = String(meta._publishrank_seo_title || ''), d = String(meta._publishrank_seo_description || ''), k = String(meta._publishrank_seo_focus_keyword || '');
 		return el('div', { className: 'pr-ue-docpanel' },
 			el('div', { className: 'pr-ue-docpanel__score' }, el(Badge, { large: true }), el('span', null, __('Live SEO score', 'publishrank'))),
-			el(C.TextControl, { __nextHasNoMarginBottom: true, label: __('Focus keyword', 'publishrank'), value: k, onChange: function (v) { setMeta('_publishrank_seo_focus_keyword', v); } }),
-			el(C.TextControl, { __nextHasNoMarginBottom: true, label: __('SEO title', 'publishrank'), help: sprintf(__('%d characters · blank = automatic', 'publishrank'), t.length), value: t, placeholder: '%%title%% %%sep%% %%sitename%%', onChange: function (v) { setMeta('_publishrank_seo_title', v); } }),
-			el(C.TextareaControl, { __nextHasNoMarginBottom: true, label: __('Meta description', 'publishrank'), help: sprintf(__('%d characters · blank = automatic', 'publishrank'), d.length), value: d, rows: 3, onChange: function (v) { setMeta('_publishrank_seo_description', v); } }),
+			CAN_EDIT ? null : el('p', { className: 'pr-ue-help' }, __('Read-only: your role cannot change SEO fields.', 'publishrank')),
+			el(C.TextControl, { __nextHasNoMarginBottom: true, disabled: !CAN_EDIT, label: __('Focus keyword', 'publishrank'), value: k, onChange: function (v) { setMeta('_publishrank_seo_focus_keyword', v); } }),
+			el(C.TextControl, { __nextHasNoMarginBottom: true, disabled: !CAN_EDIT, label: __('SEO title', 'publishrank'), help: sprintf(__('%d characters · blank = automatic', 'publishrank'), t.length), value: t, placeholder: '%%title%% %%sep%% %%sitename%%', onChange: function (v) { setMeta('_publishrank_seo_title', v); } }),
+			el(C.TextareaControl, { __nextHasNoMarginBottom: true, disabled: !CAN_EDIT, label: __('Meta description', 'publishrank'), help: sprintf(__('%d characters · blank = automatic', 'publishrank'), d.length), value: d, rows: 3, onChange: function (v) { setMeta('_publishrank_seo_description', v); } }),
 			el(GooglePreview, { compact: true }),
 			el('div', { className: 'pr-ue-actions' },
 				el(C.Button, { variant: 'primary', onClick: function () { state.go('seo', 'overview'); } }, __('Open full SEO editor', 'publishrank')),
@@ -800,6 +948,14 @@
 				if (a === FULL && prev !== FULL) { setPref('userClosed', false); }
 				prev = a;
 			});
+			// Keep the SEO launcher visible in the toolbar for publishers who never pinned or unpinned it themselves.
+			try {
+				var pinned = prefStore ? data.select(prefStore).get('core', 'pinnedItems') : undefined;
+				if ((!pinned || !Object.prototype.hasOwnProperty.call(pinned, FULL)) && !getPref('pinTouched')) {
+					var ifc = dispatchSafe('core/interface'); if (ifc && ifc.pinItem) { ifc.pinItem('core', FULL); }
+					setPref('pinTouched', true);
+				}
+			} catch (e) {}
 			var t = window.setTimeout(function () {
 				prev = activeArea(); ready = true;
 				if (!getPref('floating') && getPref('openOnLoad') && !getPref('userClosed') && window.innerWidth > 782 && prev !== FULL) { openSidebar(); prev = FULL; }
@@ -848,7 +1004,7 @@
 				PluginDocumentSettingPanel ? el(PluginDocumentSettingPanel, { name: DOC_PANEL, title: __('PublishRank SEO', 'publishrank'), className: 'pr-ue-docpanel-wrap', icon: 'chart-line' }, el(DocPanel)) : null,
 				PluginMoreMenuItem ? el(PluginMoreMenuItem, { icon: 'external', onClick: popOut }, __('PublishRank SEO movable window', 'publishrank')) : null,
 				el(FloatingWindow),
-				el(PluginSidebar, { name: SIDEBAR, title: __('PublishRank SEO', 'publishrank'), icon: el(Badge), className: 'pr-ue-sidebar pr-esc-sidebar' }, el(SidebarContent)));
+				el(PluginSidebar, { name: SIDEBAR, title: __('PublishRank SEO', 'publishrank'), icon: el('span', { className: 'pr-ue-launch' }, el(Badge), el('span', { className: 'pr-ue-launch__text', 'aria-hidden': 'true' }, __('SEO', 'publishrank'))), className: 'pr-ue-sidebar pr-esc-sidebar' }, el(SidebarContent)));
 		}
 	});
 })(window.wp, window.publishrankSeoEditor);

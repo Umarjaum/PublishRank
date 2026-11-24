@@ -367,8 +367,8 @@ final class Library {
 	public function assets( $hook ) {
 		if ( ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
 			return; }
-		wp_enqueue_style( 'publishrank-schema-library', plugins_url( 'assets/css/schema-library.css', PUBLISHRANK_SEO_FILE ), array(), PUBLISHRANK_SEO_VERSION );
-		wp_enqueue_script( 'publishrank-schema-library', plugins_url( 'assets/js/schema-library.js', PUBLISHRANK_SEO_FILE ), array(), PUBLISHRANK_SEO_VERSION . '.' . (string) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/js/schema-library.js' ), true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		wp_enqueue_style( 'publishrank-schema-library', \PublishRankSEO\Core\Branding::asset_url( 'css/schema-library.css' ), array(), PUBLISHRANK_SEO_VERSION );
+		wp_enqueue_script( 'publishrank-schema-library', \PublishRankSEO\Core\Branding::asset_url( 'js/schema-library.js' ), array(), PUBLISHRANK_SEO_VERSION . '.' . (string) @filemtime( PUBLISHRANK_SEO_PATH . 'assets/js/schema-library.js' ), true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 	}
 
 	public function meta_box( $post_type ) {

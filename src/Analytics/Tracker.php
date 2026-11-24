@@ -89,6 +89,11 @@ final class Tracker {
 		if ( ! Store::enabled() || ! Store::ready() ) {
 			return $ok;
 		}
+		// 2.26.2: per-client rate limit (filterable through publishrank_rate_limit, bucket "collect").
+		$limited = \PublishRankSEO\Core\RateLimiter::rest( 'collect', 120, 60 );
+		if ( $limited ) {
+			return $limited;
+		}
 		$body = (string) $request->get_body();
 		if ( strlen( $body ) > 2048 ) {
 			return $ok;
@@ -97,8 +102,11 @@ final class Tracker {
 		if ( ! is_array( $in ) ) {
 			$in = $request->get_json_params();
 		}
-		if ( ! is_array( $in ) || empty( $in['e'] ) || empty( $in['p'] ) ) {
+		if ( ! is_array( $in ) || empty( $in['e'] ) || empty( $in['p'] ) || ! is_scalar( $in['p'] ) ) {
 			return $ok;
+		}
+		if ( strlen( (string) $in['p'] ) > 1024 ) {
+			return new \WP_Error( 'publishrank_collect_path', __( 'Path too long.', 'publishrank' ), array( 'status' => 400 ) );
 		}
 		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? substr( sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ), 0, 400 ) : '';
 		if ( Classifier::is_bot( $ua ) ) {

@@ -401,7 +401,7 @@ final class FrontendScanner {
 			$ids[ $id ] = isset( $ids[ $id ] ) ? $ids[ $id ] + 1 : 1; }
 		if ( isset( $value['@type'] ) ) {
 			$types         = is_array( $value['@type'] ) ? $value['@type'] : array( $value['@type'] );
-			$article_types = array( 'Article', 'NewsArticle', 'BlogPosting', 'LiveBlogPosting', 'ReportageNewsArticle', 'AnalysisNewsArticle', 'OpinionNewsArticle', 'BackgroundNewsArticle', 'ReviewNewsArticle', 'SatireNewsArticle', 'AskPublicNewsArticle', 'ScholarlyArticle', 'TechArticle', 'AdvertiserContentArticle' );
+			$article_types = array( 'Article', 'NewsArticle', 'BlogPosting', 'LiveBlogPosting', 'ReportageNewsArticle', 'AnalysisNewsArticle', 'OpinionNewsArticle', 'BackgroundNewsArticle', 'ReviewNewsArticle', 'SatiricalArticle', 'SatireNewsArticle', 'AskPublicNewsArticle', 'ScholarlyArticle', 'TechArticle', 'AdvertiserContentArticle' );
 			foreach ( $types as $type ) {
 				if ( is_string( $type ) && in_array( $type, $article_types, true ) ) {
 					$articles[] = $value;

@@ -238,7 +238,7 @@ final class LiveBlogSchema {
 	public function save( $post_id, $post = null ) {
 		if ( ! isset( $_POST[ self::NONCE_FIELD ] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::NONCE_FIELD ] ) ), self::NONCE_ACTION ) ) {
 			return; }
-		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) {
+		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || ! \PublishRankSEO\Core\Capabilities::can_edit_seo( (int) $post_id ) ) {
 			return; }
 		$clean = array();
 		$posted = isset( $_POST['publishrank_live_updates'] ) && is_array( $_POST['publishrank_live_updates'] ) ? map_deep( wp_unslash( $_POST['publishrank_live_updates'] ), 'sanitize_textarea_field' ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; each field is also cleaned in clean_update().

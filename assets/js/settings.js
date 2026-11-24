@@ -137,6 +137,7 @@
 	}
 	if (search) {
 		search.addEventListener('input', applySearch);
+			search.addEventListener('search', applySearch);
 		search.addEventListener('keydown', function (e) {
 			if (e.key === 'Escape') { search.value = ''; applySearch(); }
 		});

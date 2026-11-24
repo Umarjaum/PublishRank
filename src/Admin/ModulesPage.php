@@ -130,7 +130,7 @@ final class ModulesPage {
 		}
 		echo '</div>';
 		echo '<label class="screen-reader-text" for="pr-modules-search">' . esc_html__( 'Search features', 'publishrank' ) . '</label>';
-		echo '<span class="pr-modules-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="pr-modules-search" placeholder="' . esc_attr__( 'Search features…', 'publishrank' ) . '" autocomplete="off" data-pr-modules-search /></span>';
+		echo '<span class="pr-modules-search"><button type="button" class="pr-modules-search__btn" aria-label="' . esc_attr__( 'Search features', 'publishrank' ) . '"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button><input type="search" id="pr-modules-search" placeholder="' . esc_attr__( 'Search features…', 'publishrank' ) . '" autocomplete="off" data-pr-modules-search /><button type="button" class="pr-modules-search__clear" aria-label="' . esc_attr__( 'Clear search', 'publishrank' ) . '" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></span>';
 		echo '</div>';
 
 		self::render_form( self::SLUG );

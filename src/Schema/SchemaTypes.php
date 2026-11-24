@@ -60,7 +60,7 @@ final class SchemaTypes {
 			'AdvertiserContentArticle' => self::label( 'Sponsored Article' ),
 			'BackgroundNewsArticle'    => self::label( 'Background News Article' ),
 			'ReviewNewsArticle'        => self::label( 'Review News Article' ),
-			'SatireNewsArticle'        => self::label( 'Satire News Article' ),
+			'SatiricalArticle'         => self::label( 'Satirical Article' ),
 			'AskPublicNewsArticle'     => self::label( 'Ask Public News Article' ),
 			'Article'                  => self::label( 'Article' ),
 			'BlogPosting'              => self::label( 'Blog Posting' ),
@@ -119,7 +119,8 @@ final class SchemaTypes {
 		);
 	}
 	public static function aliases() {
-		return array(); }
+		// 2.26.2: "SatireNewsArticle" is not a schema.org type; posts saved with it now output SatiricalArticle.
+		return array( 'SatireNewsArticle' => 'SatiricalArticle' ); }
 	public static function legal_types() {
 		return array(); }
 	/** Media schemas supported by this news-publisher plugin. */
@@ -148,6 +149,11 @@ final class SchemaTypes {
 		$raw = trim( (string) $key );
 		if ( '' === $raw ) {
 			return ''; }
+		foreach ( self::aliases() as $old => $new ) {
+			if ( 0 === strcasecmp( $old, $raw ) ) {
+				$raw = $new;
+			}
+		}
 		foreach ( array_keys( self::all() ) as $type ) {
 			if ( 0 === strcasecmp( $type, $raw ) ) {
 				return $type; }

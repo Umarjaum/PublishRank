@@ -4,40 +4,25 @@ Tags: seo, sitemap, schema, news, redirects
 Requires at least: 6.3
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 2.26.1
+Stable tag: 2.26.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: publishrank
 
-Free, open-source WordPress SEO for businesses and publishers; current WordPress/PHP feature tests passed across business types and news sites.
+SEO tools for news publishers: News SEO, sitemaps, schema, metadata, redirects, and technical controls.
 
 == Description ==
 
-PublishRank 2.26.1 brings a tidier dashboard, one Gutenberg SEO editor with movable-window and live-preview options, safer media URL migration, improved 404 diagnosis, reviewable bulk SEO editing, Schema Studio refinements and better video sitemap discovery.
+PublishRank 2.26.2 adds Edit SEO permission checks, a unified Classic Editor dock, a Media tab with image licence fields, expanded search and social preview simulations, and a new REST API for SEO, analysis, head output, schema and sitemaps. It also limits analytics collection and protects public REST data. Back up first and review settings on a staging copy before updating a busy production site.
 
-The 2.26.1 verification report documents its specific sandbox testing and limits. Separately, the maintainer reports testing the latest available WordPress and PHP versions across multiple business categories and news sites, with feature checks working as expected. Site-specific hosting, themes and plugins can still affect compatibility; no plugin can guarantee an issue-free experience on every configuration. See the [complete 2.26.1 verification report](https://publishrankseo.vercel.app/reports/publishrank-2.26.1-release-report.md) for its findings and limits.
+PublishRank is a free, open-source WordPress SEO plugin for businesses, stores, service providers, bloggers, creators, news publishers, newspapers, magazines and editorial teams. It brings technical SEO, Local SEO, WooCommerce SEO, site maintenance and optional newsroom workflows together. Compare the feature set with your current setup before switching; features and workflows are not identical across plugins.
 
-The [2.26.1 release history](https://publishrankseo.vercel.app/changelog#v2-26-1) and [verification report](https://publishrankseo.vercel.app/reports/publishrank-2.26.1-release-report.md) describe this release. The 2.26.0 video remains available as a previous-release walkthrough on the [official website](https://publishrankseo.vercel.app/video).
-
-PublishRank is a free, open-source WordPress SEO plugin for businesses, stores, service providers, creators, publishers and websites of every kind. It brings together technical SEO, structured data, metadata, sitemaps, Local SEO, WooCommerce SEO, redirects, security, analytics and optional editorial workflows. Compare features and workflows with your current setup before switching; plugins are not identical, and SEO tools cannot guarantee rankings or search-result presentation.
-
-Minimum requirements are WordPress 6.3 and PHP 7.4. The 2.26.1 report records a WordPress 7.1.5 / PHP 8.3 / SQLite sandbox; PHP 7.4 received static syntax scanning only. Its untested environments and integrations remain listed in the report; the additional maintainer testing above is separate from that report's test record. The 2.26.0 reports cover that earlier release separately.
+Requires WordPress 6.3+ and PHP 7.4+; tested up to WordPress 7.1. The 2.26.2 report records a WordPress 7.1.5, PHP 8.3 and SQLite test environment. WordPress 6.3 and PHP 7.4 were not runtime-tested in that report; PHP 7.4 received static compatibility scanning only.
 
 Copyright and project rights: Muhammad Umar Jabbar.
 
 Features include:
 
-* **Gutenberg SEO editor:** one persistent sidebar for SEO, Social, Schema, Advanced and Insights, with saved preferences and no duplicate SEO boxes below Gutenberg; the editor can be moved to a resizable window, minimised and docked back.
-* **Live previews:** Google desktop/mobile and Facebook/LinkedIn/X cards update from unsaved edits; title and description length bars show short, in-range, too-long or missing values.
-* **Media Link Manager:** find media references, preview URL changes, check collisions and MIME types, verify migrations, preserve attachment GUIDs, create redirects for moved files, and retry or roll back. Ambiguous references are reported, not guessed.
-* **Advanced 404 Monitor:** likely causes and linking pages are shown; redirects are offered only for high-confidence fixes. Missing uploads return a true 404 unless a redirect exists.
-* **Bulk SEO Editor:** filter and review edits before saving, skip conflicting changes, use change history and undo, and import/export CSV with spreadsheet-formula safeguards.
-* **Schema Studio and video sitemaps:** guided schema editing separates Schema.org validity from Google requirements and recommendations; YouTube/Vimeo Embed blocks and pasted links are discovered without inventing thumbnails or publication dates.
-* **Responsive and accessibility refinements:** shared focus, touch-target, reduced-motion and high-contrast handling; automated checks in the report are spot checks, not a full WCAG audit.
-
-* Schema Studio with reusable templates for a 246-type Schema.org catalog, field mapping, live JSON-LD previews and template validation; templates are disabled by default.
-* Schema diagnostics for reviewing structured-data errors and warnings.
-* Multi-location Local SEO for up to 50 locations, each with configurable business details and location pages.
 * Features screen (formerly SEO Modules) with instant on/off toggle cards for sitemaps, schema, social metadata, the live SEO score, internal links, breadcrumbs, redirects, the 404 monitor, robots.txt, llms.txt and IndexNow.
 * Floating SEO Analysis panel in the editor with a live score ring out of 100, passed checks and items to improve, plus side-by-side Google, Facebook/LinkedIn and X previews.
 * SEO titles, descriptions, canonicals, robots directives, Open Graph and X/Twitter metadata.
@@ -74,7 +59,7 @@ PublishRank does not guarantee rankings, crawling, indexing, traffic, or inclusi
 10. Sitemap Hub: your sitemap address, coverage and submission links.
 
 == Source code ==
-PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained source repository is [github.com/Umarjaum/PublishRank](https://github.com/Umarjaum/PublishRank). First-party runtime assets in `assets/` are shipped unminified and human-readable, with corresponding first-party sources in `src/assets/`. Font Awesome Free 7.3.1 is bundled locally under `assets/vendor/fontawesome-free-7.3.1/` with its upstream license. There is no build step or third-party asset CDN request.
+PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained source repository is [github.com/Umarjaum/PublishRank](https://github.com/Umarjaum/PublishRank). First-party runtime assets in `assets/` are shipped unminified and human-readable; they are the source (there is no separate copy). Font Awesome Free 7.3.1 is bundled locally under `assets/vendor/fontawesome-free-7.3.1/` with its upstream license. There is no build step or third-party asset CDN request.
 
 == Installation ==
 
@@ -87,13 +72,10 @@ PublishRank includes reviewable PHP, JavaScript and CSS source. The maintained s
 == Documentation ==
 
 * In WordPress: **PublishRank → Documentation & Help** explains titles, variables, output controls, breadcrumbs, sitemaps, schema, robots, redirects, the robust 404 Monitor, IndexNow, Baidu, diagnostics, the admin menu and toolbar, the sitemap browser view, versions and troubleshooting.
-* In the package: `docs/release-2.25.1/` contains the feature catalogue and module guide (`FEATURE-CATALOG.md`), installation and upgrade instructions, and the verification, security, performance, compatibility and licensing reports for this release.
+* In the package: `docs/release-2.26.2/` contains the REST API reference and validation report for this release; the complete feature list and module guidance are available in PublishRank → Features and PublishRank → Documentation & Help.
 * Online: [publishrankseo.vercel.app](https://publishrankseo.vercel.app/).
 
 == Frequently Asked Questions ==
-
-= Has PublishRank been tested on business and news sites? =
-The maintainer reports testing the latest available WordPress and PHP versions across multiple business categories and news sites, with feature checks working as expected. The 2.26.1 verification report documents its own sandbox scope. WordPress configurations vary, so back up first and use a staging site where possible.
 
 = Does PublishRank add anything to my page source? =
 Technical HTML-source provenance markers are always enabled on public HTML pages and cannot be disabled in settings. Source markers are not added to feeds, REST/AJAX responses or sitemaps. Separately, PublishRank displays a small branded link in the WordPress admin footer.
@@ -120,7 +102,7 @@ A readable view of the same sitemap search engines fetch as plain XML: totals, a
 Turn it on with **Turn on 404 monitoring** on **PublishRank → 404 Monitor** (or in **Features** or **Settings**), then review entries at **PublishRank → 404 Monitor**. The monitor aggregates normalized paths by browser, mobile or crawler category, records hit counts and first/last seen times, and keeps only the latest useful referrer path without storing IP addresses, cookies, request bodies or full query strings. It ignores admin, AJAX, cron, REST, non-GET/HEAD, common static-asset and infrastructure-probe requests. The log is rate-limited, protected against concurrent write loss, retained for 90 days and capped at 500 entries. Administrators can search paths, filter visitor categories, sort by hits or recency, dismiss entries, clear the log, or create validated same-site redirects. It is a bounded diagnostic aid, not a complete access log, analytics system, WAF or DDoS defense.
 
 = Where is the complete feature list? =
-The package guide `docs/release-2.25.1/FEATURE-CATALOG.md` describes every module, with the new and rebuilt 2.25.1 features marked. Inside WordPress, PublishRank → Features lists every module with a switch, and PublishRank → Documentation & Help explains each one.
+Inside WordPress, PublishRank → Features lists every module with a switch, and PublishRank → Documentation & Help explains each one. The package includes a 2.26.2 REST API reference and validation report under `docs/release-2.26.2/`.
 
 = Which logo does PublishRank use? =
 One file, `assets/images/publishrank-brand-mark.png`, shown in the admin sidebar, toolbar, screen headers, setup wizard and sitemap view. No SVG or alternate icon files are packaged.
@@ -185,12 +167,44 @@ Other website links in the administration interface (including the Schema.org vo
 
 == Changelog ==
 
+= 2.26.2 =
+* **Security: SEO editing now needs the "Edit SEO" permission.** Saving SEO fields from the editor, the block editor's REST requests, Localized SEO and Live Blog fields all check it together with "edit this post". Roles that could already edit posts keep it after the update (permission registry 6), so nobody loses access; you can now remove it from a role in PublishRank → Roles.
+* **Fixed: saving in the block editor ran other plugins' save actions twice.** The editor bridge used to replay every `save_post` handler on the site. It now runs only PublishRank's own field savers, once, and IndexNow, sitemaps, link counts, analytics, Markdown delivery, the schema index and Article Intelligence no longer react to the bridge request. Add-ons that relied on the old behaviour can use the `publishrank_editor_bridge_replay_all_hooks` filter. While the bridge saves, the editor's Save button is locked.
+* **Classic Editor: all seven SEO boxes in one dock.** Fields, Preview, Analysis, Schema, Multilingual and Media tabs, with field sub-tabs; the dock can be floated, dragged, resized (size remembered) and shows the live score. Clicking a tab always opens it; the arrow folds the panel. Users without the Edit SEO permission see the values read-only.
+* **New Media tab (block and Classic editor).** Lists every image the item uses (featured, social, author, video thumbnail, images in the content), local or external. Edit Media Library alt text, title, caption, description and the new credit/licence fields in place, with protection against overwriting someone else's change (HTTP 409). Check an external social image address, pick a social image, or start a safe dry run to point every use of a file to a new address (applied in Media Link Manager).
+* **Image licence metadata.** Credit line, creator, copyright notice, licence URL and "where to license" page per image, printed on ImageObject as `creditText`, `creator`, `copyrightNotice`, `license` and `acquireLicensePage` (Google image metadata). IPTC credit and copyright from uploads are used when the fields are empty.
+* **Previews: Bing, LinkedIn and WhatsApp.** The search preview switches between Google and Bing (desktop/mobile); Facebook, LinkedIn, WhatsApp and X are separate cards with the real image size, aspect ratio and a warning when the image is too small. Every card is labelled as a simulation.
+* **Block editor sidebar.** Visible "SEO" button with the live score in the toolbar, drag-to-resize sidebar (width remembered), resizable floating window, crimson accents everywhere, read-only notice.
+* **New REST API (`publishrank/v1`).** `GET/PATCH /posts/{id}/seo`, `GET /posts/{id}/analysis`, `GET /posts/{id}/head` (title, meta, links and JSON-LD for headless sites), `GET /posts/{id}/schema`, `GET /sitemaps`. See `docs/release-2.26.2/REST-API.md`.
+* **Privacy: focus keyword and keyphrases are no longer public in the REST API.** The `publishrank_seo` REST field returns editorial strategy fields only to users who can edit the post (`publishrank_rest_public_editorial_fields` restores the old behaviour).
+* **Analytics: rate limit** on `/publishrank/v1/collect` (120 hits per minute per visitor, filterable) and over-long paths are rejected.
+* **Fixed: invalid schema type "SatireNewsArticle".** It is not a schema.org type; the option is now SatiricalArticle and posts saved with the old value output SatiricalArticle automatically.
+* **Schema Studio:** each Google requirement shows the date it was last reviewed.
+* **Removed the stale `src/assets/` copies** (they had drifted from the shipped files). `assets/` is the only source.
+* **PHP 7.4:** one closure that PHPCompatibility flagged for PHP 7.4 was changed.
+
 = 2.26.1 =
-* **Gutenberg editor:** consolidates PublishRank SEO editing in one sidebar, removes duplicate boxes below Gutenberg, supports a movable/resizable window and provides live Google and social previews.
-* **Safer media maintenance:** adds Media Link Manager, dry-run URL migration, collision/MIME checks, verification, rollback, media-health scans and optional media-host rewriting; ambiguous references are not guessed.
-* **404 Monitor:** adds cause diagnosis, own-site linking pages and high-confidence redirects; missing uploads return a true 404 unless redirected.
-* **Bulk SEO Editor:** adds review-before-save editing, conflict protection, change history/undo and safeguarded CSV import/export.
-* **Schema Studio, video sitemap, dashboard, responsive and accessibility refinements.** See the [complete 2.26.1 changelog](https://github.com/Umarjaum/PublishRank/blob/main/changelog.txt) and [release verification report](https://publishrankseo.vercel.app/reports/publishrank-2.26.1-release-report.md).
+* **Tidier dashboard.** Feature switches stay one row tall (integrations that need another plugin now show a short "Needs WooCommerce · Get the plugin" line instead of a large box that stretched the whole row), the "Your site today" numbers are readable again with the score ring beside its text, Sitemap URLs and Current configuration sit side by side on wide screens, Tools Showcase uses compact cards, and the Technical health table turns into stacked rows on phones.
+* **Movable SEO window and green length bars.** The PublishRank SEO editor can be popped out of the sidebar (button in its header, the Post tab panel, the Options menu or Preferences) into a window you can drag anywhere, minimise to its title bar, resize and dock back; its position is remembered. On phones it opens as a bottom sheet. Title and description length bars in the Google, social and live previews are green inside the recommended range, amber when short and red when too long or missing.
+* **Google and social previews in the editor sidebar.** Google result preview (desktop/mobile) above the SEO title and description, Facebook/LinkedIn and X card previews at the top of the Social tab, and a compact Google preview in the Post tab panel, all updating live from unsaved edits.
+* **One SEO editor in Gutenberg.** All PublishRank SEO editing (overview and score, search appearance, title and description, focus keywords, social previews, canonical and robots, Schema Studio, advanced, internal links, Article Intelligence, newsroom details and diagnostics) now lives in a single panel in the permanent right-hand sidebar. It is listed in the editor's Options menu as "PublishRank SEO editor" and "PublishRank SEO panel" on desktop and on phones, can be pinned or closed, and remembers your last section, expanded state and density. "Reset editor preferences" restores the defaults.
+* **No more SEO boxes below the Gutenberg editor.** SEO Overrides, Schema Selection, Schema Studio, Schema Library, Localized SEO, Article Intelligence and Live Preview are no longer registered below the block editor; their fields moved into the sidebar and still save to the same post meta. The Classic Editor keeps its consolidated SEO box. Mastodon sharing and newsroom source review are unchanged.
+* **Fixed: opening an SEO tab could mark the post as changed** ("unsaved changes" prompt) without any edit. The older floating dock no longer tracks changes inside the block editor.
+* **Schema Studio guided workflow:** searchable, ranked schema type picker with descriptions, a step-by-step path (type → properties → values → data mapping → preview → validation → save), clearer separation of Schema.org validity, Google requirements and optional recommendations, and a preview that never reports rich-result eligibility for an entity that is not printed on the sample page.
+* **New: Media Link Manager** (PublishRank → Media Links). Search media by file name, title, ID or any URL (including size variants and query strings), see dimensions, type, size, original and current URL, and every reference PublishRank can find: post content, block attributes, featured images, post meta, term and user meta, options, comments, WooCommerce galleries and variation images, SEO/social/schema images and logos. Unsupported or ambiguous references (for example PHP objects inside serialized data) are listed, never silently changed.
+* **Safe media URL changes:** rename a file, move it to another uploads folder, point references at another URL, or re-base a whole media host. Each change starts as a dry run with a record-by-record preview, checks destination collisions and MIME type, applies in batches inside a database transaction where available, keeps a reversible change log, never rewrites attachment GUIDs, keeps the original file until you finalise, verifies the new URL and the updated records, and can be retried or rolled back. Finalising can add a redirect from the old file address.
+* **Media health scan:** missing files, duplicate files and content that links to uploads that no longer exist.
+* **Media host / CDN:** optional rewriting of attachment URLs, srcset and content images to your configured media host, with a connection test.
+* **New permission:** "Manage media links", granted automatically to roles that can already manage PublishRank settings.
+* **404 Monitor:** each missing address now shows its likely cause (extra characters or punctuation in the link, wrong letter case, moved page, old date-based address, unpublished or trashed post, missing or moved media file, page number past the end, probe for a file that never existed) and, where the cause is certain, the exact destination. A new "Causes & broken links" tab summarises causes, lists pages on your own site that link to missing addresses (with "Edit linking page"), and can redirect every address with an exact fix in one step. Every referring page is recorded (host and path only, no IP address) and follows the existing retention setting.
+* **Fixed: a missing file under uploads could show the home page with status 200** (a "soft 404") or redirect to the same missing address with a trailing slash. It now answers 404 unless a redirect exists.
+* **Bulk SEO Editor rebuilt** (Publisher Toolkit). Edit SEO title, meta description, robots, canonical and focus keyword inline for many items, or set one value on selected rows. Filter by content type, status, category and by problems: missing titles or descriptions, duplicate titles or descriptions, over-long titles or descriptions, noindex, custom canonical. Every change goes through a review screen (before/after) and is validated; nothing is saved until you confirm. Changes edited by someone else after your review are skipped, not overwritten. A new Change history tab can undo any batch (fields edited again since are kept).
+* **CSV export and import** for SEO fields, with the same review step; spreadsheet formulas are neutralised on export.
+* **Fixed: bulk "noindex" in the Publisher Toolkit cleared the robots setting** instead of saving it.
+* **Video sitemap:** YouTube and Vimeo videos added with the block editor's Embed block or pasted as a link on their own line are now found (previously only iframes and HTML5 video). YouTube's own thumbnail is used when the post has none. Videos without any thumbnail are left out instead of guessed, and no publication date is claimed for third-party videos.
+* **Editor:** the score card's "Full report" link opens Article Intelligence in the PublishRank SEO sidebar.
+* **Accessibility:** help icons, chart period buttons and small link buttons now meet the 24 px minimum target size.
+* **Responsive design:** breakpoints consolidated to 360, 430, 600, 782, 960, 1024, 1280 and 1440 px across all 45 stylesheets; tables scroll inside their card instead of widening the page (Redirects on phones); image-size and field grids fit the 280 px editor sidebar; shared focus, touch-size, reduced-motion and high-contrast rules for every PublishRank screen.
 
 = 2.26.0 =
 * **New: Schema Studio** (PublishRank → Schema Studio). Build structured data from templates for 246 catalogued Schema.org types (website and publishing, organisations, healthcare, e-commerce, education, food and hospitality, events, property and services, jobs, media, navigation), each checked against the current Schema.org vocabulary. Every property can be a fixed value or a dynamic field (post title, excerpt, featured image, author, dates, canonical URL, site identity, Local SEO business data, WooCommerce price/stock/rating/brand, custom fields, Advanced Custom Fields fields, taxonomies and term meta) chosen from a menu, with no PHP. Templates can be created, edited, duplicated, deleted, set as default, assigned to post types, taxonomies, archives, the front page, individual items or Local SEO business categories, prioritised, merged into the matching built-in entity or added as a new one, exported and imported. Editors can switch templates on or off per post. Built-in templates ship switched off, so existing output never changes until you enable one.
@@ -435,5 +449,5 @@ Other website links in the administration interface (including the Schema.org vo
 
 == Upgrade Notice ==
 
-= 2.26.1 =
-This release consolidates Gutenberg SEO editing, improves media URL workflows and bulk editing, and advances the database schema from version 7 to 8. Back up first and test on staging before updating a busy site; consult the 2.26.1 verification report for its sandbox test scope and limitations.
+= 2.26.2 =
+Adds Edit SEO permission checks, a unified Classic Editor dock, image metadata and licence fields, search/social preview simulations, and the publishrank/v1 REST API; also improves REST privacy, analytics limits and schema handling. Review the release report and test on staging before production updates.

@@ -54,8 +54,16 @@ final class RestFields {
 		if ( 'publish' !== $status && ! current_user_can( 'read_post', $post_id ) ) {
 			return array(); }
 		$seo   = SeoData::for_post( $post_id );
+		/**
+		 * 2.26.2: editorial strategy fields (focus keyword, keyphrases, related terms, entity topic, cornerstone) are
+		 * returned only to users who can edit the post. Return true to restore the pre-2.26.2 public behaviour.
+		 *
+		 * @param bool $public  Whether anonymous readers receive the editorial fields.
+		 * @param int  $post_id Post ID.
+		 */
+		$editorial = current_user_can( 'edit_post', $post_id ) || (bool) apply_filters( 'publishrank_rest_public_editorial_fields', false, $post_id );
 		$image = isset( $seo['image'] ) && is_array( $seo['image'] ) ? $seo['image'] : array();
-		return array(
+		$out = array(
 			'title'                => isset( $seo['title'] ) ? $seo['title'] : '',
 			'description'          => isset( $seo['description'] ) ? $seo['description'] : '',
 			'canonical'            => isset( $seo['canonical'] ) ? $seo['canonical'] : '',
@@ -75,6 +83,19 @@ final class RestFields {
 				'type'   => isset( $image['type'] ) ? $image['type'] : '',
 			),
 			'sources'              => isset( $seo['sources'] ) ? $seo['sources'] : array(),
+			'reading_minutes'      => ReadingExperience::reading_time( $post_id ),
+			'links'                => LinkManager::counts( $post_id ),
+			'schema_enabled'       => \PublishRankSEO\Core\OutputSettings::schema(),
+		);
+		if ( $editorial ) {
+			$out = array_merge( $out, self::editorial( $post_id ) );
+		}
+		return $out;
+	}
+
+	/** Editorial strategy fields. @return array<string,mixed> */
+	public static function editorial( $post_id ) {
+		return array(
 			'focus_keyword'        => PostMeta::get( $post_id, PostMeta::FOCUS_KEYWORD, '' ),
 			'primary_keyphrase'    => PostMeta::get( $post_id, PostMeta::PRIMARY_KEYPHRASE, '' ),
 			'secondary_keyphrases' => PostMeta::get_list( $post_id, PostMeta::SECONDARY_KEYPHRASES ),
@@ -82,9 +103,6 @@ final class RestFields {
 			'related_terms'        => PostMeta::get_list( $post_id, PostMeta::RELATED_TERMS ),
 			'entity_topic'         => PostMeta::get( $post_id, PostMeta::ENTITY_TOPIC, '' ),
 			'cornerstone'          => '1' === PostMeta::get( $post_id, PostMeta::CORNERSTONE, '0' ),
-			'reading_minutes'      => ReadingExperience::reading_time( $post_id ),
-			'links'                => LinkManager::counts( $post_id ),
-			'schema_enabled'       => \PublishRankSEO\Core\OutputSettings::schema(),
 		);
 	}
 }

@@ -15,6 +15,7 @@ final class SchemaIndexEndpoint {
 	public function register() {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 		add_action( 'save_post', array( $this, 'invalidate_cache' ) );
+		add_action( 'publishrank_editor_bridge_after_save', array( $this, 'delete_index_transients_public' ) );
 		add_action( 'deleted_post', array( $this, 'invalidate_cache' ) );
 		add_action( 'transition_post_status', array( $this, 'invalidate_on_status_change' ), 10, 3 );
 	}
@@ -163,7 +164,15 @@ final class SchemaIndexEndpoint {
 		return $response;
 	}
 
+	/** Cache refresh after the block editor bridge saved SEO fields (runs once per Update). */
+	public function delete_index_transients_public() {
+		$this->delete_index_transients();
+	}
+
 	public function invalidate_cache() {
+		if ( \PublishRankSEO\Editor\UnifiedEditor::is_bridge_request() ) {
+			return; // Saved once by the post save itself; never again from the editor save bridge.
+		}
 		$this->delete_index_transients();
 	}
 

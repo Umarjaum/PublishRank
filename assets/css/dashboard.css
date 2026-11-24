@@ -65,7 +65,10 @@ body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-dash-metrics .p
 /* ---------- Tools Showcase ---------- */
 body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-dashboard-workspace { container-type: inline-size; }
 body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 12px 0 18px; }
-body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar input[type="search"] { flex: 1 1 260px; width: auto; max-width: 440px; min-height: 40px; margin: 0; }
+body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar .pr-tools-search { flex: 1 1 260px; max-width: 440px; }
+body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar .pr-tools-search input[type="search"] { width: 100%; min-width: 0; min-height: 40px; margin: 0; padding-inline: 38px 34px; border-color: #E2C6D2; border-radius: var(--pw-pill, 999px); }
+body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar .pr-tools-search .pr-modules-search__btn { inset-inline-start: 6px; border-radius: 999px; }
+body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar .pr-tools-search .pr-modules-search__clear { inset-inline-end: 6px; border-radius: 999px; }
 body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar select { flex: 0 1 220px; height: 40px; min-height: 40px; margin: 0; padding: 0 30px 0 12px; line-height: 38px; }
 body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar .button { min-height: 40px; margin: 0; line-height: 38px; }
 body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar #pr-tools-count { margin-left: auto; }
@@ -95,7 +98,7 @@ body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-health-summary 
 	body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-hero { padding: 24px 18px; gap: 20px; }
 	body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-hero__actions { gap: 8px; }
 	body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-hero__actions .pr-btn { min-height: 44px; padding: 8px 16px; }
-	body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar input[type="search"] { flex: 1 1 100%; max-width: none; }
+	body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar .pr-tools-search { flex: 1 1 100%; max-width: none; }
 	body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar select { flex: 1 1 150px; }
 	body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tools-toolbar #pr-tools-count { flex: 1 1 100%; margin: 0; }
 	body.toplevel_page_publishrank-seo-dashboard #wpbody-content .pr-tool-group .pr-action-card { padding: 14px; column-gap: 12px; }

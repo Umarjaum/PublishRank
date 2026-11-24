@@ -144,6 +144,7 @@ final class Plugin {
 			$this->loader->register( LinkManager::class, false );
 			$this->loader->register( ResourceHints::class, false );
 		$this->loader->register( RestFields::class, false );
+		$this->loader->register( \PublishRankSEO\API\PostSeoController::class, false );
 		// Third-party integrations detect their host plugin lazily, so load order does not matter.
 		$this->loader->register( \PublishRankSEO\Integrations\BbPressIntegration::class, false );
 		$this->loader->register( \PublishRankSEO\Integrations\BuddyPressIntegration::class, false );
@@ -303,6 +304,8 @@ final class Plugin {
 				SitemapCursorStore::bump( 'taxonomy' );
 			};
 			add_action( 'save_post', $invalidate_post, 20, 1 );
+			// SEO fields saved by the block editor bridge (robots, canonical, schema) change sitemap output too.
+			add_action( 'publishrank_editor_bridge_after_save', $invalidate_post, 20, 1 );
 			add_action( 'deleted_post', $invalidate_post, 20, 1 );
 			// Publish, unpublish, trash, restore and scheduled-publish transitions do not all fire save_post.
 			add_action(

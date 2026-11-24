@@ -114,5 +114,8 @@
 			applyFilter();
 		});
 	});
-	if (search) { search.addEventListener('input', applyFilter); }
+		if (search) {
+			search.addEventListener('input', applyFilter);
+			search.addEventListener('search', applyFilter);
+		}
 }());

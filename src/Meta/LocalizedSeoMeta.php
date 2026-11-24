@@ -134,7 +134,7 @@ final class LocalizedSeoMeta {
 	}
 
 	public function save( $post_id, $post ) {
-		if ( ! isset( $_POST['publishrank_localized_seo_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['publishrank_localized_seo_nonce'] ) ), 'publishrank_localized_seo' ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) { return; }
+		if ( ! isset( $_POST['publishrank_localized_seo_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['publishrank_localized_seo_nonce'] ) ), 'publishrank_localized_seo' ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || ! \PublishRankSEO\Core\Capabilities::can_edit_seo( (int) $post_id ) ) { return; }
 		$posted = isset( $_POST['publishrank_seo_localized'] ) && is_array( $_POST['publishrank_seo_localized'] ) ? wp_unslash( $_POST['publishrank_seo_localized'] ) : array();
 		$optional = self::optional_locales();
 		$opted_in = isset( $_POST['publishrank_seo_localized_on'] ) && is_array( $_POST['publishrank_seo_localized_on'] ) ? array_keys( wp_unslash( $_POST['publishrank_seo_localized_on'] ) ) : array();

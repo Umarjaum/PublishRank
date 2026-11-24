@@ -412,7 +412,7 @@ final class HelpDocumentationPage {
 		}
 		echo '</div>';
 		echo '<label class="screen-reader-text" for="pr-docs-search">' . esc_html__( 'Search help', 'publishrank' ) . '</label>';
-		echo '<span class="pr-modules-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="pr-docs-search" placeholder="' . esc_attr__( 'Search help…', 'publishrank' ) . '" autocomplete="off" data-pr-docs-search /></span>';
+		echo '<span class="pr-modules-search"><button type="button" class="pr-modules-search__btn" aria-label="' . esc_attr__( 'Search help', 'publishrank' ) . '"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button><input type="search" id="pr-docs-search" placeholder="' . esc_attr__( 'Search help…', 'publishrank' ) . '" autocomplete="off" data-pr-docs-search /><button type="button" class="pr-modules-search__clear" aria-label="' . esc_attr__( 'Clear search', 'publishrank' ) . '" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></span>';
 		echo '</div>';
 		echo '<p class="pr-docs-count" data-pr-docs-count role="status" aria-live="polite"></p>';
 

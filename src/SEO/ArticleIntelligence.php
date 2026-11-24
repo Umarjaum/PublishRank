@@ -78,7 +78,6 @@ final class ArticleIntelligence {
 		$post_type = is_string( $post_type ) && '' !== $post_type ? $post_type : 'post';
 		if ( ! in_array( $post_type, self::supported_post_types(), true ) ) {
 			return; }
-		add_filter( 'postbox_classes_' . $post_type . '_publishrank_article_intelligence', array( __CLASS__, 'collapse_by_default' ) );
 		add_meta_box(
 			'publishrank_article_intelligence',
 			__( 'PublishRank Fix Assistant & Full Report', 'publishrank' ),
@@ -90,6 +89,9 @@ final class ArticleIntelligence {
 	}
 
 	/**
+	 * Deprecated in 2.26.2 and no longer registered: the Fix Assistant is never printed as a postbox (it is a tab in
+	 * the Classic dock and a group in the block editor sidebar). Kept so third-party callers do not fatal.
+	 *
 	 * The floating "SEO Analysis" panel is the single score summary in the editor, so the full report box
 	 * starts collapsed instead of showing a second copy of the same score. Editors can still expand it
 	 * (WordPress remembers their choice per user).
@@ -174,6 +176,9 @@ final class ArticleIntelligence {
 	}
 
 	public function store_on_save( $post_id, $post, $update = true ) {
+		if ( \PublishRankSEO\Editor\UnifiedEditor::is_bridge_request() ) {
+			return; // Saved once by the post save itself; never again from the editor save bridge.
+		}
 		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || ! $post instanceof \WP_Post ) {
 			return; }
 		if ( 'auto-draft' === $post->post_status || ! in_array( $post->post_type, self::supported_post_types(), true ) ) {

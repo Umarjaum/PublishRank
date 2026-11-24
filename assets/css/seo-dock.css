@@ -114,3 +114,25 @@
 .pr-seodock input[type=radio]:checked,#publishrank-mastodon input[type=radio]:checked{border-color:#9B1245}
 .pr-seodock input[type=radio]:checked::before,#publishrank-mastodon input[type=radio]:checked::before{background-color:#9B1245}
 .pr-seodock input[type=checkbox]:focus,.pr-seodock input[type=radio]:focus,#publishrank-mastodon input[type=checkbox]:focus{border-color:#9B1245;box-shadow:0 0 0 2px rgba(155,18,69,.25)}
+
+/* ---- 2.26.2: two-level tabs, score, resize, read-only ---- */
+.pr-seodock__score{flex:none;min-width:30px;height:24px;padding:0 7px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#f0f0f1;color:#50575e;box-sizing:border-box}
+.pr-seodock__score:empty{display:none}
+.pr-seodock__score.is-excellent,.pr-seodock__score.is-good{background:#E7F5EC;color:#0A6B2E}
+.pr-seodock__score.is-ok{background:#FFF4DE;color:#8A5A00}
+.pr-seodock__score.is-bad{background:#FCEBF2;color:#9B1245}
+.pr-seodock__tabbar{border-bottom:0}
+.pr-seodock--classic .pr-seodock__tabs .pr-seodock__tab{border-radius:8px;padding:7px 14px;font-weight:500}
+.pr-seodock__subtabs{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 4px;padding:3px;border-radius:9px;background:#f6f7f7;border:1px solid #ececec}
+.pr-seodock__subtabs[hidden]{display:none}
+.pr-seodock__subtabs .pr-seodock__tab{background:transparent;border-radius:7px;padding:5px 10px;font-size:12px}
+.pr-seodock__subtabs .pr-seodock__tab.is-active{background:#fff;color:#9B1245;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.pr-seodock__boxtitle{margin:16px 0 6px;padding-bottom:6px;font-size:13px;font-weight:600;border-bottom:1px solid #f0f0f1;color:#1d2327}
+.pr-seodock__box:first-of-type>.pr-seodock__boxtitle{margin-top:8px}
+.pr-seodock__box+.pr-seodock__box>.pr-seodock__boxtitle{margin-top:22px}
+.pr-seodock__readonly{margin:10px 0!important}
+.pr-seodock__resize{display:none;position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 0 50%,#9B1245 50% 58%,transparent 58% 70%,#9B1245 70% 78%,transparent 78%);opacity:.65;border-radius:0 0 5px 0}
+.pr-seodock--classic.is-floating .pr-seodock__resize{display:block}
+.pr-seodock--classic.is-floating{display:flex;flex-direction:column;max-height:calc(100vh - 60px)}
+.pr-seodock--classic.is-floating .pr-seodock__panes{flex:1 1 auto;max-height:none;min-height:0}
+@media (max-width:782px){.pr-seodock__resize{display:none!important}}

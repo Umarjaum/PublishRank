@@ -13,7 +13,7 @@ final class SettingsPage {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 10 );
 		add_action( 'admin_init', array( $this, 'settings' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ), 1005 );
 	}
 
 	/** Register the settings page. */
@@ -26,7 +26,7 @@ final class SettingsPage {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( 'publishrank' === $page ) {
 			VariablePicker::enqueue( '' );
-			wp_enqueue_style( 'publishrank-settings-ui', \PublishRankSEO\Core\Branding::asset_url( 'css/settings.css' ), array(), AdminShell::ver( 'css/settings.css' ) );
+			wp_enqueue_style( 'publishrank-settings-ui', \PublishRankSEO\Core\Branding::asset_url( 'css/settings.css' ), array( 'publishrank-modules', 'publishrank-shell' ), AdminShell::ver( 'css/settings.css' ) );
 			wp_enqueue_script( 'publishrank-settings-ui', \PublishRankSEO\Core\Branding::asset_url( 'js/settings.js' ), array(), AdminShell::ver( 'js/settings.js' ), true );
 			wp_localize_script(
 				'publishrank-settings-ui',
@@ -1141,7 +1141,7 @@ final class SettingsPage {
 				<?php endforeach; ?>
 				</nav>
 				<label class="screen-reader-text" for="pr-set-search"><?php esc_html_e( 'Find a setting', 'publishrank' ); ?></label>
-				<span class="pr-modules-search pr-set-search hide-if-no-js"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="pr-set-search" placeholder="<?php esc_attr_e( 'Find a setting…', 'publishrank' ); ?>" autocomplete="off" data-pr-set-search /></span>
+				<span class="pr-modules-search pr-set-search hide-if-no-js"><button type="button" class="pr-modules-search__btn" aria-label="<?php esc_attr_e( 'Find a setting', 'publishrank' ); ?>"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button><input type="search" id="pr-set-search" placeholder="<?php esc_attr_e( 'Find a setting…', 'publishrank' ); ?>" autocomplete="off" data-pr-set-search /><button type="button" class="pr-modules-search__clear" aria-label="<?php esc_attr_e( 'Clear search', 'publishrank' ); ?>" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></span>
 			</div>
 			<p class="pr-set-search-status" data-pr-set-search-status aria-live="polite" hidden></p>
 				<form method="post" action="options.php" class="pr-set-form" data-pr-set-form>
@@ -1294,17 +1294,17 @@ $pr_selected = array_map( 'absint', preg_split( '/[\s,]+/', (string) $val( 'publ
 ?>
 <input type="hidden" name="publishrank_seo_news_exclude_categories[]" value="" />
 <div class="pr-news-category-tools" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px">
-<input type="search" id="pr-news-category-search" class="regular-text" placeholder="<?php echo esc_attr__( 'Find a category…', 'publishrank' ); ?>" aria-label="<?php echo esc_attr__( 'Find a category', 'publishrank' ); ?>" />
+<span class="pr-modules-search"><button type="button" class="pr-modules-search__btn" aria-label="<?php echo esc_attr__( 'Find a category', 'publishrank' ); ?>"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button><input type="search" id="pr-news-category-search" class="regular-text" placeholder="<?php echo esc_attr__( 'Find a category…', 'publishrank' ); ?>" aria-label="<?php echo esc_attr__( 'Find a category', 'publishrank' ); ?>" autocomplete="off" /><button type="button" class="pr-modules-search__clear" aria-label="<?php echo esc_attr__( 'Clear search', 'publishrank' ); ?>" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></span>
 <button type="button" class="button" id="pr-news-category-clear"><?php esc_html_e( 'Clear all exclusions', 'publishrank' ); ?></button>
 <span id="pr-news-category-count" class="description" aria-live="polite"></span>
 </div>
 <div id="pr-news-category-list" style="max-height:220px;overflow:auto;border:1px solid #c3c4c7;border-radius:4px;padding:10px;background:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px 16px">
 <?php foreach ( $pr_cats as $pr_cat ) : ?>
-<label class="pr-news-category-item" style="display:flex;gap:7px;align-items:flex-start"><input type="checkbox" name="publishrank_seo_news_exclude_categories[]" value="<?php echo esc_attr( (string) $pr_cat->term_id ); ?>" <?php checked( in_array( (int) $pr_cat->term_id, $pr_selected, true ) ); ?> /><span><?php echo esc_html( $pr_cat->name ); ?></span></label>
+<label class="pr-news-category-item"><input type="checkbox" name="publishrank_seo_news_exclude_categories[]" value="<?php echo esc_attr( (string) $pr_cat->term_id ); ?>" <?php checked( in_array( (int) $pr_cat->term_id, $pr_selected, true ) ); ?> /><span><?php echo esc_html( $pr_cat->name ); ?></span></label>
 <?php endforeach; ?>
 </div>
 <p class="description"><?php esc_html_e( 'Only checked categories are excluded from the News sitemap. Untick any category to include it again, or use Clear all exclusions to include every category.', 'publishrank' ); ?></p>
-<script>(function(){var root=document.getElementById('pr-news-category-list'),search=document.getElementById('pr-news-category-search'),clear=document.getElementById('pr-news-category-clear'),count=document.getElementById('pr-news-category-count');if(!root){return;}var items=[].slice.call(root.querySelectorAll('.pr-news-category-item'));function update(){var n=0;items.forEach(function(item){var input=item.querySelector('input');if(input&&input.checked){n++;}var match=!search||!search.value||item.textContent.toLowerCase().indexOf(search.value.toLowerCase())!==-1;item.hidden=!match;});if(count){count.textContent=n+' '+(n===1?'category excluded':'categories excluded');}}if(search){search.addEventListener('input',update);}if(clear){clear.addEventListener('click',function(){items.forEach(function(item){var input=item.querySelector('input');if(input){input.checked=false;}});update();});}root.addEventListener('change',update);update();}());</script></td></tr>
+<script>(function(){var root=document.getElementById('pr-news-category-list'),search=document.getElementById('pr-news-category-search'),clear=document.getElementById('pr-news-category-clear'),count=document.getElementById('pr-news-category-count');if(!root){return;}var items=[].slice.call(root.querySelectorAll('.pr-news-category-item'));function update(){var n=0;var q=search?search.value.trim().toLowerCase():'';items.forEach(function(item){var input=item.querySelector('input');if(input&&input.checked){n++;}var match=!q||item.textContent.toLowerCase().indexOf(q)!==-1;item.hidden=!match;});if(count){count.textContent=n+' '+(n===1?'category excluded':'categories excluded');}}if(search){search.addEventListener('input',update);search.addEventListener('search',update);}if(clear){clear.addEventListener('click',function(){items.forEach(function(item){var input=item.querySelector('input');if(input){input.checked=false;}});update();});}root.addEventListener('change',update);update();}());</script></td></tr>
 <tr><th scope="row"><?php esc_html_e( 'Stock tickers (legacy)', 'publishrank' ); ?></th><td><input type="hidden" name="publishrank_seo_news_stock_tickers" value="0" /><label><input name="publishrank_seo_news_stock_tickers" type="checkbox" value="1" <?php checked( $val( 'publishrank_seo_news_stock_tickers', false ) ); ?> /> <?php esc_html_e( 'Add an optional stock-ticker field to articles and output it in the News sitemap', 'publishrank' ); ?></label><p class="description"><?php esc_html_e( 'Off by default. Google no longer lists the stock_tickers tag in its News sitemap documentation, so it may be ignored. Only valid EXCHANGE:SYMBOL entries (max 5 per article) are output.', 'publishrank' ); ?></p></td></tr>
 <tr><th scope="row"><label for="publishrank_seo_news_genre"><?php esc_html_e( 'News genre (legacy)', 'publishrank' ); ?></label></th><td><select id="publishrank_seo_news_genre" name="publishrank_seo_news_genre"><option value="" <?php selected( $val( 'publishrank_seo_news_genre' ), '' ); ?>><?php esc_html_e( 'Not specified', 'publishrank' ); ?></option>
 		<?php

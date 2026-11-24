@@ -59,6 +59,10 @@
 			clearTimeout(timer);
 			timer = setTimeout(apply, 120);
 		});
+			search.addEventListener('search', function () {
+				clearTimeout(timer);
+				apply();
+			});
 	}
 	apply();
 })();

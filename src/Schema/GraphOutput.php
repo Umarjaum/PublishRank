@@ -741,7 +741,7 @@ final class GraphOutput {
 		$mime     = ! empty( $filetype['type'] ) ? sanitize_text_field( $filetype['type'] ) : '';
 		if ( $mime ) {
 			$image['encodingFormat'] = $mime; }
-		return $image;
+		return \PublishRankSEO\MediaLinks\ImageRights::apply( $image, \PublishRankSEO\MediaLinks\ImageRights::id_for_url( $clean ) );
 	}
 
 	/** @param \WP_Post $post @return string */

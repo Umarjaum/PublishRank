@@ -1,20 +1,24 @@
 <?php
 /**
- * Puts the PublishRank SEO fields where publishers can reach them instantly.
+ * Classic Editor placement of the PublishRank SEO editor.
  *
- * - Classic editor: the SEO Overrides, Schema Selection and Multilingual boxes are lifted out of the footer
- *   and rendered as one tabbed "SEO fields" dock directly under the title.
- * - Block editor: the same boxes are moved into the PublishRank sidebar, under the SEO analysis, while it is open
- *   (see assets/js/seo-dock.js and block-editor-sidebar.js). When the sidebar is closed they go back to the
- *   editor's own Meta Boxes area at the bottom, so they never float over the article.
- *
- * Every field keeps its name, id and nonce, so PostMeta::save() still receives exactly the same POST data.
+ * - Every PublishRank SEO meta box listed in Editor\BoxRegistry (SEO fields, Live Preview, Fix Assistant & Full
+ *   Report, Schema Selection, Schema Studio, More structured data, Multilingual SEO) is taken out of the Classic
+ *   Editor's meta box areas and rendered as one tabbed "PublishRank SEO" dock directly under the title
+ *   (edit_form_after_title). Main tabs: Fields, Preview, Analysis, Schema, Multilingual and Media.
+ * - The dock lives inside the post form, so every field keeps its name, id and nonce and the normal Classic
+ *   submit (Save Draft, Update, autosave) posts exactly the same data to PostMeta::save() and the other owners.
+ * - The dock can float (drag it anywhere) and the movable SEO window (seo-window.js) can host it with previews.
+ * - Boxes that are not SEO editing (Mastodon, Newsroom sources, see BoxRegistry::kept()) stay where they are.
+ * - The block editor is handled by Editor\UnifiedEditor, which reads the same BoxRegistry list.
  *
  * @package PublishRankSEO
  */
 namespace PublishRankSEO\Admin;
 
 use PublishRankSEO\Core\Branding;
+use PublishRankSEO\Core\Capabilities;
+use PublishRankSEO\Editor\BoxRegistry;
 use PublishRankSEO\Meta\PostMeta;
 
 defined( 'ABSPATH' ) || exit;
@@ -27,7 +31,19 @@ final class EditorPlacement {
 
 	/** @return string[] Meta box ids that make up the SEO fields. */
 	public static function box_ids() {
-		return array( 'publishrank-seo-overrides', 'publishrank-schema', 'publishrank-localized-seo' );
+		return BoxRegistry::ids();
+	}
+
+	/** @return array<string,string> Main dock tabs, in order. */
+	public static function tab_labels() {
+		return array(
+			'fields'       => __( 'Fields', 'publishrank' ),
+			'preview'      => __( 'Preview', 'publishrank' ),
+			'analysis'     => __( 'Analysis', 'publishrank' ),
+			'schema'       => __( 'Schema', 'publishrank' ),
+			'multilingual' => __( 'Multilingual', 'publishrank' ),
+			'media'        => __( 'Media', 'publishrank' ),
+		);
 	}
 
 	public function register() {
@@ -71,7 +87,7 @@ final class EditorPlacement {
 		$page = $screen->id;
 		foreach ( self::box_ids() as $id ) {
 			foreach ( array( 'normal', 'advanced', 'side' ) as $context ) {
-				foreach ( array( 'high', 'core', 'default', 'low' ) as $priority ) {
+				foreach ( array( 'high', 'core', 'default', 'low', 'sorted' ) as $priority ) {
 					if ( isset( $wp_meta_boxes[ $page ][ $context ][ $priority ][ $id ] ) && is_array( $wp_meta_boxes[ $page ][ $context ][ $priority ][ $id ] ) ) {
 						$this->boxes[ $id ] = $wp_meta_boxes[ $page ][ $context ][ $priority ][ $id ];
 						unset( $wp_meta_boxes[ $page ][ $context ][ $priority ][ $id ] );
@@ -81,22 +97,33 @@ final class EditorPlacement {
 		}
 	}
 
-	/** Classic editor: the tabbed SEO fields dock under the title. Tabs are added by seo-dock.js; without JS every section simply shows. */
+	/** Classic editor: the tabbed PublishRank SEO dock under the title. Tabs are added by seo-dock.js; without JS every section simply shows. */
 	public function render_classic_dock( $post = null ) {
 		if ( empty( $this->boxes ) || ! $post instanceof \WP_Post ) {
 			return;
 		}
-		echo '<div id="publishrank-seo-dock" class="pr-seodock pr-seodock--classic" data-pr-seodock>';
-		echo '<div class="pr-seodock__head"><img class="pr-seodock__logo" src="' . esc_url( Branding::logo_url() ) . '" width="18" height="18" alt="" /><strong class="pr-seodock__title">' . esc_html__( 'PublishRank SEO fields', 'publishrank' ) . '</strong><button type="button" class="pr-seodock__pop" data-pr-pop aria-pressed="false" title="' . esc_attr__( 'Float this panel so you can move it anywhere', 'publishrank' ) . '"><span class="dashicons dashicons-move" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__( 'Float or dock the SEO fields panel', 'publishrank' ) . '</span></button><button type="button" class="pr-seodock__toggle" data-pr-toggle aria-expanded="true" aria-controls="publishrank-seo-dock-panes"><span class="screen-reader-text">' . esc_html__( 'Show or hide the SEO fields', 'publishrank' ) . '</span><span class="pr-seodock__chev" aria-hidden="true"></span></button></div>';
-		// Section tabs get their own row under the header so they never squeeze the title or the buttons.
+		$map     = BoxRegistry::classic_tabs();
+		$labels  = self::tab_labels();
+		$can_edit = Capabilities::can_edit_seo( (int) $post->ID );
+		echo '<div id="publishrank-seo-dock" class="pr-seodock pr-seodock--classic" data-pr-seodock' . ( $can_edit ? '' : ' data-pr-readonly="1"' ) . '>';
+		echo '<div class="pr-seodock__head"><img class="pr-seodock__logo" src="' . esc_url( Branding::logo_url() ) . '" width="18" height="18" alt="" /><strong class="pr-seodock__title">' . esc_html__( 'PublishRank SEO', 'publishrank' ) . '</strong><span class="pr-seodock__score" data-pr-dock-score aria-hidden="true"></span><button type="button" class="pr-seodock__pop" data-pr-pop aria-pressed="false" title="' . esc_attr__( 'Float this panel so you can move it anywhere', 'publishrank' ) . '"><span class="dashicons dashicons-move" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__( 'Float or dock the SEO panel', 'publishrank' ) . '</span></button><button type="button" class="pr-seodock__toggle" data-pr-toggle aria-expanded="true" aria-controls="publishrank-seo-dock-panes"><span class="screen-reader-text">' . esc_html__( 'Show or hide the SEO panel', 'publishrank' ) . '</span><span class="pr-seodock__chev" aria-hidden="true"></span></button></div>';
+		// Main tabs on their own row under the header so they never squeeze the title or the buttons.
 		echo '<div class="pr-seodock__tabbar"><div class="pr-seodock__tabs" role="tablist" data-pr-tabs></div></div>';
 		echo '<div class="pr-seodock__panes" id="publishrank-seo-dock-panes" data-pr-panes>';
+		if ( ! $can_edit ) {
+			echo '<div class="notice notice-info inline pr-seodock__readonly"><p>' . esc_html__( 'You can view these SEO fields, but your role is not allowed to change them. Changes here are not saved.', 'publishrank' ) . '</p></div>';
+		}
 		foreach ( $this->boxes as $id => $box ) {
-			echo '<div class="pr-seodock__box pr-seodock-root" data-pr-box="' . esc_attr( $id ) . '" data-pr-title="' . esc_attr( wp_strip_all_tags( isset( $box['title'] ) ? (string) $box['title'] : $id ) ) . '">';
+			$tab = isset( $map[ $id ] ) ? $map[ $id ] : sanitize_key( $id );
+			echo '<div id="' . esc_attr( $id ) . '" class="pr-seodock__box pr-seodock-root" data-pr-box="' . esc_attr( $id ) . '" data-pr-tab-group="' . esc_attr( $tab ) . '" data-pr-tab-label="' . esc_attr( isset( $labels[ $tab ] ) ? $labels[ $tab ] : '' ) . '" data-pr-title="' . esc_attr( wp_strip_all_tags( isset( $box['title'] ) ? (string) $box['title'] : $id ) ) . '">';
 			if ( isset( $box['callback'] ) && is_callable( $box['callback'] ) ) {
 				call_user_func( $box['callback'], $post, $box );
 			}
 			echo '</div>';
+		}
+		if ( $can_edit ) {
+			// Media tab: filled by media-tab.js from the REST API (images this post uses, alt text, URL changes).
+			echo '<div class="pr-seodock__box" data-pr-box="publishrank-media" data-pr-tab-group="media" data-pr-tab-label="' . esc_attr( $labels['media'] ) . '" data-pr-title="' . esc_attr( $labels['media'] ) . '"><div data-pr-media-root data-post-id="' . esc_attr( (int) $post->ID ) . '"></div></div>';
 		}
 		echo '</div></div>';
 	}
@@ -142,6 +169,86 @@ final class EditorPlacement {
 		);
 	}
 
+	/** Media tab (both editors): the images this post uses, their details and safe URL changes. */
+	private function enqueue_media_tab( $post_id ) {
+		if ( ! Capabilities::can_edit_seo( (int) $post_id ) ) {
+			return;
+		}
+		$css = PUBLISHRANK_SEO_PATH . 'assets/css/media-tab.css';
+		$js  = PUBLISHRANK_SEO_PATH . 'assets/js/media-tab.js';
+		wp_enqueue_style( 'publishrank-media-tab', Branding::asset_url( 'css/media-tab.css' ), array(), Branding::version() . '.' . ( file_exists( $css ) ? (string) filemtime( $css ) : '0' ) );
+		wp_enqueue_script( 'publishrank-media-tab', Branding::asset_url( 'js/media-tab.js' ), array(), Branding::version() . '.' . ( file_exists( $js ) ? (string) filemtime( $js ) : '0' ), true );
+		wp_localize_script(
+			'publishrank-media-tab',
+			'publishrankMediaTab',
+			array(
+				'restRoot' => esc_url_raw( rest_url( 'publishrank/v1/' ) ),
+				'nonce'    => wp_create_nonce( 'wp_rest' ),
+				'canEdit'  => true,
+				'i18n'     => array(
+					'featured'     => __( 'Featured image', 'publishrank' ),
+					'social'       => __( 'Social image', 'publishrank' ),
+					'author'       => __( 'Author image', 'publishrank' ),
+					'video'        => __( 'Video thumbnail', 'publishrank' ),
+					'content'      => __( 'In content', 'publishrank' ),
+					'pick'         => __( 'Choose social image', 'publishrank' ),
+					'refresh'      => __( 'Refresh', 'publishrank' ),
+					'altHelp'      => __( 'Alt text here is the Media Library default for the image. An image block can carry its own alt text; PublishRank never rewrites block attributes.', 'publishrank' ),
+					'loading'      => __( 'Loading images…', 'publishrank' ),
+					/* translators: %d: number of images. */
+					'count'        => __( '%d images used by this item.', 'publishrank' ),
+					'none'         => __( 'This item does not use any images yet.', 'publishrank' ),
+					'local'        => __( 'Media Library', 'publishrank' ),
+					'external'     => __( 'External', 'publishrank' ),
+					'unlinked'     => __( 'Not in Media Library', 'publishrank' ),
+					/* translators: %d: number of references. */
+					'refs'         => __( '%d references', 'publishrank' ),
+					'small'        => __( 'Below 1200×630: some networks show a small card.', 'publishrank' ),
+					'noAlt'        => __( 'No default alt text.', 'publishrank' ),
+					'edit'         => __( 'Edit details', 'publishrank' ),
+					'details'      => __( 'Details', 'publishrank' ),
+					'alt'          => __( 'Alt text (default)', 'publishrank' ),
+					'title'        => __( 'Title', 'publishrank' ),
+					'caption'      => __( 'Caption', 'publishrank' ),
+					'description'  => __( 'Description', 'publishrank' ),
+					'save'         => __( 'Save image details', 'publishrank' ),
+					'noEdit'       => __( 'You cannot edit this image.', 'publishrank' ),
+					'saving'       => __( 'Saving…', 'publishrank' ),
+					'saved'        => __( 'Saved.', 'publishrank' ),
+					'extNote'      => __( 'This image is on another website. It is stored only as a link in this post; no Media Library item is changed.', 'publishrank' ),
+					'unlinkedNote' => __( 'This address is on your site but is not a Media Library item, so it has no editable details.', 'publishrank' ),
+					'newUrl'       => __( 'Point every use of this file to a new address', 'publishrank' ),
+					'dry'          => __( 'Preview change (dry run)', 'publishrank' ),
+					'badUrl'       => __( 'Use a full http:// or https:// address.', 'publishrank' ),
+					'planning'     => __( 'Building a dry run… nothing is changed.', 'publishrank' ),
+					'dryDone'      => __( 'Dry run ready. Nothing has been changed yet.', 'publishrank' ),
+					/* translators: %d: number of file addresses. */
+					'variants'     => __( '%d file addresses (original and sizes) would be redirected to the new address', 'publishrank' ),
+					'rights'       => __( 'Credit and licence (Google image metadata)', 'publishrank' ),
+					'credit'       => __( 'Credit line', 'publishrank' ),
+					'creator'      => __( 'Photographer / creator', 'publishrank' ),
+					'copyright'    => __( 'Copyright notice', 'publishrank' ),
+					'license'      => __( 'Licence URL', 'publishrank' ),
+					'licensePage'  => __( 'Where to license it (URL)', 'publishrank' ),
+					'scanNext'     => __( 'Every post, setting and block that uses it is scanned and listed for your review before anything is written.', 'publishrank' ),
+					'mime'         => __( 'File check: ', 'publishrank' ),
+					'review'       => __( 'Review and apply in Media Link Manager', 'publishrank' ),
+					'useUrl'       => __( 'Check and use', 'publishrank' ),
+					'checking'     => __( 'Checking…', 'publishrank' ),
+					'extOk'        => __( 'Social image set. It stays a plain link; no Media Library item is changed.', 'publishrank' ),
+					'extWarn'      => __( 'Set, but the server could not confirm the image: ', 'publishrank' ),
+					'extTitle'     => __( 'Use an external social image address', 'publishrank' ),
+					'extLabel'     => __( 'Image address (http or https)', 'publishrank' ),
+					'noPicker'     => __( 'The Media Library is not available on this screen.', 'publishrank' ),
+					'pickTitle'    => __( 'Choose the social image', 'publishrank' ),
+					'pickButton'   => __( 'Use as social image', 'publishrank' ),
+					'picked'       => __( 'Social image updated. Save the post to publish it.', 'publishrank' ),
+					'detailsFor'   => __( 'Image details', 'publishrank' ),
+				),
+			)
+		);
+	}
+
 	/** Register (not enqueue) the dock assets so the block editor sidebar can depend on them. */
 	public function register_assets( $hook ) {
 		if ( 'post.php' !== $hook && 'post-new.php' !== $hook ) {
@@ -161,6 +268,7 @@ final class EditorPlacement {
 		$post_id = $post instanceof \WP_Post ? (int) $post->ID : ( isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		wp_enqueue_style( self::HANDLE );
 		wp_enqueue_script( self::HANDLE );
+		$this->enqueue_media_tab( $post_id );
 		// The movable window is a Classic Editor convenience only; the block editor uses the unified sidebar.
 		if ( ! self::is_block_editor( $post instanceof \WP_Post ? $post : null ) ) {
 			$this->enqueue_window( $post instanceof \WP_Post ? $post : null );
@@ -172,6 +280,7 @@ final class EditorPlacement {
 				'postId'     => $post_id,
 				'blockEditor' => self::is_block_editor( $post instanceof \WP_Post ? $post : null ),
 				'boxIds'     => self::box_ids(),
+				'canEdit'    => $post_id ? Capabilities::can_edit_seo( $post_id ) : Capabilities::can( 'edit_seo' ),
 				'touchKey'   => PostMeta::EDITOR_TOUCH,
 				'logo'       => Branding::logo_url(),
 				'i18n'       => array(
@@ -185,6 +294,8 @@ final class EditorPlacement {
 					'panel'    => __( 'PublishRank SEO fields', 'publishrank' ),
 					'minimize' => __( 'Minimize SEO fields', 'publishrank' ),
 					'expand'   => __( 'Expand SEO fields', 'publishrank' ),
+					'sections' => __( 'SEO field groups', 'publishrank' ),
+					'readonly' => __( 'Your role can view but not change these SEO fields.', 'publishrank' ),
 				),
 			)
 		);

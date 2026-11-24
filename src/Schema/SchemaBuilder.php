@@ -222,6 +222,7 @@ final class SchemaBuilder {
 				$alt = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
 				if ( $alt ) {
 					$primary_image['caption'] = sanitize_text_field( $alt ); }
+				$primary_image = \PublishRankSEO\MediaLinks\ImageRights::apply( $primary_image, $image_id );
 			}
 			$nodes[] = $primary_image;
 		}

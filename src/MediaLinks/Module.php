@@ -62,9 +62,9 @@ final class Module {
 		$ver = static function ( $rel ) {
 			return PUBLISHRANK_SEO_VERSION . '.' . (int) @filemtime( PUBLISHRANK_SEO_PATH . $rel ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
 		};
-		wp_enqueue_style( 'publishrank-design-system', PUBLISHRANK_SEO_URL . 'assets/css/design-system.css', array(), $ver( 'assets/css/design-system.css' ) );
-		wp_enqueue_style( 'publishrank-media-links', PUBLISHRANK_SEO_URL . 'assets/css/media-links.css', array( 'publishrank-design-system' ), $ver( 'assets/css/media-links.css' ) );
-		wp_enqueue_script( 'publishrank-media-links', PUBLISHRANK_SEO_URL . 'assets/js/media-links.js', array( 'wp-api-fetch' ), $ver( 'assets/js/media-links.js' ), true );
+		wp_enqueue_style( 'publishrank-design-system', \PublishRankSEO\Core\Branding::asset_url( 'css/design-system.css' ), array(), $ver( 'assets/css/design-system.css' ) );
+		wp_enqueue_style( 'publishrank-media-links', \PublishRankSEO\Core\Branding::asset_url( 'css/media-links.css' ), array( 'publishrank-design-system' ), $ver( 'assets/css/media-links.css' ) );
+		wp_enqueue_script( 'publishrank-media-links', \PublishRankSEO\Core\Branding::asset_url( 'js/media-links.js' ), array( 'wp-api-fetch' ), $ver( 'assets/js/media-links.js' ), true );
 		$up = Scanner::uploads();
 		wp_localize_script(
 			'publishrank-media-links',

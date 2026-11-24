@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Capabilities {
 	const PREFIX        = 'publishrank_';
-	const VERSION       = 5;
+	const VERSION       = 6;
 	const VERSION_OPT   = 'publishrank_caps_version';
 	const SNAPSHOT_OPT  = 'publishrank_caps_role_snapshot';
 	const AUDIT_OPT     = 'publishrank_caps_audit';
@@ -182,6 +182,21 @@ final class Capabilities {
 			return current_user_can( $cap );
 		}
 		return user_can( (int) $user_id, $cap );
+	}
+
+	/**
+	 * Whether the current user may change the PublishRank SEO fields of a post: they must be able to edit the
+	 * post itself and hold the edit_seo permission from the Roles screen. Used by every post SEO write path
+	 * (meta auth callbacks, the classic save, the block editor save bridge and the REST controller).
+	 *
+	 * @param int $post_id Post ID (0 checks only the SEO permission).
+	 */
+	public static function can_edit_seo( $post_id = 0 ) {
+		$post_id = (int) $post_id;
+		if ( $post_id > 0 && ! current_user_can( 'edit_post', $post_id ) ) {
+			return false;
+		}
+		return (bool) self::can( 'edit_seo' );
 	}
 
 	/** Die with a 403 when the current user lacks a capability. */
@@ -378,6 +393,15 @@ final class Capabilities {
 				foreach ( wp_roles()->role_objects as $role ) {
 					if ( $role->has_cap( self::cap( 'manage_settings' ) ) ) {
 						$role->add_cap( self::cap( 'manage_media_links' ) );
+					}
+				}
+			}
+			// 2.26.2 (registry 6): edit_seo is now enforced on every post SEO write. Every role that could edit posts
+			// before keeps editing SEO fields, so nobody loses access silently; administrators can restrict it later.
+			if ( $previous < 6 ) {
+				foreach ( wp_roles()->role_objects as $role ) {
+					if ( $role->has_cap( 'edit_posts' ) ) {
+						$role->add_cap( self::cap( 'edit_seo' ) );
 					}
 				}
 			}

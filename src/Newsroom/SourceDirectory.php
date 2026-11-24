@@ -246,6 +246,9 @@ final class SourceDirectory {
 
 	/** Record which directory sources a published or draft post links to (one meta row per source). */
 	public static function track_usage( $post_id, $post ) {
+		if ( \PublishRankSEO\Editor\UnifiedEditor::is_bridge_request() ) {
+			return; // Saved once by the post save itself; never again from the editor save bridge.
+		}
 		if ( ! $post instanceof \WP_Post || wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) || self::CPT === $post->post_type ) {
 			return;
 		}

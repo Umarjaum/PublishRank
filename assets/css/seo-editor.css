@@ -252,3 +252,72 @@
 @media print {
 	.pr-ue-float { display: none; }
 }
+
+/* ---------- 2.26.2 ---------- */
+/* Crimson PublishRank accent inside the floating window too (the sidebar already uses it). */
+.pr-ue-float, .pr-ue-docpanel-wrap {
+	--wp-admin-theme-color: #9B1245; --wp-admin-theme-color--rgb: 155, 18, 69;
+	--wp-admin-theme-color-darker-10: #7D0E38; --wp-admin-theme-color-darker-20: #650A24;
+	--wp-components-color-accent: #9B1245; --wp-components-color-accent-darker-10: #7D0E38; --wp-components-color-accent-darker-20: #650A24;
+}
+.pr-ue-root { --pr-ue-brand: #9B1245; position: relative; }
+
+/* Visible toolbar launcher: live score + "SEO" label. */
+.pr-ue-launch { display: inline-flex; align-items: center; gap: 6px; }
+.pr-ue-launch .pr-esc-badge { width: 24px; height: 24px; flex: 0 0 24px; }
+.pr-ue-launch__text { font-size: 13px; font-weight: 600; line-height: 1; letter-spacing: .01em; }
+.interface-pinned-items .components-button:has(.pr-ue-launch),
+.editor-header__settings .components-button:has(.pr-ue-launch) { width: auto !important; min-width: 0; padding: 0 10px 0 6px !important; border-radius: 6px; }
+.interface-pinned-items .components-button:has(.pr-ue-launch).is-pressed,
+.editor-header__settings .components-button:has(.pr-ue-launch).is-pressed { background: #9B1245 !important; color: #fff !important; }
+.interface-pinned-items .components-button:has(.pr-ue-launch):not(.is-pressed),
+.editor-header__settings .components-button:has(.pr-ue-launch):not(.is-pressed) { box-shadow: inset 0 0 0 1px #C9A2B2; color: #7D0E38; }
+@media (max-width: 600px) { .pr-ue-launch__text { display: none; } }
+
+/* Resizable sidebar: a 8px grab strip on the left edge of the PublishRank sidebar. */
+.pr-ue-resizer { position: absolute; z-index: 30; left: 0; top: 0; bottom: 0; width: 8px; cursor: col-resize; touch-action: none; background: transparent; }
+.pr-ue-resizer::after { content: ""; position: absolute; left: 3px; top: 0; bottom: 0; width: 2px; background: transparent; transition: background-color .15s; }
+.pr-ue-resizer:hover::after, .pr-ue-resizer:focus-visible::after, body.pr-ue-resizing .pr-ue-resizer::after { background: #9B1245; }
+.pr-ue-resizer:focus-visible { outline: none; }
+body.pr-ue-resizing, body.pr-ue-resizing * { cursor: col-resize !important; user-select: none !important; }
+body.pr-ue-sized .interface-interface-skeleton__sidebar:has(.pr-ue-sidebar),
+body.pr-ue-sized .interface-complementary-area__fill:has(.pr-ue-sidebar),
+body.pr-ue-sized .interface-complementary-area:has(.pr-ue-sidebar) { width: var(--pr-ue-sidebar-w, 280px) !important; }
+
+/* Floating window: visible resize grip on top of the native corner handle. */
+.pr-ue-float__grip { position: absolute; right: 2px; bottom: 2px; width: 14px; height: 14px; pointer-events: none; background: linear-gradient(135deg, transparent 0 50%, #9B1245 50% 58%, transparent 58% 70%, #9B1245 70% 78%, transparent 78%); opacity: .6; }
+.pr-ue-float__head { background: linear-gradient(180deg, #fff, #f6f7f7); }
+
+/* Bing simulation */
+.pr-ue-serp--bing { font-family: "Segoe UI", Arial, Helvetica, sans-serif; }
+.pr-ue-serp--bing .pr-ue-serp__title { color: #001ba0; }
+.pr-ue-serp--bing .pr-ue-serp__url { color: #006d21; }
+.pr-ue-serp--bing .pr-ue-serp__desc { color: #444; font-size: 14px; }
+.pr-ue-pv__bar { row-gap: 6px; }
+
+/* Social cards */
+.pr-ue-sc__approx { margin-left: auto; font-size: 11px; color: var(--pr-ue-muted, #50575e); font-weight: 400; }
+.pr-ue-sc__badge--linkedin { background: #0a66c2; font-size: 11px; }
+.pr-ue-sc__badge--whatsapp { background: #25d366; }
+.pr-ue-sc--linkedin .pr-ue-sc__frame { border-radius: 4px; }
+.pr-ue-sc--linkedin .pr-ue-sc__body { background: #fff; }
+.pr-ue-sc--whatsapp .pr-ue-sc__frame { background: #d9fdd3; border-color: #c4e8be; border-radius: 10px; }
+.pr-ue-sc--whatsapp .pr-ue-sc__body { background: #d1f4cc; }
+.pr-ue-sc--whatsapp .pr-ue-sc__media { aspect-ratio: 1.91 / 1; }
+.pr-ue-sc__facts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; font-size: 11.5px; color: var(--pr-ue-muted, #50575e); }
+.pr-ue-sc__warn { margin: 0; padding: 6px 8px; border-radius: 6px; background: #fff4de; color: #8a5a00; font-size: 12px; }
+.pr-ue-readonly { margin: 8px 12px !important; }
+.pr-ue-media { min-width: 0; }
+
+/* Six tabs in a 280px sidebar: wrap to a second row instead of hiding tabs off-screen. */
+.pr-ue-tabs .components-tab-panel__tabs { flex-wrap: wrap; overflow: visible; }
+.pr-ue-tabs .components-tab-panel__tabs-item { flex: 1 0 auto; min-height: 40px; padding: 0 8px; font-size: 12.5px; }
+.pr-ue-launch .pr-esc-badge { background-color: #fff; border-radius: 50%; }
+/* Segmented switches: the active option uses the PublishRank accent, never WordPress' dark "pressed" grey. */
+.pr-ue-pv__switch { flex-wrap: wrap; }
+.pr-ue-pv__switch .components-button.is-pressed,
+.pr-ue-pv__switch .components-button.is-pressed:hover:not(:disabled) { background: #9B1245; color: #fff; box-shadow: none; }
+.pr-ue-pv__switch .components-button:not(.is-pressed) { box-shadow: inset 0 0 0 1px #C9A2B2; color: #7D0E38; }
+/* 2.26.2: the sidebar's pin button uses the PublishRank accent instead of WordPress's dark pressed state. */
+.interface-complementary-area:has(.pr-ue-sidebar) .interface-complementary-area-header .components-button.is-pressed,
+.interface-complementary-area:has(.pr-ue-sidebar) .interface-complementary-area-header .components-button.is-pressed:hover:not(:disabled) { background: #9B1245; color: #fff; }

@@ -74,6 +74,10 @@ final class RestApi {
 		register_rest_route( self::NS, $b . '/attachments/(?P<id>\d+)', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'get_item' ), 'permission_callback' => array( __CLASS__, 'allowed_attachment' ) ) );
 		register_rest_route( self::NS, $b . '/attachments/(?P<id>\d+)/references', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'references' ), 'permission_callback' => array( __CLASS__, 'allowed_attachment' ) ) );
 		register_rest_route( self::NS, $b . '/attachments/(?P<id>\d+)/plan', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'plan' ), 'permission_callback' => array( __CLASS__, 'allowed_attachment' ) ) );
+		// 2.26.2: the Media tab inside both SEO editors.
+		register_rest_route( self::NS, $b . '/post/(?P<id>\d+)/images', array( 'methods' => array( 'GET', 'POST' ), 'callback' => array( __CLASS__, 'post_images' ), 'permission_callback' => array( __CLASS__, 'allowed_post_images' ), 'args' => array( 'featured' => array( 'type' => 'integer' ), 'og_image' => array( 'type' => 'string' ), 'content' => array( 'type' => 'string' ) ) ) );
+		register_rest_route( self::NS, $b . '/attachments/(?P<id>\d+)/metadata', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'attachment_metadata' ), 'permission_callback' => array( __CLASS__, 'allowed_attachment_metadata' ), 'args' => array( 'alt' => array( 'type' => 'string' ), 'title' => array( 'type' => 'string' ), 'caption' => array( 'type' => 'string' ), 'description' => array( 'type' => 'string' ), 'modified' => array( 'type' => 'string' ) ) ) );
+		register_rest_route( self::NS, $b . '/check-url', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'check_url' ), 'permission_callback' => array( __CLASS__, 'allowed_check_url' ), 'args' => array( 'url' => array( 'type' => 'string', 'required' => true ), 'verify' => array( 'type' => 'boolean' ) ) ) );
 		register_rest_route( self::NS, $b . '/rebase/plan', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'plan_rebase' ), 'permission_callback' => array( __CLASS__, 'allowed_site' ) ) );
 		register_rest_route( self::NS, $b . '/runs', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'runs' ), 'permission_callback' => array( __CLASS__, 'allowed' ) ) );
 		register_rest_route( self::NS, $b . '/runs/(?P<run>\d+)', array(
@@ -93,6 +97,69 @@ final class RestApi {
 			array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'host_save' ), 'permission_callback' => array( __CLASS__, 'allowed_site' ) ),
 		) );
 		register_rest_route( self::NS, $b . '/host/test', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'host_test' ), 'permission_callback' => array( __CLASS__, 'allowed' ) ) );
+	}
+
+	/** Post Media tab: edit the post and hold edit_seo. Media Library permissions are checked per action. */
+	public static function allowed_post_images( \WP_REST_Request $req ) {
+		if ( ! is_user_logged_in() ) {
+			return new \WP_Error( 'publishrank_forbidden', __( 'Sign in first.', 'publishrank' ), array( 'status' => 401 ) );
+		}
+		$id = (int) $req['id'];
+		if ( ! get_post( $id ) || ! Capabilities::can_edit_seo( $id ) ) {
+			return new \WP_Error( 'publishrank_forbidden', __( 'You cannot edit the SEO fields of this item.', 'publishrank' ), array( 'status' => 403 ) );
+		}
+		return true;
+	}
+
+	/** Attachment metadata: edit the attachment and hold edit_seo. manage_media_links is NOT required. */
+	public static function allowed_attachment_metadata( \WP_REST_Request $req ) {
+		if ( ! is_user_logged_in() ) {
+			return new \WP_Error( 'publishrank_forbidden', __( 'Sign in first.', 'publishrank' ), array( 'status' => 401 ) );
+		}
+		$id = (int) $req['id'];
+		if ( 'attachment' !== get_post_type( $id ) ) {
+			return new \WP_Error( 'publishrank_media_missing', __( 'Attachment not found.', 'publishrank' ), array( 'status' => 404 ) );
+		}
+		if ( ! Capabilities::can_edit_seo( $id ) ) {
+			return new \WP_Error( 'publishrank_forbidden', __( 'You cannot edit this image.', 'publishrank' ), array( 'status' => 403 ) );
+		}
+		return true;
+	}
+
+	public static function allowed_check_url() {
+		if ( ! is_user_logged_in() ) {
+			return new \WP_Error( 'publishrank_forbidden', __( 'Sign in first.', 'publishrank' ), array( 'status' => 401 ) );
+		}
+		return Capabilities::can( 'edit_seo' ) ? true : new \WP_Error( 'publishrank_forbidden', __( 'You cannot edit SEO fields.', 'publishrank' ), array( 'status' => 403 ) );
+	}
+
+	public static function post_images( \WP_REST_Request $r ) {
+		$state = array();
+		if ( null !== $r->get_param( 'featured' ) ) {
+			$state['featured'] = absint( $r->get_param( 'featured' ) );
+		}
+		if ( null !== $r->get_param( 'og_image' ) ) {
+			$state['og_image'] = (string) $r->get_param( 'og_image' );
+		}
+		if ( null !== $r->get_param( 'content' ) ) {
+			$state['content'] = (string) $r->get_param( 'content' );
+		}
+		return rest_ensure_response( PostImages::collect( (int) $r['id'], $state ) );
+	}
+
+	public static function attachment_metadata( \WP_REST_Request $r ) {
+		$fields = array();
+		foreach ( array( 'alt', 'title', 'caption', 'description', 'modified', 'credit', 'creator', 'copyright', 'license', 'license_page' ) as $k ) {
+			if ( null !== $r->get_param( $k ) ) {
+				$fields[ $k ] = (string) $r->get_param( $k );
+			}
+		}
+		$res = PostImages::update_metadata( (int) $r['id'], $fields );
+		return is_wp_error( $res ) ? $res : rest_ensure_response( $res );
+	}
+
+	public static function check_url( \WP_REST_Request $r ) {
+		return rest_ensure_response( PostImages::check_url( (string) $r->get_param( 'url' ), (bool) $r->get_param( 'verify' ) ) );
 	}
 
 	private static function out( $data ) {

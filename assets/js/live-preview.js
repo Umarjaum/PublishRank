@@ -130,13 +130,17 @@
 		var sw = el('div', 'pr-pv-switch');
 		sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', t.previewDevice);
 		['desktop', 'mobile'].forEach(function (k) { var b = el('button', 'pr-pv-switch__btn' + (state.device === k ? ' is-active' : ''), t[k]); b.type = 'button'; b.setAttribute('aria-pressed', state.device === k ? 'true' : 'false'); b.addEventListener('click', function () { state.device = k; renderSearch(state.last); }); sw.appendChild(b); });
-		p.appendChild(sw);
-		var card = el('div', 'pr-serp' + (mobile ? ' is-mobile' : '')), top = el('div', 'pr-serp__top');
+		var es = el('div', 'pr-pv-switch'); es.setAttribute('role', 'group'); es.setAttribute('aria-label', t.engine || 'Search engine');
+		[['google', 'Google'], ['bing', 'Bing']].forEach(function (k) { var b = el('button', 'pr-pv-switch__btn' + ((state.engine || 'google') === k[0] ? ' is-active' : ''), k[1]); b.type = 'button'; b.setAttribute('aria-pressed', (state.engine || 'google') === k[0] ? 'true' : 'false'); b.addEventListener('click', function () { state.engine = k[0]; renderSearch(state.last); }); es.appendChild(b); });
+		var sws = el('div', 'pr-pv-switches'); sws.appendChild(es); sws.appendChild(sw); p.appendChild(sws);
+		var bing = state.engine === 'bing';
+		var card = el('div', 'pr-serp' + (mobile ? ' is-mobile' : '') + (bing ? ' pr-serp--bing' : '')), top = el('div', 'pr-serp__top');
+		card.setAttribute('role', 'img'); card.setAttribute('aria-label', (bing ? 'Bing' : 'Google') + ' ' + (mobile ? t.mobile : t.desktop) + ' — ' + (t.simulation || 'simulation'));
 		var fav = d.favicon ? el('img', 'pr-serp__fav') : el('span', 'pr-serp__fav pr-serp__fav--ph', (d.site_name || 'S').charAt(0).toUpperCase());
 		if (d.favicon && safeUrl(d.favicon)) { fav.src = d.favicon; fav.alt = ''; }
 		top.appendChild(fav);
-		var who = el('div', 'pr-serp__who'); who.appendChild(el('div', 'pr-serp__site', d.site_name)); who.appendChild(el('div', 'pr-serp__url', crumbs(d.canonical))); top.appendChild(who); card.appendChild(top);
-		var tfont = (mobile ? '20px' : '20px') + ' Arial,sans-serif', tmax = mobile ? 560 : 600;
+		var who = el('div', 'pr-serp__who'); who.appendChild(el('div', 'pr-serp__site', d.site_name)); who.appendChild(el('div', 'pr-serp__url', bing ? String(d.canonical || '').replace(/^https?:\/\//, '') : crumbs(d.canonical))); top.appendChild(who); card.appendChild(top);
+		var tfont = (mobile ? '20px' : '20px') + (bing ? ' "Segoe UI",Arial,sans-serif' : ' Arial,sans-serif'), tmax = bing ? (mobile ? 540 : 590) : (mobile ? 560 : 600);
 		card.appendChild(el('div', 'pr-serp__title', clip(d.title || '', tfont, tmax * (mobile ? 2 : 1))));
 			var date = ''; try { date = new Date(d.date).toLocaleDateString(document.documentElement.lang || undefined, { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { /* none */ }
 		var dfont = '14px Arial,sans-serif', dmax = mobile ? 640 : 920;
@@ -144,9 +148,10 @@
 		desc.appendChild(document.createTextNode(clip(d.description || '', dfont, dmax * (mobile ? 3 : 2) - (date ? 70 : 0)))); card.appendChild(desc);
 		p.appendChild(card);
 		var m = el('div', 'pr-pv-meters');
-		m.appendChild(meter(t.title, px(d.title || '', tfont), 600, t.pixels, 285));
-		m.appendChild(meter(t.metaDescription, (d.description || '').length, 160, t.chars, 120));
+		m.appendChild(meter(t.title + ' (' + (t.estimate || 'estimate') + ')', px(d.title || '', tfont), tmax, t.pixels, 285));
+		m.appendChild(meter(t.metaDescription + ' (' + (t.estimate || 'estimate') + ')', (d.description || '').length, bing ? 168 : 160, t.chars, 120));
 		p.appendChild(m);
+		p.appendChild(el('p', 'pr-pv-hint', t.simNote || 'Simulation. Search engines choose the final title and snippet; widths are estimates, not fixed limits.'));
 			if (!d.description) { p.appendChild(el('p', 'pr-pv-hint', issueText(d, t.descriptionIssue) || t.descriptionIssue)); }
 		}
 		function issueText(d, area) { var f = (d.issues || []).filter(function (i) { return i.area === area; })[0]; return f ? f.msg : ''; }
@@ -214,17 +219,34 @@
 		g.appendChild(chips([{ label: t.title, st: status(gTitle ? px(gTitle, tfont) : 0, 280, 600) }, { label: t.description, st: status(gDesc.length, 70, 160) }]));
 		grid.appendChild(g);
 
-		/* Facebook / LinkedIn */
+		/* Facebook, LinkedIn and WhatsApp: separate approximations with the image size and aspect ratio. */
 		var fTitle = s.title || d.title || '', fDesc = s.description || d.description || '';
-		var f = shell('facebook', 'f', t.linkedin || 'Facebook & LinkedIn'), fFrame = el('div', 'pr-sp__frame pr-sp__fb');
-		fFrame.appendChild(media(s.image));
-		var fBody = el('div', 'pr-sp__fbbody');
-		fBody.appendChild(el('div', 'pr-sp__host', host.toUpperCase()));
-		fBody.appendChild(el('div', 'pr-sp__ftitle', clip(fTitle, '600 16px Arial,sans-serif', 560)));
-		fBody.appendChild(el('div', 'pr-sp__fdesc', clip(fDesc, '14px Arial,sans-serif', 540)));
-		fFrame.appendChild(fBody); f.appendChild(fFrame);
-		f.appendChild(chips([{ label: t.title, st: status(fTitle.length, 25, 88) }, { label: t.description, st: status(fDesc.length, 50, 200) }]));
-		grid.appendChild(f);
+		function facts(card, url, minW, minH, name) {
+			var line = el('div', 'pr-sp__facts', safeUrl(url) ? (t.measuring || 'Measuring image…') : (t.noImage || 'No image'));
+			card.appendChild(line);
+			if (!safeUrl(url)) { return; }
+			var im = new Image();
+			im.onload = function () {
+				var w = im.naturalWidth, h = im.naturalHeight;
+				line.textContent = w + '×' + h + ' · ' + (w / h).toFixed(2) + ':1 · ' + host;
+				if (w < minW || h < minH) { card.appendChild(el('p', 'pr-pv-hint pr-sp__warn', (t.smallImage || '%1$s works best with at least %2$s.').replace('%1$s', name).replace('%2$s', minW + '×' + minH))); }
+			};
+			im.onerror = function () { line.textContent = t.imageFailed || 'The image could not be loaded.'; };
+			im.src = url;
+		}
+		[['facebook', 'f', 'Facebook', 1200, 630, true, 88], ['linkedin', 'in', 'LinkedIn', 1200, 627, false, 120], ['whatsapp', 'W', 'WhatsApp', 300, 200, false, 65]].forEach(function (n) {
+			var c = shell(n[0], n[1], n[2] + ' · ' + (t.approx || 'approximation')), fr = el('div', 'pr-sp__frame pr-sp__fb pr-sp__fb--' + n[0]);
+			fr.appendChild(media(s.image));
+			var bd = el('div', 'pr-sp__fbbody');
+			if (n[0] !== 'whatsapp') { bd.appendChild(el('div', 'pr-sp__host', n[5] ? host.toUpperCase() : host)); }
+			bd.appendChild(el('div', 'pr-sp__ftitle', clip(fTitle, '600 16px Arial,sans-serif', 560)));
+			if (n[0] !== 'linkedin') { bd.appendChild(el('div', 'pr-sp__fdesc', clip(fDesc, '14px Arial,sans-serif', 540))); }
+			if (n[0] === 'whatsapp') { bd.appendChild(el('div', 'pr-sp__host', host)); }
+			fr.appendChild(bd); c.appendChild(fr);
+			facts(c, s.image, n[3], n[4], n[2]);
+			c.appendChild(chips([{ label: t.title, st: status(fTitle.length, 20, n[6]) }].concat(n[0] === 'linkedin' ? [] : [{ label: t.description, st: status(fDesc.length, 50, 200) }])));
+			grid.appendChild(c);
+		});
 
 		/* X */
 		var xTitle = s.x_title || s.title || d.title || '', xDesc = s.x_description || s.description || d.description || '', xImg = s.x_image || s.image, small = s.card === 'summary';
@@ -367,6 +389,7 @@
 	}
 	// Other PublishRank editor UI (the block editor sidebar's Google and social cards) reads the same result.
 	window.PublishRankLivePreview = { last: function () { return state.last; }, refresh: function () { state.lastBody = ''; schedule(0); } };
+	document.addEventListener('publishrank:media-changed', function () { state.lastBody = ''; schedule(300); });
 	setInterval(tick, 5000);
 		$(function () { schedule(250); });
 }(jQuery));

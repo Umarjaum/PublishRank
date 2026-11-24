@@ -68,6 +68,9 @@ final class IndexNow {
 	}
 
 	public function queue_post( $post_id, $post, $update ) {
+		if ( \PublishRankSEO\Editor\UnifiedEditor::is_bridge_request() ) {
+			return; // Saved once by the post save itself; never again from the editor save bridge.
+		}
 		if ( ! $post instanceof \WP_Post || wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return; }
 		if ( 'publish' !== $post->post_status || ! $this->allowed_type( $post->post_type ) || ! $this->is_indexable_post( $post ) ) {

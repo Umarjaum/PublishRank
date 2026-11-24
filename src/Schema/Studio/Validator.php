@@ -412,6 +412,7 @@ final class Validator {
 					'recommended' => $rec,
 					'note'        => isset( $g['note'] ) ? $g['note'] : '',
 					'doc'         => $g['doc'],
+					'reviewed'    => isset( $g['reviewed'] ) ? (string) $g['reviewed'] : '',
 				);
 				break;
 			}

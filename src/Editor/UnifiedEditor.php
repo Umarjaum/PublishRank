@@ -2,7 +2,7 @@
 /**
  * One PublishRank SEO editing experience for the block editor.
  *
- * How it works (2.26.1):
+ * How it works (2.26.2):
  * - The PublishRank SEO meta boxes (SEO Overrides, Live Preview, Fix Assistant, Schema Selection, Schema Library,
  *   Schema Studio, Multilingual SEO) are taken out of the block editor's meta box registry with remove_meta_box()
  *   on the add_meta_boxes hook. They are never printed in the "Meta Boxes" area below the content, so no
@@ -14,9 +14,9 @@
  * - Values that are registered post meta (SEO title, description, focus keyword, social text, canonical, robots,
  *   keyphrase lists) are mirrored into the editor's own meta store, so they save natively with the post.
  * - Every other field is saved by a nonce- and capability-checked AJAX request that runs right after a successful,
- *   non-autosave post save. It replays the same save_post callbacks the classic meta box flow uses, so every value
- *   keeps its original storage location.
- * - The Classic Editor is not affected: it keeps the consolidated SEO fields dock (EditorPlacement).
+ *   non-autosave post save. It calls only the PublishRank callbacks that own those sections (SaveBridge), so every
+ *   value keeps its original storage location and no other save_post handler runs twice.
+ * - The box list is shared with the Classic Editor dock through BoxRegistry.
  *
  * @package PublishRankSEO
  */
@@ -40,22 +40,12 @@ final class UnifiedEditor {
 	private static $bridge_request = false;
 
 	/**
-	 * PublishRank SEO meta boxes that move into the unified sidebar. Non-SEO boxes (Mastodon sharing, newsroom
-	 * source review/details) stay where they are because they are not part of SEO editing.
+	 * PublishRank SEO meta boxes that move into the unified sidebar (shared with the Classic dock).
 	 *
 	 * @return string[]
 	 */
 	public static function box_ids() {
-		$ids = array(
-			'publishrank-seo-overrides',
-			'publishrank-live-preview',
-			'publishrank_article_intelligence',
-			'publishrank-schema',
-			'publishrank-schema-studio',
-			'publishrank-schema-library',
-			'publishrank-localized-seo',
-		);
-		return array_values( array_unique( array_filter( array_map( 'strval', (array) apply_filters( 'publishrank_unified_editor_boxes', $ids ) ) ) ) );
+		return BoxRegistry::ids();
 	}
 
 	public function register() {
@@ -65,9 +55,9 @@ final class UnifiedEditor {
 		add_action( 'wp_ajax_' . self::AJAX_ACTION, array( $this, 'ajax_save' ) );
 	}
 
-	/** True while the AJAX save bridge replays the save callbacks. */
+	/** True while the block editor save bridge is saving the PublishRank section fields. */
 	public static function is_bridge_request() {
-		return self::$bridge_request;
+		return self::$bridge_request || SaveBridge::is_active();
 	}
 
 	/** Whether the post (or current screen) uses the block editor. */
@@ -180,7 +170,7 @@ final class UnifiedEditor {
 				$deps[] = $optional;
 			}
 		}
-		foreach ( array( \PublishRankSEO\Admin\EditorPlacement::HANDLE, 'publishrank-editor-score-card' ) as $optional ) {
+		foreach ( array( \PublishRankSEO\Admin\EditorPlacement::HANDLE, 'publishrank-editor-score-card', 'publishrank-media-tab' ) as $optional ) {
 			if ( wp_script_is( $optional, 'registered' ) || wp_script_is( $optional, 'enqueued' ) ) {
 				$deps[] = $optional;
 			}
@@ -203,8 +193,12 @@ final class UnifiedEditor {
 				'logo'         => Branding::logo_url(),
 				'siteName'     => wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES ),
 				'homeUrl'      => home_url( '/' ),
+				'canEdit'      => Capabilities::can_edit_seo( $post_id ),
 				'canSchema'    => Capabilities::can( 'manage_schema' ),
 				'canMedia'     => Capabilities::can( 'manage_media_links' ),
+				'canUpload'    => current_user_can( 'upload_files' ),
+				'restRoot'     => esc_url_raw( rest_url( 'publishrank/v1/' ) ),
+				'restNonce'    => wp_create_nonce( 'wp_rest' ),
 				'links'        => array(
 					'schemaStudio' => admin_url( 'admin.php?page=publishrank-schema-studio' ),
 					'inspector'    => add_query_arg( array( 'page' => 'publishrank-seo-inspector', 'post_id' => $post_id ), admin_url( 'admin.php' ) ),
@@ -218,8 +212,9 @@ final class UnifiedEditor {
 	}
 
 	/**
-	 * Save bridge: replays the save_post callbacks with the PublishRank section fields, exactly as the classic
-	 * meta box submission does. Each callback still verifies its own nonce and capability.
+	 * Save bridge: saves the PublishRank section fields by calling only the PublishRank callbacks that own them
+	 * (see SaveBridge). save_post is NOT replayed, so third-party handlers run once per Update. Each callback still
+	 * verifies its own nonce and capability.
 	 */
 	public function ajax_save() {
 		if ( ! check_ajax_referer( self::NONCE_ACTION, self::NONCE_FIELD, false ) ) {
@@ -230,9 +225,14 @@ final class UnifiedEditor {
 		if ( ! $post instanceof \WP_Post || ! current_user_can( 'edit_post', $post_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'You are not allowed to edit this item.', 'publishrank' ) ), 403 );
 		}
+		if ( ! Capabilities::can_edit_seo( $post_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Your role is not allowed to change SEO fields. Ask an administrator to grant "Edit SEO fields on posts" on the PublishRank Roles screen.', 'publishrank' ) ), 403 );
+		}
 		if ( ! in_array( $post->post_type, PostMeta::post_types(), true ) || wp_is_post_revision( $post_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'PublishRank SEO fields are not available for this content type.', 'publishrank' ) ), 400 );
 		}
+		$fields = $_POST; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; each owner callback verifies its own nonce and sanitises its fields.
+		unset( $fields['action'], $fields[ self::NONCE_FIELD ] );
 		self::$bridge_request = true;
 		$before               = self::fingerprint( $post_id );
 		/**
@@ -242,13 +242,35 @@ final class UnifiedEditor {
 		 * @param \WP_Post $post    Post.
 		 */
 		do_action( 'publishrank_editor_bridge_before_save', $post_id, $post );
-		// Same hooks, in the same order, as wp_insert_post() fires for the classic meta box form.
-		do_action( "save_post_{$post->post_type}", $post_id, $post, true );
-		do_action( 'save_post', $post_id, $post, true );
-		do_action( 'wp_insert_post', $post_id, $post, true );
-		do_action( 'publishrank_editor_bridge_after_save', $post_id, $post );
-		self::$bridge_request = false;
+		$ran = array();
+		try {
+			/**
+			 * Escape hatch for add-ons that relied on the 2.26.1 behaviour of replaying every save_post handler.
+			 * Off by default: replaying runs other plugins' save handlers a second time with partial POST data.
+			 *
+			 * @param bool     $replay  Whether to replay save_post_{type}, save_post and wp_insert_post.
+			 * @param \WP_Post $post    Post.
+			 */
+			if ( apply_filters( 'publishrank_editor_bridge_replay_all_hooks', false, $post ) ) {
+				do_action( "save_post_{$post->post_type}", $post_id, $post, true );
+				do_action( 'save_post', $post_id, $post, true );
+				do_action( 'wp_insert_post', $post_id, $post, true );
+				$ran[] = 'legacy-replay';
+			} else {
+				$ran = SaveBridge::run( $post_id, $post, $fields );
+			}
+		} finally {
+			self::$bridge_request = false;
+		}
 		clean_post_cache( $post_id );
+		/**
+		 * Fires after the PublishRank editor fields were saved from the block editor. PublishRank refreshes its own
+		 * sitemap and schema caches here, once.
+		 *
+		 * @param int      $post_id Post ID.
+		 * @param \WP_Post $post    Post.
+		 */
+		do_action( 'publishrank_editor_bridge_after_save', $post_id, $post );
 		$after   = self::fingerprint( $post_id );
 		$changed = array();
 		foreach ( $after as $key => $hash ) {
@@ -263,8 +285,9 @@ final class UnifiedEditor {
 		}
 		wp_send_json_success(
 			array(
-				'saved'   => true,
-				'changed' => array_values( array_unique( $changed ) ),
+				'saved'     => true,
+				'changed'   => array_values( array_unique( $changed ) ),
+				'callbacks' => $ran,
 			)
 		);
 	}

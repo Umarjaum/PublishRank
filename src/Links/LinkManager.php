@@ -129,6 +129,9 @@ final class LinkManager {
 
 	/** Store internal/external link counts as post meta for Insights and audits. */
 	public function count_links( $post_id ) {
+		if ( \PublishRankSEO\Editor\UnifiedEditor::is_bridge_request() ) {
+			return; // Saved once by the post save itself; never again from the editor save bridge.
+		}
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return; }
 		$content = (string) get_post_field( 'post_content', $post_id );

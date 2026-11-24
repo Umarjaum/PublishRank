@@ -1,8 +1,8 @@
 # PublishRank SEO for WordPress
 
-## What's new in 2.26.1
+## What's new in 2.26.2
 
-PublishRank 2.26.1 is the current release. Read the [2.26.1 change history](https://publishrankseo.vercel.app/changelog#v2-26-1), the [verification report](docs/release-2.26.1/VERIFICATION-REPORT.md), and the [previous 2.26.0 release video](https://publishrankseo.vercel.app/video).
+PublishRank 2.26.2 is the current release. Read the [2.26.2 change history](https://publishrankseo.vercel.app/changelog#v2-26-2), the [validation report](docs/release-2.26.2/VALIDATION-REPORT.md), and the [REST API reference](docs/release-2.26.2/REST-API.md). The [previous 2.26.0 release video](https://publishrankseo.vercel.app/video) remains available.
 
 <p>
   <a href="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-introduction.mp4"><img src="https://raw.githubusercontent.com/Umarjaum/PublishRank/main/docs/media/publishrank-intro-preview.gif" width="280" alt="Autoplaying preview of the 15-second PublishRank introduction; click to open the original video with audio" /></a>
@@ -21,36 +21,39 @@ PublishRank 2.26.1 is the current release. Read the [2.26.1 change history](http
 
 PublishRank combines technical SEO, metadata, connected structured data, sitemaps, Local SEO, WooCommerce SEO, redirects, security, analytics and optional editorial workflows. SEO tools provide publishing signals and controls; search engines may still rewrite or omit titles, descriptions, images, snippets and rich-result presentations.
 
-The maintainer reports feature checks passing on the latest WordPress and PHP versions tested across multiple business categories and news sites. These additional tests are separate from the version-specific checks documented in each release report; hosting, themes and other plugins can still affect compatibility.
+Release-specific test results and limitations are recorded in each release report. The 2.26.2 report documents its own WordPress 7.1.5/PHP 8.3/SQLite test environment and untested areas; it does not establish compatibility for every hosting, theme or plugin combination.
 
 ## Current release
-- **Version:** 2.26.1
+- **Version:** 2.26.2
 - **License:** GPLv2 or later
 - **Requires WordPress:** 6.3 or newer
 - **Requires PHP:** 7.4 or newer (the report distinguishes runtime tests from static syntax scanning)
 - **Repository:** <https://github.com/Umarjaum/PublishRank>
 - **Release downloads:** <https://github.com/Umarjaum/PublishRank/releases>
-- **Direct plugin download:** <https://github.com/Umarjaum/PublishRank/releases/download/v2.26.1/PublishRank-2.26.1.zip>
+- **Direct plugin download:** <https://publishrankseo.vercel.app/downloads/PublishRank-2.26.2.zip> (the exact supplied 2.26.2 archive)
 - **Official website:** <https://publishrankseo.vercel.app/>
 - **Developer:** <https://umarjaum.vercel.app/>
 - **WordPress.org listing:** <https://wordpress.org/plugins/publishrank/>
 
-### 2.26.1 release highlights
-- **A tidier dashboard** with clearer site metrics, compact feature cards and technical-health rows that stack on phones.
-- **One Gutenberg SEO editor** in the persistent sidebar, with saved preferences, live Google and social previews, and a movable/resizable window that can be minimised or docked. Duplicate SEO boxes below Gutenberg are removed; Classic Editor retains its consolidated box.
-- **Media Link Manager** for locating references and reviewing URL changes before applying them; it checks collisions, verifies migrations, supports redirects and rollback, and reports ambiguous references instead of guessing.
-- **Advanced 404 diagnosis** with own-site linking pages, likely causes and redirects only for high-confidence fixes.
-- **A reviewable Bulk SEO Editor** with conflict checks, change history and undo, plus safeguarded CSV import/export.
-- **Schema Studio refinements** and improved YouTube/Vimeo video-sitemap discovery.
-- **Responsive/accessibility refinements**, including focus, target-size, reduced-motion and forced-colours handling.
+### 2.26.2 release highlights
+- **Safer SEO editing:** saving SEO fields requires the Edit SEO permission alongside post-edit access; existing editors keep the capability on upgrade.
+- **Editor save fix:** the block-editor bridge runs PublishRank's own field savers once rather than replaying all site `save_post` callbacks.
+- **Unified Classic Editor dock:** Fields, Preview, Analysis, Schema, Multilingual and Media tabs are available in one movable, resizable dock, with read-only values for users without Edit SEO.
+- **Media tab and image licence metadata:** inspect used images, edit Media Library metadata with stale-change protection, and add credit, creator, copyright, licence and acquisition-page fields.
+- **More preview choices:** Bing desktop/mobile search and separate Facebook, LinkedIn, WhatsApp and X cards are labelled simulations and show image-size information.
+- **New `publishrank/v1` REST API:** post SEO GET/PATCH, analysis, rendered head data, schema and sitemap endpoints, documented in the release API reference.
+- **Privacy and safeguards:** focus keywords/keyphrases are not returned publicly through REST by default; analytics collection has a configurable rate limit and rejects over-long paths.
+- **Schema and compatibility fixes:** old `SatireNewsArticle` values map to `SatiricalArticle`; a PHP 7.4 compatibility finding was corrected.
 
-**Verification:** the 2.26.1 report documents sandbox testing on WordPress 7.1.5, PHP 8.3 and SQLite. It explicitly does not claim production-host testing. PHP 7.4 received static syntax scanning only; WooCommerce, builders, multilingual plugins, real phones and Safari/Firefox were not tested. Automated accessibility checks were spot checks, not a full WCAG audit. See the [complete 2.26.1 report](docs/release-2.26.1/VERIFICATION-REPORT.md) for findings, blocked items and limitations.
+**Validation report:** the supplied report records WordPress 7.1.5 with SQLite, PHP 8.3, Chromium/Playwright, PHP lint on 266 files (zero errors), one PHPCompatibility finding fixed, JavaScript checks, and editor, permission, media, REST, analytics and schema checks. It did not runtime-test WordPress 6.3 or PHP 7.4; PHP 7.4 received static scanning only. MySQL/MariaDB, multisite, WooCommerce, WPML/Polylang, object cache, screen-reader/full keyboard-only, RTL, mobile-editor, live external validators and performance testing were not performed. The [complete report](docs/release-2.26.2/VALIDATION-REPORT.md) records all results and known limitations; the checks are not independently rerun by this website update.
 
-This report remains the record of that release’s specific sandbox test scope. Separately, the maintainer reports broader testing on the latest available WordPress and PHP versions across multiple business categories and news sites, with feature checks working as expected. This is not a guarantee that every hosting, theme or plugin combination will behave identically.
+## Historical release: 2.26.1
+- The previous release introduced a unified Gutenberg sidebar, Media Link Manager, 404 diagnosis, bulk SEO review safeguards and improved video sitemap discovery.
+- See its [2.26.1 verification report](docs/release-2.26.1/VERIFICATION-REPORT.md) for that release's own test scope.
 
 ## Historical release: 2.25.1
 - Traffic Guard monitor/enforce modes and country controls; an FAQ block and reusable collections; SEO Inspector and validated custom schema; Source Directory; Access Shield refinements; update/news notifications.
-- The [2.25.1 verification report](VERIFICATION-REPORT-2.25.1.md) records that release's specific checks and scope. It does not replace the 2.26.1 report.
+- The [2.25.1 verification report](VERIFICATION-REPORT-2.25.1.md) records that release's specific checks and scope. It does not replace the current 2.26.2 validation report.
 
 ## What's new in 2.25.0
 - **Theme masking:** maximum-level theme identifier rewriting, fingerprint scan and compatibility checks across nine listed themes; direct static theme files still require a server rule.
@@ -65,7 +68,7 @@ Older changelog details are preserved in the [2.23.0-and-earlier history archive
 
 ## Actual interface screenshots
 
-These are real WordPress-admin captures from the earlier 2.25.0 interface set. They are historical examples, not new 2.25.1 screenshots:
+These are real WordPress-admin captures from the earlier 2.25.0 interface set. They are historical examples, not 2.26.2 screenshots:
 
 ![PublishRank Dashboard](docs/screenshots/publishrank-dashboard.png)
 
@@ -139,7 +142,7 @@ The sitemap index includes responsive cards, content-type badges, child-file cou
 
 ## Complete feature catalog
 
-The [2.26.1 verification report](docs/release-2.26.1/VERIFICATION-REPORT.md) documents the current release's test results and limits. The [2.25.1 feature catalog](docs/release-2.25.1/FEATURE-CATALOG.md), [verification report](VERIFICATION-REPORT-2.25.1.md), [security audit](docs/release-2.25.1/SECURITY-AUDIT.md) and [compatibility report](docs/release-2.25.1/COMPATIBILITY-REPORT.md) remain available as historical documentation. Earlier releases and all 134 selectable Local SEO business options remain covered in the historical changelog; the options are not 134 separate Schema.org classes.
+The [2.26.2 validation report](docs/release-2.26.2/VALIDATION-REPORT.md) documents the current release's checks and limits; the [REST API reference](docs/release-2.26.2/REST-API.md) documents new endpoints. The [2.26.1 verification report](docs/release-2.26.1/VERIFICATION-REPORT.md) and earlier feature catalogs, verification reports, security audits and compatibility reports remain available as historical documentation. Earlier releases and all 134 selectable Local SEO business options remain covered in the historical changelog; the options are not 134 separate Schema.org classes.
 
 ## WordPress installation
 

@@ -39,9 +39,10 @@
 		return out;
 	}
 
-	function buildTabs(tabsEl, sources, onSelect) {
+	function buildTabs(tabsEl, sources, onSelect, storeKey, flat) {
+		storeKey = storeKey || K_TAB;
 		var parts = [];
-		sources.forEach(function (s) { parts = parts.concat(partsFor(s.root, s.id, s.title)); });
+		sources.forEach(function (s) { parts = parts.concat(flat ? [{ key: s.id, label: s.title, nodes: s.nodes || [s.root] }] : partsFor(s.root, s.id, s.title)); });
 		tabsEl.replaceChildren();
 		tabsEl.setAttribute('aria-label', t.tabs || 'SEO field sections');
 		parts.forEach(function (p) {
@@ -74,7 +75,7 @@
 		tabsEl.addEventListener('click', function (e) {
 			var b = e.target.closest('[data-pr-tab]'); if (!b) { return; }
 			var key = b.getAttribute('data-pr-tab'), was = current;
-			show(key); lsSet(K_TAB, key);
+			show(key); lsSet(storeKey, key);
 			if (onSelect) { onSelect(key, was === key); }
 		});
 		tabsEl.addEventListener('keydown', function (e) {
@@ -84,7 +85,7 @@
 			var n = list[(i + (e.key === 'ArrowRight' ? 1 : list.length - 1)) % list.length];
 			n.focus(); n.click(); e.preventDefault();
 		});
-		return { parts: parts, show: show, reset: reset, current: function () { return current; }, revealFor: function (el) { var p = partFor(el); if (p) { show(p.key); lsSet(K_TAB, p.key); } return !!p; } };
+		return { parts: parts, show: show, reset: reset, current: function () { return current; }, revealFor: function (el) { var p = partFor(el); if (p) { show(p.key); lsSet(storeKey, p.key); } return !!p; } };
 	}
 
 	/* ---------- movable panel helpers ---------- */
@@ -116,36 +117,96 @@
 		} catch (e) {}
 	}
 
-	/* ---------- classic editor dock ---------- */
+	/* ---------- classic editor dock ----------
+	 * Two levels: main tabs (Fields, Preview, Analysis, Schema, Multilingual, Media) group the boxes listed in
+	 * BoxRegistry; the Fields tab keeps its section sub-tabs (Search, Social, Indexing, ...). */
 	var classic = null;
 	function initClassic() {
 		var host = document.getElementById('publishrank-seo-dock');
 		if (!host || isBlock) { return; }
 		var tabsEl = host.querySelector('[data-pr-tabs]'), panes = host.querySelector('[data-pr-panes]'), toggle = host.querySelector('[data-pr-toggle]');
-		var sources = Array.prototype.map.call(host.querySelectorAll('.pr-seodock__box'), function (el) {
-			return { id: el.getAttribute('data-pr-box'), title: (el.getAttribute('data-pr-title') || '').replace(/^PublishRank\s+/i, ''), root: el };
-		});
-		if (!tabsEl || !panes || !sources.length) { return; }
+		var boxes = Array.prototype.slice.call(host.querySelectorAll('.pr-seodock__box'));
+		if (!tabsEl || !panes || !boxes.length) { return; }
 		host.classList.add('is-enhanced');
+		var groups = [], byKey = {};
+		boxes.forEach(function (el) {
+			var g = el.getAttribute('data-pr-tab-group') || el.getAttribute('data-pr-box');
+			if (!byKey[g]) { byKey[g] = { id: g, title: el.getAttribute('data-pr-tab-label') || (el.getAttribute('data-pr-title') || '').replace(/^PublishRank\s+/i, ''), nodes: [] }; groups.push(byKey[g]); }
+			byKey[g].nodes.push(el);
+			// Several boxes in one tab: give each a small heading so the publisher knows which tool it is.
+			if (g === 'schema' && !el.querySelector(':scope > .pr-seodock__boxtitle')) {
+				var h = document.createElement('h3'); h.className = 'pr-seodock__boxtitle';
+				h.textContent = (el.getAttribute('data-pr-title') || '').replace(/^PublishRank\s*(—|-)?\s*/i, '');
+				el.insertBefore(h, el.firstChild);
+			}
+		});
 		function setOpen(open) {
 			panes.hidden = !open; host.classList.toggle('is-open', open);
 			if (toggle) { toggle.setAttribute('aria-expanded', open ? 'true' : 'false'); }
 			lsSet(K_OPEN, open ? '1' : '0');
 		}
-		var tabs = buildTabs(tabsEl, sources, function (key, same) { setOpen(same ? panes.hidden : true); });
-		tabs.show(lsGet(K_TAB) || '');
-		setOpen(lsGet(K_OPEN) === '1');
+		var main = buildTabs(tabsEl, groups, function (key, same) { setOpen(true); /* a tab click always shows it; the chevron folds the panel */ emit('publishrank:dock-tab', { tab: key }); }, K_TAB + '-main', true);
+		/* Sub-tabs for the SEO fields box. */
+		var sub = null, fieldsBox = byKey.fields && byKey.fields.nodes[0];
+		if (fieldsBox) {
+			var subBar = document.createElement('div'); subBar.className = 'pr-seodock__subtabs'; subBar.setAttribute('role', 'tablist');
+			subBar.setAttribute('aria-label', t.sections || 'SEO field groups');
+			fieldsBox.parentNode.insertBefore(subBar, fieldsBox);
+			byKey.fields.nodes.unshift(subBar);
+			sub = buildTabs(subBar, [{ id: fieldsBox.getAttribute('data-pr-box'), title: '', root: fieldsBox }], null, K_TAB);
+			sub.show(lsGet(K_TAB) || '');
+			if (sub.parts.length < 2) { subBar.hidden = true; }
+		}
+		main.show(lsGet(K_TAB + '-main') || 'fields');
+		setOpen(lsGet(K_OPEN) !== '0');
 		if (toggle) { toggle.addEventListener('click', function () { setOpen(panes.hidden); }); }
 		var pop = host.querySelector('[data-pr-pop]'), head = host.querySelector('.pr-seodock__head');
 		function setFloat(on) {
 			host.classList.toggle('is-floating', on); lsSet(CFLOAT, on ? '1' : '0');
 			if (pop) { pop.setAttribute('aria-pressed', on ? 'true' : 'false'); }
-			if (on) { setOpen(true); restorePos(host, CPOS); } else { host.style.left = host.style.top = host.style.right = host.style.bottom = ''; }
+			if (on) { setOpen(true); restorePos(host, CPOS); restoreSize(host); } else { host.style.left = host.style.top = host.style.right = host.style.bottom = host.style.width = host.style.height = ''; }
 		}
 		if (pop) { pop.addEventListener('click', function () { setFloat(!host.classList.contains('is-floating')); }); }
 		if (head) { makeDraggable(host, head, CPOS, function () { return host.classList.contains('is-floating'); }); }
+		makeResizable(host);
 		if (lsGet(CFLOAT) === '1') { setFloat(true); }
-		classic = { host: host, tabs: tabs, open: function () { setOpen(true); } };
+		/* Read-only for roles without edit_seo: fields stay visible but cannot be changed or submitted. */
+		if (host.getAttribute('data-pr-readonly') === '1' || cfg.canEdit === false) {
+			host.querySelectorAll('.pr-seodock__box input, .pr-seodock__box select, .pr-seodock__box textarea').forEach(function (f) {
+				if (f.type === 'hidden') { return; }
+				if (f.tagName === 'SELECT' || f.type === 'checkbox' || f.type === 'radio') { f.disabled = true; } else { f.readOnly = true; }
+			});
+		}
+		classic = {
+			host: host, tabs: { revealFor: function (el) { var ok = main.revealFor(el); if (sub) { sub.revealFor(el); } return ok; } },
+			open: function () { setOpen(true); }, show: function (key) { main.show(key); setOpen(true); }
+		};
+		document.addEventListener('publishrank:score', function (e) {
+			var b = host.querySelector('[data-pr-dock-score]'); if (!b || !e.detail) { return; }
+			var n = parseInt(e.detail.score, 10) || 0; b.textContent = String(n); b.className = 'pr-seodock__score is-' + (e.detail.band || 'bad');
+		});
+	}
+	/* Floating dock: resize from the corner, size remembered per browser. */
+	var CSIZE = 'publishrank-seodock-size';
+	function restoreSize(host) {
+		try { var s = JSON.parse(lsGet(CSIZE) || 'null'); if (s && s.w && window.innerWidth > 782) { host.style.width = Math.min(s.w, window.innerWidth - 16) + 'px'; host.style.height = Math.min(s.h, window.innerHeight - 40) + 'px'; } } catch (e) {}
+	}
+	function makeResizable(host) {
+		var grip = document.createElement('span'); grip.className = 'pr-seodock__resize'; grip.setAttribute('aria-hidden', 'true'); grip.title = t.resize || 'Drag to resize';
+		host.appendChild(grip);
+		var st = null;
+		grip.addEventListener('pointerdown', function (e) {
+			if (!host.classList.contains('is-floating') || window.innerWidth <= 782) { return; }
+			var r = host.getBoundingClientRect(); st = { x: e.clientX, y: e.clientY, w: r.width, h: r.height };
+			if (grip.setPointerCapture) { grip.setPointerCapture(e.pointerId); } e.preventDefault();
+		});
+		grip.addEventListener('pointermove', function (e) {
+			if (!st) { return; }
+			host.style.width = Math.max(340, Math.min(window.innerWidth - 16, st.w + e.clientX - st.x)) + 'px';
+			host.style.height = Math.max(240, Math.min(window.innerHeight - 40, st.h + e.clientY - st.y)) + 'px';
+		});
+		function end() { if (!st) { return; } st = null; lsSet(CSIZE, JSON.stringify({ w: host.offsetWidth, h: host.offsetHeight })); }
+		grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
 	}
 
 	/* ---------- block editor dock ---------- */
@@ -356,7 +417,7 @@
 		}, 400);
 	}
 
-	window.PublishRankSeoDock = { dock: dock, release: release, openFloat: openSidebarDock, openSidebar: openSidebarDock, focusField: focusField, isDocked: function () { return !!docked || !!classic; } };
+	window.PublishRankSeoDock = { showTab: function (k) { if (classic) { classic.show(k); } }, dock: dock, release: release, openFloat: openSidebarDock, openSidebar: openSidebarDock, focusField: focusField, isDocked: function () { return !!docked || !!classic; } };
 
 	$(function () {
 		if (isBlock) {

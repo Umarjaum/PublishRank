@@ -234,7 +234,7 @@ final class PostMeta {
 							return PostMeta::sanitize_text( addslashes( $value ), 320 );
 						},
 						'auth_callback'     => static function ( $allowed, $meta_key, $post_id ) {
-							return current_user_can( 'edit_post', (int) $post_id );
+							return \PublishRankSEO\Core\Capabilities::can_edit_seo( (int) $post_id );
 						},
 					)
 				);
@@ -252,7 +252,7 @@ final class PostMeta {
 						return self::truncate( sanitize_text_field( is_scalar( $value ) ? (string) $value : '' ), 100 );
 					},
 					'auth_callback'     => static function ( $allowed, $meta_key, $post_id ) {
-						return current_user_can( 'edit_post', (int) $post_id );
+						return \PublishRankSEO\Core\Capabilities::can_edit_seo( (int) $post_id );
 					},
 				)
 			);
@@ -275,7 +275,7 @@ final class PostMeta {
 							return PostMeta::parse_list( $value, $limits[0], $limits[1] );
 						},
 						'auth_callback'     => static function ( $allowed, $meta_key, $post_id ) {
-							return current_user_can( 'edit_post', (int) $post_id );
+							return \PublishRankSEO\Core\Capabilities::can_edit_seo( (int) $post_id );
 						},
 					)
 				);
@@ -392,7 +392,7 @@ final class PostMeta {
 			return; }
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return; }
-		if ( wp_is_post_revision( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) {
+		if ( wp_is_post_revision( $post_id ) || ! \PublishRankSEO\Core\Capabilities::can_edit_seo( (int) $post_id ) ) {
 			return; }
 		$text_fields = array(
 			self::TITLE             => 255,

@@ -75,6 +75,9 @@ final class MarkdownDelivery {
 	}
 
 	public static function bump() {
+		if ( \PublishRankSEO\Editor\UnifiedEditor::is_bridge_request() ) {
+			return; // Saved once by the post save itself; never again from the editor save bridge.
+		}
 		update_option( 'publishrank_ai_markdown_epoch', time(), false );
 	}
 
